@@ -1,31 +1,65 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+
+// Pick the best available English TTS voice
+function getBestVoice() {
+  const voices = window.speechSynthesis?.getVoices() || []
+  const preferred = [
+    'Google UK English Female',
+    'Google US English',
+    'Samantha',
+    'Karen',
+    'Daniel',
+    'Moira',
+    'Google UK English Male',
+  ]
+  for (const name of preferred) {
+    const v = voices.find(v => v.name === name)
+    if (v) return v
+  }
+  // Fallback: first English voice
+  return voices.find(v => v.lang?.startsWith('en')) || voices[0] || null
+}
 
 export function useVoice() {
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [isSpeaking, setIsSpeaking] = useState(false)
-  const [supported, setSupported] = useState(
-    typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+  const [supported] = useState(
+    typeof window !== 'undefined' &&
+    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
   )
   const recognitionRef = useRef(null)
+  const [voicesLoaded, setVoicesLoaded] = useState(false)
 
-  const startListening = useCallback((onResult) => {
+  useEffect(() => {
+    if (!window.speechSynthesis) return
+    const load = () => setVoicesLoaded(true)
+    window.speechSynthesis.onvoiceschanged = load
+    if (window.speechSynthesis.getVoices().length > 0) setVoicesLoaded(true)
+  }, [])
+
+  const startListening = useCallback((onResult, onInterim) => {
     if (!supported) return
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SR()
     recognition.continuous = false
     recognition.interimResults = true
     recognition.lang = 'en-US'
+    recognition.maxAlternatives = 1
 
     recognition.onresult = (e) => {
-      const t = Array.from(e.results).map(r => r[0].transcript).join('')
-      setTranscript(t)
+      const interim = Array.from(e.results).map(r => r[0].transcript).join('')
+      setTranscript(interim)
+      onInterim && onInterim(interim)
       if (e.results[e.results.length - 1].isFinal) {
-        onResult && onResult(t)
+        onResult && onResult(interim)
       }
     }
     recognition.onend = () => setIsListening(false)
-    recognition.onerror = () => setIsListening(false)
+    recognition.onerror = (e) => {
+      console.warn('Speech error:', e.error)
+      setIsListening(false)
+    }
 
     recognitionRef.current = recognition
     recognition.start()
@@ -34,27 +68,40 @@ export function useVoice() {
   }, [supported])
 
   const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop()
-      setIsListening(false)
-    }
+    recognitionRef.current?.stop()
+    setIsListening(false)
   }, [])
 
   const speak = useCallback((text, onEnd) => {
     if (!window.speechSynthesis) return
     window.speechSynthesis.cancel()
-    const utt = new SpeechSynthesisUtterance(text)
-    utt.rate = 0.95
-    utt.pitch = 1
+
+    // Strip markdown
+    const clean = text
+      .replace(/#+\s/g, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/`(.*?)`/g, '$1')
+      .replace(/\n{2,}/g, '. ')
+      .replace(/\n/g, ' ')
+      .slice(0, 800) // don't read entire essays
+
+    const utt = new SpeechSynthesisUtterance(clean)
+    utt.lang = 'en-US'
+    utt.rate = 0.92
+    utt.pitch = 1.05
     utt.volume = 1
-    // Try to use a good voice
-    const voices = window.speechSynthesis.getVoices()
-    const preferred = voices.find(v => v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel'))
-    if (preferred) utt.voice = preferred
+
+    const voice = getBestVoice()
+    if (voice) utt.voice = voice
+
     utt.onstart = () => setIsSpeaking(true)
     utt.onend = () => { setIsSpeaking(false); onEnd && onEnd() }
+    utt.onerror = () => setIsSpeaking(false)
+
+    // Chrome bug: long utterances get cut off, chunk them
     window.speechSynthesis.speak(utt)
-  }, [])
+  }, [voicesLoaded])
 
   const stopSpeaking = useCallback(() => {
     window.speechSynthesis?.cancel()

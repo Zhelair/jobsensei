@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Mic, Search, BookOpen, Star, DollarSign,
   Wrench, Briefcase, Settings, ChevronLeft, ChevronRight, GraduationCap
 } from 'lucide-react'
+import ProjectSwitcher from '../Projects/ProjectSwitcher'
 
 const NAV_ITEMS = [
   { id: SECTIONS.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
@@ -47,7 +48,8 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom */}
-      <div className="px-3 py-4 border-t border-navy-700 space-y-1">
+      <div className="px-3 py-4 border-t border-navy-700 space-y-2">
+        <ProjectSwitcher collapsed={!sidebarOpen} />
         <button
           onClick={() => setActiveSection(SECTIONS.SETTINGS)}
           className={`nav-item w-full ${activeSection === SECTIONS.SETTINGS ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-0' : ''}`}

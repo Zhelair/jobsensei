@@ -1,6 +1,7 @@
 import React from 'react'
 import { AppProvider, useApp, SECTIONS } from './context/AppContext'
 import { AIProvider } from './context/AIContext'
+import { ProjectProvider } from './context/ProjectContext'
 import Sidebar from './components/Layout/Sidebar'
 import TopBar from './components/Layout/TopBar'
 import BottomNav from './components/Layout/BottomNav'
@@ -55,7 +56,9 @@ export default function App() {
   return (
     <AIProvider>
       <AppProvider>
-        <AppContent />
+        <ProjectProvider>
+          <AppContent />
+        </ProjectProvider>
       </AppProvider>
     </AIProvider>
   )

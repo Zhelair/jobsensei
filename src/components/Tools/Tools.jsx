@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
+import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON } from '../../utils/helpers'
 import { Wrench, Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight } from 'lucide-react'
@@ -14,11 +15,13 @@ const TOOLS = [
 
 export default function Tools() {
   const [activeTool, setActiveTool] = useState(null)
+  const { getProjectData } = useProject()
+  const resume = getProjectData('resume')
 
-  if (activeTool === 'predictor') return <QuestionPredictor onBack={() => setActiveTool(null)} />
+  if (activeTool === 'predictor') return <QuestionPredictor onBack={() => setActiveTool(null)} resume={resume} />
   if (activeTool === 'tone') return <ToneAnalyzer onBack={() => setActiveTool(null)} />
   if (activeTool === 'followup') return <FollowUpEmail onBack={() => setActiveTool(null)} />
-  if (activeTool === 'pitch') return <ElevatorPitch onBack={() => setActiveTool(null)} />
+  if (activeTool === 'pitch') return <ElevatorPitch onBack={() => setActiveTool(null)} resume={resume} />
 
   return (
     <div className="p-4 md:p-6 animate-in">
@@ -42,11 +45,11 @@ export default function Tools() {
   )
 }
 
-function QuestionPredictor({ onBack }) {
+function QuestionPredictor({ onBack, resume }) {
   const { profile, drillMode, setActiveSection } = useApp()
   const { callAI, isConnected } = useAI()
   const [jd, setJd] = useState('')
-  const [background, setBackground] = useState(profile?.currentRole || '')
+  const [background, setBackground] = useState(resume || profile?.currentRole || '')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
 
@@ -260,11 +263,11 @@ function FollowUpEmail({ onBack }) {
   )
 }
 
-function ElevatorPitch({ onBack }) {
+function ElevatorPitch({ onBack, resume }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
   const [role, setRole] = useState(profile?.targetRole || '')
-  const [strengths, setStrengths] = useState('')
+  const [strengths, setStrengths] = useState(resume ? resume.slice(0, 300) : '')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
 
