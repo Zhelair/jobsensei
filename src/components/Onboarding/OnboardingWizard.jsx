@@ -1,0 +1,194 @@
+import React, { useState } from 'react'
+import { useApp } from '../../context/AppContext'
+import { useAI } from '../../context/AIContext'
+import { GraduationCap, ChevronRight, ChevronLeft, Check, Zap } from 'lucide-react'
+
+export default function OnboardingWizard() {
+  const { saveProfile } = useApp()
+  const { saveConfig, PROVIDERS, PROVIDER_CONFIGS } = useAI()
+
+  const [step, setStep] = useState(0)
+  const [data, setData] = useState({
+    name: '', currentRole: '', experience: '', industry: '',
+    targetRole: '', targetIndustries: '', targetCompanies: '',
+    provider: PROVIDERS.DEEPSEEK, apiKey: '', model: 'deepseek-chat', customBaseUrl: '',
+  })
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState(null)
+
+  function update(k, v) { setData(d => ({ ...d, [k]: v })) }
+
+  async function testConnection() {
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const cfg = PROVIDER_CONFIGS[data.provider]
+      const baseUrl = data.provider === PROVIDERS.CUSTOM ? data.customBaseUrl : cfg.baseUrl
+      const body = data.provider === PROVIDERS.ANTHROPIC
+        ? { model: data.model, max_tokens: 20, messages: [{ role: 'user', content: 'Say "OK"' }] }
+        : { model: data.model, max_tokens: 20, messages: [{ role: 'user', content: 'Say "OK"' }] }
+
+      const headers = data.provider === PROVIDERS.ANTHROPIC
+        ? { 'Content-Type': 'application/json', 'x-api-key': data.apiKey, 'anthropic-version': '2023-06-01' }
+        : { 'Content-Type': 'application/json', 'Authorization': `Bearer ${data.apiKey}` }
+
+      const endpoint = data.provider === PROVIDERS.ANTHROPIC ? `${baseUrl}/v1/messages` : `${baseUrl}/chat/completions`
+      const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) })
+      setTestResult(res.ok ? 'success' : 'error')
+    } catch {
+      setTestResult('error')
+    }
+    setTesting(false)
+  }
+
+  function finish() {
+    saveProfile({
+      name: data.name, currentRole: data.currentRole,
+      experience: data.experience, industry: data.industry,
+      targetRole: data.targetRole, targetIndustries: data.targetIndustries,
+      targetCompanies: data.targetCompanies,
+    })
+    saveConfig({ provider: data.provider, apiKey: data.apiKey, model: data.model, customBaseUrl: data.customBaseUrl })
+  }
+
+  const steps = [
+    {
+      title: 'Who are you?',
+      subtitle: 'Tell us about your background so we can personalize everything.',
+      content: (
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-slate-400 font-body mb-1.5 block">Your name</label>
+            <input className="input-field" placeholder="Nikita" value={data.name} onChange={e => update('name', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 font-body mb-1.5 block">Current / most recent role</label>
+            <input className="input-field" placeholder="Financial Crime Investigations Expert" value={data.currentRole} onChange={e => update('currentRole', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 font-body mb-1.5 block">Years of experience</label>
+            <input className="input-field" placeholder="4+ years" value={data.experience} onChange={e => update('experience', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 font-body mb-1.5 block">Industry</label>
+            <input className="input-field" placeholder="Fintech / Gambling / Financial Crime" value={data.industry} onChange={e => update('industry', e.target.value)} />
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "What are you hunting for?",
+      subtitle: 'Help us tailor your interview prep and gap analysis.',
+      content: (
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-slate-400 font-body mb-1.5 block">Target role type</label>
+            <input className="input-field" placeholder="Senior FRAML Analyst, Compliance Manager..." value={data.targetRole} onChange={e => update('targetRole', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 font-body mb-1.5 block">Preferred industries</label>
+            <input className="input-field" placeholder="Fintech, Banking, Payments..." value={data.targetIndustries} onChange={e => update('targetIndustries', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 font-body mb-1.5 block">Any specific companies on your radar? (optional)</label>
+            <input className="input-field" placeholder="Revolut, N26, Stripe..." value={data.targetCompanies} onChange={e => update('targetCompanies', e.target.value)} />
+          </div>
+        </div>
+      )
+    },
+    {
+      title: 'Connect your AI',
+      subtitle: 'Your API key stays on your device. We never see it.',
+      content: (
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-slate-400 font-body mb-1.5 block">AI Provider</label>
+            <select
+              className="input-field"
+              value={data.provider}
+              onChange={e => {
+                const p = e.target.value
+                update('provider', p)
+                update('model', PROVIDER_CONFIGS[p].defaultModel)
+              }}
+            >
+              {Object.entries(PROVIDER_CONFIGS).map(([k, v]) => (
+                <option key={k} value={k}>{v.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 font-body mb-1.5 block">API Key</label>
+            <input
+              className="input-field font-mono text-xs"
+              type="password"
+              placeholder="sk-..."
+              value={data.apiKey}
+              onChange={e => update('apiKey', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 font-body mb-1.5 block">Model</label>
+            <input className="input-field font-mono text-xs" placeholder="deepseek-chat" value={data.model} onChange={e => update('model', e.target.value)} />
+          </div>
+          {data.provider === PROVIDERS.CUSTOM && (
+            <div>
+              <label className="text-sm text-slate-400 font-body mb-1.5 block">Base URL</label>
+              <input className="input-field font-mono text-xs" placeholder="https://..." value={data.customBaseUrl} onChange={e => update('customBaseUrl', e.target.value)} />
+            </div>
+          )}
+          <button onClick={testConnection} disabled={!data.apiKey || testing} className="btn-secondary w-full justify-center">
+            <Zap size={14} />
+            {testing ? 'Testing...' : 'Test Connection'}
+          </button>
+          {testResult === 'success' && <p className="text-green-400 text-sm text-center">✅ Connected successfully!</p>}
+          {testResult === 'error' && <p className="text-red-400 text-sm text-center">❌ Connection failed. Check your key and model name.</p>}
+        </div>
+      )
+    },
+  ]
+
+  return (
+    <div className="fixed inset-0 bg-navy-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-navy-800 border border-navy-700 rounded-2xl w-full max-w-md shadow-2xl animate-in">
+        {/* Header */}
+        <div className="p-6 border-b border-navy-700">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-indigo-500 flex items-center justify-center">
+              <GraduationCap size={20} className="text-white" />
+            </div>
+            <div>
+              <h2 className="font-display font-bold text-white text-xl">Welcome to JobSensei</h2>
+              <p className="text-slate-400 text-xs">Your AI-powered job hunt companion</p>
+            </div>
+          </div>
+          {/* Step indicators */}
+          <div className="flex gap-2">
+            {steps.map((s, i) => (
+              <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= step ? 'bg-teal-500' : 'bg-navy-600'}`} />
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <h3 className="font-display font-semibold text-white text-lg mb-1">{steps[step].title}</h3>
+          <p className="text-slate-400 text-sm mb-5">{steps[step].subtitle}</p>
+          {steps[step].content}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 pb-6 flex items-center justify-between">
+          {step > 0
+            ? <button onClick={() => setStep(s => s - 1)} className="btn-ghost"><ChevronLeft size={16} /> Back</button>
+            : <button onClick={finish} className="text-slate-500 text-sm hover:text-slate-300 transition-colors">Skip for now</button>
+          }
+          {step < steps.length - 1
+            ? <button onClick={() => setStep(s => s + 1)} className="btn-primary">Next <ChevronRight size={16} /></button>
+            : <button onClick={finish} className="btn-primary"><Check size={16} /> Get Started</button>
+          }
+        </div>
+      </div>
+    </div>
+  )
+}
