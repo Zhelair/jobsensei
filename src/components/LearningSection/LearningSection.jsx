@@ -6,7 +6,8 @@ import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { sm2, getNextReviewDate, isDueToday } from '../../utils/spacedRepetition'
 import ChatWindow from '../shared/ChatWindow'
-import { BookOpen, Plus, Brain, Zap, Check, ChevronRight, ArrowLeft, Edit3, Trash2, X } from 'lucide-react'
+import { BookOpen, Plus, Brain, Zap, Check, ArrowLeft, Edit3, Trash2, X } from 'lucide-react'
+import VoiceChatBar from '../shared/VoiceChatBar'
 
 const STARTER_TOPICS = [
   { title: 'B2B vs B2C Fraud: Key Differences', category: 'FRAML', difficulty: 'Intermediate' },
@@ -213,29 +214,30 @@ export default function LearningSection() {
 
 function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isConnected }) {
   const [messages, setMessages] = useState(topic.messages || [])
-  const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [depth, setDepth] = useState('Have basics')
 
   async function sendMessage(text) {
-    if (!text.trim()||loading) return
-    const userMsg = {role:'user',content:text}
+    if (!text.trim() || loading) return
+    const userMsg = { role: 'user', content: text }
     const newMsgs = [...messages, userMsg]
-    setMessages(newMsgs); setInput(''); setLoading(true)
+    setMessages(newMsgs); setLoading(true)
     try {
       let full = ''
-      setMessages([...newMsgs, {role:'assistant',content:''}])
+      setMessages([...newMsgs, { role: 'assistant', content: '' }])
       await callAI({
         systemPrompt: prompts.topicTutor(topic.title, depth, profile?.currentRole, drillMode),
         messages: newMsgs, temperature: 0.7,
-        onChunk: (_,acc)=>{full=acc;setMessages([...newMsgs,{role:'assistant',content:acc}])},
+        onChunk: (_, acc) => { full = acc; setMessages([...newMsgs, { role: 'assistant', content: acc }]) },
       })
-      const finalMsgs = [...newMsgs, {role:'assistant',content:full}]
+      const finalMsgs = [...newMsgs, { role: 'assistant', content: full }]
       setMessages(finalMsgs)
-      onUpdate(topic.id, {messages:finalMsgs, status:'In Progress'})
+      onUpdate(topic.id, { messages: finalMsgs, status: 'In Progress' })
     } catch {}
     setLoading(false)
   }
+
+  const lastAiMsg = messages.filter(m => m.role === 'assistant' && m.content).at(-1)?.content || ''
 
   return (
     <div className="flex flex-col h-full animate-in">
@@ -245,21 +247,25 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
           <div>
             <div className="text-white text-sm font-body font-medium">{topic.title}</div>
             <div className="flex gap-1.5 mt-0.5">
-              {['New to this','Have basics','Go advanced'].map(d=>(
-                <button key={d} onClick={()=>setDepth(d)}
-                  className={`text-xs px-2 py-0.5 rounded transition-all ${depth===d?'bg-teal-500/20 text-teal-400':'text-slate-500 hover:text-slate-300'}`}>{d}</button>
+              {['New to this', 'Have basics', 'Go advanced'].map(d => (
+                <button key={d} onClick={() => setDepth(d)}
+                  className={`text-xs px-2 py-0.5 rounded transition-all ${depth === d ? 'bg-teal-500/20 text-teal-400' : 'text-slate-500 hover:text-slate-300'}`}>{d}</button>
               ))}
             </div>
           </div>
         </div>
-        <button onClick={()=>onUpdate(topic.id,{status:'Completed'})} className="btn-ghost text-xs"><Check size={14}/> Done</button>
+        <button onClick={() => onUpdate(topic.id, { status: 'Completed' })} className="btn-ghost text-xs">
+          <Check size={14}/> Done
+        </button>
       </div>
       <ChatWindow messages={messages} isLoading={loading} emptyText="Ask anything about this topic, or say 'Teach me' to start!" />
-      <div className="p-4 border-t border-navy-700 bg-navy-900 flex gap-2">
-        <input className="input-field flex-1" placeholder={`Ask about ${topic.title}...`} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();sendMessage(input)}}} />
-        <button onClick={()=>sendMessage(input)} disabled={!input.trim()||loading||!isConnected} className="w-10 h-10 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-40 flex items-center justify-center flex-shrink-0">
-          <ChevronRight size={16} className="text-navy-900"/>
-        </button>
+      <div className="p-4 border-t border-navy-700 bg-navy-900">
+        <VoiceChatBar
+          onSend={sendMessage}
+          isLoading={loading}
+          lastAiMessage={lastAiMsg}
+          placeholder={`Ask about ${topic.title}…`}
+        />
       </div>
     </div>
   )

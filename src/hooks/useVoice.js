@@ -1,16 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 
-// Pick the best available English TTS voice
 function getBestVoice() {
   const voices = window.speechSynthesis?.getVoices() || []
   const preferred = [
-    'Google UK English Female',
-    'Google US English',
-    'Samantha',
-    'Karen',
-    'Daniel',
-    'Moira',
-    'Google UK English Male',
+    'Google UK English Female', 'Google US English',
+    'Samantha', 'Karen', 'Daniel', 'Moira', 'Google UK English Male',
   ]
   for (const name of preferred) {
     const v = voices.find(v => v.name === name)
@@ -29,6 +23,10 @@ export function useVoice() {
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
   )
   const recognitionRef = useRef(null)
+  // continuous mode: accumulate all final segments, only call onResult on stop
+  const accumulatedRef = useRef('')
+  const onResultCallbackRef = useRef(null)
+  const lastTextRef = useRef('')   // for replay
   const [voicesLoaded, setVoicesLoaded] = useState(false)
 
   useEffect(() => {
@@ -41,28 +39,43 @@ export function useVoice() {
   const startListening = useCallback((onResult, onInterim) => {
     if (!supported) return
     setError(null)
+    accumulatedRef.current = ''
+    onResultCallbackRef.current = onResult
+
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SR()
-    recognition.continuous = false
+    recognition.continuous = true          // KEY: keep listening through pauses
     recognition.interimResults = true
     recognition.lang = 'en-US'
     recognition.maxAlternatives = 1
 
     recognition.onresult = (e) => {
-      const interim = Array.from(e.results).map(r => r[0].transcript).join('')
-      setTranscript(interim)
-      onInterim && onInterim(interim)
-      if (e.results[e.results.length - 1].isFinal) {
-        onResult && onResult(interim)
+      let interim = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          accumulatedRef.current += e.results[i][0].transcript + ' '
+        } else {
+          interim += e.results[i][0].transcript
+        }
       }
+      const display = (accumulatedRef.current + interim).trim()
+      setTranscript(display)
+      onInterim && onInterim(display)
     }
-    recognition.onend = () => setIsListening(false)
+
+    // onend fires when stopListening() is called → deliver accumulated result
+    recognition.onend = () => {
+      setIsListening(false)
+      const final = accumulatedRef.current.trim()
+      if (final) onResultCallbackRef.current && onResultCallbackRef.current(final)
+    }
+
     recognition.onerror = (e) => {
       setIsListening(false)
       if (e.error === 'not-allowed' || e.error === 'permission-denied') {
-        setError('Microphone access denied. Please allow microphone in your browser settings and try again.')
+        setError('Microphone access denied. Please allow microphone in your browser settings.')
       } else if (e.error === 'no-speech') {
-        setError(null) // silence is not an error
+        setError(null)
       } else if (e.error === 'audio-capture') {
         setError('No microphone found. Please connect a microphone and try again.')
       } else if (e.error !== 'aborted') {
@@ -76,16 +89,16 @@ export function useVoice() {
     setTranscript('')
   }, [supported])
 
+  // calling stop() triggers onend, which delivers the accumulated transcript
   const stopListening = useCallback(() => {
     recognitionRef.current?.stop()
-    setIsListening(false)
   }, [])
 
   const speak = useCallback((text, onEnd) => {
     if (!window.speechSynthesis) return
     window.speechSynthesis.cancel()
+    lastTextRef.current = text  // store for replay
 
-    // Strip markdown
     const clean = text
       .replace(/#+\s/g, '')
       .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -100,7 +113,6 @@ export function useVoice() {
     utt.rate = 0.92
     utt.pitch = 1.05
     utt.volume = 1
-
     const voice = getBestVoice()
     if (voice) utt.voice = voice
 
@@ -116,10 +128,15 @@ export function useVoice() {
     setIsSpeaking(false)
   }, [])
 
+  // Replay the last spoken text
+  const replayLast = useCallback(() => {
+    if (lastTextRef.current) speak(lastTextRef.current)
+  }, [speak])
+
   const clearError = useCallback(() => setError(null), [])
 
   return {
     isListening, transcript, isSpeaking, supported, error,
-    startListening, stopListening, speak, stopSpeaking, clearError
+    startListening, stopListening, speak, stopSpeaking, clearError, replayLast,
   }
 }
