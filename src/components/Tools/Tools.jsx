@@ -3,8 +3,8 @@ import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
-import { tryParseJSON } from '../../utils/helpers'
-import { Wrench, Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight } from 'lucide-react'
+import { tryParseJSON, generateId } from '../../utils/helpers'
+import { Wrench, Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock } from 'lucide-react'
 
 const TOOLS = [
   { id: 'predictor', icon: Target, label: 'Question Predictor', desc: 'Predict the 15 most likely questions for any JD' },
@@ -15,17 +15,35 @@ const TOOLS = [
 
 export default function Tools() {
   const [activeTool, setActiveTool] = useState(null)
-  const { getProjectData } = useProject()
+  const [showHistory, setShowHistory] = useState(false)
+  const { getProjectData, updateProjectData } = useProject()
   const resume = getProjectData('resume')
+  const toolsHistory = getProjectData('toolsHistory')
 
-  if (activeTool === 'predictor') return <QuestionPredictor onBack={() => setActiveTool(null)} resume={resume} />
-  if (activeTool === 'tone') return <ToneAnalyzer onBack={() => setActiveTool(null)} />
-  if (activeTool === 'followup') return <FollowUpEmail onBack={() => setActiveTool(null)} />
-  if (activeTool === 'pitch') return <ElevatorPitch onBack={() => setActiveTool(null)} resume={resume} />
+  function saveHistory(tool, toolLabel, inputs, result) {
+    const entry = { id: generateId(), date: new Date().toISOString(), tool, toolLabel, inputs, result }
+    updateProjectData('toolsHistory', [entry, ...(toolsHistory || [])].slice(0, 50))
+  }
+
+  if (activeTool === 'predictor') return <QuestionPredictor onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('predictor', 'Question Predictor', i, r)} />
+  if (activeTool === 'tone') return <ToneAnalyzer onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('tone', 'Tone Analyzer', i, r)} />
+  if (activeTool === 'followup') return <FollowUpEmail onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('followup', 'Follow-up Email', i, r)} />
+  if (activeTool === 'pitch') return <ElevatorPitch onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('pitch', 'Elevator Pitch', i, r)} />
+
+  if (showHistory) return <ToolsHistory history={toolsHistory || []} onBack={() => setShowHistory(false)} />
+
+  const recentHistory = (toolsHistory || []).slice(0, 5)
 
   return (
     <div className="p-4 md:p-6 animate-in">
-      <h2 className="section-title mb-1">Tools</h2>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="section-title">Tools</h2>
+        {recentHistory.length > 0 && (
+          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs">
+            <History size={14}/> History ({toolsHistory.length})
+          </button>
+        )}
+      </div>
       <p className="section-sub mb-5">Utility belt for your job hunt.</p>
       <div className="grid sm:grid-cols-2 gap-3">
         {TOOLS.map(({ id, icon: Icon, label, desc }) => (
@@ -41,12 +59,161 @@ export default function Tools() {
           </button>
         ))}
       </div>
+
+      {recentHistory.length > 0 && (
+        <div className="mt-6">
+          <h3 className="font-display font-semibold text-slate-400 text-sm mb-3 flex items-center gap-2">
+            <Clock size={14}/> Recent Results
+          </h3>
+          <div className="space-y-2">
+            {recentHistory.map(h => (
+              <div key={h.id} className="card">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-white text-sm font-body">{h.toolLabel}</span>
+                  <span className="text-slate-500 text-xs">{new Date(h.date).toLocaleDateString()}</span>
+                </div>
+                <HistorySummary item={h} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function QuestionPredictor({ onBack, resume }) {
-  const { profile, drillMode, setActiveSection } = useApp()
+function HistorySummary({ item }) {
+  if (item.tool === 'predictor' && item.result?.questions)
+    return <p className="text-slate-400 text-xs">{item.result.questions.length} questions predicted · {item.inputs?.jd || ''}</p>
+  if (item.tool === 'tone' && item.result?.scores)
+    return <p className="text-slate-400 text-xs">{Object.entries(item.result.scores).map(([k,v]) => `${k} ${v}/10`).join(' · ')}</p>
+  if (item.tool === 'followup' && item.result?.subject)
+    return <p className="text-slate-400 text-xs truncate">Subject: {item.result.subject}</p>
+  if (item.tool === 'pitch' && item.result?.shortVersion)
+    return <p className="text-slate-400 text-xs line-clamp-2">{item.result.shortVersion}</p>
+  return null
+}
+
+function ToolsHistory({ history, onBack }) {
+  const [selected, setSelected] = useState(null)
+  if (selected) return (
+    <div className="p-4 md:p-6 animate-in">
+      <button onClick={() => setSelected(null)} className="btn-ghost mb-4">← History</button>
+      <div className="flex items-center gap-3 mb-4">
+        <span className="font-display font-bold text-white">{selected.toolLabel}</span>
+        <span className="text-slate-400 text-sm">{new Date(selected.date).toLocaleDateString()}</span>
+      </div>
+      <FullHistoryResult item={selected} />
+    </div>
+  )
+  return (
+    <div className="p-4 md:p-6 animate-in">
+      <button onClick={onBack} className="btn-ghost mb-4">← Tools</button>
+      <h2 className="section-title mb-1">Tools History</h2>
+      <p className="section-sub mb-4">{history.length} saved result{history.length !== 1 ? 's' : ''}</p>
+      {history.length === 0 ? (
+        <div className="card text-center py-10 text-slate-500">No results yet.</div>
+      ) : (
+        <div className="space-y-2">
+          {history.map(h => (
+            <button key={h.id} onClick={() => setSelected(h)} className="card-hover w-full text-left">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-white font-body font-medium text-sm">{h.toolLabel}</span>
+                <span className="text-slate-500 text-xs">{new Date(h.date).toLocaleDateString()}</span>
+              </div>
+              <HistorySummary item={h} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function FullHistoryResult({ item }) {
+  if (item.tool === 'predictor' && item.result?.questions) {
+    const PROB_COLORS = { High: 'badge-red', Medium: 'badge-yellow', Low: 'badge-teal' }
+    const CAT_COLORS = { Technical: 'badge-indigo', Behavioral: 'badge-teal', Culture: 'badge-green', Curveball: 'badge-yellow', 'Role-Specific': 'badge-red' }
+    return (
+      <div className="space-y-2">
+        {item.result.questions.map((q, i) => (
+          <div key={i} className="card">
+            <div className="flex items-start gap-3">
+              <span className="text-slate-600 font-mono text-xs mt-1">{String(i+1).padStart(2,'0')}</span>
+              <div className="flex-1">
+                <p className="text-white text-sm font-body mb-2">{q.question}</p>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  <span className={PROB_COLORS[q.probability] || 'badge-slate'}>{q.probability} probability</span>
+                  <span className={CAT_COLORS[q.category] || 'badge-slate'}>{q.category}</span>
+                </div>
+                <p className="text-teal-400 text-xs">💡 {q.tip}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  if (item.tool === 'tone' && item.result) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {Object.entries(item.result.scores || {}).map(([k, v]) => (
+            <div key={k} className="card text-center">
+              <div className={`font-display font-bold text-2xl mb-1 ${v >= 8 ? 'text-green-400' : v >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>{v}</div>
+              <div className="text-slate-400 text-xs capitalize">{k}</div>
+            </div>
+          ))}
+        </div>
+        {item.result.rewrittenAnswer && (
+          <div className="card border-green-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-display font-semibold text-white text-sm">✨ Stronger Version</h4>
+              <button onClick={() => navigator.clipboard?.writeText(item.result.rewrittenAnswer)} className="btn-ghost text-xs"><Copy size={13}/> Copy</button>
+            </div>
+            <p className="text-slate-200 text-sm leading-relaxed">{item.result.rewrittenAnswer}</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+  if (item.tool === 'followup' && item.result) {
+    return (
+      <div className="card">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-slate-400 text-xs">Subject: <span className="text-white">{item.result.subject}</span></span>
+          <button onClick={() => navigator.clipboard?.writeText(`Subject: ${item.result.subject}\n\n${item.result.body}`)} className="btn-ghost text-xs"><Copy size={13}/> Copy</button>
+        </div>
+        <div className="divider"/>
+        <p className="text-slate-200 text-sm font-body leading-relaxed whitespace-pre-wrap">{item.result.body}</p>
+      </div>
+    )
+  }
+  if (item.tool === 'pitch' && item.result) {
+    return (
+      <div className="space-y-4">
+        <div className="card border-teal-500/20">
+          <div className="flex items-center justify-between mb-2">
+            <span className="badge-teal">60 seconds</span>
+            <button onClick={() => navigator.clipboard?.writeText(item.result.fullPitch)} className="btn-ghost text-xs"><Copy size={13}/> Copy</button>
+          </div>
+          <p className="text-white text-sm font-body leading-relaxed">{item.result.fullPitch}</p>
+        </div>
+        <div className="card border-indigo-500/20">
+          <div className="flex items-center justify-between mb-2">
+            <span className="badge-indigo">30 seconds</span>
+            <button onClick={() => navigator.clipboard?.writeText(item.result.shortVersion)} className="btn-ghost text-xs"><Copy size={13}/> Copy</button>
+          </div>
+          <p className="text-white text-sm font-body leading-relaxed">{item.result.shortVersion}</p>
+        </div>
+      </div>
+    )
+  }
+  return <p className="text-slate-500 text-sm">No preview available.</p>
+}
+
+function QuestionPredictor({ onBack, resume, saveHistory }) {
+  const { profile, drillMode } = useApp()
   const { callAI, isConnected } = useAI()
   const [jd, setJd] = useState('')
   const [background, setBackground] = useState(resume || profile?.currentRole || '')
@@ -65,7 +232,10 @@ function QuestionPredictor({ onBack, resume }) {
         temperature: 0.5,
       })
       const parsed = tryParseJSON(raw)
-      if (parsed) setResult(parsed)
+      if (parsed) {
+        setResult(parsed)
+        saveHistory({ jd: jd.slice(0, 80) }, parsed)
+      }
     } catch {}
     setLoading(false)
   }
@@ -108,7 +278,7 @@ function QuestionPredictor({ onBack, resume }) {
   )
 }
 
-function ToneAnalyzer({ onBack }) {
+function ToneAnalyzer({ onBack, saveHistory }) {
   const { callAI, isConnected } = useAI()
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
@@ -123,7 +293,10 @@ function ToneAnalyzer({ onBack }) {
         temperature: 0.4,
       })
       const parsed = tryParseJSON(raw)
-      if (parsed) setResult(parsed)
+      if (parsed) {
+        setResult(parsed)
+        saveHistory({ answer: answer.slice(0, 100) }, parsed)
+      }
     } catch {}
     setLoading(false)
   }
@@ -141,7 +314,6 @@ function ToneAnalyzer({ onBack }) {
 
       {result && (
         <div className="space-y-4 animate-in">
-          {/* Scores */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {Object.entries(result.scores || {}).map(([k, v]) => (
               <div key={k} className="card text-center">
@@ -151,7 +323,6 @@ function ToneAnalyzer({ onBack }) {
             ))}
           </div>
 
-          {/* Top advice */}
           {result.topAdvice && (
             <div className="card border-teal-500/30 bg-teal-500/5">
               <div className="text-teal-400 text-sm font-display font-semibold mb-1">🎯 Key Improvement</div>
@@ -159,7 +330,6 @@ function ToneAnalyzer({ onBack }) {
             </div>
           )}
 
-          {/* Weak language */}
           {result.weakLanguage?.length > 0 && (
             <div className="card">
               <h4 className="font-display font-semibold text-white text-sm mb-3">Weak Language Found</h4>
@@ -178,7 +348,6 @@ function ToneAnalyzer({ onBack }) {
             </div>
           )}
 
-          {/* Rewritten */}
           {result.rewrittenAnswer && (
             <div className="card border-green-500/20">
               <div className="flex items-center justify-between mb-2">
@@ -196,7 +365,7 @@ function ToneAnalyzer({ onBack }) {
   )
 }
 
-function FollowUpEmail({ onBack }) {
+function FollowUpEmail({ onBack, saveHistory }) {
   const { callAI, isConnected } = useAI()
   const [company, setCompany] = useState('')
   const [interviewer, setInterviewer] = useState('')
@@ -215,7 +384,10 @@ function FollowUpEmail({ onBack }) {
         temperature: 0.7,
       })
       const parsed = tryParseJSON(raw)
-      if (parsed) setResult(parsed)
+      if (parsed) {
+        setResult(parsed)
+        saveHistory({ company, role }, parsed)
+      }
     } catch {}
     setLoading(false)
   }
@@ -263,7 +435,7 @@ function FollowUpEmail({ onBack }) {
   )
 }
 
-function ElevatorPitch({ onBack, resume }) {
+function ElevatorPitch({ onBack, resume, saveHistory }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
   const [role, setRole] = useState(profile?.targetRole || '')
@@ -280,7 +452,10 @@ function ElevatorPitch({ onBack, resume }) {
         temperature: 0.8,
       })
       const parsed = tryParseJSON(raw)
-      if (parsed) setResult(parsed)
+      if (parsed) {
+        setResult(parsed)
+        saveHistory({ role }, parsed)
+      }
     } catch {}
     setLoading(false)
   }

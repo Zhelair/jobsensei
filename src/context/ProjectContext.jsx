@@ -6,6 +6,8 @@ const ProjectContext = createContext(null)
 const EMPTY_PROJECT_DATA = {
   gapResults: [],           // saved gap analyses
   interviewSessions: [],    // interview history
+  negotiationSessions: [],  // negotiation history
+  toolsHistory: [],         // tools usage history
   starStories: [],          // STAR bank
   applications: [],         // job tracker
   companyNotes: {},         // company notes

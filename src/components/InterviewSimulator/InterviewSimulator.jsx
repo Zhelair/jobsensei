@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useVoice } from '../../hooks/useVoice'
 import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
 import ChatWindow from '../shared/ChatWindow'
-import { Mic, MicOff, Send, RotateCcw, History, Play, Volume2, VolumeX } from 'lucide-react'
+import { Mic, MicOff, Send, RotateCcw, History, Play, Volume2, VolumeX, AlertCircle } from 'lucide-react'
 import { generateId } from '../../utils/helpers'
 
 const MODES = [
@@ -18,7 +18,11 @@ const MODES = [
 export default function InterviewSimulator() {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
-  const { isListening, startListening, stopListening, speak, isSpeaking, stopSpeaking, supported: voiceSupported } = useVoice()
+  const {
+    isListening, startListening, stopListening,
+    speak, isSpeaking, stopSpeaking,
+    supported: voiceSupported, error: voiceError, clearError: clearVoiceError
+  } = useVoice()
   const { getProjectData, updateProjectData } = useProject()
 
   const sessions = getProjectData('interviewSessions')
@@ -37,6 +41,7 @@ export default function InterviewSimulator() {
     return () => clearTimeout(t)
   }, [jd])
   useEffect(() => { updateProjectData('interviewMode', mode) }, [mode])
+
   const [questionCount, setQuestionCount] = useState(10)
   const [voiceMode, setVoiceMode] = useState(false)
   const [ttsEnabled, setTtsEnabled] = useState(false)
@@ -48,15 +53,84 @@ export default function InterviewSimulator() {
   const [sessionScore, setSessionScore] = useState(null)
   const abortRef = useRef(null)
 
+  // Stable refs for use inside callbacks (avoid stale closures)
+  const sessionIdRef = useRef(null)
+  const voiceModeRef = useRef(voiceMode)
+  const sessionsRef = useRef(sessions)
+  const modeRef = useRef(mode)
+  const jdRef = useRef(jd)
+  const questionsAskedRef = useRef(questionsAsked)
+  const sessionScoreRef = useRef(sessionScore)
+
+  useEffect(() => { voiceModeRef.current = voiceMode }, [voiceMode])
+  useEffect(() => { sessionsRef.current = sessions }, [sessions])
+  useEffect(() => { modeRef.current = mode }, [mode])
+  useEffect(() => { jdRef.current = jd }, [jd])
+  useEffect(() => { questionsAskedRef.current = questionsAsked }, [questionsAsked])
+  useEffect(() => { sessionScoreRef.current = sessionScore }, [sessionScore])
+
   useEffect(() => {
     const bg = resume || (profile?.currentRole ? `${profile.currentRole}, ${profile.experience || ''} experience in ${profile.industry || ''}.` : '')
     setBackground(bg)
   }, [resume, profile])
 
+  // Toggle voice mode — also auto-enables TTS for hands-free conversation
+  function toggleVoiceMode() {
+    const next = !voiceMode
+    setVoiceMode(next)
+    if (next) {
+      setTtsEnabled(true)  // voice mode implies TTS on
+    } else {
+      setTtsEnabled(false)
+      stopSpeaking()
+      stopListening()
+    }
+  }
+
+  // Upsert session into history (creates or updates based on sessionIdRef)
+  const upsertSession = useCallback((msgs, score) => {
+    const id = sessionIdRef.current
+    if (!id || msgs.filter(m => m.content).length < 2) return
+    const currentSessions = sessionsRef.current
+    const existing = currentSessions.find(s => s.id === id)
+    const sessionData = {
+      id,
+      date: existing?.date || new Date().toISOString(),
+      mode: MODES.find(m2 => m2.id === modeRef.current)?.label || modeRef.current,
+      score: score ?? existing?.score ?? null,
+      messages: msgs,
+      jdSnippet: jdRef.current.slice(0, 100),
+      questionCount: questionsAskedRef.current,
+    }
+    const updated = existing
+      ? currentSessions.map(s => s.id === id ? sessionData : s)
+      : [...currentSessions, sessionData]
+    updateProjectData('interviewSessions', updated)
+  }, [updateProjectData])
+
   function startSession() {
+    sessionIdRef.current = generateId()
     setMessages([]); setQuestionsAsked(0); setSessionScore(null)
     setView('chat')
     beginInterview()
+  }
+
+  // After TTS ends in voice mode, automatically start listening
+  const autoListenAfterSpeak = useCallback(() => {
+    if (!voiceModeRef.current || !voiceSupported) return
+    startListening(
+      (final) => {
+        if (final.trim()) sendMessageFromVoice(final)
+      },
+      (interim) => setInterimText(interim)
+    )
+  }, [voiceSupported, startListening])
+
+  // Separate ref to sendMessage so autoListenAfterSpeak can call it without circular deps
+  const sendMessageRef = useRef(null)
+
+  function sendMessageFromVoice(text) {
+    sendMessageRef.current && sendMessageRef.current(text)
   }
 
   async function beginInterview() {
@@ -72,8 +146,11 @@ export default function InterviewSimulator() {
         onChunk: (_, acc) => { full = acc; setMessages([{ role: 'assistant', content: acc }]) },
         signal: abortRef.current.signal,
       })
-      setMessages([{ role: 'assistant', content: full }])
-      if (ttsEnabled) speak(full)
+      const firstMsg = [{ role: 'assistant', content: full }]
+      setMessages(firstMsg)
+      if (ttsEnabled) {
+        speak(full, autoListenAfterSpeak)
+      }
     } catch (e) {
       if (e.name !== 'AbortError') setMessages([{ role: 'assistant', content: 'Failed to start. Check your API settings.' }])
     }
@@ -92,35 +169,55 @@ export default function InterviewSimulator() {
       setMessages([...newMessages, { role: 'assistant', content: '' }])
       abortRef.current = new AbortController()
       await callAI({
-        systemPrompt: prompts.interviewSimulator(jd, mode, drillMode, background),
+        systemPrompt: prompts.interviewSimulator(jdRef.current, modeRef.current, drillMode, background),
         messages: newMessages, temperature: 0.8,
         onChunk: (_, acc) => { full = acc; setMessages([...newMessages, { role: 'assistant', content: acc }]) },
         signal: abortRef.current.signal,
       })
       const finalMessages = [...newMessages, { role: 'assistant', content: full }]
       setMessages(finalMessages)
-      if (ttsEnabled) speak(full)
+
+      // Extract score if present
+      let score = sessionScoreRef.current
       if (full.includes('/10')) {
         const m = full.match(/(\d+)\/10/)
-        if (m) { const score = parseInt(m[1]); setSessionScore(score); saveSession(finalMessages, score) }
+        if (m) { score = parseInt(m[1]); setSessionScore(score) }
+      }
+
+      // Always persist session after every exchange
+      upsertSession(finalMessages, score)
+
+      if (ttsEnabled) {
+        speak(full, autoListenAfterSpeak)
       }
     } catch (e) {
-      if (e.name !== 'AbortError') setMessages(prev => [...prev.slice(0,-1), { role: 'assistant', content: 'Error. Please try again.' }])
+      if (e.name !== 'AbortError') setMessages(prev => [...prev.slice(0, -1), { role: 'assistant', content: 'Error. Please try again.' }])
     }
     setIsLoading(false)
   }
 
-  function saveSession(msgs, score) {
-    const session = { id: generateId(), date: new Date().toISOString(), mode: MODES.find(m2=>m2.id===mode)?.label||mode, score, messages: msgs, jdSnippet: jd.slice(0,100), questionCount: questionsAsked }
-    updateProjectData('interviewSessions', [...sessions, session])
-  }
+  // Keep sendMessageRef in sync
+  useEffect(() => { sendMessageRef.current = sendMessage })
 
+  // Mic button: press to record, final speech auto-sends
   function handleVoice() {
     if (isListening) { stopListening(); return }
+    clearVoiceError()
     startListening(
-      (final) => { setInput(final); setInterimText('') },
+      (final) => { if (final.trim()) sendMessage(final) },
       (interim) => setInterimText(interim)
     )
+  }
+
+  // Save session when navigating away mid-interview
+  function handleBack() {
+    if (messages.filter(m => m.content).length > 1) {
+      upsertSession(messages, sessionScoreRef.current)
+    }
+    abortRef.current?.abort()
+    stopSpeaking()
+    stopListening()
+    setView('setup')
   }
 
   if (view === 'history') return <SessionHistory sessions={sessions} onBack={() => setView('setup')} />
@@ -163,12 +260,17 @@ export default function InterviewSimulator() {
           ))}
         </div>
         {voiceSupported && (
-          <button onClick={()=>setVoiceMode(!voiceMode)}
+          <button onClick={toggleVoiceMode}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-all ${voiceMode?'bg-teal-500/20 text-teal-400 border-teal-500/30':'bg-navy-700 text-slate-400 border-navy-600'}`}>
-            <Mic size={14}/> {voiceMode?'Voice ON':'Voice OFF'}
+            <Mic size={14}/> {voiceMode ? 'Voice ON — hands-free' : 'Voice OFF'}
           </button>
         )}
       </div>
+      {voiceMode && (
+        <div className="bg-teal-500/5 border border-teal-500/20 rounded-xl px-3 py-2 text-teal-300 text-xs">
+          🎙 Hands-free mode: AI will speak each question and automatically listen for your answer.
+        </div>
+      )}
       <button onClick={startSession} disabled={!isConnected} className="btn-primary w-full justify-center py-3 text-base">
         <Play size={18}/> Start Interview
       </button>
@@ -189,13 +291,18 @@ export default function InterviewSimulator() {
         <div className="flex items-center gap-2">
           {sessionScore!==null && <span className={`badge ${sessionScore>=8?'badge-green':sessionScore>=6?'badge-yellow':'badge-red'}`}>{sessionScore}/10</span>}
           <button onClick={()=>sendMessage('DEBRIEF - Please give me the full session debrief now.')} className="btn-ghost text-xs">Debrief</button>
-          <button onClick={()=>setView('setup')} className="btn-ghost"><RotateCcw size={14}/></button>
+          <button onClick={handleBack} className="btn-ghost"><RotateCcw size={14}/></button>
         </div>
       </div>
 
       <ChatWindow messages={messages} isLoading={isLoading} />
 
       <div className="p-4 border-t border-navy-700 bg-navy-900 space-y-2">
+        {voiceError && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 text-red-300 text-xs flex items-center gap-2">
+            <AlertCircle size={14}/> {voiceError}
+          </div>
+        )}
         {isListening && interimText && (
           <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl px-3 py-2 text-teal-300 text-xs italic">
             🎙 {interimText}
@@ -209,17 +316,17 @@ export default function InterviewSimulator() {
               {isListening?<MicOff size={16}/>:<Mic size={16}/>}
             </button>
           )}
-          <button onClick={()=>{if(isSpeaking){stopSpeaking();setTtsEnabled(false)}else setTtsEnabled(!ttsEnabled)}}
+          <button onClick={()=>{if(isSpeaking){stopSpeaking();if(voiceMode)stopListening()}else{setTtsEnabled(!ttsEnabled)}}}
             className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${ttsEnabled||isSpeaking?'bg-teal-500/20 text-teal-400':'bg-navy-700 text-slate-500 hover:text-slate-300'}`}
             title={ttsEnabled?'Disable voice':'Enable interviewer voice'}>
             {ttsEnabled||isSpeaking?<Volume2 size={16}/>:<VolumeX size={16}/>}
           </button>
           <textarea
             className="textarea-field flex-1 py-2.5 resize-none min-h-[40px] max-h-32"
-            placeholder={isListening?'🎙 Listening...':'Type your answer... (Enter to send, Shift+Enter for new line)'}
+            placeholder={isListening?'🎙 Listening...':voiceMode?'Or type your answer...' :'Type your answer... (Enter to send, Shift+Enter for new line)'}
             value={isListening ? interimText : input}
             onChange={e => !isListening && setInput(e.target.value)}
-            onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage(isListening?interimText:input)}}}
+            onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!isListening)sendMessage(input)}}}
             rows={1}
             readOnly={isListening}
           />
@@ -229,7 +336,8 @@ export default function InterviewSimulator() {
             <Send size={16} className="text-navy-900"/>
           </button>
         </div>
-        {isListening && <p className="text-teal-400 text-xs text-center">Speak now — press Enter or Send when done</p>}
+        {isListening && <p className="text-teal-400 text-xs text-center animate-pulse">🎙 Listening… speak your answer</p>}
+        {isSpeaking && voiceMode && <p className="text-indigo-400 text-xs text-center">AI is speaking — listening next…</p>}
       </div>
     </div>
   )
@@ -267,7 +375,7 @@ function SessionHistory({ sessions, onBack }) {
             <button key={s.id} onClick={()=>setSelected(s)} className="card-hover w-full text-left flex items-center justify-between">
               <div>
                 <div className="text-white font-body font-medium text-sm">{s.mode}</div>
-                <div className="text-slate-500 text-xs">{new Date(s.date).toLocaleDateString()}</div>
+                <div className="text-slate-500 text-xs">{new Date(s.date).toLocaleDateString()} · {s.questionCount || 0} exchanges</div>
               </div>
               {s.score ? <span className={`font-display font-bold ${s.score>=8?'text-green-400':s.score>=6?'text-yellow-400':'text-red-400'}`}>{s.score}/10</span> : <span className="text-slate-600">—</span>}
             </button>

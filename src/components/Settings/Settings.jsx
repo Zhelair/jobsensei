@@ -69,27 +69,34 @@ export default function Settings() {
     const file = e.target.files[0]; if (!file) return
     setExtracting(true)
     try {
-      // Read as text (works for .txt files directly)
       if (file.name.endsWith('.txt') || file.type === 'text/plain') {
         const text = await file.text()
         setResumeText(text)
       } else if (file.name.endsWith('.pdf') || file.type === 'application/pdf') {
-        // For PDF: read as base64 and use AI to extract text
-        const reader = new FileReader()
-        reader.onload = async (ev) => {
-          const base64 = ev.target.result.split(',')[1]
-          // We'll just notify user to use text extraction
-          setResumeText(`[PDF uploaded: ${file.name}]\n\nPlease paste your resume text here manually for best results, or copy-paste from your PDF viewer.\n\nAlternatively, export your PDF as .txt and upload that.`)
-          setExtracting(false)
+        // Use pdfjs-dist for real client-side PDF text extraction
+        const pdfjsLib = await import('pdfjs-dist')
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+        const arrayBuffer = await file.arrayBuffer()
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+        let fullText = ''
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i)
+          const content = await page.getTextContent()
+          const pageText = content.items.map(item => item.str).join(' ')
+          fullText += pageText + '\n'
         }
-        reader.readAsDataURL(file)
-        return
+        const cleaned = fullText.trim().replace(/\s{3,}/g, '\n')
+        setResumeText(cleaned || '[PDF had no readable text. Please paste your resume below.]')
       } else {
         // Try to read as text anyway (for .doc plain text, .rtf, etc)
         const text = await file.text()
         setResumeText(text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s{3,}/g, '\n'))
       }
-    } catch { setResumeText('[Could not read file. Please paste your resume text below.]') }
+    } catch (err) {
+      console.error('Resume parse error:', err)
+      setResumeText('[Could not read file. Please paste your resume text below.]')
+    }
     setExtracting(false)
     e.target.value = ''
   }
@@ -185,7 +192,7 @@ export default function Settings() {
         <button onClick={saveResume} className={`btn-primary text-sm ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
           {resumeSaved ? <><Check size={14}/> Saved to Project!</> : 'Save Resume to Project'}
         </button>
-        <p className="text-slate-600 text-xs mt-2">💡 For best PDF results: open your PDF → select all → copy → paste above</p>
+        <p className="text-slate-600 text-xs mt-2">💡 PDF files are parsed automatically. For best results use a text-based PDF (not a scanned image).</p>
       </div>
 
       {/* Project management */}
