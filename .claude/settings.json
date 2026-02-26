@@ -1,0 +1,80 @@
+{
+  "version": "1.0",
+  "model": "claude-sonnet-4-20250929",
+  "max_tokens": 4096,
+  "temperature": 0.7,
+  
+  "tools": {
+    "enabled": [
+      "read",
+      "write", 
+      "bash",
+      "grep",
+      "ls",
+      "git",
+      "test"
+    ],
+    "disabled": []
+  },
+  
+  "mcp_servers": {
+    "github": {
+      "enabled": false,
+      "reason": "Enable only if you've installed github MCP"
+    }
+  },
+  
+  "git": {
+    "auto_commit": false,
+    "commit_template": "[feat|fix|refactor|test]: {message}",
+    "require_message": true,
+    "check_branch_protection": true
+  },
+  
+  "performance": {
+    "context_limit": 120000,
+    "auto_compact_at": 100000,
+    "session_timeout_minutes": 60,
+    "read_limit_per_file": 50000
+  },
+  
+  "development": {
+    "dev_server_port": 3000,
+    "test_framework": "jest",
+    "linter": "eslint",
+    "formatter": "prettier"
+  },
+  
+  "coding_style": {
+    "language": "typescript",
+    "framework": "nextjs-react",
+    "naming_convention": "camelCase",
+    "line_length": 100,
+    "indent_size": 2
+  },
+  
+  "output": {
+    "verbose": false,
+    "show_timings": true,
+    "color_output": true,
+    "progress_indicator": true
+  },
+  
+  "safety": {
+    "confirm_before_delete": true,
+    "confirm_before_deploy": true,
+    "block_dangerous_commands": true,
+    "warn_secrets_exposure": true
+  },
+  
+  "project_specific": {
+    "name": "JobSensei",
+    "description": "Job discovery and matching application",
+    "language": "TypeScript",
+    "package_manager": "npm",
+    "build_command": "npm run build",
+    "dev_command": "npm run dev",
+    "test_command": "npm test",
+    "deploy_target": "vercel"
+  }
+}
