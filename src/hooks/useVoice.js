@@ -16,7 +16,6 @@ function getBestVoice() {
     const v = voices.find(v => v.name === name)
     if (v) return v
   }
-  // Fallback: first English voice
   return voices.find(v => v.lang?.startsWith('en')) || voices[0] || null
 }
 
@@ -24,6 +23,7 @@ export function useVoice() {
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [error, setError] = useState(null)
   const [supported] = useState(
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
@@ -40,6 +40,7 @@ export function useVoice() {
 
   const startListening = useCallback((onResult, onInterim) => {
     if (!supported) return
+    setError(null)
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SR()
     recognition.continuous = false
@@ -57,8 +58,16 @@ export function useVoice() {
     }
     recognition.onend = () => setIsListening(false)
     recognition.onerror = (e) => {
-      console.warn('Speech error:', e.error)
       setIsListening(false)
+      if (e.error === 'not-allowed' || e.error === 'permission-denied') {
+        setError('Microphone access denied. Please allow microphone in your browser settings and try again.')
+      } else if (e.error === 'no-speech') {
+        setError(null) // silence is not an error
+      } else if (e.error === 'audio-capture') {
+        setError('No microphone found. Please connect a microphone and try again.')
+      } else if (e.error !== 'aborted') {
+        setError(`Voice error: ${e.error}. Try refreshing the page.`)
+      }
     }
 
     recognitionRef.current = recognition
@@ -84,7 +93,7 @@ export function useVoice() {
       .replace(/`(.*?)`/g, '$1')
       .replace(/\n{2,}/g, '. ')
       .replace(/\n/g, ' ')
-      .slice(0, 800) // don't read entire essays
+      .slice(0, 800)
 
     const utt = new SpeechSynthesisUtterance(clean)
     utt.lang = 'en-US'
@@ -97,9 +106,8 @@ export function useVoice() {
 
     utt.onstart = () => setIsSpeaking(true)
     utt.onend = () => { setIsSpeaking(false); onEnd && onEnd() }
-    utt.onerror = () => setIsSpeaking(false)
+    utt.onerror = () => { setIsSpeaking(false); onEnd && onEnd() }
 
-    // Chrome bug: long utterances get cut off, chunk them
     window.speechSynthesis.speak(utt)
   }, [voicesLoaded])
 
@@ -108,5 +116,10 @@ export function useVoice() {
     setIsSpeaking(false)
   }, [])
 
-  return { isListening, transcript, isSpeaking, supported, startListening, stopListening, speak, stopSpeaking }
+  const clearError = useCallback(() => setError(null), [])
+
+  return {
+    isListening, transcript, isSpeaking, supported, error,
+    startListening, stopListening, speak, stopSpeaking, clearError
+  }
 }
