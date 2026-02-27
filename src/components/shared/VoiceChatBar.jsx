@@ -7,9 +7,10 @@
  *   lastAiMessage      — most recent AI message content (for auto-TTS and replay)
  *   placeholder        — input placeholder text
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Mic, MicOff, Send, Volume2, VolumeX, AlertCircle, X } from 'lucide-react'
 import { useVoice } from '../../hooks/useVoice'
+import { useApp } from '../../context/AppContext'
 
 export default function VoiceChatBar({
   onSend,
@@ -17,6 +18,7 @@ export default function VoiceChatBar({
   lastAiMessage = '',
   placeholder = 'Type your message…',
 }) {
+  const { isMuted } = useApp()
   const {
     isListening, transcript, isSpeaking, supported, error, clearError,
     startListening, stopListening, speak, stopSpeaking, replayLast,
@@ -27,15 +29,25 @@ export default function VoiceChatBar({
   const ttsEnabledRef = useRef(false)
   const textareaRef = useRef(null)
 
+  // Keep speak in a ref so the TTS effect never needs speak as a dependency
+  const speakRef = useRef(speak)
+  useEffect(() => { speakRef.current = speak }, [speak])
+
   useEffect(() => { ttsEnabledRef.current = ttsEnabled }, [ttsEnabled])
 
-  // Auto-play new AI messages when TTS is enabled (fires only when message changes)
+  // Stop ongoing speech immediately when globally muted
+  useEffect(() => {
+    if (isMuted) stopSpeaking()
+  }, [isMuted]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-play new AI messages when TTS is enabled.
+  // speak intentionally excluded from deps — speakRef keeps it current without causing re-runs.
   const prevMsgRef = useRef('')
   useEffect(() => {
     if (!lastAiMessage || lastAiMessage === prevMsgRef.current) return
     prevMsgRef.current = lastAiMessage
-    if (ttsEnabledRef.current) speak(lastAiMessage)
-  }, [lastAiMessage, speak])
+    if (ttsEnabledRef.current && !isMuted) speakRef.current(lastAiMessage)
+  }, [lastAiMessage, isMuted])
 
   // -- Mic --
   function handleMic() {
@@ -51,7 +63,7 @@ export default function VoiceChatBar({
   }
 
   // -- TTS button --
-  // OFF  + not speaking → enable TTS autoplay + replay last message
+  // OFF  + not speaking → enable TTS autoplay + replay last message (if not muted)
   // ON   + not speaking → disable TTS autoplay
   // any state + speaking → stop speaking
   function handleTts() {
@@ -60,7 +72,7 @@ export default function VoiceChatBar({
       setTtsEnabled(false)
     } else {
       setTtsEnabled(true)
-      replayLast()
+      if (!isMuted) replayLast()
     }
   }
 
