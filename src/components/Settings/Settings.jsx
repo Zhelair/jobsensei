@@ -218,7 +218,7 @@ export default function Settings() {
             <Upload size={13}/> {extracting ? 'Reading...' : 'Upload File (.txt, .pdf)'}
           </button>
           <button onClick={() => imageRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
-            <Image size={13}/> {analyzingImage ? 'Analyzing...' : 'Upload Photo / Screenshot'}
+            <Image size={13}/> {analyzingImage ? 'Analyzing...' : 'Visual Design Review'}
           </button>
           <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.rtf" className="hidden" onChange={handleResumeFile} />
           <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />

@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
-import { Wrench, Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe } from 'lucide-react'
+import { Wrench, Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X } from 'lucide-react'
 
 const TOOLS = [
   { id: 'predictor', icon: Target, label: 'Question Predictor', desc: 'Predict the 15 most likely questions for any JD' },
@@ -14,6 +14,7 @@ const TOOLS = [
   { id: 'coverletter', icon: FileText, label: 'Cover Letter Optimizer', desc: '3 versions — Corporate, Creative, Casual — with keyword analysis' },
   { id: 'resumechecker', icon: ClipboardCheck, label: 'Resume Checker', desc: 'ATS score + recruiter lens on your resume' },
   { id: 'linkedin', icon: Globe, label: 'LinkedIn Auditor', desc: 'Score your profile and get quick wins' },
+  { id: 'visualreview', icon: Camera, label: 'Visual Design Review', desc: 'AI analyzes your resume design, layout, and visual impact' },
 ]
 
 export default function Tools() {
@@ -35,6 +36,7 @@ export default function Tools() {
   if (activeTool === 'coverletter') return <CoverLetterOptimizer onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('coverletter', 'Cover Letter Optimizer', i, r)} />
   if (activeTool === 'resumechecker') return <ResumeChecker onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('resumechecker', 'Resume Checker', i, r)} />
   if (activeTool === 'linkedin') return <LinkedInAuditor onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('linkedin', 'LinkedIn Auditor', i, r)} />
+  if (activeTool === 'visualreview') return <VisualResumeReview onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('visualreview', 'Visual Design Review', i, r)} />
 
   if (showHistory) return <ToolsHistory history={toolsHistory || []} onBack={() => setShowHistory(false)} />
 
@@ -103,6 +105,8 @@ function HistorySummary({ item }) {
     return <p className="text-slate-400 text-xs">ATS {item.result.atsScore}/100 · Recruiter {item.result.recruiterScore}/100</p>
   if (item.tool === 'linkedin' && item.result)
     return <p className="text-slate-400 text-xs">Overall score {item.result.overallScore}/100</p>
+  if (item.tool === 'visualreview' && item.result?.analysis)
+    return <p className="text-slate-400 text-xs line-clamp-1">{item.result.analysis.slice(0, 100)}…</p>
   return null
 }
 
@@ -285,6 +289,13 @@ function FullHistoryResult({ item }) {
       </div>
     )
   }
+  if (item.tool === 'visualreview' && item.result?.analysis)
+    return (
+      <div className="card border-indigo-500/20 bg-indigo-500/5">
+        <h4 className="font-display font-semibold text-white text-sm mb-3">📸 Visual Design Analysis</h4>
+        <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{item.result.analysis}</div>
+      </div>
+    )
   return <p className="text-slate-500 text-sm">No preview available.</p>
 }
 
@@ -766,6 +777,97 @@ function ResumeChecker({ onBack, resume, saveHistory }) {
               <ul className="space-y-1">{result.suggestions.map((s, i) => <li key={i} className="text-slate-400 text-xs">• {s}</li>)}</ul>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function VisualResumeReview({ onBack, saveHistory }) {
+  const { callAI, isConnected, provider, PROVIDERS } = useAI()
+  const imageInputRef = useRef(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [imageData, setImageData] = useState(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [result, setResult] = useState(null)
+
+  async function handleImageFile(e) {
+    const file = e.target.files[0]; if (!file) return
+    if (!file.type.startsWith('image/')) return
+    const dataUrl = await new Promise((res, rej) => {
+      const reader = new FileReader()
+      reader.onload = () => res(reader.result)
+      reader.onerror = rej
+      reader.readAsDataURL(file)
+    })
+    setImagePreview(dataUrl)
+    setImageData({ base64: dataUrl.split(',')[1], mediaType: file.type })
+    setResult(null)
+    e.target.value = ''
+  }
+
+  async function analyze() {
+    if (!imageData) return
+    setAnalyzing(true); setResult(null)
+    try {
+      const prompt = 'Analyze this resume/CV image for visual design. Cover: (1) Overall layout and structure, (2) Color scheme and use of color, (3) Typography — fonts, sizes, hierarchy, (4) White space and readability, (5) Professional impression, (6) Specific visual improvements ranked by priority. Be specific and actionable.'
+      const userContent = provider === PROVIDERS.ANTHROPIC
+        ? [{ type: 'image', source: { type: 'base64', media_type: imageData.mediaType, data: imageData.base64 } }, { type: 'text', text: prompt }]
+        : [{ type: 'image_url', image_url: { url: `data:${imageData.mediaType};base64,${imageData.base64}` } }, { type: 'text', text: prompt }]
+      const raw = await callAI({
+        systemPrompt: 'You are an expert resume designer and career coach. Analyze resume images for visual design quality, layout, and professional impact. Provide structured, actionable feedback.',
+        messages: [{ role: 'user', content: userContent }],
+        temperature: 0.5,
+      })
+      setResult(raw)
+      saveHistory({ fileName: 'resume image' }, { analysis: raw })
+    } catch {
+      setResult('⚠️ Visual analysis requires a vision-capable model (OpenAI gpt-4o or Anthropic Claude). DeepSeek does not support image input.')
+    }
+    setAnalyzing(false)
+  }
+
+  return (
+    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+      <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
+      <h2 className="section-title mb-1">Visual Design Review</h2>
+      <p className="section-sub mb-5">Upload a screenshot or photo of your resume — AI analyzes design, layout, colors, and visual impact.</p>
+
+      <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+
+      {!imagePreview ? (
+        <button
+          onClick={() => imageInputRef.current?.click()}
+          className="w-full border-2 border-dashed border-navy-600 hover:border-teal-500/50 rounded-2xl p-12 flex flex-col items-center gap-3 text-slate-500 hover:text-slate-400 transition-all mb-4"
+        >
+          <Camera size={32} />
+          <span className="text-sm font-body">Click to upload resume screenshot or photo</span>
+          <span className="text-xs">PNG, JPG, WEBP supported</span>
+        </button>
+      ) : (
+        <div className="mb-4">
+          <div className="rounded-2xl overflow-hidden bg-navy-900 mb-3">
+            <img src={imagePreview} alt="Resume preview" className="w-full max-h-72 object-contain" />
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => imageInputRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
+              <Camera size={13}/> Change Image
+            </button>
+            <button onClick={() => { setImagePreview(null); setImageData(null); setResult(null) }} className="btn-ghost text-xs text-red-400 hover:text-red-300">
+              <X size={13}/> Remove
+            </button>
+          </div>
+        </div>
+      )}
+
+      <button onClick={analyze} disabled={!imageData || analyzing || !isConnected} className="btn-primary w-full justify-center mb-5">
+        <Camera size={16} /> {analyzing ? 'Analyzing design...' : 'Analyze Visual Design'}
+      </button>
+
+      {result && (
+        <div className="card border-indigo-500/20 bg-indigo-500/5 animate-in">
+          <h4 className="font-display font-semibold text-white text-sm mb-3">📸 Visual Design Analysis</h4>
+          <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{result}</div>
         </div>
       )}
     </div>
