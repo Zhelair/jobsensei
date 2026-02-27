@@ -6,7 +6,7 @@ import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { sm2, getNextReviewDate, isDueToday } from '../../utils/spacedRepetition'
 import ChatWindow from '../shared/ChatWindow'
-import { BookOpen, Plus, Brain, Zap, Check, ArrowLeft, Edit3, Trash2, X } from 'lucide-react'
+import { BookOpen, Plus, Brain, Zap, Check, ArrowLeft, Edit3, Trash2, X, ChevronRight } from 'lucide-react'
 import VoiceChatBar from '../shared/VoiceChatBar'
 
 const STARTER_TOPICS = [
@@ -175,6 +175,39 @@ export default function LearningSection() {
         </div>
       )}
 
+      {/* Quiz history log */}
+      {topics.some(t=>t.quizScores?.length>0) && (
+        <div className="card mb-4 mt-0">
+          <div className="text-white text-sm font-display font-semibold mb-3 flex items-center gap-2">
+            <Brain size={14} className="text-teal-400"/> Quiz Results
+          </div>
+          <div className="space-y-2">
+            {topics.filter(t=>t.quizScores?.length>0).map(t=>{
+              const scores = t.quizScores
+              const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10
+              const best = Math.max(...scores)
+              return (
+                <div key={t.id} className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-slate-300 text-xs truncate">{t.title}</div>
+                    <div className="flex gap-1 mt-1">
+                      {scores.slice(-8).map((s,i)=>(
+                        <div key={i} className={`w-2 h-5 rounded-sm ${s>=8?'bg-green-500':s>=6?'bg-yellow-500':'bg-red-500'}`}
+                          style={{opacity: 0.5 + (i/scores.length)*0.5}} title={`${s}/10`}/>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className={`text-xs font-display font-semibold ${avg>=8?'text-green-400':avg>=6?'text-yellow-400':'text-red-400'}`}>{avg}/10 avg</div>
+                    <div className="text-slate-600 text-xs">{scores.length} quiz{scores.length!==1?'zes':''}</div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {topics.map(topic=>{
           const due = isDueToday(topic.nextReview) && topic.status==='In Progress'
@@ -195,6 +228,12 @@ export default function LearningSection() {
                 <span className="badge-slate">{topic.category}</span>
                 <span className={DIFF_COLORS[topic.difficulty]||'badge-slate'}>{topic.difficulty}</span>
                 <span className={`badge ${topic.status==='Completed'?'badge-green':topic.status==='In Progress'?'badge-teal':'badge-slate'}`}>{topic.status}</span>
+                {topic.quizScores?.length>0 && (()=>{
+                  const last = topic.quizScores[topic.quizScores.length-1]
+                  return <span className={`badge ${last>=8?'badge-green':last>=6?'badge-yellow':'badge-red'}`}>
+                    Quiz: {Number.isInteger(last)?last:last.toFixed(1)}/10
+                  </span>
+                })()}
               </div>
               <div className="flex gap-2 mt-auto">
                 <button onClick={()=>{setSelectedTopic(topic);setView('tutor')}} className="btn-secondary flex-1 justify-center text-xs py-1.5">

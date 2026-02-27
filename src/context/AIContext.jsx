@@ -44,6 +44,7 @@ export function AIProvider({ children }) {
   const [model, setModel] = useState('deepseek-chat')
   const [customBaseUrl, setCustomBaseUrl] = useState('')
   const [isConnected, setIsConnected] = useState(false)
+  const [isThinking, setIsThinking] = useState(false)
 
   useEffect(() => {
     const saved = localStorage.getItem('js_ai_config')
@@ -73,10 +74,15 @@ export function AIProvider({ children }) {
     const cfg = PROVIDER_CONFIGS[provider]
     const baseUrl = provider === PROVIDERS.CUSTOM ? customBaseUrl : cfg.baseUrl
 
-    if (cfg.format === 'anthropic') {
-      return callAnthropic({ baseUrl, systemPrompt, messages, temperature, onChunk, signal })
+    setIsThinking(true)
+    try {
+      if (cfg.format === 'anthropic') {
+        return await callAnthropic({ baseUrl, systemPrompt, messages, temperature, onChunk, signal })
+      }
+      return await callOpenAICompat({ baseUrl, systemPrompt, messages, temperature, onChunk, signal })
+    } finally {
+      setIsThinking(false)
     }
-    return callOpenAICompat({ baseUrl, systemPrompt, messages, temperature, onChunk, signal })
   }
 
   async function callOpenAICompat({ baseUrl, systemPrompt, messages, temperature, onChunk, signal }) {
@@ -183,7 +189,7 @@ export function AIProvider({ children }) {
 
   return (
     <AIContext.Provider value={{
-      provider, model, apiKey, customBaseUrl, isConnected,
+      provider, model, apiKey, customBaseUrl, isConnected, isThinking,
       saveConfig, callAI, PROVIDER_CONFIGS, PROVIDERS,
     }}>
       {children}

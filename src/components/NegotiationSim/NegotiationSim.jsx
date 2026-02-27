@@ -6,7 +6,7 @@ import { prompts } from '../../utils/prompts'
 import { generateId } from '../../utils/helpers'
 import ChatWindow from '../shared/ChatWindow'
 import VoiceChatBar from '../shared/VoiceChatBar'
-import { Play, RotateCcw, History } from 'lucide-react'
+import { Play, X, History } from 'lucide-react'
 
 export default function NegotiationSim() {
   const { drillMode } = useApp()
@@ -157,7 +157,9 @@ export default function NegotiationSim() {
         <div className="flex gap-2">
           <button onClick={() => sendMessage('END NEGOTIATION')}
             className="btn-ghost text-xs text-yellow-400 hover:text-yellow-300">Get Coaching</button>
-          <button onClick={handleBack} className="btn-ghost"><RotateCcw size={14}/></button>
+          <button onClick={handleBack} className="btn-ghost text-xs flex items-center gap-1 text-slate-400 hover:text-white">
+            <X size={14}/> End
+          </button>
         </div>
       </div>
 

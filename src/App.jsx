@@ -15,6 +15,7 @@ import NegotiationSim from './components/NegotiationSim/NegotiationSim'
 import Tools from './components/Tools/Tools'
 import JobTracker from './components/JobTracker/JobTracker'
 import Settings from './components/Settings/Settings'
+import Notes from './components/Notes/Notes'
 
 function AppContent() {
   const { activeSection, showOnboarding } = useApp()
@@ -28,6 +29,7 @@ function AppContent() {
     [SECTIONS.NEGOTIATION]: NegotiationSim,
     [SECTIONS.TOOLS]: Tools,
     [SECTIONS.TRACKER]: JobTracker,
+    [SECTIONS.NOTES]: Notes,
     [SECTIONS.SETTINGS]: Settings,
   }
 

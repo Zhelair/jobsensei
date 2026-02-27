@@ -106,21 +106,45 @@ export function useVoice() {
       .replace(/`(.*?)`/g, '$1')
       .replace(/\n{2,}/g, '. ')
       .replace(/\n/g, ' ')
-      .slice(0, 800)
 
-    const utt = new SpeechSynthesisUtterance(clean)
-    utt.lang = 'en-US'
-    utt.rate = 0.92
-    utt.pitch = 1.05
-    utt.volume = 1
+    // Split into sentence-sized chunks to avoid Chrome's ~15s TTS cutoff bug.
+    // Each chunk is spoken via onend chaining so nothing gets dropped.
+    const rawSentences = clean.match(/[^.!?]+[.!?]+|\S[^.!?]*/g) || [clean]
+    const chunks = []
+    let current = ''
+    for (const sentence of rawSentences) {
+      if (current.length + sentence.length > 220) {
+        if (current.trim()) chunks.push(current.trim())
+        current = sentence
+      } else {
+        current += sentence
+      }
+    }
+    if (current.trim()) chunks.push(current.trim())
+    if (chunks.length === 0) return
+
+    setIsSpeaking(true)
+    let index = 0
     const voice = getBestVoice()
-    if (voice) utt.voice = voice
 
-    utt.onstart = () => setIsSpeaking(true)
-    utt.onend = () => { setIsSpeaking(false); onEnd && onEnd() }
-    utt.onerror = () => { setIsSpeaking(false); onEnd && onEnd() }
+    function speakNext() {
+      if (index >= chunks.length) {
+        setIsSpeaking(false)
+        onEnd && onEnd()
+        return
+      }
+      const utt = new SpeechSynthesisUtterance(chunks[index++])
+      utt.lang = 'en-US'
+      utt.rate = 0.92
+      utt.pitch = 1.05
+      utt.volume = 1
+      if (voice) utt.voice = voice
+      utt.onend = speakNext
+      utt.onerror = () => { setIsSpeaking(false); onEnd && onEnd() }
+      window.speechSynthesis.speak(utt)
+    }
 
-    window.speechSynthesis.speak(utt)
+    speakNext()
   }, [voicesLoaded])
 
   const stopSpeaking = useCallback(() => {
