@@ -6,7 +6,7 @@ import { prompts } from '../../utils/prompts'
 import { generateId } from '../../utils/helpers'
 import ChatWindow from '../shared/ChatWindow'
 import VoiceChatBar from '../shared/VoiceChatBar'
-import { RotateCcw, History, Play } from 'lucide-react'
+import { X, History, Play } from 'lucide-react'
 
 const MODES = [
   { id: 'hr', label: 'HR Screen', desc: 'Culture fit, motivation, soft skills' },
@@ -132,11 +132,11 @@ export default function InterviewSimulator() {
       })
       const finalMessages = [...newMessages, { role: 'assistant', content: full }]
       setMessages(finalMessages)
-      // Extract score if present in the response
+      // Extract score if present in the response (handles decimals like 8.5/10)
       let score = sessionScoreRef.current
       if (full.includes('/10')) {
-        const m = full.match(/(\d+)\/10/)
-        if (m) { score = parseInt(m[1]); setSessionScore(score) }
+        const m = full.match(/(\d+(?:\.\d+)?)\/10/)
+        if (m) { score = parseFloat(m[1]); setSessionScore(score) }
       }
       upsertSession(finalMessages, score)
     } catch (e) {
@@ -237,12 +237,14 @@ export default function InterviewSimulator() {
         <div className="flex items-center gap-2">
           {sessionScore !== null && (
             <span className={`badge ${sessionScore >= 8 ? 'badge-green' : sessionScore >= 6 ? 'badge-yellow' : 'badge-red'}`}>
-              {sessionScore}/10
+              {Number.isInteger(sessionScore) ? sessionScore : sessionScore.toFixed(1)}/10
             </span>
           )}
           <button onClick={() => sendMessage('DEBRIEF - Please give me the full session debrief now.')}
             className="btn-ghost text-xs">Debrief</button>
-          <button onClick={handleBack} className="btn-ghost"><RotateCcw size={14}/></button>
+          <button onClick={handleBack} className="btn-ghost text-xs flex items-center gap-1 text-slate-400 hover:text-white">
+            <X size={14}/> End
+          </button>
         </div>
       </div>
 
@@ -269,9 +271,9 @@ function SessionHistory({ sessions, onBack }) {
       <div className="flex items-center gap-3 mb-4">
         <span className="font-display font-bold text-white">{selected.mode}</span>
         <span className="text-slate-400 text-sm">{new Date(selected.date).toLocaleDateString()}</span>
-        {selected.score && (
+        {selected.score != null && (
           <span className={`badge ${selected.score >= 8 ? 'badge-green' : selected.score >= 6 ? 'badge-yellow' : 'badge-red'}`}>
-            {selected.score}/10
+            {Number.isInteger(selected.score) ? selected.score : selected.score.toFixed(1)}/10
           </span>
         )}
       </div>
@@ -304,8 +306,8 @@ function SessionHistory({ sessions, onBack }) {
                   {new Date(s.date).toLocaleDateString()} · {s.questionCount || 0} exchanges
                 </div>
               </div>
-              {s.score
-                ? <span className={`font-display font-bold ${s.score >= 8 ? 'text-green-400' : s.score >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>{s.score}/10</span>
+              {s.score != null
+                ? <span className={`font-display font-bold ${s.score >= 8 ? 'text-green-400' : s.score >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>{Number.isInteger(s.score) ? s.score : s.score.toFixed(1)}/10</span>
                 : <span className="text-slate-600">—</span>
               }
             </button>
