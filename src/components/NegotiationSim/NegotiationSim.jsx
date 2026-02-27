@@ -7,11 +7,13 @@ import { generateId } from '../../utils/helpers'
 import ChatWindow from '../shared/ChatWindow'
 import VoiceChatBar from '../shared/VoiceChatBar'
 import { Play, X, History } from 'lucide-react'
+import { useVisuals } from '../../context/VisualsContext'
 
 export default function NegotiationSim() {
   const { drillMode } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData } = useProject()
+  const { triggerConfetti, showToast } = useVisuals()
 
   const sessions = getProjectData('negotiationSessions')
 
@@ -50,6 +52,8 @@ export default function NegotiationSim() {
   async function startNegotiation() {
     sessionIdRef.current = generateId()
     setMessages([]); setView('chat'); setLoading(true)
+    triggerConfetti()
+    showToast("Negotiation starting — anchor high! 💰")
     try {
       let full = ''
       setMessages([{ role: 'assistant', content: '' }])
@@ -94,53 +98,62 @@ export default function NegotiationSim() {
   if (view === 'history') return <NegotiationHistory sessions={sessions} onBack={() => setView('setup')} />
 
   if (view === 'setup') return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="section-title">Salary Negotiation Simulator</h2>
+        <div>
+          <h2 className="section-title">Salary Negotiation Simulator</h2>
+          <p className="section-sub">Roleplay the offer call and practice negotiating.</p>
+        </div>
         <button onClick={() => setView('history')} className="btn-ghost">
           <History size={16}/> History ({sessions.length})
         </button>
       </div>
-      <p className="section-sub mb-5">Roleplay the offer call and practice negotiating.</p>
 
-      <div className="card mb-5 border-indigo-500/20 bg-indigo-500/5">
-        <h3 className="font-display font-semibold text-indigo-400 text-sm mb-3">📚 Negotiation Tactics</h3>
-        <div className="grid sm:grid-cols-2 gap-2 text-xs">
-          {[
-            ['BATNA', 'Know your Best Alternative before you start'],
-            ['Anchoring', 'Name a high number first to set the range'],
-            ['Silence', "After asking, stay quiet — next person to speak loses"],
-            ['Bracketing', 'Make target the midpoint between ask and offer'],
-            ['Total Package', 'Negotiate benefits, equity, title too'],
-            ['Market Data', 'Reference Glassdoor/LinkedIn to depersonalize the ask'],
-          ].map(([t, d]) => (
-            <div key={t} className="bg-navy-800 rounded-lg p-2">
-              <div className="text-indigo-400 font-semibold mb-0.5">{t}</div>
-              <div className="text-slate-400">{d}</div>
-            </div>
-          ))}
+      {/* 2-col: tactics left / form right */}
+      <div className="grid md:grid-cols-2 gap-5 mt-5">
+        {/* Left: tactics reference */}
+        <div className="card border-indigo-500/20 bg-indigo-500/5 self-start">
+          <h3 className="font-display font-semibold text-indigo-400 text-sm mb-3">📚 Negotiation Tactics</h3>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {[
+              ['BATNA', 'Know your Best Alternative before you start'],
+              ['Anchoring', 'Name a high number first to set the range'],
+              ['Silence', 'After asking, stay quiet — next person to speak loses'],
+              ['Bracketing', 'Make target the midpoint between ask and offer'],
+              ['Total Package', 'Negotiate benefits, equity, title too'],
+              ['Market Data', 'Reference Glassdoor/LinkedIn to depersonalize the ask'],
+            ].map(([t, d]) => (
+              <div key={t} className="bg-navy-800 rounded-lg p-2.5">
+                <div className="text-indigo-400 font-semibold mb-0.5">{t}</div>
+                <div className="text-slate-400">{d}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: form + start */}
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="text-sm text-slate-400 mb-1.5 block">Offer details</label>
+            <textarea className="textarea-field h-32"
+              placeholder="e.g. Role: Senior Compliance Analyst, Salary: €55,000, Location: Sofia, 20 days PTO"
+              value={offerDetails} onChange={e => setOfferDetails(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 mb-1.5 block">Your context <span className="text-slate-600">(optional)</span></label>
+            <textarea className="textarea-field h-24"
+              placeholder="e.g. Market rate is €60-65k, I have a competing offer at €58k, walk-away is €52k"
+              value={context} onChange={e => setContext(e.target.value)} />
+          </div>
+          <button onClick={startNegotiation} disabled={!isConnected || !offerDetails.trim()}
+            className="btn-primary w-full justify-center py-3 mt-auto">
+            <Play size={18}/> Start Negotiation
+          </button>
+          {!isConnected && (
+            <p className="text-center text-slate-500 text-xs -mt-2">Configure your API key in Settings first.</p>
+          )}
         </div>
       </div>
-
-      <div className="space-y-3 mb-5">
-        <div>
-          <label className="text-sm text-slate-400 mb-1.5 block">Offer details</label>
-          <textarea className="textarea-field h-24"
-            placeholder="e.g. Role: Senior Compliance Analyst, Salary: €55,000, Location: Sofia, 20 days PTO"
-            value={offerDetails} onChange={e => setOfferDetails(e.target.value)} />
-        </div>
-        <div>
-          <label className="text-sm text-slate-400 mb-1.5 block">Your context <span className="text-slate-600">(optional)</span></label>
-          <textarea className="textarea-field h-16"
-            placeholder="e.g. Market rate is €60-65k, I have a competing offer at €58k, walk-away is €52k"
-            value={context} onChange={e => setContext(e.target.value)} />
-        </div>
-      </div>
-
-      <button onClick={startNegotiation} disabled={!isConnected || !offerDetails.trim()}
-        className="btn-primary w-full justify-center py-3">
-        <Play size={18}/> Start Negotiation
-      </button>
     </div>
   )
 

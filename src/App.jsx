@@ -3,6 +3,8 @@ import { AppProvider, useApp, SECTIONS } from './context/AppContext'
 import { AIProvider } from './context/AIContext'
 import { ProjectProvider } from './context/ProjectContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { VisualsProvider } from './context/VisualsContext'
+import VisualsOverlay from './components/shared/VisualsOverlay'
 import Sidebar from './components/Layout/Sidebar'
 import TopBar from './components/Layout/TopBar'
 import BottomNav from './components/Layout/BottomNav'
@@ -51,6 +53,7 @@ function AppContent() {
         </main>
       </div>
       <BottomNav />
+      <VisualsOverlay />
     </div>
   )
 }
@@ -58,13 +61,15 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AIProvider>
-        <AppProvider>
-          <ProjectProvider>
-            <AppContent />
-          </ProjectProvider>
-        </AppProvider>
-      </AIProvider>
+      <VisualsProvider>
+        <AIProvider>
+          <AppProvider>
+            <ProjectProvider>
+              <AppContent />
+            </ProjectProvider>
+          </AppProvider>
+        </AIProvider>
+      </VisualsProvider>
     </ThemeProvider>
   )
 }
