@@ -63,7 +63,7 @@ export default function VoiceChatBar({
   }
 
   // -- TTS button --
-  // OFF  + not speaking → enable TTS autoplay + replay last message (if not muted)
+  // OFF  + not speaking → enable TTS autoplay + speak last AI message immediately (if not muted)
   // ON   + not speaking → disable TTS autoplay
   // any state + speaking → stop speaking
   function handleTts() {
@@ -72,7 +72,11 @@ export default function VoiceChatBar({
       setTtsEnabled(false)
     } else {
       setTtsEnabled(true)
-      if (!isMuted) replayLast()
+      if (!isMuted) {
+        // Use lastAiMessage directly — lastTextRef may be empty on fresh mount
+        if (lastAiMessage) speakRef.current(lastAiMessage)
+        else replayLast()
+      }
     }
   }
 
