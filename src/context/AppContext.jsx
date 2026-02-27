@@ -11,6 +11,7 @@ export const SECTIONS = {
   NEGOTIATION: 'negotiation',
   TOOLS: 'tools',
   TRACKER: 'tracker',
+  NOTES: 'notes',
   SETTINGS: 'settings',
 }
 

@@ -6,7 +6,7 @@ import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { sm2, getNextReviewDate, isDueToday } from '../../utils/spacedRepetition'
 import ChatWindow from '../shared/ChatWindow'
-import { BookOpen, Plus, Brain, Zap, Check, ArrowLeft, Edit3, Trash2, X } from 'lucide-react'
+import { BookOpen, Plus, Brain, Zap, Check, ArrowLeft, Edit3, Trash2, X, ChevronRight } from 'lucide-react'
 import VoiceChatBar from '../shared/VoiceChatBar'
 
 const STARTER_TOPICS = [

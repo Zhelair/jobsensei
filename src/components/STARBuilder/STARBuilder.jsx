@@ -4,7 +4,7 @@ import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
-import { Star, Plus, Wand2, Copy, Trash2, ArrowLeft, Tag, Edit3, Check } from 'lucide-react'
+import { Star, Plus, Wand2, Copy, Trash2, ArrowLeft, Tag, Edit3, Check, Eye } from 'lucide-react'
 
 export default function STARBuilder() {
   const { drillMode } = useApp()
@@ -24,6 +24,7 @@ export default function STARBuilder() {
   const [filter, setFilter] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editContent, setEditContent] = useState('')
+  const [viewingStory, setViewingStory] = useState(null)
 
   async function buildStar() {
     if (!situation.trim()) return
@@ -59,6 +60,59 @@ export default function STARBuilder() {
   const filtered = filter
     ? stories.filter(s => s.situation?.toLowerCase().includes(filter.toLowerCase()) || s.suggestedTags?.some(t => t.toLowerCase().includes(filter.toLowerCase())))
     : stories
+
+  // Story detail view (view saved AI results)
+  if (view === 'detail' && viewingStory) return (
+    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+      <button onClick={() => { setView('bank'); setViewingStory(null) }} className="btn-ghost mb-4"><ArrowLeft size={16} /> Story Bank</button>
+
+      <div className="flex items-start justify-between gap-3 mb-5">
+        <div>
+          <h2 className="section-title mb-0.5">{viewingStory.situation || 'Story'}</h2>
+          <p className="section-sub">{new Date(viewingStory.date).toLocaleDateString()}</p>
+        </div>
+        <button onClick={() => copy(viewingStory.fullAnswer)} className="btn-ghost text-xs flex-shrink-0"><Copy size={13} /> Copy</button>
+      </div>
+
+      <div className="space-y-4">
+        <div className="card border-teal-500/20">
+          <h3 className="font-display font-semibold text-white text-sm mb-3">Interview-Ready Answer</h3>
+          <p className="text-slate-200 text-sm font-body leading-relaxed">{viewingStory.fullAnswer}</p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-3">
+          {[['S','Situation',viewingStory.situation,'teal'],['T','Task',viewingStory.task,'indigo'],['A','Action',viewingStory.action,'teal'],['R','Result',viewingStory.result,'indigo']].map(([l,label,content,c])=>(
+            <div key={label} className="card">
+              <div className={`w-7 h-7 rounded-lg mb-2 flex items-center justify-center font-display font-bold text-sm ${c==='teal'?'bg-teal-500/20 text-teal-400':'bg-indigo-500/20 text-indigo-400'}`}>{l}</div>
+              <div className="text-slate-400 text-xs mb-1">{label}</div>
+              <p className="text-slate-200 text-sm">{content}</p>
+            </div>
+          ))}
+        </div>
+
+        {viewingStory.weaknesses?.length > 0 && (
+          <div className="card border-yellow-500/20 bg-yellow-500/5">
+            <div className="text-yellow-400 text-sm font-display font-semibold mb-2">⚠️ Areas to strengthen</div>
+            {viewingStory.weaknesses.map((w, i) => <p key={i} className="text-slate-400 text-xs">• {w}</p>)}
+          </div>
+        )}
+
+        {(viewingStory.suggestedTags?.length > 0 || viewingStory.targetQuestions?.length > 0) && (
+          <div className="card">
+            {viewingStory.suggestedTags?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">{viewingStory.suggestedTags.map((t,i)=><span key={i} className="badge-indigo"><Tag size={10}/> {t}</span>)}</div>
+            )}
+            {viewingStory.targetQuestions?.length > 0 && (
+              <>
+                <div className="text-slate-400 text-xs mb-1">Answers questions like:</div>
+                {viewingStory.targetQuestions.map((q,i)=><p key={i} className="text-slate-300 text-xs">• {q}</p>)}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 
   if (view === 'build') return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
@@ -146,9 +200,10 @@ export default function STARBuilder() {
                   <div className="text-slate-500 text-xs mt-0.5">{new Date(story.date).toLocaleDateString()}</div>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => startEdit(story)} className="btn-ghost text-xs p-1.5"><Edit3 size={13}/></button>
-                  <button onClick={() => copy(story.fullAnswer)} className="btn-ghost text-xs p-1.5"><Copy size={13}/></button>
-                  <button onClick={() => deleteStory(story.id)} className="btn-ghost text-xs p-1.5 text-red-400 hover:text-red-300"><Trash2 size={13}/></button>
+                  <button onClick={() => { setViewingStory(story); setView('detail') }} className="btn-ghost text-xs p-1.5" title="View full analysis"><Eye size={13}/></button>
+                  <button onClick={() => startEdit(story)} className="btn-ghost text-xs p-1.5" title="Edit answer"><Edit3 size={13}/></button>
+                  <button onClick={() => copy(story.fullAnswer)} className="btn-ghost text-xs p-1.5" title="Copy to clipboard"><Copy size={13}/></button>
+                  <button onClick={() => deleteStory(story.id)} className="btn-ghost text-xs p-1.5 text-red-400 hover:text-red-300" title="Delete"><Trash2 size={13}/></button>
                 </div>
               </div>
               <div className="flex flex-wrap gap-1.5 mb-2">{story.suggestedTags?.map((t,i)=><span key={i} className="badge-indigo text-xs">{t}</span>)}</div>
