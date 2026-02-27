@@ -8,6 +8,7 @@ const EMPTY_PROJECT_DATA = {
   interviewSessions: [],    // interview history
   negotiationSessions: [],  // negotiation history
   toolsHistory: [],         // tools usage history
+  quizHistory: [],          // full quiz result snapshots
   starStories: [],          // STAR bank
   applications: [],         // job tracker
   companyNotes: {},         // company notes

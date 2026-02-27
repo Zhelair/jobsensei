@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { useApp } from '../context/AppContext'
 
 function getBestVoice() {
   const voices = window.speechSynthesis?.getVoices() || []
@@ -14,6 +15,7 @@ function getBestVoice() {
 }
 
 export function useVoice() {
+  const { isMuted } = useApp()
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [isSpeaking, setIsSpeaking] = useState(false)
@@ -28,6 +30,14 @@ export function useVoice() {
   const onResultCallbackRef = useRef(null)
   const lastTextRef = useRef('')   // for replay
   const [voicesLoaded, setVoicesLoaded] = useState(false)
+
+  // Stop speech immediately when globally muted
+  useEffect(() => {
+    if (isMuted) {
+      window.speechSynthesis?.cancel()
+      setIsSpeaking(false)
+    }
+  }, [isMuted])
 
   useEffect(() => {
     if (!window.speechSynthesis) return
@@ -96,6 +106,7 @@ export function useVoice() {
 
   const speak = useCallback((text, onEnd) => {
     if (!window.speechSynthesis) return
+    if (isMuted) return
     window.speechSynthesis.cancel()
     lastTextRef.current = text  // store for replay
 
@@ -145,7 +156,7 @@ export function useVoice() {
     }
 
     speakNext()
-  }, [voicesLoaded])
+  }, [voicesLoaded, isMuted])
 
   const stopSpeaking = useCallback(() => {
     window.speechSynthesis?.cancel()

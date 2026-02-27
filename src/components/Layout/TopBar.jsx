@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
-import { Settings, GraduationCap, Zap, Shield, Brain, HelpCircle, X } from 'lucide-react'
+import { Settings, GraduationCap, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX } from 'lucide-react'
 
 const SECTION_TITLES = {
   dashboard: 'Dashboard',
@@ -70,7 +70,7 @@ const SECTION_HELP = {
 }
 
 export default function TopBar() {
-  const { activeSection, setActiveSection, drillMode, setDrillMode } = useApp()
+  const { activeSection, setActiveSection, drillMode, setDrillMode, isMuted, setIsMuted } = useApp()
   const { isConnected, isThinking } = useAI()
   const [showHelp, setShowHelp] = useState(false)
 
@@ -105,6 +105,18 @@ export default function TopBar() {
             {isConnected ? 'AI Connected' : 'No API Key'}
           </div>
         )}
+
+        {/* Global mute/unmute toggle */}
+        <button
+          onClick={() => {
+            if (!isMuted) window.speechSynthesis?.cancel()
+            setIsMuted(!isMuted)
+          }}
+          className={`btn-ghost ${isMuted ? 'text-red-400' : 'text-slate-400'}`}
+          title={isMuted ? 'Unmute AI voice' : 'Mute AI voice'}
+        >
+          {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+        </button>
 
         {/* Sensei / Drill mode toggle */}
         <button
