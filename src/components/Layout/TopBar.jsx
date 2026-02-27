@@ -1,7 +1,20 @@
 import React, { useState } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
-import { Settings, GraduationCap, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX } from 'lucide-react'
+import { useTheme, THEMES } from '../../context/ThemeContext'
+import { Settings, GraduationCap, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles } from 'lucide-react'
+
+const THEME_ICONS = {
+  [THEMES.DARK]: Moon,
+  [THEMES.DAYLIGHT]: Sun,
+  [THEMES.MYSPACE]: Sparkles,
+}
+
+const THEME_LABELS = {
+  [THEMES.DARK]: 'Dark',
+  [THEMES.DAYLIGHT]: 'Daylight',
+  [THEMES.MYSPACE]: 'Neon',
+}
 
 const SECTION_TITLES = {
   dashboard: 'Dashboard',
@@ -72,7 +85,9 @@ const SECTION_HELP = {
 export default function TopBar() {
   const { activeSection, setActiveSection, drillMode, setDrillMode, isMuted, setIsMuted } = useApp()
   const { isConnected, isThinking } = useAI()
+  const { theme, cycleTheme } = useTheme()
   const [showHelp, setShowHelp] = useState(false)
+  const ThemeIcon = THEME_ICONS[theme]
 
   const help = SECTION_HELP[activeSection]
 
@@ -105,6 +120,15 @@ export default function TopBar() {
             {isConnected ? 'AI Connected' : 'No API Key'}
           </div>
         )}
+
+        {/* Theme cycle button */}
+        <button
+          onClick={cycleTheme}
+          className="btn-ghost"
+          title={`Theme: ${THEME_LABELS[theme]} — click to cycle`}
+        >
+          <ThemeIcon size={16} />
+        </button>
 
         {/* Global mute/unmute toggle */}
         <button
