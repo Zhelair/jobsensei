@@ -2,10 +2,10 @@ import React, { useState, useRef } from 'react'
 import { useAI } from '../../context/AIContext'
 import { useApp } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
-import { Zap, Check, Trash2, Eye, EyeOff, GraduationCap, FileText, Upload, Download, X } from 'lucide-react'
+import { Zap, Check, Trash2, Eye, EyeOff, GraduationCap, FileText, Upload, Download, X, Image } from 'lucide-react'
 
 export default function Settings() {
-  const { provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS } = useAI()
+  const { provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS, callAI } = useAI()
   const { profile, saveProfile, setShowOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData, exportProject, exportAll, importProjects } = useProject()
 
@@ -21,8 +21,11 @@ export default function Settings() {
   const [resumeSaved, setResumeSaved] = useState(false)
   const [extracting, setExtracting] = useState(false)
   const fileRef = useRef(null)
+  const imageRef = useRef(null)
   const importRef = useRef(null)
   const [importMsg, setImportMsg] = useState('')
+  const [imageAnalysis, setImageAnalysis] = useState('')
+  const [analyzingImage, setAnalyzingImage] = useState(false)
 
   function update(k, v) {
     if (k === 'provider') {
@@ -98,6 +101,40 @@ export default function Settings() {
       setResumeText('[Could not read file. Please paste your resume text below.]')
     }
     setExtracting(false)
+    e.target.value = ''
+  }
+
+  async function handleImageFile(e) {
+    const file = e.target.files[0]; if (!file) return
+    if (!file.type.startsWith('image/')) return
+    setAnalyzingImage(true); setImageAnalysis('')
+    try {
+      // Convert to base64
+      const dataUrl = await new Promise((res, rej) => {
+        const reader = new FileReader()
+        reader.onload = () => res(reader.result)
+        reader.onerror = rej
+        reader.readAsDataURL(file)
+      })
+      const base64 = dataUrl.split(',')[1]
+      const mediaType = file.type
+
+      const prompt = 'Analyze this resume/CV image. Describe: (1) Overall visual layout and structure, (2) Color scheme and use of color, (3) Font choices, sizes, and readability, (4) Use of white space and visual hierarchy, (5) Professional impression and any design red flags, (6) Specific improvements to the visual design. Be constructive and specific.'
+
+      const userContent = provider === PROVIDERS.ANTHROPIC
+        ? [{ type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } }, { type: 'text', text: prompt }]
+        : [{ type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}` } }, { type: 'text', text: prompt }]
+
+      const result = await callAI({
+        systemPrompt: 'You are an expert resume designer and career coach. Analyze resume images for visual design quality, layout, and professional impact.',
+        messages: [{ role: 'user', content: userContent }],
+        temperature: 0.5,
+      })
+      setImageAnalysis(result)
+    } catch (err) {
+      setImageAnalysis('⚠️ Image analysis requires a vision-capable model (OpenAI gpt-4o or Anthropic Claude). DeepSeek does not support image input.')
+    }
+    setAnalyzingImage(false)
     e.target.value = ''
   }
 
@@ -180,7 +217,11 @@ export default function Settings() {
           <button onClick={() => fileRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
             <Upload size={13}/> {extracting ? 'Reading...' : 'Upload File (.txt, .pdf)'}
           </button>
+          <button onClick={() => imageRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
+            <Image size={13}/> {analyzingImage ? 'Analyzing...' : 'Visual Design Review'}
+          </button>
           <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.rtf" className="hidden" onChange={handleResumeFile} />
+          <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
           {resumeText && <button onClick={clearResume} className="btn-ghost text-xs text-red-400 hover:text-red-300 px-2"><X size={14}/></button>}
         </div>
         <textarea
@@ -192,7 +233,17 @@ export default function Settings() {
         <button onClick={saveResume} className={`btn-primary text-sm ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
           {resumeSaved ? <><Check size={14}/> Saved to Project!</> : 'Save Resume to Project'}
         </button>
-        <p className="text-slate-600 text-xs mt-2">💡 PDF files are parsed automatically. For best results use a text-based PDF (not a scanned image).</p>
+        <p className="text-slate-600 text-xs mt-2">💡 PDF/text uploads extract the text. Photo upload uses AI vision to analyze design and styling (requires OpenAI or Anthropic).</p>
+
+        {imageAnalysis && (
+          <div className="mt-3 card border-indigo-500/20 bg-indigo-500/5">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-display font-semibold text-white text-sm">📸 Visual Resume Analysis</h4>
+              <button onClick={() => setImageAnalysis('')} className="text-slate-500 hover:text-slate-300"><X size={13}/></button>
+            </div>
+            <div className="text-slate-300 text-xs leading-relaxed whitespace-pre-wrap">{imageAnalysis}</div>
+          </div>
+        )}
       </div>
 
       {/* Project management */}

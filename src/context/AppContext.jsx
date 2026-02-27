@@ -21,6 +21,7 @@ export function AppProvider({ children }) {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [profile, setProfile] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [isMuted, setIsMuted] = useState(false)
 
   // Stats tracking
   const [stats, setStats] = useState({
@@ -77,6 +78,7 @@ export function AppProvider({ children }) {
       profile, saveProfile,
       stats, updateStats,
       sidebarOpen, setSidebarOpen,
+      isMuted, setIsMuted,
     }}>
       {children}
     </AppContext.Provider>

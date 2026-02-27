@@ -6,7 +6,7 @@ import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { sm2, getNextReviewDate, isDueToday } from '../../utils/spacedRepetition'
 import ChatWindow from '../shared/ChatWindow'
-import { BookOpen, Plus, Brain, Zap, Check, ArrowLeft, Edit3, Trash2, X, ChevronRight } from 'lucide-react'
+import { BookOpen, Plus, Brain, Zap, Check, ArrowLeft, Edit3, Trash2, X, ChevronRight, History } from 'lucide-react'
 import VoiceChatBar from '../shared/VoiceChatBar'
 
 const STARTER_TOPICS = [
@@ -30,6 +30,7 @@ export default function LearningSection() {
   const { getProjectData, updateProjectData } = useProject()
 
   const topics = getProjectData('topics')
+  const quizHistory = getProjectData('quizHistory') || []
 
   const [view, setView] = useState('library')
   const [selectedTopic, setSelectedTopic] = useState(null)
@@ -57,6 +58,11 @@ export default function LearningSection() {
   function updateTopic(id, updates) {
     setTopics(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t))
     if (selectedTopic?.id === id) setSelectedTopic(t => ({...t, ...updates}))
+  }
+
+  function saveQuizHistory(data) {
+    const entry = { id: generateId(), date: new Date().toISOString(), ...data }
+    updateProjectData('quizHistory', [entry, ...quizHistory].slice(0, 100))
   }
 
   function deleteTopic(id) {
@@ -87,10 +93,13 @@ export default function LearningSection() {
     <TopicTutor topic={selectedTopic} onBack={()=>{setView('library');setSelectedTopic(null)}} onUpdate={updateTopic} drillMode={drillMode} profile={profile} callAI={callAI} isConnected={isConnected} />
   )
   if (view === 'quiz' && selectedTopic) return (
-    <QuizMode topic={selectedTopic} onBack={()=>{setView('library');setSelectedTopic(null)}} onUpdate={updateTopic} callAI={callAI} isConnected={isConnected} />
+    <QuizMode topic={selectedTopic} onBack={()=>{setView('library');setSelectedTopic(null)}} onUpdate={updateTopic} onQuizComplete={saveQuizHistory} callAI={callAI} isConnected={isConnected} />
   )
   if (view === 'transferable') return (
     <TransferableSkills onBack={()=>setView('library')} drillMode={drillMode} profile={profile} callAI={callAI} isConnected={isConnected} />
+  )
+  if (view === 'quizHistory') return (
+    <QuizHistory history={quizHistory} onBack={()=>setView('library')} />
   )
 
   return (
@@ -101,6 +110,11 @@ export default function LearningSection() {
           <p className="section-sub">{topics.length} topics · {dueTopics.length} review{dueTopics.length!==1?'s':''} due</p>
         </div>
         <div className="flex gap-2">
+          {quizHistory.length > 0 && (
+            <button onClick={()=>setView('quizHistory')} className="btn-ghost text-xs">
+              <History size={14}/> Quiz History ({quizHistory.length})
+            </button>
+          )}
           <button onClick={()=>setView('transferable')} className="btn-secondary text-xs"><Zap size={14}/> Transferable Skills</button>
           <button onClick={()=>setShowAdd(!showAdd)} className="btn-primary text-xs"><Plus size={14}/> Add Topic</button>
         </div>
@@ -310,7 +324,7 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
   )
 }
 
-function QuizMode({ topic, onBack, onUpdate, callAI, isConnected }) {
+function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected }) {
   const [phase, setPhase] = useState('loading')
   const [questions, setQuestions] = useState([])
   const [current, setCurrent] = useState(0)
@@ -355,6 +369,16 @@ function QuizMode({ topic, onBack, onUpdate, callAI, isConnected }) {
     const quality = avg>=8?5:avg>=6?3:1
     const {repetitions,easeFactor,interval} = sm2(quality,topic.repetitions||0,topic.easeFactor||2.5,topic.interval||0)
     onUpdate(topic.id,{repetitions,easeFactor,interval,nextReview:getNextReviewDate(interval),status:'In Progress',quizScores:[...(topic.quizScores||[]),avg]})
+    const correct = Object.values(feedback).filter(f=>f.correct!==false&&(f.score===undefined||f.score>=6)).length
+    onQuizComplete && onQuizComplete({
+      topicId: topic.id,
+      topicTitle: topic.title,
+      score: avg,
+      correct,
+      total: Object.values(feedback).length,
+      questions,
+      feedback,
+    })
     setPhase('results')
   }
 
@@ -475,6 +499,66 @@ function TransferableSkills({ onBack, drillMode, profile, callAI, isConnected })
             if(line.trim()==='') return <div key={i} className="h-1"/>
             return <p key={i} className="text-slate-300 text-sm mb-1">{line}</p>
           })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function QuizHistory({ history, onBack }) {
+  const [selected, setSelected] = useState(null)
+
+  if (selected) return (
+    <div className="p-4 md:p-6 max-w-xl mx-auto animate-in">
+      <button onClick={() => setSelected(null)} className="btn-ghost mb-4"><ArrowLeft size={16}/> History</button>
+      <div className="card text-center py-6 mb-4">
+        <div className="text-3xl mb-2">🎓</div>
+        <div className="font-display font-bold text-white text-xl mb-1">{selected.correct}/{selected.total} Correct</div>
+        <div className="text-teal-400 text-sm font-display font-semibold">{selected.topicTitle}</div>
+        <div className="text-slate-500 text-xs mt-1">{new Date(selected.date).toLocaleDateString(undefined, { dateStyle: 'medium' })} · Score {selected.score}/10</div>
+      </div>
+      <div className="space-y-3">
+        {selected.questions.map(q => {
+          const fb = selected.feedback[q.id]
+          const passed = fb?.correct !== false && (fb?.score === undefined || fb?.score >= 6)
+          return (
+            <div key={q.id} className={`card border ${passed ? 'border-green-500/20' : 'border-red-500/20'}`}>
+              <p className="text-white text-sm mb-2">{q.question}</p>
+              {(fb?.explanation || fb?.feedback) && (
+                <p className={`text-xs ${passed ? 'text-green-300' : 'text-red-300'}`}>{fb.explanation || fb.feedback}</p>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="p-4 md:p-6 animate-in">
+      <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16}/> Learning</button>
+      <h2 className="section-title mb-1">Quiz History</h2>
+      <p className="section-sub mb-4">{history.length} quiz attempt{history.length !== 1 ? 's' : ''}</p>
+      {history.length === 0 ? (
+        <div className="card text-center py-10 text-slate-500">No quizzes taken yet.</div>
+      ) : (
+        <div className="space-y-2">
+          {history.map(h => (
+            <button key={h.id} onClick={() => setSelected(h)} className="card-hover w-full text-left">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-white font-body font-medium text-sm">{h.topicTitle}</span>
+                <span className={`font-display font-semibold text-sm ${h.score >= 8 ? 'text-green-400' : h.score >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>
+                  {h.correct}/{h.total} correct
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 text-xs">{new Date(h.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
+                <span className={`badge ${h.score >= 8 ? 'badge-green' : h.score >= 6 ? 'badge-yellow' : 'badge-red'}`}>
+                  {h.score}/10
+                </span>
+              </div>
+            </button>
+          ))}
         </div>
       )}
     </div>

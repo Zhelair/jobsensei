@@ -1,16 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
-import { Wrench, Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock } from 'lucide-react'
+import { Wrench, Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X } from 'lucide-react'
 
 const TOOLS = [
   { id: 'predictor', icon: Target, label: 'Question Predictor', desc: 'Predict the 15 most likely questions for any JD' },
   { id: 'tone', icon: Gauge, label: 'Tone Analyzer', desc: 'Analyze your answer for confidence and clarity' },
   { id: 'followup', icon: Mail, label: 'Follow-up Email', desc: 'Generate a perfect post-interview email' },
   { id: 'pitch', icon: Megaphone, label: 'Elevator Pitch', desc: '"Why should we hire you?" — perfected' },
+  { id: 'coverletter', icon: FileText, label: 'Cover Letter Optimizer', desc: '3 versions — Corporate, Creative, Casual — with keyword analysis' },
+  { id: 'resumechecker', icon: ClipboardCheck, label: 'Resume Checker', desc: 'ATS score + recruiter lens on your resume' },
+  { id: 'linkedin', icon: Globe, label: 'LinkedIn Auditor', desc: 'Score your profile and get quick wins' },
+  { id: 'visualreview', icon: Camera, label: 'Visual Design Review', desc: 'AI analyzes your resume design, layout, and visual impact' },
 ]
 
 export default function Tools() {
@@ -29,6 +33,10 @@ export default function Tools() {
   if (activeTool === 'tone') return <ToneAnalyzer onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('tone', 'Tone Analyzer', i, r)} />
   if (activeTool === 'followup') return <FollowUpEmail onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('followup', 'Follow-up Email', i, r)} />
   if (activeTool === 'pitch') return <ElevatorPitch onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('pitch', 'Elevator Pitch', i, r)} />
+  if (activeTool === 'coverletter') return <CoverLetterOptimizer onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('coverletter', 'Cover Letter Optimizer', i, r)} />
+  if (activeTool === 'resumechecker') return <ResumeChecker onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('resumechecker', 'Resume Checker', i, r)} />
+  if (activeTool === 'linkedin') return <LinkedInAuditor onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('linkedin', 'LinkedIn Auditor', i, r)} />
+  if (activeTool === 'visualreview') return <VisualResumeReview onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('visualreview', 'Visual Design Review', i, r)} />
 
   if (showHistory) return <ToolsHistory history={toolsHistory || []} onBack={() => setShowHistory(false)} />
 
@@ -91,6 +99,14 @@ function HistorySummary({ item }) {
     return <p className="text-slate-400 text-xs truncate">Subject: {item.result.subject}</p>
   if (item.tool === 'pitch' && item.result?.shortVersion)
     return <p className="text-slate-400 text-xs line-clamp-2">{item.result.shortVersion}</p>
+  if (item.tool === 'coverletter' && item.result?.letters)
+    return <p className="text-slate-400 text-xs">{item.result.letters.length} versions · {item.result.keywordMatches?.length || 0} keywords matched</p>
+  if (item.tool === 'resumechecker' && item.result)
+    return <p className="text-slate-400 text-xs">ATS {item.result.atsScore}/100 · Recruiter {item.result.recruiterScore}/100</p>
+  if (item.tool === 'linkedin' && item.result)
+    return <p className="text-slate-400 text-xs">Overall score {item.result.overallScore}/100</p>
+  if (item.tool === 'visualreview' && item.result?.analysis)
+    return <p className="text-slate-400 text-xs line-clamp-1">{item.result.analysis.slice(0, 100)}…</p>
   return null
 }
 
@@ -209,6 +225,77 @@ function FullHistoryResult({ item }) {
       </div>
     )
   }
+  if (item.tool === 'coverletter' && item.result?.letters) {
+    return (
+      <div className="space-y-3">
+        {item.result.keywordMatches?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {item.result.keywordMatches.map((kw, i) => <span key={i} className="badge-green">{kw}</span>)}
+          </div>
+        )}
+        {item.result.letters.map((l, i) => (
+          <div key={i} className="card">
+            <div className="flex items-center justify-between mb-2">
+              <span className="badge-teal">{l.tone}</span>
+              <button onClick={() => navigator.clipboard?.writeText(l.body)} className="btn-ghost text-xs"><Copy size={13}/> Copy</button>
+            </div>
+            <p className="text-slate-300 text-sm font-body leading-relaxed whitespace-pre-wrap line-clamp-4">{l.body}</p>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  if (item.tool === 'resumechecker' && item.result) {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="card text-center">
+            <div className={`font-display font-bold text-2xl mb-1 ${item.result.atsScore >= 80 ? 'text-green-400' : item.result.atsScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{item.result.atsScore}</div>
+            <div className="text-slate-400 text-xs">ATS Score</div>
+          </div>
+          <div className="card text-center">
+            <div className={`font-display font-bold text-2xl mb-1 ${item.result.recruiterScore >= 80 ? 'text-green-400' : item.result.recruiterScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{item.result.recruiterScore}</div>
+            <div className="text-slate-400 text-xs">Recruiter Score</div>
+          </div>
+        </div>
+        {item.result.strengths?.length > 0 && (
+          <div className="card border-green-500/20">
+            <h4 className="font-display font-semibold text-white text-sm mb-2">✅ Strengths</h4>
+            <ul className="space-y-1">{item.result.strengths.map((s, i) => <li key={i} className="text-slate-300 text-xs">• {s}</li>)}</ul>
+          </div>
+        )}
+        {item.result.suggestions?.length > 0 && (
+          <div className="card">
+            <h4 className="font-display font-semibold text-white text-sm mb-2">💡 Suggestions</h4>
+            <ul className="space-y-1">{item.result.suggestions.map((s, i) => <li key={i} className="text-slate-400 text-xs">• {s}</li>)}</ul>
+          </div>
+        )}
+      </div>
+    )
+  }
+  if (item.tool === 'linkedin' && item.result) {
+    return (
+      <div className="space-y-3">
+        <div className="card text-center py-4">
+          <div className={`font-display font-bold text-4xl mb-1 ${item.result.overallScore >= 80 ? 'text-green-400' : item.result.overallScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{item.result.overallScore}</div>
+          <div className="text-slate-400 text-sm">Overall LinkedIn Score</div>
+        </div>
+        {item.result.quickWins?.length > 0 && (
+          <div className="card border-teal-500/20">
+            <h4 className="font-display font-semibold text-white text-sm mb-2">⚡ Quick Wins</h4>
+            <ul className="space-y-1">{item.result.quickWins.map((w, i) => <li key={i} className="text-slate-300 text-xs">• {w}</li>)}</ul>
+          </div>
+        )}
+      </div>
+    )
+  }
+  if (item.tool === 'visualreview' && item.result?.analysis)
+    return (
+      <div className="card border-indigo-500/20 bg-indigo-500/5">
+        <h4 className="font-display font-semibold text-white text-sm mb-3">📸 Visual Design Analysis</h4>
+        <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{item.result.analysis}</div>
+      </div>
+    )
   return <p className="text-slate-500 text-sm">No preview available.</p>
 }
 
@@ -499,6 +586,380 @@ function ElevatorPitch({ onBack, resume, saveHistory }) {
               <ul className="space-y-1">
                 {result.tweaks.map((t, i) => <li key={i} className="text-slate-400 text-xs">• {t}</li>)}
               </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CoverLetterOptimizer({ onBack, resume, saveHistory }) {
+  const { callAI, isConnected } = useAI()
+  const [jd, setJd] = useState('')
+  const [resumeText, setResumeText] = useState(resume || '')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null)
+  const [activeTab, setActiveTab] = useState(0)
+
+  async function generate() {
+    setLoading(true); setResult(null)
+    try {
+      const raw = await callAI({
+        systemPrompt: prompts.coverLetterOptimizer(jd, resumeText),
+        messages: [{ role: 'user', content: 'Generate cover letters.' }],
+        temperature: 0.8,
+      })
+      const parsed = tryParseJSON(raw)
+      if (parsed) {
+        setResult(parsed)
+        saveHistory({ jd: jd.slice(0, 80) }, parsed)
+      }
+    } catch {}
+    setLoading(false)
+  }
+
+  return (
+    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+      <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
+      <h2 className="section-title mb-1">Cover Letter Optimizer</h2>
+      <p className="section-sub mb-5">3 tone versions — Corporate, Creative, Casual — with keyword analysis.</p>
+
+      <div className="space-y-3 mb-4">
+        <textarea className="textarea-field h-28" placeholder="Paste the job description..." value={jd} onChange={e => setJd(e.target.value)} />
+        <textarea className="textarea-field h-28" placeholder="Paste your resume or key experience..." value={resumeText} onChange={e => setResumeText(e.target.value)} />
+      </div>
+      <button onClick={generate} disabled={loading || !isConnected || !jd.trim() || !resumeText.trim()} className="btn-primary mb-5">
+        <FileText size={16} /> {loading ? 'Writing 3 versions...' : 'Generate Cover Letters'}
+      </button>
+
+      {result && (
+        <div className="space-y-4 animate-in">
+          {(result.keywordMatches?.length > 0 || result.missingKeywords?.length > 0) && (
+            <div className="card">
+              <h4 className="font-display font-semibold text-white text-sm mb-3">Keyword Analysis</h4>
+              {result.keywordMatches?.length > 0 && (
+                <div className="mb-3">
+                  <span className="text-green-400 text-xs font-display font-semibold">✓ Matched in your resume</span>
+                  <div className="flex flex-wrap gap-1.5 mt-2">{result.keywordMatches.map((kw, i) => <span key={i} className="badge-green">{kw}</span>)}</div>
+                </div>
+              )}
+              {result.missingKeywords?.length > 0 && (
+                <div>
+                  <span className="text-yellow-400 text-xs font-display font-semibold">⚠ Consider weaving in</span>
+                  <div className="flex flex-wrap gap-1.5 mt-2">{result.missingKeywords.map((kw, i) => <span key={i} className="badge-yellow">{kw}</span>)}</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {result.letters?.length > 0 && (
+            <div>
+              <div className="flex gap-2 mb-3">
+                {result.letters.map((l, i) => (
+                  <button key={i} onClick={() => setActiveTab(i)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-body border transition-all ${activeTab === i ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' : 'bg-navy-700 text-slate-400 border-navy-600 hover:border-slate-500'}`}>
+                    {l.tone}
+                  </button>
+                ))}
+              </div>
+              {result.letters[activeTab] && (
+                <div className="card border-teal-500/20">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex gap-3">
+                      <span className={`text-xs font-display font-semibold ${result.letters[activeTab].clarityScore >= 80 ? 'text-green-400' : result.letters[activeTab].clarityScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
+                        Clarity {result.letters[activeTab].clarityScore}/100
+                      </span>
+                      <span className={`text-xs font-display font-semibold ${result.letters[activeTab].confidenceScore >= 80 ? 'text-green-400' : result.letters[activeTab].confidenceScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
+                        Confidence {result.letters[activeTab].confidenceScore}/100
+                      </span>
+                    </div>
+                    <button onClick={() => navigator.clipboard?.writeText(result.letters[activeTab].body)} className="btn-ghost text-xs">
+                      <Copy size={13} /> Copy
+                    </button>
+                  </div>
+                  <p className="text-slate-200 text-sm font-body leading-relaxed whitespace-pre-wrap">{result.letters[activeTab].body}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ResumeChecker({ onBack, resume, saveHistory }) {
+  const { callAI, isConnected } = useAI()
+  const [resumeText, setResumeText] = useState(resume || '')
+  const [jd, setJd] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null)
+
+  async function analyze() {
+    setLoading(true); setResult(null)
+    try {
+      const raw = await callAI({
+        systemPrompt: prompts.resumeChecker(resumeText, jd),
+        messages: [{ role: 'user', content: 'Analyze my resume.' }],
+        temperature: 0.4,
+      })
+      const parsed = tryParseJSON(raw)
+      if (parsed) {
+        setResult(parsed)
+        saveHistory({ resumeSlice: resumeText.slice(0, 80) }, parsed)
+      }
+    } catch {}
+    setLoading(false)
+  }
+
+  return (
+    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+      <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
+      <h2 className="section-title mb-1">Resume Checker</h2>
+      <p className="section-sub mb-5">ATS scanner + recruiter lens — see your resume like they do.</p>
+
+      <div className="space-y-3 mb-4">
+        <textarea className="textarea-field h-40" placeholder="Paste your resume text here..." value={resumeText} onChange={e => setResumeText(e.target.value)} />
+        <textarea className="textarea-field h-20" placeholder="Job description (optional — enables gap analysis)..." value={jd} onChange={e => setJd(e.target.value)} />
+      </div>
+      <button onClick={analyze} disabled={loading || !isConnected || !resumeText.trim()} className="btn-primary mb-5">
+        <ClipboardCheck size={16} /> {loading ? 'Analyzing...' : 'Check Resume'}
+      </button>
+
+      {result && (
+        <div className="space-y-4 animate-in">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="card text-center py-6">
+              <div className={`font-display font-bold text-4xl mb-1 ${result.atsScore >= 80 ? 'text-green-400' : result.atsScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{result.atsScore}</div>
+              <div className="text-slate-400 text-sm">ATS Score</div>
+              <div className="text-slate-600 text-xs mt-1">Keyword matching</div>
+            </div>
+            <div className="card text-center py-6">
+              <div className={`font-display font-bold text-4xl mb-1 ${result.recruiterScore >= 80 ? 'text-green-400' : result.recruiterScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{result.recruiterScore}</div>
+              <div className="text-slate-400 text-sm">Recruiter Score</div>
+              <div className="text-slate-600 text-xs mt-1">Human appeal</div>
+            </div>
+          </div>
+
+          {result.redFlags?.length > 0 && (
+            <div className="card border-red-500/20">
+              <h4 className="font-display font-semibold text-white text-sm mb-3">🚩 Red Flags to Fix</h4>
+              <div className="space-y-3">
+                {result.redFlags.map((f, i) => (
+                  <div key={i} className="bg-navy-900 rounded-xl p-3">
+                    <p className="text-red-300 text-xs font-mono mb-1">"{f.original}"</p>
+                    <p className="text-green-300 text-xs font-mono mb-1">→ "{f.fix}"</p>
+                    <p className="text-slate-500 text-xs">{f.why}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {result.keywordGaps?.length > 0 && (
+            <div className="card border-yellow-500/20">
+              <h4 className="font-display font-semibold text-white text-sm mb-2">⚠️ Keyword Gaps</h4>
+              <div className="flex flex-wrap gap-1.5">{result.keywordGaps.map((kw, i) => <span key={i} className="badge-yellow">{kw}</span>)}</div>
+            </div>
+          )}
+
+          {result.strengths?.length > 0 && (
+            <div className="card border-green-500/20">
+              <h4 className="font-display font-semibold text-white text-sm mb-2">✅ Strengths</h4>
+              <ul className="space-y-1">{result.strengths.map((s, i) => <li key={i} className="text-slate-300 text-xs">• {s}</li>)}</ul>
+            </div>
+          )}
+
+          {result.suggestions?.length > 0 && (
+            <div className="card">
+              <h4 className="font-display font-semibold text-white text-sm mb-2">💡 Suggestions</h4>
+              <ul className="space-y-1">{result.suggestions.map((s, i) => <li key={i} className="text-slate-400 text-xs">• {s}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function VisualResumeReview({ onBack, saveHistory }) {
+  const { callAI, isConnected, provider, PROVIDERS } = useAI()
+  const imageInputRef = useRef(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [imageData, setImageData] = useState(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [result, setResult] = useState(null)
+
+  async function handleImageFile(e) {
+    const file = e.target.files[0]; if (!file) return
+    if (!file.type.startsWith('image/')) return
+    const dataUrl = await new Promise((res, rej) => {
+      const reader = new FileReader()
+      reader.onload = () => res(reader.result)
+      reader.onerror = rej
+      reader.readAsDataURL(file)
+    })
+    setImagePreview(dataUrl)
+    setImageData({ base64: dataUrl.split(',')[1], mediaType: file.type })
+    setResult(null)
+    e.target.value = ''
+  }
+
+  async function analyze() {
+    if (!imageData) return
+    setAnalyzing(true); setResult(null)
+    try {
+      const prompt = 'Analyze this resume/CV image for visual design. Cover: (1) Overall layout and structure, (2) Color scheme and use of color, (3) Typography — fonts, sizes, hierarchy, (4) White space and readability, (5) Professional impression, (6) Specific visual improvements ranked by priority. Be specific and actionable.'
+      const userContent = provider === PROVIDERS.ANTHROPIC
+        ? [{ type: 'image', source: { type: 'base64', media_type: imageData.mediaType, data: imageData.base64 } }, { type: 'text', text: prompt }]
+        : [{ type: 'image_url', image_url: { url: `data:${imageData.mediaType};base64,${imageData.base64}` } }, { type: 'text', text: prompt }]
+      const raw = await callAI({
+        systemPrompt: 'You are an expert resume designer and career coach. Analyze resume images for visual design quality, layout, and professional impact. Provide structured, actionable feedback.',
+        messages: [{ role: 'user', content: userContent }],
+        temperature: 0.5,
+      })
+      setResult(raw)
+      saveHistory({ fileName: 'resume image' }, { analysis: raw })
+    } catch {
+      setResult('⚠️ Visual analysis requires a vision-capable model (OpenAI gpt-4o or Anthropic Claude). DeepSeek does not support image input.')
+    }
+    setAnalyzing(false)
+  }
+
+  return (
+    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+      <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
+      <h2 className="section-title mb-1">Visual Design Review</h2>
+      <p className="section-sub mb-5">Upload a screenshot or photo of your resume — AI analyzes design, layout, colors, and visual impact.</p>
+
+      <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+
+      {!imagePreview ? (
+        <button
+          onClick={() => imageInputRef.current?.click()}
+          className="w-full border-2 border-dashed border-navy-600 hover:border-teal-500/50 rounded-2xl p-12 flex flex-col items-center gap-3 text-slate-500 hover:text-slate-400 transition-all mb-4"
+        >
+          <Camera size={32} />
+          <span className="text-sm font-body">Click to upload resume screenshot or photo</span>
+          <span className="text-xs">PNG, JPG, WEBP supported</span>
+        </button>
+      ) : (
+        <div className="mb-4">
+          <div className="rounded-2xl overflow-hidden bg-navy-900 mb-3">
+            <img src={imagePreview} alt="Resume preview" className="w-full max-h-72 object-contain" />
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => imageInputRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
+              <Camera size={13}/> Change Image
+            </button>
+            <button onClick={() => { setImagePreview(null); setImageData(null); setResult(null) }} className="btn-ghost text-xs text-red-400 hover:text-red-300">
+              <X size={13}/> Remove
+            </button>
+          </div>
+        </div>
+      )}
+
+      <button onClick={analyze} disabled={!imageData || analyzing || !isConnected} className="btn-primary w-full justify-center mb-5">
+        <Camera size={16} /> {analyzing ? 'Analyzing design...' : 'Analyze Visual Design'}
+      </button>
+
+      {result && (
+        <div className="card border-indigo-500/20 bg-indigo-500/5 animate-in">
+          <h4 className="font-display font-semibold text-white text-sm mb-3">📸 Visual Design Analysis</h4>
+          <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{result}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LinkedInAuditor({ onBack, saveHistory }) {
+  const { callAI, isConnected } = useAI()
+  const [profileText, setProfileText] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null)
+
+  async function audit() {
+    setLoading(true); setResult(null)
+    try {
+      const raw = await callAI({
+        systemPrompt: prompts.linkedInAuditor(profileText),
+        messages: [{ role: 'user', content: 'Audit my LinkedIn profile.' }],
+        temperature: 0.5,
+      })
+      const parsed = tryParseJSON(raw)
+      if (parsed) {
+        setResult(parsed)
+        saveHistory({ profileSlice: profileText.slice(0, 80) }, parsed)
+      }
+    } catch {}
+    setLoading(false)
+  }
+
+  return (
+    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+      <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
+      <h2 className="section-title mb-1">LinkedIn Profile Auditor</h2>
+      <p className="section-sub mb-5">Paste your headline, About, and experience. Get a score and quick wins.</p>
+
+      <textarea className="textarea-field h-40 mb-4"
+        placeholder="Paste your LinkedIn headline, About section, and key experience highlights..."
+        value={profileText} onChange={e => setProfileText(e.target.value)} />
+      <button onClick={audit} disabled={loading || !isConnected || !profileText.trim()} className="btn-primary mb-5">
+        <Globe size={16} /> {loading ? 'Auditing...' : 'Audit Profile'}
+      </button>
+
+      {result && (
+        <div className="space-y-4 animate-in">
+          <div className="card text-center py-6">
+            <div className={`font-display font-bold text-5xl mb-2 ${result.overallScore >= 80 ? 'text-green-400' : result.overallScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{result.overallScore}</div>
+            <div className="text-slate-400 text-sm">Overall LinkedIn Score</div>
+            {result.ctaPresent === false && <div className="text-yellow-400 text-xs mt-2">⚠ No call-to-action detected</div>}
+          </div>
+
+          {result.sections && Object.entries(result.sections).map(([key, section]) =>
+            key !== 'keywords' && section.score !== undefined ? (
+              <div key={key} className="card">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-display font-semibold text-white text-sm capitalize">{key}</h4>
+                  <span className={`font-display font-bold text-lg ${section.score >= 80 ? 'text-green-400' : section.score >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{section.score}/100</span>
+                </div>
+                <p className="text-slate-400 text-xs mb-2">{section.feedback}</p>
+                {section.suggestion && <p className="text-teal-400 text-xs">💡 {section.suggestion}</p>}
+              </div>
+            ) : null
+          )}
+
+          {result.sections?.keywords && (
+            <div className="card">
+              <h4 className="font-display font-semibold text-white text-sm mb-3">Keywords</h4>
+              {result.sections.keywords.found?.length > 0 && (
+                <div className="mb-3">
+                  <span className="text-green-400 text-xs font-display font-semibold">✓ Already there</span>
+                  <div className="flex flex-wrap gap-1.5 mt-2">{result.sections.keywords.found.map((kw, i) => <span key={i} className="badge-green">{kw}</span>)}</div>
+                </div>
+              )}
+              {result.sections.keywords.missing?.length > 0 && (
+                <div>
+                  <span className="text-yellow-400 text-xs font-display font-semibold">⚠ Add these for discoverability</span>
+                  <div className="flex flex-wrap gap-1.5 mt-2">{result.sections.keywords.missing.map((kw, i) => <span key={i} className="badge-yellow">{kw}</span>)}</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {result.quickWins?.length > 0 && (
+            <div className="card border-teal-500/20">
+              <h4 className="font-display font-semibold text-white text-sm mb-2">⚡ Quick Wins</h4>
+              <ul className="space-y-1">{result.quickWins.map((w, i) => <li key={i} className="text-slate-300 text-xs">• {w}</li>)}</ul>
+            </div>
+          )}
+
+          {result.strengths?.length > 0 && (
+            <div className="card border-green-500/20">
+              <h4 className="font-display font-semibold text-white text-sm mb-2">✅ Already Strong</h4>
+              <ul className="space-y-1">{result.strengths.map((s, i) => <li key={i} className="text-slate-300 text-xs">• {s}</li>)}</ul>
             </div>
           )}
         </div>

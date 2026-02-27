@@ -1,22 +1,55 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
-import { GraduationCap, ChevronRight, ChevronLeft, Check, Zap } from 'lucide-react'
+import { useProject } from '../../context/ProjectContext'
+import { GraduationCap, ChevronRight, ChevronLeft, Check, Zap, Upload, FileText } from 'lucide-react'
 
 export default function OnboardingWizard() {
   const { saveProfile } = useApp()
   const { saveConfig, PROVIDERS, PROVIDER_CONFIGS } = useAI()
+  const { updateProjectData } = useProject()
 
   const [step, setStep] = useState(0)
   const [data, setData] = useState({
     name: '', currentRole: '', experience: '', industry: '',
     targetRole: '', targetIndustries: '', targetCompanies: '',
     provider: PROVIDERS.DEEPSEEK, apiKey: '', model: 'deepseek-chat', customBaseUrl: '',
+    resume: '',
   })
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState(null)
+  const [extractingResume, setExtractingResume] = useState(false)
+  const resumeFileRef = useRef(null)
 
   function update(k, v) { setData(d => ({ ...d, [k]: v })) }
+
+  async function handleOnboardingResumeFile(e) {
+    const file = e.target.files[0]; if (!file) return
+    setExtractingResume(true)
+    try {
+      if (file.name.endsWith('.txt') || file.type === 'text/plain') {
+        update('resume', await file.text())
+      } else if (file.name.endsWith('.pdf') || file.type === 'application/pdf') {
+        const pdfjsLib = await import('pdfjs-dist')
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+        const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise
+        let fullText = ''
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i)
+          const content = await page.getTextContent()
+          fullText += content.items.map(item => item.str).join(' ') + '\n'
+        }
+        update('resume', fullText.trim().replace(/\s{3,}/g, '\n') || '[PDF had no readable text. Paste below.]')
+      } else {
+        update('resume', (await file.text()).replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s{3,}/g, '\n'))
+      }
+    } catch {
+      update('resume', '[Could not read file. Please paste your resume below.]')
+    }
+    setExtractingResume(false)
+    e.target.value = ''
+  }
 
   async function testConnection() {
     setTesting(true)
@@ -49,6 +82,7 @@ export default function OnboardingWizard() {
       targetCompanies: data.targetCompanies,
     })
     saveConfig({ provider: data.provider, apiKey: data.apiKey, model: data.model, customBaseUrl: data.customBaseUrl })
+    if (data.resume?.trim()) updateProjectData('resume', data.resume)
   }
 
   const steps = [
@@ -93,6 +127,45 @@ export default function OnboardingWizard() {
             <label className="text-sm text-slate-400 font-body mb-1.5 block">Any specific companies on your radar? (optional)</label>
             <input className="input-field" placeholder="Revolut, N26, Stripe..." value={data.targetCompanies} onChange={e => update('targetCompanies', e.target.value)} />
           </div>
+        </div>
+      )
+    },
+    {
+      title: 'Upload your Resume / CV',
+      subtitle: 'One upload fills Interview Prep, Gap Analysis, and all Tools automatically.',
+      content: (
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => resumeFileRef.current?.click()}
+              className="btn-secondary flex-1 justify-center"
+            >
+              <Upload size={14} />
+              {extractingResume ? 'Reading…' : 'Upload .txt or .pdf'}
+            </button>
+            <input
+              ref={resumeFileRef}
+              type="file"
+              accept=".txt,.pdf,.doc,.docx,.rtf"
+              className="hidden"
+              onChange={handleOnboardingResumeFile}
+            />
+          </div>
+          <textarea
+            className="textarea-field h-32 text-xs"
+            placeholder="Or paste your resume / CV text here…"
+            value={data.resume}
+            onChange={e => update('resume', e.target.value)}
+          />
+          {data.resume?.trim() ? (
+            <p className="text-teal-400 text-xs text-center flex items-center justify-center gap-1.5">
+              <Check size={13} /> Resume captured · {data.resume.length.toLocaleString()} characters
+            </p>
+          ) : (
+            <p className="text-slate-500 text-xs text-center">
+              You can skip this and upload it later in Settings.
+            </p>
+          )}
         </div>
       )
     },

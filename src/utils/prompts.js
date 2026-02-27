@@ -311,6 +311,99 @@ Return ONLY valid JSON:
   "tweaks": ["tweak1", "tweak2", "tweak3"]
 }`,
 
+  coverLetterOptimizer: (jd, resume) => `You are an expert cover letter coach who writes compelling, keyword-optimized cover letters.
+
+JOB DESCRIPTION:
+${jd}
+
+CANDIDATE RESUME / BACKGROUND:
+${resume}
+
+Generate 3 tailored cover letter versions — one per tone — and identify keyword alignment.
+Return ONLY valid JSON:
+{
+  "letters": [
+    {
+      "tone": "Corporate",
+      "body": "Full cover letter body (4-5 paragraphs). Professional, formal, metrics-focused.",
+      "clarityScore": 0,
+      "confidenceScore": 0
+    },
+    {
+      "tone": "Creative",
+      "body": "Full cover letter body. Opens with a hook, shows personality, still professional.",
+      "clarityScore": 0,
+      "confidenceScore": 0
+    },
+    {
+      "tone": "Casual",
+      "body": "Full cover letter body. Warm, conversational, authentic — like a smart email to a friend of a friend.",
+      "clarityScore": 0,
+      "confidenceScore": 0
+    }
+  ],
+  "keywordMatches": ["keywords from the JD that appear in the resume"],
+  "missingKeywords": ["important JD keywords not in resume that could be naturally added"]
+}
+Each score is 0-100. Return ONLY valid JSON, no other text.`,
+
+  resumeChecker: (resume, jd) => `You are a dual expert: an ATS (Applicant Tracking System) engineer AND a senior recruiter with 10+ years of hiring experience.
+
+RESUME:
+${resume}
+
+${jd ? `JOB DESCRIPTION (for gap analysis):\n${jd}` : 'No job description provided — analyze the resume in general terms.'}
+
+Analyze from both perspectives. Return ONLY valid JSON:
+{
+  "atsScore": 0,
+  "recruiterScore": 0,
+  "keywordGaps": ["keywords missing from resume vs the JD or expected for this field"],
+  "redFlags": [
+    {
+      "original": "exact weak phrase or pattern from the resume",
+      "fix": "stronger, impact-driven version",
+      "why": "why the original is weak"
+    }
+  ],
+  "strengths": ["specific things the resume does well"],
+  "suggestions": ["specific, actionable improvements to make"]
+}
+ATS score (0-100): keyword density, formatting clarity, section headers, quantified results, action verbs.
+Recruiter score (0-100): narrative impact, achievement framing, visual scannability, uniqueness.
+Return ONLY valid JSON, no other text.`,
+
+  linkedInAuditor: (profileText) => `You are a LinkedIn optimization expert who has reviewed thousands of profiles for hiring managers and recruiters.
+
+PROFILE TEXT:
+${profileText}
+
+Audit this LinkedIn profile and return ONLY valid JSON:
+{
+  "overallScore": 0,
+  "ctaPresent": false,
+  "sections": {
+    "headline": {
+      "score": 0,
+      "feedback": "What works and what doesn't about the headline",
+      "suggestion": "Specific rewrite suggestion with an example"
+    },
+    "about": {
+      "score": 0,
+      "feedback": "Assessment of the summary/about section",
+      "suggestion": "What to add or change"
+    },
+    "keywords": {
+      "found": ["strong industry keywords already present"],
+      "missing": ["high-value keywords to add for better recruiter discoverability"]
+    }
+  },
+  "quickWins": ["2-minute changes that have outsized impact on visibility or recruiter appeal"],
+  "strengths": ["what is already strong about this profile"]
+}
+Score guidelines: 80+ strong, 60-79 needs work, below 60 significant gaps.
+Return ONLY valid JSON, no other text.`,
+
   senseiTip: (profile, stats) => `You are JobSensei, a career coach. Generate a brief, personalized daily tip for this job seeker.
 
 Profile: ${JSON.stringify(profile || {})}
