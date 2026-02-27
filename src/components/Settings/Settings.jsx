@@ -3,6 +3,7 @@ import { useAI } from '../../context/AIContext'
 import { useApp } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
 import { Zap, Check, Trash2, Eye, EyeOff, GraduationCap, FileText, Upload, Download, X, Image } from 'lucide-react'
+import DeepSeekGuide from './DeepSeekGuide'
 
 export default function Settings() {
   const { provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS, callAI } = useAI()
@@ -160,6 +161,8 @@ export default function Settings() {
     <div className="p-4 md:p-6 max-w-xl mx-auto animate-in space-y-4">
       <h2 className="section-title mb-1">Settings</h2>
       <p className="section-sub">Configure AI, resume, and project settings.</p>
+
+      <DeepSeekGuide />
 
       {/* AI Config */}
       <div className="card">
