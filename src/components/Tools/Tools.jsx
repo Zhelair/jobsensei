@@ -4,9 +4,15 @@ import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
-import { Wrench, Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X } from 'lucide-react'
+import { Wrench, Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X, Search, Star, DollarSign } from 'lucide-react'
+import GapAnalysis from '../GapAnalysis/GapAnalysis'
+import STARBuilder from '../STARBuilder/STARBuilder'
+import NegotiationSim from '../NegotiationSim/NegotiationSim'
 
 const TOOLS = [
+  { id: 'gap', icon: Search, label: 'Gap Analysis', desc: 'Match to JD, score application, detect red flags' },
+  { id: 'star', icon: Star, label: 'STAR Builder', desc: 'Structure interview answers and build your story bank' },
+  { id: 'negotiation', icon: DollarSign, label: 'Negotiation Sim', desc: 'Roleplay salary negotiation with AI recruiter Alex Chen' },
   { id: 'predictor', icon: Target, label: 'Question Predictor', desc: 'Predict the 15 most likely questions for any JD' },
   { id: 'tone', icon: Gauge, label: 'Tone Analyzer', desc: 'Analyze your answer for confidence and clarity' },
   { id: 'followup', icon: Mail, label: 'Follow-up Email', desc: 'Generate a perfect post-interview email' },
@@ -28,6 +34,10 @@ export default function Tools() {
     const entry = { id: generateId(), date: new Date().toISOString(), tool, toolLabel, inputs, result }
     updateProjectData('toolsHistory', [entry, ...(toolsHistory || [])].slice(0, 50))
   }
+
+  if (activeTool === 'gap') return <GapAnalysis onBack={() => setActiveTool(null)} />
+  if (activeTool === 'star') return <STARBuilder onBack={() => setActiveTool(null)} />
+  if (activeTool === 'negotiation') return <NegotiationSim onBack={() => setActiveTool(null)} embedded />
 
   if (activeTool === 'predictor') return <QuestionPredictor onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('predictor', 'Question Predictor', i, r)} />
   if (activeTool === 'tone') return <ToneAnalyzer onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('tone', 'Tone Analyzer', i, r)} />
@@ -110,11 +120,26 @@ function HistorySummary({ item }) {
   return null
 }
 
+const HISTORY_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'predictor', label: 'Question Predictor' },
+  { id: 'tone', label: 'Tone Analyzer' },
+  { id: 'followup', label: 'Follow-up Email' },
+  { id: 'pitch', label: 'Elevator Pitch' },
+  { id: 'coverletter', label: 'Cover Letter' },
+  { id: 'resumechecker', label: 'Resume Checker' },
+  { id: 'linkedin', label: 'LinkedIn' },
+  { id: 'visualreview', label: 'Visual Review' },
+]
+
 function ToolsHistory({ history, onBack }) {
   const [selected, setSelected] = useState(null)
+  const [activeFilter, setActiveFilter] = useState('all')
+  const [search, setSearch] = useState('')
+
   if (selected) return (
     <div className="p-4 md:p-6 animate-in">
-      <button onClick={() => setSelected(null)} className="btn-ghost mb-4">← History</button>
+      <button onClick={() => setSelected(null)} className="btn-ghost mb-4"><ArrowLeft size={16} /> History</button>
       <div className="flex items-center gap-3 mb-4">
         <span className="font-display font-bold text-white">{selected.toolLabel}</span>
         <span className="text-slate-400 text-sm">{new Date(selected.date).toLocaleDateString()}</span>
@@ -122,23 +147,74 @@ function ToolsHistory({ history, onBack }) {
       <FullHistoryResult item={selected} />
     </div>
   )
+
+  const filtered = history.filter(h => {
+    if (activeFilter !== 'all' && h.tool !== activeFilter) return false
+    if (search && !h.toolLabel.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
+
+  const now = new Date()
+  const todayStr = now.toDateString()
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+
+  const groups = [
+    { label: 'Today', items: filtered.filter(h => new Date(h.date).toDateString() === todayStr) },
+    { label: 'This Week', items: filtered.filter(h => { const d = new Date(h.date); return d.toDateString() !== todayStr && d >= weekAgo }) },
+    { label: 'Older', items: filtered.filter(h => new Date(h.date) < weekAgo) },
+  ].filter(g => g.items.length > 0)
+
   return (
     <div className="p-4 md:p-6 animate-in">
-      <button onClick={onBack} className="btn-ghost mb-4">← Tools</button>
+      <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
       <h2 className="section-title mb-1">Tools History</h2>
       <p className="section-sub mb-4">{history.length} saved result{history.length !== 1 ? 's' : ''}</p>
-      {history.length === 0 ? (
-        <div className="card text-center py-10 text-slate-500">No results yet.</div>
+
+      {history.length > 0 && (
+        <>
+          <input
+            className="input-field mb-3"
+            placeholder="Search history..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {HISTORY_FILTERS.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setActiveFilter(f.id)}
+                className={`px-3 py-1 rounded-full text-xs font-body transition-all ${activeFilter === f.id ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'bg-navy-800 text-slate-400 border border-navy-600 hover:border-slate-500'}`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {filtered.length === 0 ? (
+        <div className="card text-center py-10 text-slate-500">
+          {history.length === 0 ? 'No results yet.' : 'No results match your filter.'}
+        </div>
       ) : (
-        <div className="space-y-2">
-          {history.map(h => (
-            <button key={h.id} onClick={() => setSelected(h)} className="card-hover w-full text-left">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-white font-body font-medium text-sm">{h.toolLabel}</span>
-                <span className="text-slate-500 text-xs">{new Date(h.date).toLocaleDateString()}</span>
+        <div className="space-y-5">
+          {groups.map(group => (
+            <div key={group.label}>
+              <div className="text-slate-500 text-xs font-display font-semibold uppercase tracking-wider mb-2 flex items-center gap-2">
+                <Clock size={11} /> {group.label}
               </div>
-              <HistorySummary item={h} />
-            </button>
+              <div className="space-y-2">
+                {group.items.map(h => (
+                  <button key={h.id} onClick={() => setSelected(h)} className="card-hover w-full text-left">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-white font-body font-medium text-sm">{h.toolLabel}</span>
+                      <span className="text-slate-500 text-xs">{new Date(h.date).toLocaleDateString()}</span>
+                    </div>
+                    <HistorySummary item={h} />
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -917,6 +993,12 @@ function LinkedInAuditor({ onBack, saveHistory }) {
             <div className="text-slate-400 text-sm">Overall LinkedIn Score</div>
             {result.ctaPresent === false && <div className="text-yellow-400 text-xs mt-2">⚠ No call-to-action detected</div>}
           </div>
+
+          {result.summary && (
+            <div className="card border-indigo-500/20 bg-indigo-500/5">
+              <p className="text-slate-200 text-sm leading-relaxed">{result.summary}</p>
+            </div>
+          )}
 
           {result.sections && Object.entries(result.sections).map(([key, section]) =>
             key !== 'keywords' && section.score !== undefined ? (

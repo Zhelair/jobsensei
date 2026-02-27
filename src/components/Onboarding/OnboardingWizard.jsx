@@ -2,11 +2,11 @@ import React, { useState, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
-import { GraduationCap, ChevronRight, ChevronLeft, Check, Zap, Upload, FileText } from 'lucide-react'
+import { GraduationCap, ChevronRight, ChevronLeft, Check, Zap, Upload, FileText, Coffee, ChevronDown, ChevronUp } from 'lucide-react'
 
 export default function OnboardingWizard() {
   const { saveProfile } = useApp()
-  const { saveConfig, PROVIDERS, PROVIDER_CONFIGS } = useAI()
+  const { saveConfig, PROVIDERS, PROVIDER_CONFIGS, verifyBmac } = useAI()
   const { updateProjectData } = useProject()
 
   const [step, setStep] = useState(0)
@@ -20,6 +20,23 @@ export default function OnboardingWizard() {
   const [testResult, setTestResult] = useState(null)
   const [extractingResume, setExtractingResume] = useState(false)
   const resumeFileRef = useRef(null)
+  const [showOwnKey, setShowOwnKey] = useState(false)
+  const [bmacInput, setBmacInput] = useState('')
+  const [bmacLoading, setBmacLoading] = useState(false)
+  const [bmacError, setBmacError] = useState('')
+  const [bmacVerified, setBmacVerified] = useState(false)
+
+  async function handleBmacVerify() {
+    if (!bmacInput.trim()) return
+    setBmacLoading(true); setBmacError('')
+    try {
+      await verifyBmac(bmacInput.trim())
+      setBmacVerified(true)
+    } catch (e) {
+      setBmacError(e.message)
+    }
+    setBmacLoading(false)
+  }
 
   function update(k, v) { setData(d => ({ ...d, [k]: v })) }
 
@@ -170,52 +187,96 @@ export default function OnboardingWizard() {
       )
     },
     {
-      title: 'Connect your AI',
-      subtitle: 'Your API key stays on your device. We never see it.',
+      title: 'Activate JobSensei AI',
+      subtitle: 'Choose how to power the AI features.',
       content: (
         <div className="space-y-4">
-          <div>
-            <label className="text-sm text-slate-400 font-body mb-1.5 block">AI Provider</label>
-            <select
-              className="input-field"
-              value={data.provider}
-              onChange={e => {
-                const p = e.target.value
-                update('provider', p)
-                update('model', PROVIDER_CONFIGS[p].defaultModel)
-              }}
-            >
-              {Object.entries(PROVIDER_CONFIGS).map(([k, v]) => (
-                <option key={k} value={k}>{v.label}</option>
-              ))}
-            </select>
+          {/* BMAC option */}
+          <div className={`rounded-xl border p-4 space-y-3 ${bmacVerified ? 'border-green-500/30 bg-green-500/5' : 'border-teal-500/20'}`}>
+            <div className="flex items-center gap-2">
+              <Coffee size={15} className="text-yellow-400" />
+              <span className="font-display font-semibold text-white text-sm">Buy Me a Coffee Supporter</span>
+            </div>
+            {bmacVerified ? (
+              <div className="flex items-center gap-2 text-green-400 text-sm">
+                <Check size={15}/> Verified! AI powered by JobSensei.
+              </div>
+            ) : (
+              <>
+                <p className="text-slate-400 text-xs">Already a supporter? Enter your BMAC email to activate.</p>
+                <input
+                  className="input-field text-sm"
+                  type="email"
+                  placeholder="Your Buy Me a Coffee email..."
+                  value={bmacInput}
+                  onChange={e => { setBmacInput(e.target.value); setBmacError('') }}
+                />
+                <button
+                  onClick={handleBmacVerify}
+                  disabled={!bmacInput.trim() || bmacLoading}
+                  className="btn-primary w-full justify-center"
+                >
+                  <Coffee size={14}/> {bmacLoading ? 'Verifying...' : 'Verify Membership'}
+                </button>
+                {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
+                <p className="text-slate-600 text-xs">
+                  Not a supporter?{' '}
+                  <a href="https://buymeacoffee.com/niksales73l" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:underline">
+                    Buy Me a Coffee →
+                  </a>
+                </p>
+              </>
+            )}
           </div>
-          <div>
-            <label className="text-sm text-slate-400 font-body mb-1.5 block">API Key</label>
-            <input
-              className="input-field font-mono text-xs"
-              type="password"
-              placeholder="sk-..."
-              value={data.apiKey}
-              onChange={e => update('apiKey', e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="text-sm text-slate-400 font-body mb-1.5 block">Model</label>
-            <input className="input-field font-mono text-xs" placeholder="deepseek-chat" value={data.model} onChange={e => update('model', e.target.value)} />
-          </div>
-          {data.provider === PROVIDERS.CUSTOM && (
-            <div>
-              <label className="text-sm text-slate-400 font-body mb-1.5 block">Base URL</label>
-              <input className="input-field font-mono text-xs" placeholder="https://..." value={data.customBaseUrl} onChange={e => update('customBaseUrl', e.target.value)} />
+
+          {/* Own API key toggle */}
+          <button
+            onClick={() => setShowOwnKey(o => !o)}
+            className="w-full flex items-center justify-between text-slate-400 hover:text-slate-300 transition-colors text-xs py-1"
+          >
+            <span>Or use my own API key</span>
+            {showOwnKey ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+          </button>
+
+          {showOwnKey && (
+            <div className="space-y-3 border-t border-navy-700 pt-3">
+              <div>
+                <label className="text-sm text-slate-400 font-body mb-1.5 block">Provider</label>
+                <select
+                  className="input-field"
+                  value={data.provider}
+                  onChange={e => {
+                    const p = e.target.value
+                    update('provider', p)
+                    update('model', PROVIDER_CONFIGS[p].defaultModel)
+                  }}
+                >
+                  {Object.entries(PROVIDER_CONFIGS).map(([k, v]) => (
+                    <option key={k} value={k}>{v.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-slate-400 font-body mb-1.5 block">API Key</label>
+                <input
+                  className="input-field font-mono text-xs"
+                  type="password"
+                  placeholder="sk-..."
+                  value={data.apiKey}
+                  onChange={e => update('apiKey', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm text-slate-400 font-body mb-1.5 block">Model</label>
+                <input className="input-field font-mono text-xs" placeholder="deepseek-chat" value={data.model} onChange={e => update('model', e.target.value)} />
+              </div>
+              <button onClick={testConnection} disabled={!data.apiKey || testing} className="btn-secondary w-full justify-center">
+                <Zap size={14}/> {testing ? 'Testing...' : 'Test Connection'}
+              </button>
+              {testResult === 'success' && <p className="text-green-400 text-sm text-center">✅ Connected!</p>}
+              {testResult === 'error' && <p className="text-red-400 text-sm text-center">❌ Failed. Check your key.</p>}
             </div>
           )}
-          <button onClick={testConnection} disabled={!data.apiKey || testing} className="btn-secondary w-full justify-center">
-            <Zap size={14} />
-            {testing ? 'Testing...' : 'Test Connection'}
-          </button>
-          {testResult === 'success' && <p className="text-green-400 text-sm text-center">✅ Connected successfully!</p>}
-          {testResult === 'error' && <p className="text-red-400 text-sm text-center">❌ Connection failed. Check your key and model name.</p>}
         </div>
       )
     },

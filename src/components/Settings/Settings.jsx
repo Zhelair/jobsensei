@@ -2,11 +2,11 @@ import React, { useState, useRef } from 'react'
 import { useAI } from '../../context/AIContext'
 import { useApp } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
-import { Zap, Check, Trash2, Eye, EyeOff, GraduationCap, FileText, Upload, Download, X } from 'lucide-react'
+import { Zap, Check, Trash2, Eye, EyeOff, GraduationCap, FileText, Upload, Download, X, Coffee, ChevronDown, ChevronUp, LogOut } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
 
 export default function Settings() {
-  const { provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS, callAI } = useAI()
+  const { provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS, bmacToken, bmacEmail, verifyBmac, clearBmacToken } = useAI()
   const { profile, saveProfile, setShowOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData, exportProject, exportAll, importProjects } = useProject()
 
@@ -15,6 +15,12 @@ export default function Settings() {
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState(null)
   const [saved, setSaved] = useState(false)
+  const [showOwnKey, setShowOwnKey] = useState(false)
+
+  // BMAC state
+  const [bmacInput, setBmacInput] = useState('')
+  const [bmacLoading, setBmacLoading] = useState(false)
+  const [bmacError, setBmacError] = useState('')
 
   // Resume state
   const resume = getProjectData('resume')
@@ -58,6 +64,18 @@ export default function Settings() {
   }
 
   function save() { saveConfig(form); setSaved(true); setTimeout(() => setSaved(false), 2000) }
+
+  async function handleBmacVerify() {
+    if (!bmacInput.trim()) return
+    setBmacLoading(true); setBmacError('')
+    try {
+      await verifyBmac(bmacInput.trim())
+      setBmacInput('')
+    } catch (e) {
+      setBmacError(e.message)
+    }
+    setBmacLoading(false)
+  }
 
   function saveResume() {
     updateProjectData('resume', resumeText)
@@ -125,59 +143,118 @@ export default function Settings() {
       <h2 className="section-title mb-1">Settings</h2>
       <p className="section-sub">Configure AI, resume, and project settings.</p>
 
-      {/* Guide — full width */}
-      <DeepSeekGuide />
-
       {/* 2-col grid: balanced columns */}
       <div className="grid md:grid-cols-2 gap-4 items-start">
 
-        {/* Left: AI Config + Profile */}
+        {/* Left: AI Access + Profile */}
         <div className="space-y-4">
-          <div className="card">
-            <h3 className="font-display font-semibold text-white mb-4 flex items-center gap-2"><Zap size={16} className="text-teal-400"/> AI Configuration</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">Provider</label>
-                <select className="input-field" value={form.provider} onChange={e => update('provider', e.target.value)}>
-                  {Object.entries(PROVIDER_CONFIGS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-                </select>
+
+          {/* BMAC Supporter Access — primary */}
+          <div className={`card ${bmacToken ? 'border-green-500/30 bg-green-500/5' : 'border-teal-500/20'}`}>
+            <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+              <Coffee size={16} className="text-yellow-400"/> Supporter Access
+            </h3>
+            <p className="text-slate-400 text-xs mb-4">Buy Me a Coffee supporters get AI powered by JobSensei — no API key needed.</p>
+
+            {bmacToken ? (
+              <div className="space-y-3">
+                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex items-center gap-2">
+                  <Check size={16} className="text-green-400 flex-shrink-0" />
+                  <div>
+                    <div className="text-green-400 text-sm font-display font-semibold">Active supporter</div>
+                    <div className="text-slate-400 text-xs">{bmacEmail}</div>
+                  </div>
+                </div>
+                <button onClick={clearBmacToken} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
+                  <LogOut size={13}/> Sign out of supporter mode
+                </button>
               </div>
-              <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">API Key</label>
-                <div className="relative">
-                  <input className="input-field pr-10 font-mono text-xs" type={showKey ? 'text' : 'password'} placeholder="Enter your API key..." value={form.apiKey} onChange={e => update('apiKey', e.target.value)} />
-                  <button onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
-                    {showKey ? <EyeOff size={15}/> : <Eye size={15}/>}
+            ) : (
+              <div className="space-y-3">
+                <input
+                  className="input-field text-sm"
+                  type="email"
+                  placeholder="Your Buy Me a Coffee email..."
+                  value={bmacInput}
+                  onChange={e => { setBmacInput(e.target.value); setBmacError('') }}
+                  onKeyDown={e => e.key === 'Enter' && handleBmacVerify()}
+                />
+                <button
+                  onClick={handleBmacVerify}
+                  disabled={!bmacInput.trim() || bmacLoading}
+                  className="btn-primary w-full justify-center"
+                >
+                  <Coffee size={14}/> {bmacLoading ? 'Verifying...' : 'Verify Membership'}
+                </button>
+                {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
+                <p className="text-slate-600 text-xs">
+                  Not a supporter yet?{' '}
+                  <a href="https://buymeacoffee.com/niksales73l" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:underline">
+                    Buy Me a Coffee →
+                  </a>
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Own API Key — secondary, collapsible */}
+          <div className="card">
+            <button
+              onClick={() => setShowOwnKey(o => !o)}
+              className="w-full flex items-center justify-between"
+            >
+              <span className="font-display font-semibold text-white text-sm flex items-center gap-2">
+                <Zap size={15} className="text-teal-400"/> Use my own API key
+              </span>
+              {showOwnKey ? <ChevronUp size={15} className="text-slate-400"/> : <ChevronDown size={15} className="text-slate-400"/>}
+            </button>
+
+            {showOwnKey && (
+              <div className="mt-4 space-y-3">
+                <DeepSeekGuide />
+                <div>
+                  <label className="text-sm text-slate-400 mb-1.5 block">Provider</label>
+                  <select className="input-field" value={form.provider} onChange={e => update('provider', e.target.value)}>
+                    {Object.entries(PROVIDER_CONFIGS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-400 mb-1.5 block">API Key</label>
+                  <div className="relative">
+                    <input className="input-field pr-10 font-mono text-xs" type={showKey ? 'text' : 'password'} placeholder="Enter your API key..." value={form.apiKey} onChange={e => update('apiKey', e.target.value)} />
+                    <button onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                      {showKey ? <EyeOff size={15}/> : <Eye size={15}/>}
+                    </button>
+                  </div>
+                  <p className="text-slate-600 text-xs mt-1">Stored locally. Never sent to our servers.</p>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-400 mb-1.5 block">Model</label>
+                  <input className="input-field font-mono text-xs" placeholder="e.g. deepseek-chat" value={form.model} onChange={e => update('model', e.target.value)} />
+                </div>
+                {form.provider === PROVIDERS.CUSTOM && (
+                  <div>
+                    <label className="text-sm text-slate-400 mb-1.5 block">Custom Base URL</label>
+                    <input className="input-field font-mono text-xs" placeholder="https://..." value={form.customBaseUrl} onChange={e => update('customBaseUrl', e.target.value)} />
+                  </div>
+                )}
+                <div className="bg-navy-900 rounded-xl p-3 text-xs text-slate-500 space-y-1">
+                  <div><span className="text-slate-400">DeepSeek:</span> deepseek-chat / deepseek-reasoner</div>
+                  <div><span className="text-slate-400">OpenAI:</span> gpt-4o / gpt-4o-mini</div>
+                  <div><span className="text-slate-400">Anthropic:</span> claude-sonnet-4-6 / claude-haiku-4-5-20251001</div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={testConnection} disabled={!form.apiKey || testing} className="btn-secondary flex-1 justify-center">
+                    <Zap size={14}/> {testing ? 'Testing...' : 'Test'}
+                  </button>
+                  <button onClick={save} className={`btn-primary flex-1 justify-center ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
+                    {saved ? <><Check size={14}/> Saved!</> : 'Save Config'}
                   </button>
                 </div>
-                <p className="text-slate-600 text-xs mt-1">Stored locally only. Never sent to our servers.</p>
+                {testResult === 'success' && <p className="text-green-400 text-sm text-center">✅ Connected!</p>}
+                {testResult === 'error' && <p className="text-red-400 text-sm text-center">❌ Failed. Check key and model name.</p>}
               </div>
-              <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">Model</label>
-                <input className="input-field font-mono text-xs" placeholder="e.g. deepseek-chat" value={form.model} onChange={e => update('model', e.target.value)} />
-              </div>
-              {form.provider === PROVIDERS.CUSTOM && (
-                <div>
-                  <label className="text-sm text-slate-400 mb-1.5 block">Custom Base URL</label>
-                  <input className="input-field font-mono text-xs" placeholder="https://..." value={form.customBaseUrl} onChange={e => update('customBaseUrl', e.target.value)} />
-                </div>
-              )}
-              <div className="bg-navy-900 rounded-xl p-3 text-xs text-slate-500 space-y-1">
-                <div><span className="text-slate-400">DeepSeek:</span> deepseek-chat / deepseek-reasoner</div>
-                <div><span className="text-slate-400">OpenAI:</span> gpt-4o / gpt-4o-mini</div>
-                <div><span className="text-slate-400">Anthropic:</span> claude-sonnet-4-6 / claude-haiku-4-5-20251001</div>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={testConnection} disabled={!form.apiKey || testing} className="btn-secondary flex-1 justify-center">
-                  <Zap size={14}/> {testing ? 'Testing...' : 'Test'}
-                </button>
-                <button onClick={save} className={`btn-primary flex-1 justify-center ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-                  {saved ? <><Check size={14}/> Saved!</> : 'Save Config'}
-                </button>
-              </div>
-              {testResult === 'success' && <p className="text-green-400 text-sm text-center">✅ Connected!</p>}
-              {testResult === 'error' && <p className="text-red-400 text-sm text-center">❌ Failed. Check key and model name.</p>}
-            </div>
+            )}
           </div>
 
           {/* Profile */}

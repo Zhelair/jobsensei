@@ -6,10 +6,10 @@ import { prompts } from '../../utils/prompts'
 import { generateId } from '../../utils/helpers'
 import ChatWindow from '../shared/ChatWindow'
 import VoiceChatBar from '../shared/VoiceChatBar'
-import { Play, X, History } from 'lucide-react'
+import { Play, X, History, ArrowLeft } from 'lucide-react'
 import { useVisuals } from '../../context/VisualsContext'
 
-export default function NegotiationSim() {
+export default function NegotiationSim({ onBack, embedded }) {
   const { drillMode } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData } = useProject()
@@ -99,6 +99,9 @@ export default function NegotiationSim() {
 
   if (view === 'setup') return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in">
+      {onBack && (
+        <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
+      )}
       <div className="flex items-center justify-between mb-1">
         <div>
           <h2 className="section-title">Salary Negotiation Simulator</h2>
@@ -158,7 +161,7 @@ export default function NegotiationSim() {
   )
 
   return (
-    <div className="flex flex-col h-full animate-in">
+    <div className={`flex flex-col animate-in ${embedded ? 'h-[calc(100vh-140px)]' : 'h-full'}`}>
       <div className="px-4 py-3 border-b border-navy-700 bg-navy-900 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-teal-500 flex items-center justify-center text-sm">💼</div>
