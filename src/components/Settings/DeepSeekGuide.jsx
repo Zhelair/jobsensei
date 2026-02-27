@@ -13,7 +13,7 @@ const STEPS = [
   {
     num: 2,
     title: 'Navigate to API Keys',
-    desc: "After logging in, click your profile icon in the top-right corner. Select "API Keys" from the dropdown menu.",
+    desc: 'After logging in, click your profile icon in the top-right corner. Select "API Keys" from the dropdown menu.',
     img: '/guides/deepseek/step-2.png',
   },
   {
