@@ -7,6 +7,7 @@ import { generateId } from '../../utils/helpers'
 import ChatWindow from '../shared/ChatWindow'
 import VoiceChatBar from '../shared/VoiceChatBar'
 import { X, History, Play } from 'lucide-react'
+import { useVisuals } from '../../context/VisualsContext'
 
 const MODES = [
   { id: 'hr', label: 'HR Screen', desc: 'Culture fit, motivation, soft skills' },
@@ -19,6 +20,7 @@ export default function InterviewSimulator() {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData } = useProject()
+  const { triggerConfetti, showToast } = useVisuals()
 
   const sessions = getProjectData('interviewSessions')
   const resume = getProjectData('resume')
@@ -89,6 +91,8 @@ export default function InterviewSimulator() {
     sessionIdRef.current = generateId()
     setMessages([]); setQuestionsAsked(0); setSessionScore(null)
     setView('chat')
+    triggerConfetti()
+    showToast("Interview starting — you've got this! 💼")
     beginInterview()
   }
 
@@ -159,7 +163,7 @@ export default function InterviewSimulator() {
   if (view === 'history') return <SessionHistory sessions={sessions} onBack={() => setView('setup')} />
 
   if (view === 'setup') return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-5 animate-in">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5 animate-in">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="section-title">Interview Simulator</h2>
@@ -170,9 +174,10 @@ export default function InterviewSimulator() {
         </button>
       </div>
 
+      {/* Mode selector — full width, 4 cols on md+ */}
       <div>
         <label className="text-sm text-slate-400 mb-2 block">Interview Mode</label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {MODES.map(m => (
             <button key={m.id} onClick={() => setMode(m.id)}
               className={`p-3 rounded-xl border text-left transition-all ${mode === m.id
@@ -185,39 +190,44 @@ export default function InterviewSimulator() {
         </div>
       </div>
 
-      <div>
-        <label className="text-sm text-slate-400 mb-1.5 block">
-          Job Description <span className="text-slate-600">(optional but recommended)</span>
-        </label>
-        <textarea className="textarea-field h-28" placeholder="Paste the job description..."
-          value={jd} onChange={e => setJd(e.target.value)} />
-      </div>
+      {/* 2-col: JD left / background + questions + start right */}
+      <div className="grid md:grid-cols-2 gap-5">
+        <div>
+          <label className="text-sm text-slate-400 mb-1.5 block">
+            Job Description <span className="text-slate-600">(optional but recommended)</span>
+          </label>
+          <textarea className="textarea-field h-52" placeholder="Paste the job description..."
+            value={jd} onChange={e => setJd(e.target.value)} />
+        </div>
 
-      <div>
-        <label className="text-sm text-slate-400 mb-1.5 block">
-          Your background {resume && <span className="text-teal-400 text-xs ml-1">← from resume</span>}
-        </label>
-        <textarea className="textarea-field h-20" placeholder="Describe your experience..."
-          value={background} onChange={e => setBackground(e.target.value)} />
-      </div>
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="text-sm text-slate-400 mb-1.5 block">
+              Your background {resume && <span className="text-teal-400 text-xs ml-1">← from resume</span>}
+            </label>
+            <textarea className="textarea-field h-32" placeholder="Describe your experience..."
+              value={background} onChange={e => setBackground(e.target.value)} />
+          </div>
 
-      <div className="flex gap-2 items-center flex-wrap">
-        <label className="text-sm text-slate-400">Questions:</label>
-        {[5, 10, 15].map(n => (
-          <button key={n} onClick={() => setQuestionCount(n)}
-            className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${questionCount === n
-              ? 'bg-teal-500/20 text-teal-400 border-teal-500/30'
-              : 'bg-navy-700 text-slate-400 border-navy-600'}`}>{n}</button>
-        ))}
-      </div>
+          <div className="flex gap-2 items-center flex-wrap">
+            <label className="text-sm text-slate-400">Questions:</label>
+            {[5, 10, 15].map(n => (
+              <button key={n} onClick={() => setQuestionCount(n)}
+                className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${questionCount === n
+                  ? 'bg-teal-500/20 text-teal-400 border-teal-500/30'
+                  : 'bg-navy-700 text-slate-400 border-navy-600'}`}>{n}</button>
+            ))}
+          </div>
 
-      <button onClick={startSession} disabled={!isConnected}
-        className="btn-primary w-full justify-center py-3 text-base">
-        <Play size={18}/> Start Interview
-      </button>
-      {!isConnected && (
-        <p className="text-center text-slate-500 text-xs">Configure your API key in Settings first.</p>
-      )}
+          <button onClick={startSession} disabled={!isConnected}
+            className="btn-primary w-full justify-center py-3 text-base mt-auto">
+            <Play size={18}/> Start Interview
+          </button>
+          {!isConnected && (
+            <p className="text-center text-slate-500 text-xs -mt-2">Configure your API key in Settings first.</p>
+          )}
+        </div>
+      </div>
     </div>
   )
 

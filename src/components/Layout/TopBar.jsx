@@ -2,7 +2,8 @@ import React, { useState } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
-import { Settings, GraduationCap, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles } from 'lucide-react'
+import { useVisuals } from '../../context/VisualsContext'
+import { Settings, GraduationCap, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2 } from 'lucide-react'
 
 const THEME_ICONS = {
   [THEMES.DARK]: Moon,
@@ -86,6 +87,7 @@ export default function TopBar() {
   const { activeSection, setActiveSection, drillMode, setDrillMode, isMuted, setIsMuted } = useApp()
   const { isConnected, isThinking } = useAI()
   const { theme, cycleTheme } = useTheme()
+  const { enabled: visualsEnabled, setEnabled: setVisualsEnabled, triggerConfetti } = useVisuals()
   const [showHelp, setShowHelp] = useState(false)
   const ThemeIcon = THEME_ICONS[theme]
 
@@ -120,6 +122,19 @@ export default function TopBar() {
             {isConnected ? 'AI Connected' : 'No API Key'}
           </div>
         )}
+
+        {/* Visuals toggle */}
+        <button
+          onClick={() => {
+            const next = !visualsEnabled
+            setVisualsEnabled(next)
+            if (next) triggerConfetti(70)
+          }}
+          className={`btn-ghost ${visualsEnabled ? 'text-yellow-400' : 'text-slate-400'}`}
+          title={visualsEnabled ? 'Visuals ON — click to disable' : 'Visuals OFF — click to enable'}
+        >
+          <Wand2 size={16} />
+        </button>
 
         {/* Theme cycle button */}
         <button
