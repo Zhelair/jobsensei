@@ -110,7 +110,15 @@ export default function TopBar() {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
-        {/* Thinking / Connection indicator */}
+        {/* Mobile: compact AI status dot */}
+        <div className="flex sm:hidden items-center gap-1 px-2 py-1 rounded-lg bg-navy-800 border border-navy-700">
+          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isThinking ? 'bg-indigo-400 animate-pulse' : isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
+          <span className={`text-xs font-mono ${isThinking ? 'text-indigo-300' : isConnected ? 'text-green-400' : 'text-red-400'}`}>
+            {isThinking ? 'AI…' : isConnected ? 'AI' : 'Off'}
+          </span>
+        </div>
+
+        {/* Desktop: full AI status indicator */}
         {isThinking ? (
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono bg-indigo-500/10 text-indigo-300 animate-pulse">
             <Brain size={13} className="animate-pulse" />
@@ -123,23 +131,23 @@ export default function TopBar() {
           </div>
         )}
 
-        {/* Visuals toggle */}
+        {/* Visuals toggle — desktop only */}
         <button
           onClick={() => {
             const next = !visualsEnabled
             setVisualsEnabled(next)
             if (next) triggerConfetti(70)
           }}
-          className={`btn-ghost ${visualsEnabled ? 'text-yellow-400' : 'text-slate-400'}`}
+          className={`hidden sm:flex btn-ghost ${visualsEnabled ? 'text-yellow-400' : 'text-slate-400'}`}
           title={visualsEnabled ? 'Visuals ON — click to disable' : 'Visuals OFF — click to enable'}
         >
           <Wand2 size={16} />
         </button>
 
-        {/* Theme cycle button */}
+        {/* Theme cycle button — desktop only */}
         <button
           onClick={cycleTheme}
-          className="btn-ghost"
+          className="hidden sm:flex btn-ghost"
           title={`Theme: ${THEME_LABELS[theme]} — click to cycle`}
         >
           <ThemeIcon size={16} />
