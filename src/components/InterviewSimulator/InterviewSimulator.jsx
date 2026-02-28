@@ -160,9 +160,14 @@ export default function InterviewSimulator() {
   // Last AI message for VoiceChatBar TTS
   const lastAiMsg = messages.filter(m => m.role === 'assistant' && m.content).at(-1)?.content || ''
 
-  if (view === 'history') return <SessionHistory sessions={sessions} onBack={() => setView('setup')} />
+  if (view === 'history') return (
+    <div className="overflow-y-auto h-full">
+      <SessionHistory sessions={sessions} onBack={() => setView('setup')} />
+    </div>
+  )
 
   if (view === 'setup') return (
+    <div className="overflow-y-auto h-full">
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5 animate-in">
       <div className="flex items-center justify-between">
         <div>
@@ -228,6 +233,7 @@ export default function InterviewSimulator() {
           )}
         </div>
       </div>
+    </div>
     </div>
   )
 
