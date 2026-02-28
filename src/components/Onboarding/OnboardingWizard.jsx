@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
-import { GraduationCap, ChevronRight, ChevronLeft, Check, Zap, Upload, FileText, Coffee, ChevronDown, ChevronUp } from 'lucide-react'
+import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, FileText, Coffee } from 'lucide-react'
 
 export default function OnboardingWizard() {
   const { saveProfile } = useApp()
@@ -16,11 +16,8 @@ export default function OnboardingWizard() {
     provider: PROVIDERS.DEEPSEEK, apiKey: '', model: 'deepseek-chat', customBaseUrl: '',
     resume: '',
   })
-  const [testing, setTesting] = useState(false)
-  const [testResult, setTestResult] = useState(null)
   const [extractingResume, setExtractingResume] = useState(false)
   const resumeFileRef = useRef(null)
-  const [showOwnKey, setShowOwnKey] = useState(false)
   const [bmacInput, setBmacInput] = useState('')
   const [bmacLoading, setBmacLoading] = useState(false)
   const [bmacError, setBmacError] = useState('')
@@ -66,29 +63,6 @@ export default function OnboardingWizard() {
     }
     setExtractingResume(false)
     e.target.value = ''
-  }
-
-  async function testConnection() {
-    setTesting(true)
-    setTestResult(null)
-    try {
-      const cfg = PROVIDER_CONFIGS[data.provider]
-      const baseUrl = data.provider === PROVIDERS.CUSTOM ? data.customBaseUrl : cfg.baseUrl
-      const body = data.provider === PROVIDERS.ANTHROPIC
-        ? { model: data.model, max_tokens: 20, messages: [{ role: 'user', content: 'Say "OK"' }] }
-        : { model: data.model, max_tokens: 20, messages: [{ role: 'user', content: 'Say "OK"' }] }
-
-      const headers = data.provider === PROVIDERS.ANTHROPIC
-        ? { 'Content-Type': 'application/json', 'x-api-key': data.apiKey, 'anthropic-version': '2023-06-01' }
-        : { 'Content-Type': 'application/json', 'Authorization': `Bearer ${data.apiKey}` }
-
-      const endpoint = data.provider === PROVIDERS.ANTHROPIC ? `${baseUrl}/v1/messages` : `${baseUrl}/chat/completions`
-      const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) })
-      setTestResult(res.ok ? 'success' : 'error')
-    } catch {
-      setTestResult('error')
-    }
-    setTesting(false)
   }
 
   function finish() {
@@ -231,54 +205,7 @@ export default function OnboardingWizard() {
             )}
           </div>
 
-          {/* Own API key toggle */}
-          <button
-            onClick={() => setShowOwnKey(o => !o)}
-            className="w-full flex items-center justify-between text-slate-400 hover:text-slate-300 transition-colors text-xs py-1"
-          >
-            <span>Or use my own API key</span>
-            {showOwnKey ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
-          </button>
-
-          {showOwnKey && (
-            <div className="space-y-3 border-t border-navy-700 pt-3">
-              <div>
-                <label className="text-sm text-slate-400 font-body mb-1.5 block">Provider</label>
-                <select
-                  className="input-field"
-                  value={data.provider}
-                  onChange={e => {
-                    const p = e.target.value
-                    update('provider', p)
-                    update('model', PROVIDER_CONFIGS[p].defaultModel)
-                  }}
-                >
-                  {Object.entries(PROVIDER_CONFIGS).map(([k, v]) => (
-                    <option key={k} value={k}>{v.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-slate-400 font-body mb-1.5 block">API Key</label>
-                <input
-                  className="input-field font-mono text-xs"
-                  type="password"
-                  placeholder="sk-..."
-                  value={data.apiKey}
-                  onChange={e => update('apiKey', e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-sm text-slate-400 font-body mb-1.5 block">Model</label>
-                <input className="input-field font-mono text-xs" placeholder="deepseek-chat" value={data.model} onChange={e => update('model', e.target.value)} />
-              </div>
-              <button onClick={testConnection} disabled={!data.apiKey || testing} className="btn-secondary w-full justify-center">
-                <Zap size={14}/> {testing ? 'Testing...' : 'Test Connection'}
-              </button>
-              {testResult === 'success' && <p className="text-green-400 text-sm text-center">✅ Connected!</p>}
-              {testResult === 'error' && <p className="text-red-400 text-sm text-center">❌ Failed. Check your key.</p>}
-            </div>
-          )}
+          <p className="text-slate-600 text-xs text-center">Once active, you can manage access in Settings.</p>
         </div>
       )
     },
