@@ -63,36 +63,35 @@ export function useVoice() {
     recognition.lang = 'en-US'
     recognition.maxAlternatives = 1
 
-    // Per-session highest finalized index — prevents processing same index twice within a session.
+    // Per-session highest finalized index — prevents reprocessing same index twice.
     let maxFinalizedIndex = -1
-    // On a resumed session, the first finalized result may be mobile Chrome re-delivering
-    // the last chunk from the previous session. We check and skip it if so.
-    let isFirstResult = true
 
     recognition.onresult = (e) => {
-      let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal && i > maxFinalizedIndex) {
           maxFinalizedIndex = i
           const newText = e.results[i][0].transcript.trim()
+          if (!newText) continue
 
-          // Mobile Chrome re-delivery guard: if the very first final result of a resumed
-          // session is identical to what we last appended, it's a duplicate — skip it.
-          if (isFirstResult && newText === lastAppendedRef.current) {
-            isFirstResult = false
-            continue
+          // Mobile Chrome delivers cumulative final results:
+          //   index 0 → "I", index 1 → "I think", index 2 → "I think this", …
+          // If we blindly concatenate we get "I I think I think this…" (the echo bug).
+          // Fix: when the new result is an extension of what we last appended,
+          // only add the new suffix instead of the full repeated phrase.
+          // This also covers session-restart re-delivery (newText === lastAppended → toAppend = "").
+          const prev = lastAppendedRef.current
+          let toAppend = newText
+          if (prev && newText.startsWith(prev)) {
+            toAppend = newText.slice(prev.length).trim()
           }
-          isFirstResult = false
 
-          if (newText) {
-            lastAppendedRef.current = newText
-            accumulatedRef.current += newText + ' '
+          if (toAppend) {
+            lastAppendedRef.current = newText // store full cumulative phrase for next comparison
+            accumulatedRef.current += toAppend + ' '
           }
-        } else if (!e.results[i].isFinal) {
-          interim += e.results[i][0].transcript
         }
       }
-      setTranscript((accumulatedRef.current + interim).trim())
+      setTranscript(accumulatedRef.current.trim())
     }
 
     recognition.onend = () => {
