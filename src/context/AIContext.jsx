@@ -47,6 +47,7 @@ export function AIProvider({ children }) {
   const [isThinking, setIsThinking] = useState(false)
   const [bmacToken, setBmacToken] = useState(null)
   const [bmacEmail, setBmacEmail] = useState(null)
+  const [showPaywall, setShowPaywall] = useState(false)
 
   useEffect(() => {
     const saved = localStorage.getItem('js_ai_config')
@@ -114,7 +115,10 @@ export function AIProvider({ children }) {
       }
     }
 
-    if (!apiKey) throw new Error('No API key configured. Go to Settings to add your key or verify your Buy Me a Coffee membership.')
+    if (!apiKey) {
+      setShowPaywall(true)
+      throw new Error('AI access required.')
+    }
 
     const cfg = PROVIDER_CONFIGS[provider]
     const baseUrl = provider === PROVIDERS.CUSTOM ? customBaseUrl : cfg.baseUrl
@@ -281,6 +285,7 @@ export function AIProvider({ children }) {
     <AIContext.Provider value={{
       provider, model, apiKey, customBaseUrl, isConnected, isThinking,
       bmacToken, bmacEmail,
+      showPaywall, openPaywall: () => setShowPaywall(true), closePaywall: () => setShowPaywall(false),
       saveConfig, callAI, verifyBmac, clearBmacToken,
       PROVIDER_CONFIGS, PROVIDERS,
     }}>

@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react'
 import { useAI } from '../../context/AIContext'
 import { useApp } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
-import { Zap, Check, Trash2, Eye, EyeOff, GraduationCap, FileText, Upload, Download, X, Coffee, ChevronDown, ChevronUp, LogOut } from 'lucide-react'
+import { Zap, Check, Trash2, Eye, EyeOff, GraduationCap, FileText, Upload, Download, X, Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
 
 export default function Settings() {
@@ -187,12 +187,15 @@ export default function Settings() {
                   <Coffee size={14}/> {bmacLoading ? 'Verifying...' : 'Verify Membership'}
                 </button>
                 {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
-                <p className="text-slate-600 text-xs">
-                  Not a supporter yet?{' '}
-                  <a href="https://buymeacoffee.com/niksales73l" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:underline">
-                    Buy Me a Coffee →
-                  </a>
-                </p>
+                <a
+                  href="https://buymeacoffee.com/niksales73l"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary w-full justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0 text-sm"
+                >
+                  <Coffee size={14} /> Buy Me a Coffee <ExternalLink size={12} className="opacity-60" />
+                </a>
+                <p className="text-slate-600 text-xs text-center">After supporting, enter your email above to activate.</p>
               </div>
             )}
           </div>

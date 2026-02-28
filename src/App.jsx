@@ -5,6 +5,7 @@ import { ProjectProvider } from './context/ProjectContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { VisualsProvider } from './context/VisualsContext'
 import VisualsOverlay from './components/shared/VisualsOverlay'
+import PaywallModal from './components/shared/PaywallModal'
 import Sidebar from './components/Layout/Sidebar'
 import TopBar from './components/Layout/TopBar'
 import BottomNav from './components/Layout/BottomNav'
@@ -46,6 +47,7 @@ function AppContent() {
       </div>
       <BottomNav />
       <VisualsOverlay />
+      <PaywallModal />
     </div>
   )
 }
