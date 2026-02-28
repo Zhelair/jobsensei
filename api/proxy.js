@@ -2,7 +2,7 @@
 // Validates BMAC token, then forwards AI requests to DeepSeek using the server-side API key
 // Environment variables required: JWT_SECRET, DEEPSEEK_API_KEY
 
-const crypto = require('crypto')
+import crypto from 'node:crypto'
 
 function verifyToken(token) {
   try {
@@ -19,7 +19,7 @@ function verifyToken(token) {
   }
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
