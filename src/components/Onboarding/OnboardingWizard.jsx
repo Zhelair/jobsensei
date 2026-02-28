@@ -203,11 +203,19 @@ export default function OnboardingWizard() {
               </div>
             ) : (
               <>
-                <p className="text-slate-400 text-xs">Already a supporter? Enter your BMAC email to activate.</p>
+                <a
+                  href="https://buymeacoffee.com/niksales73l"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary w-full justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0"
+                >
+                  <Coffee size={14}/> Buy Me a Coffee
+                </a>
+                <p className="text-slate-400 text-xs text-center">Already a supporter? Enter your access code below.</p>
                 <input
                   className="input-field text-sm"
-                  type="email"
-                  placeholder="Your Buy Me a Coffee email..."
+                  type="text"
+                  placeholder="Enter your access code..."
                   value={bmacInput}
                   onChange={e => { setBmacInput(e.target.value); setBmacError('') }}
                 />
@@ -216,15 +224,9 @@ export default function OnboardingWizard() {
                   disabled={!bmacInput.trim() || bmacLoading}
                   className="btn-primary w-full justify-center"
                 >
-                  <Coffee size={14}/> {bmacLoading ? 'Verifying...' : 'Verify Membership'}
+                  <Coffee size={14}/> {bmacLoading ? 'Verifying...' : 'Activate Access'}
                 </button>
                 {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
-                <p className="text-slate-600 text-xs">
-                  Not a supporter?{' '}
-                  <a href="https://buymeacoffee.com/niksales73l" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:underline">
-                    Buy Me a Coffee →
-                  </a>
-                </p>
               </>
             )}
           </div>

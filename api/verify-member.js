@@ -1,5 +1,5 @@
-// Vercel serverless function — verify BMAC membership via Vercel KV and issue a signed access token
-// Environment variables required: JWT_SECRET, KV_REST_API_URL, KV_REST_API_TOKEN
+// Vercel serverless function — verify supporter access code and issue a signed token
+// Environment variables required: JWT_SECRET, ACCESS_CODES (comma-separated list of valid codes)
 
 const crypto = require('crypto')
 
@@ -11,15 +11,6 @@ function signToken(payload) {
   return Buffer.from(JSON.stringify({ data, sig })).toString('base64')
 }
 
-async function kvGet(key) {
-  const res = await fetch(`${process.env.KV_REST_API_URL}/get/${encodeURIComponent(key)}`, {
-    headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` },
-  })
-  if (!res.ok) throw new Error(`KV error: ${res.status}`)
-  const json = await res.json()
-  return json.result // null if not found, otherwise the stored value
-}
-
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -28,34 +19,33 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { email } = req.body || {}
-  if (!email || typeof email !== 'string') {
-    return res.status(400).json({ error: 'Email is required' })
+  const { email: code } = req.body || {} // frontend sends field named "email", we treat it as a code
+  if (!code || typeof code !== 'string') {
+    return res.status(400).json({ error: 'Access code is required' })
   }
 
-  if (!process.env.JWT_SECRET || !process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+  if (!process.env.JWT_SECRET || !process.env.ACCESS_CODES) {
     return res.status(500).json({ error: 'Server configuration error' })
   }
 
-  try {
-    const normalizedEmail = email.trim().toLowerCase()
-    const value = await kvGet(`supporter:${normalizedEmail}`)
+  const validCodes = process.env.ACCESS_CODES
+    .split(',')
+    .map(c => c.trim().toLowerCase())
+    .filter(Boolean)
 
-    if (!value) {
-      return res.status(403).json({
-        error: 'No active Buy Me a Coffee membership found for this email. Make sure you use the email from your BMAC account.',
-      })
-    }
+  const input = code.trim().toLowerCase()
 
-    // Issue a token valid for 30 days
-    const token = signToken({
-      email: normalizedEmail,
-      exp: Date.now() + 30 * 24 * 60 * 60 * 1000,
+  if (!validCodes.includes(input)) {
+    return res.status(403).json({
+      error: 'Invalid access code. Check the code you received after supporting on Buy Me a Coffee.',
     })
-
-    return res.status(200).json({ token })
-  } catch (err) {
-    console.error('verify-member error:', err)
-    return res.status(500).json({ error: 'Could not verify membership. Please try again.' })
   }
+
+  // Issue a token valid for 365 days (access codes don't expire often)
+  const token = signToken({
+    code: input,
+    exp: Date.now() + 365 * 24 * 60 * 60 * 1000,
+  })
+
+  return res.status(200).json({ token })
 }

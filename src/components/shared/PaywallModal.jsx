@@ -76,19 +76,20 @@ export default function PaywallModal() {
           <div className="space-y-2">
             <input
               className="input-field text-sm w-full"
-              type="email"
-              placeholder="Your Buy Me a Coffee email..."
+              type="text"
+              placeholder="Enter your access code..."
               value={email}
               onChange={e => { setEmail(e.target.value); setError('') }}
               onKeyDown={e => e.key === 'Enter' && handleVerify()}
             />
+            <p className="text-slate-600 text-xs">You'll receive a code after supporting.</p>
             <button
               onClick={handleVerify}
               disabled={!email.trim() || loading}
               className="btn-secondary w-full justify-center"
             >
               <Coffee size={14} />
-              {loading ? 'Verifying...' : 'Verify Membership'}
+              {loading ? 'Verifying...' : 'Activate Access'}
             </button>
             {error && <p className="text-red-400 text-xs text-center">{error}</p>}
           </div>
