@@ -77,14 +77,15 @@ export function useVoice() {
 
     recognition.onend = () => {
       if (!userStoppedRef.current) {
-        // Auto-stopped by browser (very common on mobile with continuous=true).
-        // Enter paused state — keep the popup open so the user can tap the mic
-        // to continue recording, or press "Done — Send" to submit what they said.
-        setIsPaused(true)
+        // Mobile browsers auto-stop continuous recognition after each utterance.
+        // Silently restart with a brand-new SR instance so recording stays alive.
+        // CRITICAL: must use beginRecognitionRef.current() (new instance), NOT
+        // recognition.start() — restarting the same object causes audio-overlap
+        // which garbles the transcript ("IIiiiittttttt isis fuufnyny").
+        beginRecognitionRef.current(false)
         return
       }
-      // User explicitly stopped — cleanup is handled directly by stopListening /
-      // discardRecording so nothing to do here.
+      // User explicitly stopped — cleanup is handled by stopListening / discardRecording.
     }
 
     recognition.onerror = (e) => {
