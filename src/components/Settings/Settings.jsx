@@ -204,7 +204,8 @@ export default function Settings() {
             )}
           </div>
 
-          {/* Own API Key — secondary, collapsible */}
+          {/* Own API Key — only visible to supporters */}
+          {bmacToken && (
           <div className="card">
             <button
               onClick={() => setShowOwnKey(o => !o)}
@@ -263,6 +264,7 @@ export default function Settings() {
               </div>
             )}
           </div>
+          )}
 
           {/* Profile */}
           <div className="card">
