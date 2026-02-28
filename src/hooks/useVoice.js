@@ -31,6 +31,8 @@ export function useVoice() {
   const lastTextRef = useRef('')
   // Tracks whether the user explicitly pressed Done/Discard (vs auto-stop on mobile)
   const userStoppedRef = useRef(false)
+  // The last text segment we finalized — used to detect mobile re-delivery on restart
+  const lastAppendedRef = useRef('')
   // Generation counter for TTS — prevents the Chrome cancel→onend→restart bug
   const speakGenRef = useRef(0)
   const [voicesLoaded, setVoicesLoaded] = useState(false)
@@ -48,7 +50,10 @@ export function useVoice() {
   const beginRecognitionRef = useRef(null)
   beginRecognitionRef.current = (resetAccumulated) => {
     if (!supported) return
-    if (resetAccumulated) accumulatedRef.current = ''
+    if (resetAccumulated) {
+      accumulatedRef.current = ''
+      lastAppendedRef.current = ''
+    }
     userStoppedRef.current = false
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -58,34 +63,50 @@ export function useVoice() {
     recognition.lang = 'en-US'
     recognition.maxAlternatives = 1
 
-    // Track the highest result index we've finalized.
-    // Mobile Chrome bug: e.resultIndex can reset to 0, causing the same words
-    // to be finalized again → "I I I III think think thikn".
-    // By only processing indices > maxFinalizedIndex we deduplicate.
+    // Per-session highest finalized index — prevents processing same index twice within a session.
     let maxFinalizedIndex = -1
+    // On a resumed session, the first finalized result may be mobile Chrome re-delivering
+    // the last chunk from the previous session. We check and skip it if so.
+    let isFirstResult = true
 
     recognition.onresult = (e) => {
+      let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal && i > maxFinalizedIndex) {
           maxFinalizedIndex = i
-          accumulatedRef.current += e.results[i][0].transcript + ' '
+          const newText = e.results[i][0].transcript.trim()
+
+          // Mobile Chrome re-delivery guard: if the very first final result of a resumed
+          // session is identical to what we last appended, it's a duplicate — skip it.
+          if (isFirstResult && newText === lastAppendedRef.current) {
+            isFirstResult = false
+            continue
+          }
+          isFirstResult = false
+
+          if (newText) {
+            lastAppendedRef.current = newText
+            accumulatedRef.current += newText + ' '
+          }
+        } else if (!e.results[i].isFinal) {
+          interim += e.results[i][0].transcript
         }
       }
-      // Show only finalized text — mobile interim results are noisy
-      setTranscript(accumulatedRef.current.trim())
+      setTranscript((accumulatedRef.current + interim).trim())
     }
 
     recognition.onend = () => {
       if (!userStoppedRef.current) {
         // Mobile browsers auto-stop continuous recognition after each utterance.
-        // Silently restart with a brand-new SR instance so recording stays alive.
-        // CRITICAL: must use beginRecognitionRef.current() (new instance), NOT
-        // recognition.start() — restarting the same object causes audio-overlap
-        // which garbles the transcript ("IIiiiittttttt isis fuufnyny").
-        beginRecognitionRef.current(false)
+        // We restart with a new SR instance. The 300ms delay lets mobile Chrome
+        // flush its audio buffer — without it, the last audio chunk leaks into
+        // the new session and gets transcribed again (the "I think I think" bug).
+        setTimeout(() => {
+          if (!userStoppedRef.current) beginRecognitionRef.current(false)
+        }, 300)
         return
       }
-      // User explicitly stopped — cleanup is handled by stopListening / discardRecording.
+      // User explicitly stopped — cleanup handled by stopListening / discardRecording.
     }
 
     recognition.onerror = (e) => {
