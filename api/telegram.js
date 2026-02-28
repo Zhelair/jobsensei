@@ -1,6 +1,9 @@
 // JobSensei Telegram Bot — Vercel serverless webhook handler
-// Handles user onboarding, tool access (15 Questions for now), and rate limiting
-// State is stored in Supabase. Admin users bypass daily limits.
+// Features: Onboarding with CV, 15 Questions (with resume + JD), Resume Checker, Interview Simulator
+//
+// Required Supabase columns on telegram_users table:
+//   telegram_id BIGINT, first_name TEXT, target_role TEXT,
+//   experience TEXT, current_step TEXT, resume_text TEXT, interview_state TEXT
 
 import { createClient } from '@supabase/supabase-js'
 
@@ -35,6 +38,15 @@ const sendTyping = (chatId) =>
 const answerCbq = (id) =>
   tg('answerCallbackQuery', { callback_query_id: id })
 
+// Download a Telegram file and return its text content
+async function downloadTelegramFile(fileId) {
+  const res = await tg('getFile', { file_id: fileId })
+  if (!res.ok) return null
+  const url = `https://api.telegram.org/file/bot${BOT_TOKEN}/${res.result.file_path}`
+  const fileRes = await fetch(url)
+  return fileRes.text()
+}
+
 // --- Keyboards ---
 
 const MAIN_MENU = {
@@ -43,6 +55,7 @@ const MAIN_MENU = {
       [{ text: '📝 15 Interview Questions', callback_data: 'tool_questions' }],
       [{ text: '📄 Resume Checker', callback_data: 'tool_resume' }],
       [{ text: '🎤 Interview Simulator', callback_data: 'tool_interview' }],
+      [{ text: '🔄 Update My CV/Resume', callback_data: 'update_resume' }],
     ],
   },
 }
@@ -63,6 +76,30 @@ const EXPERIENCE_BUTTONS = {
       [{ text: '🌱 Junior (1-3 yrs)', callback_data: 'exp_junior' }],
       [{ text: '🌿 Mid-level (3-7 yrs)', callback_data: 'exp_mid' }],
       [{ text: '🌳 Senior (7+ yrs)', callback_data: 'exp_senior' }],
+    ],
+  },
+}
+
+const SKIP_RESUME_BUTTON = {
+  reply_markup: {
+    inline_keyboard: [
+      [{ text: '⏭️ Skip for now', callback_data: 'skip_resume' }],
+    ],
+  },
+}
+
+const SKIP_JD_BUTTON = {
+  reply_markup: {
+    inline_keyboard: [
+      [{ text: '⏭️ Skip — generate without JD', callback_data: 'skip_jd' }],
+    ],
+  },
+}
+
+const STOP_INTERVIEW_BUTTON = {
+  reply_markup: {
+    inline_keyboard: [
+      [{ text: '🛑 Stop Interview', callback_data: 'stop_interview' }],
     ],
   },
 }
@@ -150,32 +187,211 @@ async function callDeepSeek(systemPrompt, userMessage) {
   return data.choices[0].message.content
 }
 
+// --- Shared: ask for resume ---
+
+function askForResume(chatId) {
+  return sendMessage(
+    chatId,
+    `📄 *Add Your Resume/CV* _(optional but recommended!)_\n\nPersonalizes your questions and analysis.\n\n*How to add it:*\n• 📋 Paste your CV text directly here\n• 📎 Upload a *.txt* file\n\n_Have a PDF? Open it → select all → copy → paste here._`,
+    SKIP_RESUME_BUTTON
+  )
+}
+
 // --- Tool: 15 Interview Questions ---
 
 async function handleQuestions(chatId, userId, user) {
   if (await hasUsedToolToday(userId, 'questions')) {
     return sendMessage(
       chatId,
-      `⏰ *Daily limit reached!*\n\nYou've already used the Questions Generator today.\n\nCome back tomorrow for another free session — or unlock unlimited access on the app! 🚀`,
+      `⏰ *Daily limit reached!*\n\nYou've already used the Questions Generator today.\n\nCome back tomorrow — or unlock unlimited access on the app! 🚀`,
       CTA_BUTTONS
     )
   }
 
+  // Ask for optional job description before generating
+  await updateUser(userId, { current_step: 'awaiting_jd' })
+  return sendMessage(
+    chatId,
+    `📋 *Optional: Paste a Job Description*\n\nI'll tailor the 15 questions specifically to the job you're applying for.\n\n_Or skip to generate based on your role & experience._`,
+    SKIP_JD_BUTTON
+  )
+}
+
+async function generateQuestions(chatId, userId, user, jobDescription) {
   await sendTyping(chatId)
   await sendMessage(chatId, `⏳ Generating 15 tailored questions for *${user.target_role}*...`)
 
+  const resumeSection = user.resume_text
+    ? `\n\nCandidate Resume:\n${user.resume_text.slice(0, 1500)}`
+    : ''
+  const jdSection = jobDescription
+    ? `\n\nJob Description:\n${jobDescription.slice(0, 1000)}`
+    : ''
+
   const questions = await callDeepSeek(
-    `You are an expert interview coach. Generate exactly 15 interview questions tailored to the role and experience level provided. Mix behavioral, technical, and situational questions. Format as a numbered list. Be specific and practical.`,
-    `Role: ${user.target_role}\nExperience: ${user.experience}\n\nGenerate 15 interview questions.`
+    `You are an expert interview coach. Generate exactly 15 interview questions tailored to the information provided. Mix behavioral, technical, and situational questions. Format as a numbered list. Be specific and practical.`,
+    `Role: ${user.target_role}\nExperience: ${user.experience}${resumeSection}${jdSection}\n\nGenerate 15 interview questions.`
   )
 
   await recordUsage(userId, 'questions')
   await sendMessage(chatId, `🎯 *15 Interview Questions — ${user.target_role}*\n\n${questions}`)
   await sendMessage(
     chatId,
-    `✅ *That's your free session for today!*\n\nWant voice coaching, AI feedback & unlimited practice?`,
+    `✅ *Free session done!*\n\nWant voice coaching, AI feedback & unlimited practice?`,
     CTA_BUTTONS
   )
+}
+
+// --- Tool: Resume Checker ---
+
+async function handleResumeChecker(chatId, userId, user) {
+  if (!user.resume_text) {
+    await updateUser(userId, { current_step: 'awaiting_resume_for_check' })
+    return sendMessage(
+      chatId,
+      `📄 *Resume Checker*\n\nYou haven't added your CV yet!\n\nPaste your resume/CV text below and I'll analyze it right away.\n\n_Tip: Copy text from your PDF/Word doc and paste here._`
+    )
+  }
+
+  if (await hasUsedToolToday(userId, 'resume_check')) {
+    return sendMessage(
+      chatId,
+      `⏰ *Daily limit reached!*\n\nYou've already used Resume Checker today.\n\nCome back tomorrow or unlock unlimited on the app! 🚀`,
+      CTA_BUTTONS
+    )
+  }
+
+  return analyzeResume(chatId, userId, user, user.resume_text)
+}
+
+async function analyzeResume(chatId, userId, user, resumeText) {
+  await sendTyping(chatId)
+  await sendMessage(chatId, `🔍 Analyzing your resume for *${user.target_role}*...`)
+
+  const feedback = await callDeepSeek(
+    `You are a senior HR expert and career coach. Analyze the resume and give structured, actionable feedback. Be honest but constructive. Format with clear sections using emojis.`,
+    `Target Role: ${user.target_role}\nExperience Level: ${user.experience || 'Not specified'}\n\nResume:\n${resumeText.slice(0, 3000)}\n\nProvide feedback in these sections:\n1. ✅ Strengths (3-5 bullet points)\n2. ⚠️ Areas to Improve (3-5 bullet points)\n3. 💡 Specific Suggestions (3-5 actionable tips)\n4. 🎯 ATS Score Estimate (X/10) with brief reason`
+  )
+
+  await recordUsage(userId, 'resume_check')
+  await sendMessage(chatId, `📊 *Resume Analysis — ${user.target_role}*\n\n${feedback}`)
+  await sendMessage(
+    chatId,
+    `✅ *Analysis complete!*\n\nWant a full rewrite, ATS optimization & more on the app?`,
+    CTA_BUTTONS
+  )
+}
+
+// --- Tool: Interview Simulator ---
+
+async function handleInterviewStart(chatId, userId, user) {
+  if (await hasUsedToolToday(userId, 'interview')) {
+    return sendMessage(
+      chatId,
+      `⏰ *Daily limit reached!*\n\nYou've already done an interview session today.\n\nCome back tomorrow or unlock unlimited on the app! 🚀`,
+      CTA_BUTTONS
+    )
+  }
+
+  await sendTyping(chatId)
+  await sendMessage(chatId, `⏳ Preparing your interview for *${user.target_role}*...`)
+
+  const resumeSection = user.resume_text
+    ? `\n\nCandidate Resume:\n${user.resume_text.slice(0, 1000)}`
+    : ''
+
+  const questionsRaw = await callDeepSeek(
+    `You are an expert interviewer. Generate exactly 5 interview questions for the role provided. Mix technical, behavioral, and situational. Return ONLY the questions, one per line, numbered 1-5. No extra commentary.`,
+    `Role: ${user.target_role}\nExperience: ${user.experience}${resumeSection}\n\nGenerate 5 interview questions.`
+  )
+
+  const questions = questionsRaw
+    .split('\n')
+    .map(l => l.replace(/^\d+[\.\)]\s*/, '').trim())
+    .filter(l => l.length > 10)
+    .slice(0, 5)
+
+  if (questions.length < 3) {
+    return sendMessage(chatId, `❌ Failed to generate questions. Please try again.`)
+  }
+
+  const interviewState = JSON.stringify({
+    active: true,
+    questions,
+    answers: [],
+    feedbacks: [],
+    current: 0,
+  })
+
+  await updateUser(userId, { current_step: 'interview_active', interview_state: interviewState })
+
+  await sendMessage(
+    chatId,
+    `🎤 *Interview Simulator Started!*\n\nI'll ask you *${questions.length} questions* — answer each like you're in a real interview.\n\nType your answer and send it. Good luck! 💪`,
+    STOP_INTERVIEW_BUTTON
+  )
+  await sendMessage(chatId, `*Question 1 of ${questions.length}:*\n\n${questions[0]}`)
+}
+
+async function handleInterviewAnswer(chatId, userId, user, answerText) {
+  let state
+  try {
+    state = JSON.parse(user.interview_state || '{}')
+  } catch {
+    await updateUser(userId, { current_step: null, interview_state: null })
+    return sendMessage(chatId, `Something went wrong. Use /menu to restart.`, MAIN_MENU)
+  }
+
+  if (!state.active || state.current >= state.questions.length) {
+    await updateUser(userId, { current_step: null, interview_state: null })
+    return sendMessage(chatId, `Interview session ended. Use /menu to start again.`, MAIN_MENU)
+  }
+
+  const currentQuestion = state.questions[state.current]
+  state.answers.push(answerText)
+
+  await sendTyping(chatId)
+
+  const feedback = await callDeepSeek(
+    `You are an expert interview coach giving brief, constructive feedback on interview answers. Be specific and practical. Keep it to 3-4 sentences.`,
+    `Role: ${user.target_role}\nQuestion: ${currentQuestion}\nAnswer: ${answerText}\n\nGive brief feedback on this answer.`
+  )
+
+  state.feedbacks.push(feedback)
+  state.current += 1
+
+  await sendMessage(chatId, `💬 *Feedback:*\n\n${feedback}`)
+
+  if (state.current >= state.questions.length) {
+    // All done — overall assessment
+    await updateUser(userId, { current_step: null, interview_state: null })
+    await recordUsage(userId, 'interview')
+
+    await sendTyping(chatId)
+    const qa = state.questions
+      .map((q, i) => `Q: ${q}\nA: ${state.answers[i] || '(no answer)'}`)
+      .join('\n\n')
+
+    const assessment = await callDeepSeek(
+      `You are an expert interview coach. Based on the full interview performance, give an overall assessment. Include: overall rating (X/10), top 2 strengths, top 2 areas to improve, and one key actionable tip.`,
+      `Role: ${user.target_role}\nExperience: ${user.experience}\n\nInterview Q&A:\n${qa}`
+    )
+
+    await sendMessage(chatId, `🏁 *Interview Complete!*\n\n*Overall Assessment:*\n\n${assessment}`)
+    await sendMessage(
+      chatId,
+      `✅ *Great practice session!*\n\nWant real-time voice coaching, deeper feedback & unlimited mock interviews?`,
+      CTA_BUTTONS
+    )
+  } else {
+    // Next question
+    await updateUser(userId, { interview_state: JSON.stringify(state) })
+    await sendMessage(
+      chatId,
+      `*Question ${state.current + 1} of ${state.questions.length}:*\n\n${state.questions[state.current]}`,
+      STOP_INTERVIEW_BUTTON
+    )
+  }
 }
 
 // --- Main update handler ---
@@ -191,13 +407,40 @@ async function handleUpdate(update) {
     await answerCbq(cq.id)
     const user = await getOrCreateUser(userId, cq.from.first_name)
 
-    // Onboarding step 2: experience level selected
+    // Experience level selected → ask for resume
     if (data.startsWith('exp_')) {
       const experience = EXP_LABELS[data]
-      await updateUser(userId, { experience, current_step: null })
+      await updateUser(userId, { experience, current_step: 'awaiting_resume' })
+      await sendMessage(chatId, `✅ *${experience} ${user.target_role}* — noted! 🎯`)
+      return askForResume(chatId)
+    }
+
+    if (data === 'skip_resume') {
+      await updateUser(userId, { current_step: null })
       return sendMessage(
         chatId,
-        `✅ All set! *${experience} ${user.target_role}* — let's get you interview-ready!\n\nChoose a tool to practice 👇`,
+        `No problem! You can add your CV anytime using "Update My CV/Resume" in the menu.\n\nLet's get you interview-ready! 👇`,
+        MAIN_MENU
+      )
+    }
+
+    if (data === 'update_resume') {
+      await updateUser(userId, { current_step: 'awaiting_resume' })
+      return askForResume(chatId)
+    }
+
+    if (data === 'skip_jd') {
+      await updateUser(userId, { current_step: null })
+      // Re-fetch user to get latest resume_text
+      const freshUser = await getOrCreateUser(userId, cq.from.first_name)
+      return generateQuestions(chatId, userId, freshUser, null)
+    }
+
+    if (data === 'stop_interview') {
+      await updateUser(userId, { current_step: null, interview_state: null })
+      return sendMessage(
+        chatId,
+        `🛑 Interview stopped.\n\nUse /menu to access tools whenever you're ready.`,
         MAIN_MENU
       )
     }
@@ -207,18 +450,20 @@ async function handleUpdate(update) {
       return handleQuestions(chatId, userId, user)
     }
 
-    if (data === 'tool_resume' || data === 'tool_interview') {
-      return sendMessage(
-        chatId,
-        `🚧 *Coming soon on the bot!*\n\nThis tool is available right now on the full JobSensei app 👇`,
-        CTA_BUTTONS
-      )
+    if (data === 'tool_resume') {
+      if (!user.target_role) return sendMessage(chatId, `Please run /start first to set up your profile.`)
+      return handleResumeChecker(chatId, userId, user)
+    }
+
+    if (data === 'tool_interview') {
+      if (!user.target_role) return sendMessage(chatId, `Please run /start first to set up your profile.`)
+      return handleInterviewStart(chatId, userId, user)
     }
 
     return
   }
 
-  // Regular text message
+  // Regular message
   const msg = update.message
   if (!msg) return
 
@@ -228,7 +473,53 @@ async function handleUpdate(update) {
   const text = (msg.text || '').trim()
   const user = await getOrCreateUser(userId, firstName)
 
+  // File/document upload (for resume)
+  if (msg.document) {
+    const isResumeStep =
+      user.current_step === 'awaiting_resume' ||
+      user.current_step === 'awaiting_resume_for_check'
+
+    if (!isResumeStep) {
+      return sendMessage(chatId, `Use /menu to access tools.`, MAIN_MENU)
+    }
+
+    const fileName = msg.document.file_name || ''
+    if (!fileName.toLowerCase().endsWith('.txt')) {
+      return sendMessage(
+        chatId,
+        `⚠️ I can only read *.txt* files right now.\n\n_Have a PDF? Open it, select all text (Ctrl+A), copy, and paste here._`,
+        SKIP_RESUME_BUTTON
+      )
+    }
+
+    await sendTyping(chatId)
+    const fileContent = await downloadTelegramFile(msg.document.file_id)
+
+    if (!fileContent || fileContent.trim().length < 50) {
+      return sendMessage(chatId, `❌ The file seems empty or too short. Please paste your CV text directly.`)
+    }
+
+    const resumeText = fileContent.trim().slice(0, 8000)
+    const isOnboarding = user.current_step === 'awaiting_resume'
+    await updateUser(userId, { resume_text: resumeText, current_step: null })
+
+    if (isOnboarding) {
+      return sendMessage(
+        chatId,
+        `✅ *CV saved!* (${resumeText.length} chars)\n\nYour tools are now personalized. Let's go! 👇`,
+        MAIN_MENU
+      )
+    } else {
+      return analyzeResume(chatId, userId, { ...user, resume_text: resumeText }, resumeText)
+    }
+  }
+
+  // --- Commands ---
+
   if (text === '/start') {
+    if (user.current_step === 'interview_active') {
+      await updateUser(userId, { interview_state: null })
+    }
     await updateUser(userId, { current_step: 'awaiting_role' })
     return sendMessage(
       chatId,
@@ -238,6 +529,7 @@ async function handleUpdate(update) {
 
   if (text === '/menu') {
     if (!user.target_role) return sendMessage(chatId, `Please run /start first to set up your profile.`)
+    if (user.current_step) await updateUser(userId, { current_step: null, interview_state: null })
     return sendMessage(chatId, `What would you like to practice today, ${firstName}? 👇`, MAIN_MENU)
   }
 
@@ -249,7 +541,8 @@ async function handleUpdate(update) {
     )
   }
 
-  // Onboarding step 1: waiting for role name
+  // --- State-based message routing ---
+
   if (user.current_step === 'awaiting_role') {
     if (text.length < 2) return sendMessage(chatId, `Please enter a valid job role (e.g. Software Engineer).`)
     await updateUser(userId, { target_role: text, current_step: 'awaiting_experience' })
@@ -258,6 +551,48 @@ async function handleUpdate(update) {
       `Great! *${text}* — got it! 🎯\n\nNow, what's your experience level?`,
       EXPERIENCE_BUTTONS
     )
+  }
+
+  if (user.current_step === 'awaiting_experience') {
+    return sendMessage(chatId, `Please select your experience level using the buttons above.\n\nOr /start to restart.`, EXPERIENCE_BUTTONS)
+  }
+
+  if (user.current_step === 'awaiting_resume') {
+    if (text.length < 50) {
+      return sendMessage(
+        chatId,
+        `That seems too short for a resume. Please paste more content, or tap Skip.`,
+        SKIP_RESUME_BUTTON
+      )
+    }
+    const resumeText = text.slice(0, 8000)
+    await updateUser(userId, { resume_text: resumeText, current_step: null })
+    return sendMessage(
+      chatId,
+      `✅ *CV saved!* (${resumeText.length} chars)\n\nYour tools are now personalized to your experience. Let's go! 👇`,
+      MAIN_MENU
+    )
+  }
+
+  if (user.current_step === 'awaiting_resume_for_check') {
+    if (text.length < 50) {
+      return sendMessage(chatId, `That seems too short. Please paste your full CV text.`)
+    }
+    const resumeText = text.slice(0, 8000)
+    await updateUser(userId, { resume_text: resumeText, current_step: null })
+    return analyzeResume(chatId, userId, { ...user, resume_text: resumeText }, resumeText)
+  }
+
+  if (user.current_step === 'awaiting_jd') {
+    await updateUser(userId, { current_step: null })
+    return generateQuestions(chatId, userId, user, text)
+  }
+
+  if (user.current_step === 'interview_active') {
+    if (text.length < 5) {
+      return sendMessage(chatId, `Please give a proper answer (at least a sentence or two).`)
+    }
+    return handleInterviewAnswer(chatId, userId, user, text)
   }
 
   // Catch-all
@@ -282,6 +617,6 @@ export default async function handler(req, res) {
     console.error('Telegram bot error:', err)
   }
 
-  // Always return 200 — Telegram retries on non-200 responses
+  // Always 200 — Telegram retries on non-200
   return res.status(200).json({ ok: true })
 }
