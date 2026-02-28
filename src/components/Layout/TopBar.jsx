@@ -1,9 +1,9 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 import { useVisuals } from '../../context/VisualsContext'
-import { Settings, GraduationCap, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2 } from 'lucide-react'
+import { Settings, GraduationCap, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal } from 'lucide-react'
 
 const THEME_ICONS = {
   [THEMES.DARK]: Moon,
@@ -89,7 +89,9 @@ export default function TopBar() {
   const { theme, cycleTheme } = useTheme()
   const { enabled: visualsEnabled, setEnabled: setVisualsEnabled, triggerConfetti } = useVisuals()
   const [showHelp, setShowHelp] = useState(false)
+  const [showMore, setShowMore] = useState(false)
   const [feedback, setFeedback] = useState(null)
+  const [aiSpeaking, setAiSpeaking] = useState(false)
   const feedbackTimer = useRef(null)
   const ThemeIcon = THEME_ICONS[theme]
 
@@ -98,6 +100,17 @@ export default function TopBar() {
     setFeedback(msg)
     feedbackTimer.current = setTimeout(() => setFeedback(null), 1800)
   }, [])
+
+  // Poll the Web Speech API to know when AI is speaking (shared across hook instances)
+  useEffect(() => {
+    const id = setInterval(() => {
+      setAiSpeaking(window.speechSynthesis?.speaking || false)
+    }, 150)
+    return () => clearInterval(id)
+  }, [])
+
+  const THEME_ORDER = [THEMES.DARK, THEMES.DAYLIGHT, THEMES.MYSPACE]
+  const nextThemeLabel = THEME_LABELS[THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length]]
 
   const help = SECTION_HELP[activeSection]
 
@@ -168,7 +181,7 @@ export default function TopBar() {
           <ThemeIcon size={16} />
         </button>
 
-        {/* Global mute/unmute toggle */}
+        {/* Global mute/unmute toggle — glows teal when AI is speaking */}
         <button
           onClick={() => {
             if (!isMuted) window.speechSynthesis?.cancel()
@@ -176,10 +189,19 @@ export default function TopBar() {
             setIsMuted(next)
             showFeedback(next ? '🔇 AI voice muted' : '🔊 AI voice on')
           }}
-          className={`btn-ghost ${isMuted ? 'text-red-400' : 'text-slate-400'}`}
-          title={isMuted ? 'Unmute AI voice' : 'Mute AI voice'}
+          className={`btn-ghost relative transition-all ${
+            isMuted
+              ? 'text-red-400'
+              : aiSpeaking
+              ? 'text-teal-400 ring-1 ring-teal-500/50 rounded-lg bg-teal-500/10'
+              : 'text-slate-400'
+          }`}
+          title={isMuted ? 'Unmute AI voice' : aiSpeaking ? 'AI is speaking — tap to mute' : 'Mute AI voice'}
         >
-          {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+          {aiSpeaking && !isMuted && (
+            <span className="absolute inset-0 rounded-lg animate-pulse bg-teal-400/10" />
+          )}
+          {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} className={aiSpeaking ? 'animate-pulse' : ''} />}
         </button>
 
         {/* Sensei / Drill mode toggle */}
@@ -202,16 +224,68 @@ export default function TopBar() {
           <span className="hidden sm:inline">{drillMode ? 'Drill 🔱' : 'Sensei'}</span>
         </button>
 
-        {/* Help button */}
+        {/* Help button — desktop only (mobile users access via ⋯ menu) */}
         {help && (
           <button
             onClick={() => setShowHelp(v => !v)}
-            className="btn-ghost relative"
+            className="hidden sm:flex btn-ghost relative"
             title={`Help: ${SECTION_TITLES[activeSection]}`}
           >
             <HelpCircle size={16} className={showHelp ? 'text-teal-400' : ''} />
           </button>
         )}
+
+        {/* Mobile ⋯ overflow menu — Theme, Visuals, Help */}
+        <div className="relative sm:hidden">
+          <button
+            onClick={() => setShowMore(v => !v)}
+            className={`btn-ghost ${showMore ? 'text-teal-400' : 'text-slate-400'}`}
+            title="More options"
+          >
+            <MoreHorizontal size={16} />
+          </button>
+          {showMore && (
+            <>
+              {/* Backdrop to close on outside tap */}
+              <div className="fixed inset-0 z-40" onClick={() => setShowMore(false)} />
+              <div className="absolute right-0 top-full mt-1.5 bg-navy-800 border border-navy-700 rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-0.5 min-w-[160px]">
+                <button
+                  onClick={() => {
+                    const next = !visualsEnabled
+                    setVisualsEnabled(next)
+                    if (next) triggerConfetti(70)
+                    showFeedback(next ? '✨ Visuals ON' : 'Visuals OFF')
+                    setShowMore(false)
+                  }}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs w-full text-left transition-colors ${visualsEnabled ? 'text-yellow-400 bg-yellow-500/10' : 'text-slate-400 hover:text-white hover:bg-navy-700'}`}
+                >
+                  <Wand2 size={14} />
+                  Visuals: {visualsEnabled ? 'ON' : 'OFF'}
+                </button>
+                <button
+                  onClick={() => {
+                    cycleTheme()
+                    showFeedback(`Theme → ${nextThemeLabel}`)
+                    setShowMore(false)
+                  }}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-navy-700 w-full text-left transition-colors"
+                >
+                  <ThemeIcon size={14} />
+                  Theme: {THEME_LABELS[theme]}
+                </button>
+                {help && (
+                  <button
+                    onClick={() => { setShowHelp(v => !v); setShowMore(false) }}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs w-full text-left transition-colors ${showHelp ? 'text-teal-400 bg-teal-500/10' : 'text-slate-400 hover:text-white hover:bg-navy-700'}`}
+                  >
+                    <HelpCircle size={14} />
+                    Help
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
 
         <button
           onClick={() => setActiveSection(SECTIONS.SETTINGS)}

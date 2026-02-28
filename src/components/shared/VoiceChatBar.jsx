@@ -8,7 +8,7 @@
  *   placeholder        — input placeholder text
  */
 import React, { useState, useEffect, useRef } from 'react'
-import { Mic, MicOff, Send, Volume2, VolumeX, AlertCircle, X, BellOff } from 'lucide-react'
+import { Mic, MicOff, Send, Volume2, VolumeX, AlertCircle, X, BellOff, RotateCcw, Trash2 } from 'lucide-react'
 import { useVoice } from '../../hooks/useVoice'
 import { useApp } from '../../context/AppContext'
 
@@ -21,7 +21,7 @@ export default function VoiceChatBar({
   const { isMuted } = useApp()
   const {
     isListening, transcript, isSpeaking, supported, error, clearError,
-    startListening, stopListening, speak, stopSpeaking, replayLast,
+    startListening, stopListening, discardRecording, speak, stopSpeaking, replayLast,
   } = useVoice()
 
   const [input, setInput] = useState('')
@@ -109,12 +109,21 @@ export default function VoiceChatBar({
               </span>
               <span className="text-teal-400 text-sm font-body font-medium">Listening…</span>
             </div>
-            <button
-              onClick={stopListening}
-              className="px-3 py-1 rounded-lg bg-teal-500/20 border border-teal-500/30 text-teal-400 text-xs font-body hover:bg-teal-500/30 transition-all"
-            >
-              Done — Send
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={discardRecording}
+                className="px-3 py-1 rounded-lg bg-red-500/15 border border-red-500/25 text-red-400 text-xs font-body hover:bg-red-500/25 transition-all flex items-center gap-1"
+                title="Discard this recording"
+              >
+                <Trash2 size={11} /> Discard
+              </button>
+              <button
+                onClick={stopListening}
+                className="px-3 py-1 rounded-lg bg-teal-500/20 border border-teal-500/30 text-teal-400 text-xs font-body hover:bg-teal-500/30 transition-all"
+              >
+                Done — Send
+              </button>
+            </div>
           </div>
 
           <div className="min-h-[3rem] bg-navy-900/60 rounded-xl px-3 py-2">
@@ -175,16 +184,20 @@ export default function VoiceChatBar({
               : 'bg-navy-700 text-slate-500 hover:text-slate-300'
           }`}
           title={
-            isSpeaking ? 'Stop speaking'
-            : ttsEnabled ? 'TTS on — click to turn off'
-            : 'Replay last AI message / enable voice'
+            isSpeaking ? 'Tap to stop'
+            : ttsEnabled ? 'Auto-play on — tap to replay now, or hold to turn off'
+            : 'Play last AI response aloud'
           }
         >
           {/* Pulse ring when speaking */}
           {isSpeaking && (
             <span className="absolute inset-0 rounded-xl bg-teal-400/20 animate-ping" />
           )}
-          {ttsEnabled || isSpeaking ? <Volume2 size={16}/> : <VolumeX size={16}/>}
+          {isSpeaking
+            ? <Volume2 size={16}/>
+            : ttsEnabled
+            ? <RotateCcw size={15}/>
+            : <VolumeX size={16}/>}
         </button>
 
         {/* Text input */}
