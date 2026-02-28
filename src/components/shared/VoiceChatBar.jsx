@@ -8,7 +8,7 @@
  *   placeholder        — input placeholder text
  */
 import React, { useState, useEffect, useRef } from 'react'
-import { Mic, MicOff, Send, Volume2, VolumeX, AlertCircle, X } from 'lucide-react'
+import { Mic, MicOff, Send, Volume2, VolumeX, AlertCircle, X, BellOff } from 'lucide-react'
 import { useVoice } from '../../hooks/useVoice'
 import { useApp } from '../../context/AppContext'
 
@@ -26,8 +26,10 @@ export default function VoiceChatBar({
 
   const [input, setInput] = useState('')
   const [ttsEnabled, setTtsEnabled] = useState(false)
+  const [mutedWarning, setMutedWarning] = useState(false)
   const ttsEnabledRef = useRef(false)
   const textareaRef = useRef(null)
+  const mutedWarnTimer = useRef(null)
 
   // Keep speak in a ref so the TTS effect never needs speak as a dependency
   const speakRef = useRef(speak)
@@ -72,7 +74,12 @@ export default function VoiceChatBar({
       setTtsEnabled(false)
     } else {
       setTtsEnabled(true)
-      if (!isMuted) {
+      if (isMuted) {
+        // Voice is globally muted — warn user
+        if (mutedWarnTimer.current) clearTimeout(mutedWarnTimer.current)
+        setMutedWarning(true)
+        mutedWarnTimer.current = setTimeout(() => setMutedWarning(false), 4000)
+      } else {
         // Use lastAiMessage directly — lastTextRef may be empty on fresh mount
         if (lastAiMessage) speakRef.current(lastAiMessage)
         else replayLast()
@@ -122,6 +129,15 @@ export default function VoiceChatBar({
         </div>
       )}
 
+      {/* ── Muted warning ── */}
+      {mutedWarning && (
+        <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2 mb-2 text-amber-300 text-xs animate-in">
+          <BellOff size={13} className="flex-shrink-0" />
+          <span className="flex-1">AI voice is muted — tap 🔇 in the top bar to unmute</span>
+          <button onClick={() => setMutedWarning(false)} className="text-amber-400 hover:text-amber-200 flex-shrink-0"><X size={12}/></button>
+        </div>
+      )}
+
       {/* ── Error banner ── */}
       {error && (
         <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 mb-2 text-red-300 text-xs">
@@ -151,8 +167,10 @@ export default function VoiceChatBar({
         {/* TTS / Replay button */}
         <button
           onClick={handleTts}
-          className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-            ttsEnabled || isSpeaking
+          className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all relative overflow-hidden ${
+            isSpeaking
+              ? 'bg-teal-500/25 text-teal-400 border border-teal-500/40 shadow-lg shadow-teal-500/20'
+              : ttsEnabled
               ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
               : 'bg-navy-700 text-slate-500 hover:text-slate-300'
           }`}
@@ -162,6 +180,10 @@ export default function VoiceChatBar({
             : 'Replay last AI message / enable voice'
           }
         >
+          {/* Pulse ring when speaking */}
+          {isSpeaking && (
+            <span className="absolute inset-0 rounded-xl bg-teal-400/20 animate-ping" />
+          )}
           {ttsEnabled || isSpeaking ? <Volume2 size={16}/> : <VolumeX size={16}/>}
         </button>
 
@@ -191,9 +213,13 @@ export default function VoiceChatBar({
       </div>
 
       {isSpeaking && (
-        <p className="text-indigo-400 text-xs text-center mt-1.5 animate-pulse">
-          🔊 AI is speaking — press 🔊 to stop
-        </p>
+        <div className="flex items-center justify-center gap-2 mt-1.5">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-400" />
+          </span>
+          <span className="text-teal-400 text-xs animate-pulse">Speaking — tap 🔊 to stop</span>
+        </div>
       )}
     </div>
   )

@@ -117,7 +117,7 @@ export default function TopBar() {
       </h1>
 
       {/* Right side */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2">
         {/* Mobile: compact AI status dot — tap for details */}
         <button
           className="flex sm:hidden items-center gap-1 px-2 py-1 rounded-lg bg-navy-800 border border-navy-700"
@@ -189,7 +189,7 @@ export default function TopBar() {
             setDrillMode(next)
             showFeedback(next ? '🔱 Drill mode — brutal honesty' : '🏯 Sensei mode — supportive coaching')
           }}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-display font-semibold transition-all duration-200 ${
+          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-display font-semibold transition-all duration-200 ${
             drillMode
               ? 'bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25'
               : 'bg-teal-500/10 text-teal-400 border border-teal-500/20 hover:bg-teal-500/20'
