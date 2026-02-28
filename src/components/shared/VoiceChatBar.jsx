@@ -20,8 +20,8 @@ export default function VoiceChatBar({
 }) {
   const { isMuted } = useApp()
   const {
-    isListening, transcript, isSpeaking, supported, error, clearError,
-    startListening, stopListening, discardRecording, speak, stopSpeaking, replayLast,
+    isListening, isPaused, transcript, isSpeaking, supported, error, clearError,
+    startListening, resumeListening, stopListening, discardRecording, speak, stopSpeaking, replayLast,
   } = useVoice()
 
   const [input, setInput] = useState('')
@@ -53,15 +53,18 @@ export default function VoiceChatBar({
 
   // -- Mic --
   function handleMic() {
+    if (isPaused) {
+      // Mobile auto-paused — resume the session (keeps accumulated text)
+      resumeListening()
+      return
+    }
     if (isListening) {
-      stopListening()   // triggers onend → delivers accumulated transcript → onSend
+      // Actively recording on desktop — stop and send
+      stopListening()
       return
     }
     clearError()
-    startListening(
-      (final) => { if (final.trim()) onSend(final) },
-      () => {}   // interim updates already tracked via transcript state in useVoice
-    )
+    startListening((final) => { if (final.trim()) onSend(final) })
   }
 
   // -- TTS button --
@@ -98,16 +101,27 @@ export default function VoiceChatBar({
 
   return (
     <div className="relative">
-      {/* ── Recording popup ── */}
-      {isListening && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-navy-800 border border-teal-500/40 rounded-2xl p-4 shadow-2xl z-20 animate-in">
+      {/* ── Recording popup (active + paused) ── */}
+      {(isListening || isPaused) && (
+        <div className={`absolute bottom-full left-0 right-0 mb-2 bg-navy-800 rounded-2xl p-4 shadow-2xl z-20 animate-in border ${isPaused ? 'border-amber-500/40' : 'border-teal-500/40'}`}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
-              </span>
-              <span className="text-teal-400 text-sm font-body font-medium">Listening…</span>
+              {isPaused ? (
+                <>
+                  <span className="relative flex h-2 w-2">
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
+                  </span>
+                  <span className="text-amber-400 text-sm font-body font-medium">Paused — tap 🎙 to continue</span>
+                </>
+              ) : (
+                <>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                  </span>
+                  <span className="text-teal-400 text-sm font-body font-medium">Listening…</span>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-1.5">
               <button
@@ -129,11 +143,11 @@ export default function VoiceChatBar({
           <div className="min-h-[3rem] bg-navy-900/60 rounded-xl px-3 py-2">
             {transcript
               ? <p className="text-white text-sm leading-relaxed">{transcript}</p>
-              : <p className="text-slate-500 text-sm italic">Speak now — natural pauses are fine…</p>
+              : <p className="text-slate-500 text-sm italic">Speak now — words appear when recognised…</p>
             }
           </div>
           <p className="text-slate-600 text-xs mt-2 text-center">
-            Press <strong className="text-slate-500">Done — Send</strong> when finished · <strong className="text-slate-500">Discard</strong> to start over
+            <strong className="text-slate-500">Done — Send</strong> to submit · <strong className="text-slate-500">Discard</strong> to cancel
           </p>
         </div>
       )}
@@ -158,18 +172,20 @@ export default function VoiceChatBar({
 
       {/* ── Input row ── */}
       <div className="flex gap-2 items-end">
-        {/* Mic button — always shown if browser supports it */}
+        {/* Mic button */}
         {supported && (
           <button
             onClick={handleMic}
             className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-              isListening
+              isListening && !isPaused
                 ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse'
+                : isPaused
+                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                 : 'bg-navy-700 text-slate-400 hover:text-teal-400 hover:bg-navy-600'
             }`}
-            title={isListening ? 'Stop & send' : 'Press to speak'}
+            title={isPaused ? 'Tap to continue recording' : isListening ? 'Stop & send' : 'Press to speak'}
           >
-            {isListening ? <MicOff size={16}/> : <Mic size={16}/>}
+            {isListening && !isPaused ? <MicOff size={16}/> : <Mic size={16}/>}
           </button>
         )}
 

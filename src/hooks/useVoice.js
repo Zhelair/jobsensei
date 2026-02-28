@@ -15,6 +15,8 @@ function getBestVoice() {
 
 export function useVoice() {
   const [isListening, setIsListening] = useState(false)
+  // isPaused = recognition auto-stopped (mobile), popup stays open so user can resume or send
+  const [isPaused, setIsPaused] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [error, setError] = useState(null)
@@ -22,13 +24,14 @@ export function useVoice() {
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
   )
+
   const recognitionRef = useRef(null)
   const accumulatedRef = useRef('')
   const onResultCallbackRef = useRef(null)
   const lastTextRef = useRef('')
-  // Generation counter — incremented on each speak() or stopSpeaking() call.
-  // speakNext() bails out if the generation has moved on, preventing the
-  // Chrome bug where cancel() fires onend and re-triggers the chain.
+  // Tracks whether the user explicitly pressed Done/Discard (vs auto-stop on mobile)
+  const userStoppedRef = useRef(false)
+  // Generation counter for TTS — prevents the Chrome cancel→onend→restart bug
   const speakGenRef = useRef(0)
   const [voicesLoaded, setVoicesLoaded] = useState(false)
 
@@ -39,45 +42,63 @@ export function useVoice() {
     if (window.speechSynthesis.getVoices().length > 0) setVoicesLoaded(true)
   }, [])
 
-  const startListening = useCallback((onResult, onInterim) => {
+  // Internal: create and start a SpeechRecognition session.
+  // resetAccumulated=true on fresh start, false when resuming after a mobile auto-pause.
+  // Stored in a ref so startListening / resumeListening always call the latest version.
+  const beginRecognitionRef = useRef(null)
+  beginRecognitionRef.current = (resetAccumulated) => {
     if (!supported) return
-    setError(null)
-    accumulatedRef.current = ''
-    onResultCallbackRef.current = onResult
+    if (resetAccumulated) accumulatedRef.current = ''
+    userStoppedRef.current = false
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SR()
-    recognition.continuous = true        // keep alive through pauses
+    recognition.continuous = true
     recognition.interimResults = true
     recognition.lang = 'en-US'
     recognition.maxAlternatives = 1
 
+    // Track the highest result index we've finalized.
+    // Mobile Chrome bug: e.resultIndex can reset to 0, causing the same words
+    // to be finalized again → "I I I III think think thikn".
+    // By only processing indices > maxFinalizedIndex we deduplicate.
+    let maxFinalizedIndex = -1
+
     recognition.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
+        if (e.results[i].isFinal && i > maxFinalizedIndex) {
+          maxFinalizedIndex = i
           accumulatedRef.current += e.results[i][0].transcript + ' '
         }
       }
-      // Show only finalized text — interim results are often noisy on mobile
-      // and cause garbled display (duplicate characters, corrupted words).
+      // Show only finalized text — mobile interim results are noisy
       setTranscript(accumulatedRef.current.trim())
     }
 
     recognition.onend = () => {
-      setIsListening(false)
-      setTranscript('')
-      const final = accumulatedRef.current.trim()
-      if (final) onResultCallbackRef.current && onResultCallbackRef.current(final)
+      if (!userStoppedRef.current) {
+        // Auto-stopped by browser (very common on mobile with continuous=true).
+        // Enter paused state — keep the popup open so the user can tap the mic
+        // to continue recording, or press "Done — Send" to submit what they said.
+        setIsPaused(true)
+        return
+      }
+      // User explicitly stopped — cleanup is handled directly by stopListening /
+      // discardRecording so nothing to do here.
     }
 
     recognition.onerror = (e) => {
       if (e.error === 'not-allowed' || e.error === 'permission-denied') {
+        userStoppedRef.current = true
         setIsListening(false)
+        setIsPaused(false)
         setError('Microphone access denied. Please allow microphone in your browser settings.')
       } else if (e.error === 'no-speech') {
         setError(null)
       } else if (e.error === 'audio-capture') {
+        userStoppedRef.current = true
         setIsListening(false)
+        setIsPaused(false)
         setError('No microphone found. Please connect a microphone and try again.')
       } else if (e.error !== 'aborted') {
         setError(`Voice error: ${e.error}. Try refreshing the page.`)
@@ -86,26 +107,52 @@ export function useVoice() {
 
     recognitionRef.current = recognition
     recognition.start()
+  }
+
+  // Start a fresh recording session
+  const startListening = useCallback((onResult) => {
+    if (!supported) return
+    setError(null)
     setIsListening(true)
+    setIsPaused(false)
     setTranscript('')
+    onResultCallbackRef.current = onResult
+    beginRecognitionRef.current(true)
   }, [supported])
 
-  // Stop listening and send whatever was recorded
+  // Resume after a mobile auto-pause (keeps previously spoken text)
+  const resumeListening = useCallback(() => {
+    if (!supported) return
+    setIsPaused(false)
+    beginRecognitionRef.current(false)
+  }, [supported])
+
+  // User pressed "Done — Send": deliver accumulated text immediately.
+  // Also calls recognition.stop() in case it's still running (desktop).
   const stopListening = useCallback(() => {
-    recognitionRef.current?.stop()
+    userStoppedRef.current = true
+    const final = accumulatedRef.current.trim()
+    accumulatedRef.current = ''
+    setIsListening(false)
+    setIsPaused(false)
+    setTranscript('')
+    try { recognitionRef.current?.stop() } catch {}
+    if (final) onResultCallbackRef.current?.(final)
   }, [])
 
-  // Stop listening and throw away the recording — nothing is sent
+  // User pressed "Discard": stop without sending anything
   const discardRecording = useCallback(() => {
-    accumulatedRef.current = ''   // clear so onend delivers nothing
+    userStoppedRef.current = true
+    accumulatedRef.current = ''
     setTranscript('')
-    recognitionRef.current?.stop()
+    setIsListening(false)
+    setIsPaused(false)
+    try { recognitionRef.current?.stop() } catch {}
   }, [])
 
   const speak = useCallback((text, onEnd) => {
     if (!window.speechSynthesis) return
 
-    // Bump generation so any in-flight speakNext() from a previous call exits
     speakGenRef.current++
     const gen = speakGenRef.current
     window.speechSynthesis.cancel()
@@ -119,7 +166,6 @@ export function useVoice() {
       .replace(/\n{2,}/g, '. ')
       .replace(/\n/g, ' ')
 
-    // Split into ≤220-char chunks to avoid Chrome's ~15 s TTS cutoff bug
     const rawSentences = clean.match(/[^.!?]+[.!?]+|\S[^.!?]*/g) || [clean]
     const chunks = []
     let current = ''
@@ -139,9 +185,7 @@ export function useVoice() {
     const voice = getBestVoice()
 
     function speakNext() {
-      // Bail out if cancelled or a newer speak() call started
       if (gen !== speakGenRef.current) return
-
       if (index >= chunks.length) {
         setIsSpeaking(false)
         onEnd && onEnd()
@@ -155,7 +199,7 @@ export function useVoice() {
       if (voice) utt.voice = voice
       utt.onend = speakNext
       utt.onerror = () => {
-        if (gen !== speakGenRef.current) return   // stale — ignore
+        if (gen !== speakGenRef.current) return
         setIsSpeaking(false)
         onEnd && onEnd()
       }
@@ -166,7 +210,7 @@ export function useVoice() {
   }, [voicesLoaded])
 
   const stopSpeaking = useCallback(() => {
-    speakGenRef.current++   // invalidates the active speakNext() chain
+    speakGenRef.current++
     window.speechSynthesis?.cancel()
     setIsSpeaking(false)
   }, [])
@@ -178,7 +222,8 @@ export function useVoice() {
   const clearError = useCallback(() => setError(null), [])
 
   return {
-    isListening, transcript, isSpeaking, supported, error,
-    startListening, stopListening, discardRecording, speak, stopSpeaking, clearError, replayLast,
+    isListening, isPaused, transcript, isSpeaking, supported, error,
+    startListening, resumeListening, stopListening, discardRecording,
+    speak, stopSpeaking, clearError, replayLast,
   }
 }
