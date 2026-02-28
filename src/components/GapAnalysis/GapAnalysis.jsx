@@ -5,11 +5,11 @@ import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, matchColor, generateId } from '../../utils/helpers'
 import ScoreRing from '../shared/ScoreRing'
-import { Search, AlertTriangle, Zap, Save, Clock, Trash2 } from 'lucide-react'
+import { Search, AlertTriangle, Zap, Save, Clock, Trash2, ArrowLeft } from 'lucide-react'
 
 const TABS = ['Gap Analysis', 'App Scoring', 'Red Flags']
 
-export default function GapAnalysis() {
+export default function GapAnalysis({ onBack }) {
   const { profile, drillMode } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData } = useProject()
@@ -108,7 +108,7 @@ export default function GapAnalysis() {
 
   if (showHistory) return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
-      <button onClick={() => setShowHistory(false)} className="btn-ghost mb-4">← Back</button>
+      <button onClick={() => setShowHistory(false)} className="btn-ghost mb-4"><ArrowLeft size={16} /> Back</button>
       <h2 className="section-title mb-1">Saved Analyses</h2>
       <p className="section-sub mb-4">{savedResults.length} saved in this project</p>
       {savedResults.length === 0 ? (
@@ -132,6 +132,9 @@ export default function GapAnalysis() {
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto animate-in">
+      {onBack && (
+        <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
+      )}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="section-title">Gap Analysis</h2>

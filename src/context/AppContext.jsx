@@ -5,13 +5,9 @@ const AppContext = createContext(null)
 export const SECTIONS = {
   DASHBOARD: 'dashboard',
   INTERVIEW: 'interview',
-  GAP: 'gap',
   LEARNING: 'learning',
-  STAR: 'star',
-  NEGOTIATION: 'negotiation',
   TOOLS: 'tools',
   TRACKER: 'tracker',
-  NOTES: 'notes',
   SETTINGS: 'settings',
 }
 

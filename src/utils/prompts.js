@@ -268,7 +268,7 @@ Return ONLY valid JSON:
   followUpEmail: (company, interviewer, role, notes, tone) => `You are an expert at professional communication. Write a post-interview follow-up email.
 
 Company: ${company}
-Interviewer: ${interviewer}  
+Interviewer: ${interviewer}
 Role: ${role}
 Interview notes: ${notes}
 Tone: ${tone}
@@ -279,11 +279,12 @@ Write a follow-up thank you email that:
 - Briefly reinforces their fit for the role
 - Ends with a clear next step or expression of continued interest
 - Feels ${tone.toLowerCase()}, human, not corporate
+- MAXIMUM 150 words in the body, 2-3 short paragraphs only — be tight and punchy, not verbose
 
 Return ONLY valid JSON:
 {
   "subject": "Email subject line",
-  "body": "Full email body"
+  "body": "Full email body (max 150 words)"
 }`,
 
   elevatorPitch: (role, strengths, drillMode) => `You are a personal branding expert crafting a killer "Why should we hire you?" response.
@@ -382,6 +383,7 @@ Audit this LinkedIn profile and return ONLY valid JSON:
 {
   "overallScore": 0,
   "ctaPresent": false,
+  "summary": "Overall assessment in plain language, max 100 words — what's working, what's missing, and the single most important thing to fix",
   "sections": {
     "headline": {
       "score": 0,

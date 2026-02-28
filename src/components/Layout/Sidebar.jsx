@@ -1,21 +1,17 @@
 import React from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import {
-  LayoutDashboard, Mic, Search, BookOpen, Star, DollarSign,
-  Wrench, Briefcase, Settings, ChevronLeft, ChevronRight, GraduationCap, FileText
+  LayoutDashboard, Mic, BookOpen,
+  Wrench, Briefcase, Settings, ChevronLeft, ChevronRight, GraduationCap
 } from 'lucide-react'
 import ProjectSwitcher from '../Projects/ProjectSwitcher'
 
 const NAV_ITEMS = [
   { id: SECTIONS.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
   { id: SECTIONS.INTERVIEW, icon: Mic, label: 'Interview Sim' },
-  { id: SECTIONS.GAP, icon: Search, label: 'Gap Analysis' },
   { id: SECTIONS.LEARNING, icon: BookOpen, label: 'Learning' },
-  { id: SECTIONS.STAR, icon: Star, label: 'STAR Builder' },
-  { id: SECTIONS.NEGOTIATION, icon: DollarSign, label: 'Negotiation Sim' },
   { id: SECTIONS.TOOLS, icon: Wrench, label: 'Tools' },
   { id: SECTIONS.TRACKER, icon: Briefcase, label: 'Job Tracker' },
-  { id: SECTIONS.NOTES, icon: FileText, label: 'Notes' },
 ]
 
 export default function Sidebar() {

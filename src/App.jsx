@@ -5,20 +5,17 @@ import { ProjectProvider } from './context/ProjectContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { VisualsProvider } from './context/VisualsContext'
 import VisualsOverlay from './components/shared/VisualsOverlay'
+import PaywallModal from './components/shared/PaywallModal'
 import Sidebar from './components/Layout/Sidebar'
 import TopBar from './components/Layout/TopBar'
 import BottomNav from './components/Layout/BottomNav'
 import OnboardingWizard from './components/Onboarding/OnboardingWizard'
 import Dashboard from './components/Dashboard/Dashboard'
 import InterviewSimulator from './components/InterviewSimulator/InterviewSimulator'
-import GapAnalysis from './components/GapAnalysis/GapAnalysis'
 import LearningSection from './components/LearningSection/LearningSection'
-import STARBuilder from './components/STARBuilder/STARBuilder'
-import NegotiationSim from './components/NegotiationSim/NegotiationSim'
 import Tools from './components/Tools/Tools'
 import JobTracker from './components/JobTracker/JobTracker'
 import Settings from './components/Settings/Settings'
-import Notes from './components/Notes/Notes'
 
 function AppContent() {
   const { activeSection, showOnboarding } = useApp()
@@ -26,20 +23,16 @@ function AppContent() {
   const sections = {
     [SECTIONS.DASHBOARD]: Dashboard,
     [SECTIONS.INTERVIEW]: InterviewSimulator,
-    [SECTIONS.GAP]: GapAnalysis,
     [SECTIONS.LEARNING]: LearningSection,
-    [SECTIONS.STAR]: STARBuilder,
-    [SECTIONS.NEGOTIATION]: NegotiationSim,
     [SECTIONS.TOOLS]: Tools,
     [SECTIONS.TRACKER]: JobTracker,
-    [SECTIONS.NOTES]: Notes,
     [SECTIONS.SETTINGS]: Settings,
   }
 
   const ActiveSection = sections[activeSection] || Dashboard
 
   // Sections that use full height (chat interfaces)
-  const fullHeightSections = [SECTIONS.INTERVIEW, SECTIONS.NEGOTIATION]
+  const fullHeightSections = [SECTIONS.INTERVIEW]
   const isFullHeight = fullHeightSections.includes(activeSection)
 
   return (
@@ -54,6 +47,7 @@ function AppContent() {
       </div>
       <BottomNav />
       <VisualsOverlay />
+      <PaywallModal />
     </div>
   )
 }

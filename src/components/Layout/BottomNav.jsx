@@ -1,12 +1,12 @@
 import React from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
-import { LayoutDashboard, Mic, Search, BookOpen, Briefcase } from 'lucide-react'
+import { LayoutDashboard, Mic, BookOpen, Wrench, Briefcase } from 'lucide-react'
 
 const MOBILE_NAV = [
   { id: SECTIONS.DASHBOARD, icon: LayoutDashboard, label: 'Home' },
   { id: SECTIONS.INTERVIEW, icon: Mic, label: 'Interview' },
-  { id: SECTIONS.GAP, icon: Search, label: 'Gap' },
   { id: SECTIONS.LEARNING, icon: BookOpen, label: 'Learn' },
+  { id: SECTIONS.TOOLS, icon: Wrench, label: 'Tools' },
   { id: SECTIONS.TRACKER, icon: Briefcase, label: 'Tracker' },
 ]
 

@@ -6,7 +6,7 @@ import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { Star, Plus, Wand2, Copy, Trash2, ArrowLeft, Tag, Edit3, Check, Eye } from 'lucide-react'
 
-export default function STARBuilder() {
+export default function STARBuilder({ onBack }) {
   const { drillMode } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData } = useProject()
@@ -172,6 +172,9 @@ export default function STARBuilder() {
 
   return (
     <div className="p-4 md:p-6 animate-in">
+      {onBack && (
+        <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
+      )}
       <div className="flex items-center justify-between mb-5">
         <div>
           <h2 className="section-title">Story Bank</h2>
