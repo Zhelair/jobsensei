@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
@@ -89,7 +89,15 @@ export default function TopBar() {
   const { theme, cycleTheme } = useTheme()
   const { enabled: visualsEnabled, setEnabled: setVisualsEnabled, triggerConfetti } = useVisuals()
   const [showHelp, setShowHelp] = useState(false)
+  const [feedback, setFeedback] = useState(null)
+  const feedbackTimer = useRef(null)
   const ThemeIcon = THEME_ICONS[theme]
+
+  const showFeedback = useCallback((msg) => {
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current)
+    setFeedback(msg)
+    feedbackTimer.current = setTimeout(() => setFeedback(null), 1800)
+  }, [])
 
   const help = SECTION_HELP[activeSection]
 
@@ -110,13 +118,20 @@ export default function TopBar() {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
-        {/* Mobile: compact AI status dot */}
-        <div className="flex sm:hidden items-center gap-1 px-2 py-1 rounded-lg bg-navy-800 border border-navy-700">
+        {/* Mobile: compact AI status dot — tap for details */}
+        <button
+          className="flex sm:hidden items-center gap-1 px-2 py-1 rounded-lg bg-navy-800 border border-navy-700"
+          onClick={() => showFeedback(
+            isThinking ? '🧠 AI is thinking…'
+            : isConnected ? '🟢 AI connected & ready'
+            : '🔴 No API key — go to Settings'
+          )}
+        >
           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isThinking ? 'bg-indigo-400 animate-pulse' : isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
           <span className={`text-xs font-mono ${isThinking ? 'text-indigo-300' : isConnected ? 'text-green-400' : 'text-red-400'}`}>
             {isThinking ? 'AI…' : isConnected ? 'AI' : 'Off'}
           </span>
-        </div>
+        </button>
 
         {/* Desktop: full AI status indicator */}
         {isThinking ? (
@@ -157,7 +172,9 @@ export default function TopBar() {
         <button
           onClick={() => {
             if (!isMuted) window.speechSynthesis?.cancel()
-            setIsMuted(!isMuted)
+            const next = !isMuted
+            setIsMuted(next)
+            showFeedback(next ? '🔇 AI voice muted' : '🔊 AI voice on')
           }}
           className={`btn-ghost ${isMuted ? 'text-red-400' : 'text-slate-400'}`}
           title={isMuted ? 'Unmute AI voice' : 'Mute AI voice'}
@@ -167,7 +184,11 @@ export default function TopBar() {
 
         {/* Sensei / Drill mode toggle */}
         <button
-          onClick={() => setDrillMode(!drillMode)}
+          onClick={() => {
+            const next = !drillMode
+            setDrillMode(next)
+            showFeedback(next ? '🔱 Drill mode — brutal honesty' : '🏯 Sensei mode — supportive coaching')
+          }}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-display font-semibold transition-all duration-200 ${
             drillMode
               ? 'bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25'
@@ -199,6 +220,13 @@ export default function TopBar() {
           <Settings size={16} />
         </button>
       </div>
+
+      {/* Mobile button feedback toast */}
+      {feedback && (
+        <div className="absolute right-4 top-full mt-1.5 px-3 py-1.5 bg-navy-700 border border-navy-600 rounded-xl text-xs text-white shadow-xl z-50 pointer-events-none whitespace-nowrap animate-in">
+          {feedback}
+        </div>
+      )}
 
       {/* Help popover */}
       {showHelp && help && (
