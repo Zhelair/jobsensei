@@ -1,7 +1,7 @@
 // Vercel serverless function — verify supporter access code and issue a signed token
 // Environment variables required: JWT_SECRET, ACCESS_CODES (comma-separated list of valid codes)
 
-const crypto = require('crypto')
+import crypto from 'node:crypto'
 
 function signToken(payload) {
   const data = JSON.stringify(payload)
@@ -11,7 +11,7 @@ function signToken(payload) {
   return Buffer.from(JSON.stringify({ data, sig })).toString('base64')
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // Always return JSON — never let Vercel return an HTML error page
   try {
     res.setHeader('Access-Control-Allow-Origin', '*')
