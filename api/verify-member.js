@@ -1,5 +1,5 @@
-// Vercel serverless function — verify BMAC membership and issue a signed access token
-// Environment variables required: BMAC_TOKEN, JWT_SECRET
+// Vercel serverless function — verify BMAC membership via Vercel KV and issue a signed access token
+// Environment variables required: JWT_SECRET, KV_REST_API_URL, KV_REST_API_TOKEN
 
 const crypto = require('crypto')
 
@@ -11,12 +11,13 @@ function signToken(payload) {
   return Buffer.from(JSON.stringify({ data, sig })).toString('base64')
 }
 
-async function fetchBmacSubscriptions() {
-  const res = await fetch('https://developers.buymeacoffee.com/api/v1/subscriptions?status=active', {
-    headers: { Authorization: `Bearer ${process.env.BMAC_TOKEN}` },
+async function kvGet(key) {
+  const res = await fetch(`${process.env.KV_REST_API_URL}/get/${encodeURIComponent(key)}`, {
+    headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` },
   })
-  if (!res.ok) throw new Error(`BMAC API error: ${res.status}`)
-  return res.json()
+  if (!res.ok) throw new Error(`KV error: ${res.status}`)
+  const json = await res.json()
+  return json.result // null if not found, otherwise the stored value
 }
 
 module.exports = async function handler(req, res) {
@@ -32,21 +33,15 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Email is required' })
   }
 
-  if (!process.env.BMAC_TOKEN || !process.env.JWT_SECRET) {
+  if (!process.env.JWT_SECRET || !process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
     return res.status(500).json({ error: 'Server configuration error' })
   }
 
   try {
-    const data = await fetchBmacSubscriptions()
     const normalizedEmail = email.trim().toLowerCase()
+    const value = await kvGet(`supporter:${normalizedEmail}`)
 
-    // Check active subscriptions for matching email
-    const isSupporter = Array.isArray(data.data) && data.data.some(sub => {
-      const subEmail = (sub.payer_email || sub.subscription_email || '').toLowerCase()
-      return subEmail === normalizedEmail && !sub.subscription_is_cancelled
-    })
-
-    if (!isSupporter) {
+    if (!value) {
       return res.status(403).json({
         error: 'No active Buy Me a Coffee membership found for this email. Make sure you use the email from your BMAC account.',
       })
