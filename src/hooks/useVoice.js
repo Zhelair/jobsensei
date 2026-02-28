@@ -23,10 +23,15 @@ export function useVoice() {
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
   )
   const recognitionRef = useRef(null)
-  // continuous mode: accumulate all final segments, only call onResult on stop
   const accumulatedRef = useRef('')
   const onResultCallbackRef = useRef(null)
-  const lastTextRef = useRef('')   // for replay
+  const lastTextRef = useRef('')
+  // Tracks whether the user explicitly triggered stop (vs auto-stop on mobile)
+  const userStoppedRef = useRef(false)
+  // Generation counter — incremented on each speak() or stopSpeaking() call.
+  // speakNext() bails out if the generation has moved on, preventing the
+  // Chrome bug where cancel() fires onend and re-triggers the chain.
+  const speakGenRef = useRef(0)
   const [voicesLoaded, setVoicesLoaded] = useState(false)
 
   useEffect(() => {
@@ -40,11 +45,12 @@ export function useVoice() {
     if (!supported) return
     setError(null)
     accumulatedRef.current = ''
+    userStoppedRef.current = false
     onResultCallbackRef.current = onResult
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SR()
-    recognition.continuous = true          // KEY: keep listening through pauses
+    recognition.continuous = true        // keep alive through pauses
     recognition.interimResults = true
     recognition.lang = 'en-US'
     recognition.maxAlternatives = 1
@@ -63,20 +69,33 @@ export function useVoice() {
       onInterim && onInterim(display)
     }
 
-    // onend fires when stopListening() is called → deliver accumulated result
     recognition.onend = () => {
+      // Mobile Chrome frequently auto-stops continuous recognition on silence.
+      // If the user hasn't pressed stop, restart to keep the session alive.
+      if (!userStoppedRef.current) {
+        try {
+          recognition.start()
+          return   // restarted — stay listening
+        } catch {
+          // Permission revoked or some other unrecoverable error — fall through
+        }
+      }
       setIsListening(false)
+      setTranscript('')
       const final = accumulatedRef.current.trim()
       if (final) onResultCallbackRef.current && onResultCallbackRef.current(final)
     }
 
     recognition.onerror = (e) => {
-      setIsListening(false)
       if (e.error === 'not-allowed' || e.error === 'permission-denied') {
+        userStoppedRef.current = true
+        setIsListening(false)
         setError('Microphone access denied. Please allow microphone in your browser settings.')
       } else if (e.error === 'no-speech') {
-        setError(null)
+        setError(null)   // not an error, just silence
       } else if (e.error === 'audio-capture') {
+        userStoppedRef.current = true
+        setIsListening(false)
         setError('No microphone found. Please connect a microphone and try again.')
       } else if (e.error !== 'aborted') {
         setError(`Voice error: ${e.error}. Try refreshing the page.`)
@@ -89,15 +108,28 @@ export function useVoice() {
     setTranscript('')
   }, [supported])
 
-  // calling stop() triggers onend, which delivers the accumulated transcript
+  // Stop listening and send whatever was recorded
   const stopListening = useCallback(() => {
+    userStoppedRef.current = true
+    recognitionRef.current?.stop()
+  }, [])
+
+  // Stop listening and throw away the recording — nothing is sent
+  const discardRecording = useCallback(() => {
+    userStoppedRef.current = true
+    accumulatedRef.current = ''   // clear so onend delivers nothing
+    setTranscript('')
     recognitionRef.current?.stop()
   }, [])
 
   const speak = useCallback((text, onEnd) => {
     if (!window.speechSynthesis) return
+
+    // Bump generation so any in-flight speakNext() from a previous call exits
+    speakGenRef.current++
+    const gen = speakGenRef.current
     window.speechSynthesis.cancel()
-    lastTextRef.current = text  // store for replay
+    lastTextRef.current = text
 
     const clean = text
       .replace(/#+\s/g, '')
@@ -107,8 +139,7 @@ export function useVoice() {
       .replace(/\n{2,}/g, '. ')
       .replace(/\n/g, ' ')
 
-    // Split into sentence-sized chunks to avoid Chrome's ~15s TTS cutoff bug.
-    // Each chunk is spoken via onend chaining so nothing gets dropped.
+    // Split into ≤220-char chunks to avoid Chrome's ~15 s TTS cutoff bug
     const rawSentences = clean.match(/[^.!?]+[.!?]+|\S[^.!?]*/g) || [clean]
     const chunks = []
     let current = ''
@@ -128,6 +159,9 @@ export function useVoice() {
     const voice = getBestVoice()
 
     function speakNext() {
+      // Bail out if cancelled or a newer speak() call started
+      if (gen !== speakGenRef.current) return
+
       if (index >= chunks.length) {
         setIsSpeaking(false)
         onEnd && onEnd()
@@ -140,7 +174,11 @@ export function useVoice() {
       utt.volume = 1
       if (voice) utt.voice = voice
       utt.onend = speakNext
-      utt.onerror = () => { setIsSpeaking(false); onEnd && onEnd() }
+      utt.onerror = () => {
+        if (gen !== speakGenRef.current) return   // stale — ignore
+        setIsSpeaking(false)
+        onEnd && onEnd()
+      }
       window.speechSynthesis.speak(utt)
     }
 
@@ -148,11 +186,11 @@ export function useVoice() {
   }, [voicesLoaded])
 
   const stopSpeaking = useCallback(() => {
+    speakGenRef.current++   // invalidates the active speakNext() chain
     window.speechSynthesis?.cancel()
     setIsSpeaking(false)
   }, [])
 
-  // Replay the last spoken text
   const replayLast = useCallback(() => {
     if (lastTextRef.current) speak(lastTextRef.current)
   }, [speak])
@@ -161,6 +199,6 @@ export function useVoice() {
 
   return {
     isListening, transcript, isSpeaking, supported, error,
-    startListening, stopListening, speak, stopSpeaking, clearError, replayLast,
+    startListening, stopListening, discardRecording, speak, stopSpeaking, clearError, replayLast,
   }
 }
