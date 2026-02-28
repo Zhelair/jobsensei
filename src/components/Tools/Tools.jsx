@@ -860,7 +860,8 @@ function ResumeChecker({ onBack, resume, saveHistory }) {
 }
 
 function VisualResumeReview({ onBack, saveHistory }) {
-  const { callAI, isConnected, provider, PROVIDERS } = useAI()
+  const { callAI, isConnected, provider, PROVIDERS, bmacToken, apiKey } = useAI()
+  const isDeepSeekActive = (bmacToken && !apiKey) || (apiKey && provider === PROVIDERS.DEEPSEEK)
   const imageInputRef = useRef(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [imageData, setImageData] = useState(null)
@@ -907,7 +908,16 @@ function VisualResumeReview({ onBack, saveHistory }) {
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
       <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
       <h2 className="section-title mb-1">Visual Design Review</h2>
-      <p className="section-sub mb-5">Upload a screenshot or photo of your resume — AI analyzes design, layout, colors, and visual impact.</p>
+      <p className="section-sub mb-3">Upload a screenshot or photo of your resume — AI analyzes design, layout, colors, and visual impact.</p>
+
+      {isDeepSeekActive ? (
+        <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 mb-5 text-amber-300 text-sm">
+          <span className="mt-0.5">⚠️</span>
+          <span>Visual Design Review requires a vision-capable model. <strong>DeepSeek does not support image analysis.</strong> Connect your own <strong>OpenAI</strong> (gpt-4o) or <strong>Anthropic (Claude)</strong> API key in Settings to use this feature.</span>
+        </div>
+      ) : (
+        <p className="text-xs text-slate-500 mb-5">Requires a vision-capable model — OpenAI gpt-4o or Anthropic Claude. Not available with DeepSeek.</p>
+      )}
 
       <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
 
@@ -936,7 +946,7 @@ function VisualResumeReview({ onBack, saveHistory }) {
         </div>
       )}
 
-      <button onClick={analyze} disabled={!imageData || analyzing || !isConnected} className="btn-primary w-full justify-center mb-5">
+      <button onClick={analyze} disabled={!imageData || analyzing || !isConnected || isDeepSeekActive} className="btn-primary w-full justify-center mb-5">
         <Camera size={16} /> {analyzing ? 'Analyzing design...' : 'Analyze Visual Design'}
       </button>
 
