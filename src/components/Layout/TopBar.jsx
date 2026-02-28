@@ -3,7 +3,7 @@ import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 import { useVisuals } from '../../context/VisualsContext'
-import { Settings, GraduationCap, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal } from 'lucide-react'
+import { Settings, GraduationCap, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2 } from 'lucide-react'
 
 const THEME_ICONS = {
   [THEMES.DARK]: Moon,
@@ -239,10 +239,10 @@ export default function TopBar() {
         <div className="relative sm:hidden">
           <button
             onClick={() => setShowMore(v => !v)}
-            className={`btn-ghost ${showMore ? 'text-teal-400' : 'text-slate-400'}`}
+            className={`btn-ghost text-base leading-none ${showMore ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
             title="More options"
           >
-            <MoreHorizontal size={16} />
+            🥷
           </button>
           {showMore && (
             <>

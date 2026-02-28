@@ -26,8 +26,6 @@ export function useVoice() {
   const accumulatedRef = useRef('')
   const onResultCallbackRef = useRef(null)
   const lastTextRef = useRef('')
-  // Tracks whether the user explicitly triggered stop (vs auto-stop on mobile)
-  const userStoppedRef = useRef(false)
   // Generation counter — incremented on each speak() or stopSpeaking() call.
   // speakNext() bails out if the generation has moved on, preventing the
   // Chrome bug where cancel() fires onend and re-triggers the chain.
@@ -45,7 +43,6 @@ export function useVoice() {
     if (!supported) return
     setError(null)
     accumulatedRef.current = ''
-    userStoppedRef.current = false
     onResultCallbackRef.current = onResult
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -56,30 +53,17 @@ export function useVoice() {
     recognition.maxAlternatives = 1
 
     recognition.onresult = (e) => {
-      let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) {
           accumulatedRef.current += e.results[i][0].transcript + ' '
-        } else {
-          interim += e.results[i][0].transcript
         }
       }
-      const display = (accumulatedRef.current + interim).trim()
-      setTranscript(display)
-      onInterim && onInterim(display)
+      // Show only finalized text — interim results are often noisy on mobile
+      // and cause garbled display (duplicate characters, corrupted words).
+      setTranscript(accumulatedRef.current.trim())
     }
 
     recognition.onend = () => {
-      // Mobile Chrome frequently auto-stops continuous recognition on silence.
-      // If the user hasn't pressed stop, restart to keep the session alive.
-      if (!userStoppedRef.current) {
-        try {
-          recognition.start()
-          return   // restarted — stay listening
-        } catch {
-          // Permission revoked or some other unrecoverable error — fall through
-        }
-      }
       setIsListening(false)
       setTranscript('')
       const final = accumulatedRef.current.trim()
@@ -88,13 +72,11 @@ export function useVoice() {
 
     recognition.onerror = (e) => {
       if (e.error === 'not-allowed' || e.error === 'permission-denied') {
-        userStoppedRef.current = true
         setIsListening(false)
         setError('Microphone access denied. Please allow microphone in your browser settings.')
       } else if (e.error === 'no-speech') {
-        setError(null)   // not an error, just silence
+        setError(null)
       } else if (e.error === 'audio-capture') {
-        userStoppedRef.current = true
         setIsListening(false)
         setError('No microphone found. Please connect a microphone and try again.')
       } else if (e.error !== 'aborted') {
@@ -110,13 +92,11 @@ export function useVoice() {
 
   // Stop listening and send whatever was recorded
   const stopListening = useCallback(() => {
-    userStoppedRef.current = true
     recognitionRef.current?.stop()
   }, [])
 
   // Stop listening and throw away the recording — nothing is sent
   const discardRecording = useCallback(() => {
-    userStoppedRef.current = true
     accumulatedRef.current = ''   // clear so onend delivers nothing
     setTranscript('')
     recognitionRef.current?.stop()
