@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useAI } from '../../context/AIContext'
 import { Coffee, X, Check, ExternalLink } from 'lucide-react'
 
-const BMAC_URL = 'https://buymeacoffee.com/niksales73l'
+const BMAC_URL = 'https://buymeacoffee.com/niksales73l/e/515014'
 
 export default function PaywallModal() {
   const { showPaywall, closePaywall, verifyBmac } = useAI()

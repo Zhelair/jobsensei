@@ -178,7 +178,7 @@ export default function OnboardingWizard() {
             ) : (
               <>
                 <a
-                  href="https://buymeacoffee.com/niksales73l"
+                  href="https://buymeacoffee.com/niksales73l/e/515014"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-primary w-full justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0"
