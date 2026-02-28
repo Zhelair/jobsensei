@@ -133,7 +133,7 @@ export default function VoiceChatBar({
             }
           </div>
           <p className="text-slate-600 text-xs mt-2 text-center">
-            Press <strong className="text-slate-500">Done</strong> or the 🎙 button again to finish and send
+            Press <strong className="text-slate-500">Done — Send</strong> when finished · <strong className="text-slate-500">Discard</strong> to start over
           </p>
         </div>
       )}
