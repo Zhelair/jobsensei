@@ -161,7 +161,7 @@ export default function Settings() {
                 <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex items-center gap-2">
                   <Check size={16} className="text-green-400 flex-shrink-0" />
                   <div>
-                    <div className="text-green-400 text-sm font-display font-semibold">Active supporter</div>
+                    <div className="text-green-400 text-sm font-display font-semibold">Access active</div>
                     <div className="text-slate-400 text-xs">{bmacEmail}</div>
                   </div>
                 </div>
@@ -171,10 +171,23 @@ export default function Settings() {
               </div>
             ) : (
               <div className="space-y-3">
+                <a
+                  href="https://buymeacoffee.com/niksales73l"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary w-full justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0 text-sm"
+                >
+                  <Coffee size={14} /> Buy Me a Coffee <ExternalLink size={12} className="opacity-60" />
+                </a>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-white/10" />
+                  <span className="text-slate-600 text-xs">have a code?</span>
+                  <div className="flex-1 h-px bg-white/10" />
+                </div>
                 <input
                   className="input-field text-sm"
-                  type="email"
-                  placeholder="Your Buy Me a Coffee email..."
+                  type="text"
+                  placeholder="Enter your access code..."
                   value={bmacInput}
                   onChange={e => { setBmacInput(e.target.value); setBmacError('') }}
                   onKeyDown={e => e.key === 'Enter' && handleBmacVerify()}
@@ -184,23 +197,15 @@ export default function Settings() {
                   disabled={!bmacInput.trim() || bmacLoading}
                   className="btn-primary w-full justify-center"
                 >
-                  <Coffee size={14}/> {bmacLoading ? 'Verifying...' : 'Verify Membership'}
+                  <Coffee size={14}/> {bmacLoading ? 'Verifying...' : 'Activate Access'}
                 </button>
                 {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
-                <a
-                  href="https://buymeacoffee.com/niksales73l"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary w-full justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0 text-sm"
-                >
-                  <Coffee size={14} /> Buy Me a Coffee <ExternalLink size={12} className="opacity-60" />
-                </a>
-                <p className="text-slate-600 text-xs text-center">After supporting, enter your email above to activate.</p>
               </div>
             )}
           </div>
 
-          {/* Own API Key — secondary, collapsible */}
+          {/* Own API Key — only visible to supporters */}
+          {bmacToken && (
           <div className="card">
             <button
               onClick={() => setShowOwnKey(o => !o)}
@@ -259,6 +264,7 @@ export default function Settings() {
               </div>
             )}
           </div>
+          )}
 
           {/* Profile */}
           <div className="card">
