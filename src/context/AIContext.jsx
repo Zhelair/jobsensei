@@ -105,8 +105,8 @@ export function AIProvider({ children }) {
   }
 
   async function callAI({ systemPrompt, messages, temperature = 0.7, onChunk, signal }) {
-    // BMAC proxy mode takes priority — user doesn't need their own key
-    if (bmacToken) {
+    // BMAC proxy mode — only when user hasn't set their own API key
+    if (bmacToken && !apiKey) {
       setIsThinking(true)
       try {
         return await callProxy({ bmacToken, systemPrompt, messages, temperature, onChunk, signal })

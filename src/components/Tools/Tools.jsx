@@ -897,8 +897,8 @@ function VisualResumeReview({ onBack, saveHistory }) {
       })
       setResult(raw)
       saveHistory({ fileName: 'resume image' }, { analysis: raw })
-    } catch {
-      setResult('⚠️ Visual analysis requires a vision-capable model (OpenAI gpt-4o or Anthropic Claude). DeepSeek does not support image input.')
+    } catch (err) {
+      setResult(`⚠️ Visual analysis failed: ${err.message || 'Unknown error'}. Make sure you are using a vision-capable model (e.g. gpt-4o).`)
     }
     setAnalyzing(false)
   }
