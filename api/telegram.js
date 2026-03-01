@@ -19,19 +19,20 @@ const ADMIN_IDS = (process.env.TELEGRAM_ADMIN_IDS || '').split(',').map(Number).
 const CHANNEL_LINK = process.env.TELEGRAM_CHANNEL_LINK || 'https://t.me/your_channel'
 const APP_LINK = 'https://jobsensei.app'
 
-const DAILY_LIMIT_MSG = `⏰ *You've used your free tool for today!*
+// Plain text — no parse_mode so Telegram can never reject it
+const DAILY_LIMIT_MSG = `⏰ You've used your free tool for today!
 
 Come back tomorrow to try another one. 🗓️
 
-*Want unlimited access? Try the JobSensei app — 20+ AI tools:*
+Want unlimited access? Try the JobSensei app — 20+ AI tools:
 
-🎤 *Interview Simulator* — practice with an AI hiring manager (HR, technical, competency, stress modes). Full voice mode — AI speaks, you reply aloud.
-🔍 *Gap Analysis* — paste any job posting → get fit score, gaps & red-flag detection
-💰 *Negotiation Simulator* — practice salary negotiation before the real call
-⭐ *STAR Builder* — turn rough notes into polished interview answers
-📚 *AI Tutor + quizzes* — actually learn the skills you need
-🛠️ *11 more tools* — resume, LinkedIn, cover letters, question predictor & more
-📋 *Job Tracker* — Kanban board for every application`
+🎤 Interview Simulator — practice with an AI hiring manager (HR, technical, competency, stress modes). Full voice mode — AI speaks, you reply aloud in real time.
+🔍 Gap Analysis — paste any job posting → fit score, gaps & red-flag detection
+💰 Negotiation Simulator — practice salary negotiation before the real call
+⭐ STAR Builder — turn rough notes into polished interview answers
+📚 AI Tutor + quizzes — actually learn the skills you need
+🛠️ 11 more tools — resume, LinkedIn, cover letters, question predictor & more
+📋 Job Tracker — Kanban board for every application`
 
 // --- Telegram API helpers ---
 
@@ -46,6 +47,10 @@ async function tg(method, body) {
 
 const sendMessage = (chatId, text, extra = {}) =>
   tg('sendMessage', { chat_id: chatId, text, parse_mode: 'Markdown', ...extra })
+
+// Plain text — used for DAILY_LIMIT_MSG to avoid Markdown parse errors
+const sendPlainMessage = (chatId, text, extra = {}) =>
+  tg('sendMessage', { chat_id: chatId, text, ...extra })
 
 const sendTyping = (chatId) =>
   tg('sendChatAction', { chat_id: chatId, action: 'typing' })
@@ -222,7 +227,7 @@ function askForResume(chatId) {
 
 async function handleQuestions(chatId, userId, user) {
   if (await hasUsedAnyToolToday(userId, user)) {
-    return sendMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
+    return sendPlainMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
   }
 
   // Ask for optional job description before generating
@@ -263,7 +268,7 @@ async function generateQuestions(chatId, userId, user, jobDescription) {
 
 async function handleResumeChecker(chatId, userId, user) {
   if (await hasUsedAnyToolToday(userId, user)) {
-    return sendMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
+    return sendPlainMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
   }
 
   if (!user.resume_text) {
@@ -299,7 +304,7 @@ async function analyzeResume(chatId, userId, user, resumeText) {
 
 async function handleInterviewStart(chatId, userId, user) {
   if (await hasUsedAnyToolToday(userId, user)) {
-    return sendMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
+    return sendPlainMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
   }
 
   await sendTyping(chatId)
@@ -454,19 +459,18 @@ async function handleUpdate(update) {
       )
     }
 
-    if (data === 'tool_questions') {
-      if (!user.target_role) return sendMessage(chatId, `Please run /start first to set up your profile.`)
-      return handleQuestions(chatId, userId, user)
-    }
-
-    if (data === 'tool_resume') {
-      if (!user.target_role) return sendMessage(chatId, `Please run /start first to set up your profile.`)
-      return handleResumeChecker(chatId, userId, user)
-    }
-
-    if (data === 'tool_interview') {
-      if (!user.target_role) return sendMessage(chatId, `Please run /start first to set up your profile.`)
-      return handleInterviewStart(chatId, userId, user)
+    if (data === 'tool_questions' || data === 'tool_resume' || data === 'tool_interview') {
+      if (!user.target_role) {
+        await tg('answerCallbackQuery', { callback_query_id: cq.id, text: 'Please run /start first to set up your profile.' })
+        return
+      }
+      if (await hasUsedAnyToolToday(userId, user)) {
+        await tg('answerCallbackQuery', { callback_query_id: cq.id, text: '1/1 used today — come back tomorrow! 🗓️' })
+        return sendPlainMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
+      }
+      if (data === 'tool_questions') return handleQuestions(chatId, userId, user)
+      if (data === 'tool_resume') return handleResumeChecker(chatId, userId, user)
+      if (data === 'tool_interview') return handleInterviewStart(chatId, userId, user)
     }
 
     return
@@ -532,7 +536,7 @@ async function handleUpdate(update) {
     await updateUser(userId, { current_step: 'awaiting_role' })
     return sendMessage(
       chatId,
-      `👋 Hey ${firstName}! Welcome to *JobSensei* 🚀\n\nI'll help you crush your next interview with AI-powered practice.\n\nFirst — *what role are you targeting?*\n\n_e.g. Software Engineer, Product Manager, Data Analyst_`
+      `👋 Hey! Welcome to *JobSensei* 🚀\n\nI'll help you crush your next interview with AI-powered practice.\n\nFirst — *what role are you targeting?*\n\n_e.g. Software Engineer, Product Manager, Data Analyst_`
     )
   }
 
@@ -541,8 +545,8 @@ async function handleUpdate(update) {
     if (user.current_step) await updateUser(userId, { current_step: null, interview_state: null })
     const isTestMode = ADMIN_IDS.includes(userId) && user?.session_data?.test_mode === true
     const menuText = isTestMode
-      ? `🧪 *Test Mode Active* — daily limits apply\n\nWhat would you like to practice today, ${firstName}? 👇`
-      : `What would you like to practice today, ${firstName}? 👇`
+      ? `🧪 *Test Mode Active* — daily limits apply\n\nWhat would you like to practice today, ${firstName}? 👇\n\n_1 free tool per day — choose wisely!_ 🎯`
+      : `What would you like to practice today, ${firstName}? 👇\n\n_1 free tool per day — choose wisely!_ 🎯`
     return sendMessage(chatId, menuText, MAIN_MENU)
   }
 
