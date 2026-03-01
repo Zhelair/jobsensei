@@ -1,9 +1,10 @@
 // JobSensei Telegram Bot — Vercel serverless webhook handler
-// Features: Onboarding with CV, 15 Questions (with resume + JD), Resume Checker, Interview Simulator
+// Features: Onboarding with CV, 10 Questions (with resume + JD), Resume Checker, Interview Simulator
 //
 // Required Supabase columns on telegram_users table:
 //   telegram_id BIGINT, first_name TEXT, target_role TEXT,
-//   experience TEXT, current_step TEXT, resume_text TEXT, interview_state TEXT
+//   experience TEXT, current_step TEXT, resume_text TEXT, interview_state TEXT,
+//   session_data JSONB
 
 import { createClient } from '@supabase/supabase-js'
 
@@ -16,7 +17,21 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
 const ADMIN_IDS = (process.env.TELEGRAM_ADMIN_IDS || '').split(',').map(Number).filter(Boolean)
 const CHANNEL_LINK = process.env.TELEGRAM_CHANNEL_LINK || 'https://t.me/your_channel'
-const APP_LINK = 'https://jobsensei.vercel.app'
+const APP_LINK = 'https://jobsensei.app'
+
+const DAILY_LIMIT_MSG = `⏰ *You've used your free tool for today!*
+
+Come back tomorrow to try another one. 🗓️
+
+*Want unlimited access? Try the JobSensei app — 20+ AI tools:*
+
+🎤 *Interview Simulator* — practice with an AI hiring manager (HR, technical, competency, stress modes). Full voice mode — AI speaks, you reply aloud.
+🔍 *Gap Analysis* — paste any job posting → get fit score, gaps & red-flag detection
+💰 *Negotiation Simulator* — practice salary negotiation before the real call
+⭐ *STAR Builder* — turn rough notes into polished interview answers
+📚 *AI Tutor + quizzes* — actually learn the skills you need
+🛠️ *11 more tools* — resume, LinkedIn, cover letters, question predictor & more
+📋 *Job Tracker* — Kanban board for every application`
 
 // --- Telegram API helpers ---
 
@@ -52,7 +67,7 @@ async function downloadTelegramFile(fileId) {
 const MAIN_MENU = {
   reply_markup: {
     inline_keyboard: [
-      [{ text: '📝 15 Interview Questions', callback_data: 'tool_questions' }],
+      [{ text: '📝 10 Interview Questions', callback_data: 'tool_questions' }],
       [{ text: '📄 Resume Checker', callback_data: 'tool_resume' }],
       [{ text: '🎤 Interview Simulator', callback_data: 'tool_interview' }],
       [{ text: '🔄 Update My CV/Resume', callback_data: 'update_resume' }],
@@ -63,7 +78,7 @@ const MAIN_MENU = {
 const CTA_BUTTONS = {
   reply_markup: {
     inline_keyboard: [[
-      { text: '🚀 Try Full App', url: APP_LINK },
+      { text: '🚀 Open JobSensei', url: APP_LINK },
       { text: '📲 Join Channel', url: CHANNEL_LINK },
     ]],
   },
@@ -138,23 +153,29 @@ async function updateUser(telegramId, updates) {
     .eq('telegram_id', telegramId)
 }
 
-async function hasUsedToolToday(telegramId, tool) {
-  if (ADMIN_IDS.includes(telegramId)) return false
+// Returns true if this user is an admin NOT in test mode (exempt from daily limits)
+function isAdminExempt(telegramId, user) {
+  if (!ADMIN_IDS.includes(telegramId)) return false
+  return !user?.session_data?.test_mode
+}
+
+// Option A: one tool total per day — returns true if ANY tool was used today
+async function hasUsedAnyToolToday(telegramId, user) {
+  if (isAdminExempt(telegramId, user)) return false
 
   const today = new Date().toISOString().split('T')[0]
   const { data } = await supabase
     .from('tool_usage')
     .select('id')
     .eq('telegram_id', telegramId)
-    .eq('tool', tool)
     .eq('used_date', today)
-    .maybeSingle()
+    .limit(1)
 
-  return !!data
+  return data && data.length > 0
 }
 
-async function recordUsage(telegramId, tool) {
-  if (ADMIN_IDS.includes(telegramId)) return
+async function recordUsage(telegramId, tool, user) {
+  if (isAdminExempt(telegramId, user)) return
 
   const today = new Date().toISOString().split('T')[0]
   await supabase
@@ -197,29 +218,25 @@ function askForResume(chatId) {
   )
 }
 
-// --- Tool: 15 Interview Questions ---
+// --- Tool: 10 Interview Questions ---
 
 async function handleQuestions(chatId, userId, user) {
-  if (await hasUsedToolToday(userId, 'questions')) {
-    return sendMessage(
-      chatId,
-      `⏰ *Daily limit reached!*\n\nYou've already used the Questions Generator today.\n\nCome back tomorrow — or unlock unlimited access on the app! 🚀`,
-      CTA_BUTTONS
-    )
+  if (await hasUsedAnyToolToday(userId, user)) {
+    return sendMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
   }
 
   // Ask for optional job description before generating
   await updateUser(userId, { current_step: 'awaiting_jd' })
   return sendMessage(
     chatId,
-    `📋 *Optional: Paste a Job Description*\n\nI'll tailor the 15 questions specifically to the job you're applying for.\n\n_Or skip to generate based on your role & experience._`,
+    `📋 *Optional: Paste a Job Description*\n\nI'll tailor the 10 questions specifically to the job you're applying for.\n\n_Or skip to generate based on your role & experience._`,
     SKIP_JD_BUTTON
   )
 }
 
 async function generateQuestions(chatId, userId, user, jobDescription) {
   await sendTyping(chatId)
-  await sendMessage(chatId, `⏳ Generating 15 tailored questions for *${user.target_role}*...`)
+  await sendMessage(chatId, `⏳ Generating 10 tailored questions for *${user.target_role}*...`)
 
   const resumeSection = user.resume_text
     ? `\n\nCandidate Resume:\n${user.resume_text.slice(0, 1500)}`
@@ -229,12 +246,12 @@ async function generateQuestions(chatId, userId, user, jobDescription) {
     : ''
 
   const questions = await callDeepSeek(
-    `You are an expert interview coach. Generate exactly 15 interview questions tailored to the information provided. Mix behavioral, technical, and situational questions. Format as a numbered list. Be specific and practical.`,
-    `Role: ${user.target_role}\nExperience: ${user.experience}${resumeSection}${jdSection}\n\nGenerate 15 interview questions.`
+    `You are an expert interview coach. Generate exactly 10 interview questions tailored to the information provided. Mix behavioral, technical, and situational questions. Format as a numbered list. Be specific and practical.`,
+    `Role: ${user.target_role}\nExperience: ${user.experience}${resumeSection}${jdSection}\n\nGenerate 10 interview questions.`
   )
 
-  await recordUsage(userId, 'questions')
-  await sendMessage(chatId, `🎯 *15 Interview Questions — ${user.target_role}*\n\n${questions}`)
+  await recordUsage(userId, 'questions', user)
+  await sendMessage(chatId, `🎯 *10 Interview Questions — ${user.target_role}*\n\n${questions}`)
   await sendMessage(
     chatId,
     `✅ *Free session done!*\n\nWant voice coaching, AI feedback & unlimited practice?`,
@@ -245,19 +262,15 @@ async function generateQuestions(chatId, userId, user, jobDescription) {
 // --- Tool: Resume Checker ---
 
 async function handleResumeChecker(chatId, userId, user) {
+  if (await hasUsedAnyToolToday(userId, user)) {
+    return sendMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
+  }
+
   if (!user.resume_text) {
     await updateUser(userId, { current_step: 'awaiting_resume_for_check' })
     return sendMessage(
       chatId,
       `📄 *Resume Checker*\n\nYou haven't added your CV yet!\n\nPaste your resume/CV text below and I'll analyze it right away.\n\n_Tip: Copy text from your PDF/Word doc and paste here._`
-    )
-  }
-
-  if (await hasUsedToolToday(userId, 'resume_check')) {
-    return sendMessage(
-      chatId,
-      `⏰ *Daily limit reached!*\n\nYou've already used Resume Checker today.\n\nCome back tomorrow or unlock unlimited on the app! 🚀`,
-      CTA_BUTTONS
     )
   }
 
@@ -273,7 +286,7 @@ async function analyzeResume(chatId, userId, user, resumeText) {
     `Target Role: ${user.target_role}\nExperience Level: ${user.experience || 'Not specified'}\n\nResume:\n${resumeText.slice(0, 3000)}\n\nProvide feedback in these sections:\n1. ✅ Strengths (3-5 bullet points)\n2. ⚠️ Areas to Improve (3-5 bullet points)\n3. 💡 Specific Suggestions (3-5 actionable tips)\n4. 🎯 ATS Score Estimate (X/10) with brief reason`
   )
 
-  await recordUsage(userId, 'resume_check')
+  await recordUsage(userId, 'resume_check', user)
   await sendMessage(chatId, `📊 *Resume Analysis — ${user.target_role}*\n\n${feedback}`)
   await sendMessage(
     chatId,
@@ -285,12 +298,8 @@ async function analyzeResume(chatId, userId, user, resumeText) {
 // --- Tool: Interview Simulator ---
 
 async function handleInterviewStart(chatId, userId, user) {
-  if (await hasUsedToolToday(userId, 'interview')) {
-    return sendMessage(
-      chatId,
-      `⏰ *Daily limit reached!*\n\nYou've already done an interview session today.\n\nCome back tomorrow or unlock unlimited on the app! 🚀`,
-      CTA_BUTTONS
-    )
+  if (await hasUsedAnyToolToday(userId, user)) {
+    return sendMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
   }
 
   await sendTyping(chatId)
@@ -365,7 +374,7 @@ async function handleInterviewAnswer(chatId, userId, user, answerText) {
   if (state.current >= state.questions.length) {
     // All done — overall assessment
     await updateUser(userId, { current_step: null, interview_state: null })
-    await recordUsage(userId, 'interview')
+    await recordUsage(userId, 'interview', user)
 
     await sendTyping(chatId)
     const qa = state.questions
@@ -530,13 +539,40 @@ async function handleUpdate(update) {
   if (text === '/menu') {
     if (!user.target_role) return sendMessage(chatId, `Please run /start first to set up your profile.`)
     if (user.current_step) await updateUser(userId, { current_step: null, interview_state: null })
-    return sendMessage(chatId, `What would you like to practice today, ${firstName}? 👇`, MAIN_MENU)
+    const isTestMode = ADMIN_IDS.includes(userId) && user?.session_data?.test_mode === true
+    const menuText = isTestMode
+      ? `🧪 *Test Mode Active* — daily limits apply\n\nWhat would you like to practice today, ${firstName}? 👇`
+      : `What would you like to practice today, ${firstName}? 👇`
+    return sendMessage(chatId, menuText, MAIN_MENU)
+  }
+
+  if (text === '/testmode') {
+    if (!ADMIN_IDS.includes(userId)) return
+    const currentTestMode = user?.session_data?.test_mode === true
+    const newTestMode = !currentTestMode
+    await updateUser(userId, {
+      session_data: { ...(user.session_data || {}), test_mode: newTestMode },
+    })
+    if (newTestMode) {
+      return sendMessage(
+        chatId,
+        `🧪 *Test Mode ON*\n\nYou are now treated as a regular user — daily limits apply and usage is recorded.\n\nSend /testmode again to switch back to admin mode.`
+      )
+    } else {
+      return sendMessage(
+        chatId,
+        `🔓 *Admin Mode ON*\n\nUnlimited access restored. Daily limits do not apply.\n\nSend /testmode to switch back to test mode.`
+      )
+    }
   }
 
   if (text === '/help') {
+    const adminNote = ADMIN_IDS.includes(userId)
+      ? `\n/testmode — Toggle between admin and test user mode`
+      : ''
     return sendMessage(
       chatId,
-      `*JobSensei Bot — Help* 🤖\n\n/start — Set up your profile\n/menu — Open practice tools\n/help — This message\n\n_Each tool is free once per day. Upgrade for unlimited access._`,
+      `*JobSensei Bot — Help* 🤖\n\n/start — Set up your profile\n/menu — Open practice tools\n/help — This message${adminNote}\n\n_Each tool is free once per day. Upgrade for unlimited access._`,
       CTA_BUTTONS
     )
   }
