@@ -89,6 +89,16 @@ const CTA_BUTTONS = {
   },
 }
 
+// Safe single-button version used for limit messages — avoids any URL validation
+// issues with CHANNEL_LINK placeholder causing Telegram to silently reject the message
+const LIMIT_BUTTONS = {
+  reply_markup: {
+    inline_keyboard: [[
+      { text: '🚀 Open JobSensei', url: APP_LINK },
+    ]],
+  },
+}
+
 const EXPERIENCE_BUTTONS = {
   reply_markup: {
     inline_keyboard: [
@@ -227,7 +237,7 @@ function askForResume(chatId) {
 
 async function handleQuestions(chatId, userId, user) {
   if (await hasUsedAnyToolToday(userId, user)) {
-    return sendPlainMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
+    return sendPlainMessage(chatId, DAILY_LIMIT_MSG, LIMIT_BUTTONS)
   }
 
   // Ask for optional job description before generating
@@ -268,7 +278,7 @@ async function generateQuestions(chatId, userId, user, jobDescription) {
 
 async function handleResumeChecker(chatId, userId, user) {
   if (await hasUsedAnyToolToday(userId, user)) {
-    return sendPlainMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
+    return sendPlainMessage(chatId, DAILY_LIMIT_MSG, LIMIT_BUTTONS)
   }
 
   if (!user.resume_text) {
@@ -304,7 +314,7 @@ async function analyzeResume(chatId, userId, user, resumeText) {
 
 async function handleInterviewStart(chatId, userId, user) {
   if (await hasUsedAnyToolToday(userId, user)) {
-    return sendPlainMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
+    return sendPlainMessage(chatId, DAILY_LIMIT_MSG, LIMIT_BUTTONS)
   }
 
   await sendTyping(chatId)
@@ -418,7 +428,11 @@ async function handleUpdate(update) {
     const userId = cq.from.id
     const data = cq.data
 
-    await answerCbq(cq.id)
+    // For tool buttons we answer AFTER the limit check so we can include toast text.
+    // For all other buttons we answer immediately for instant feedback.
+    const isToolButton = data === 'tool_questions' || data === 'tool_resume' || data === 'tool_interview'
+    if (!isToolButton) await answerCbq(cq.id)
+
     const user = await getOrCreateUser(userId, cq.from.first_name)
 
     // Experience level selected → ask for resume
@@ -459,15 +473,17 @@ async function handleUpdate(update) {
       )
     }
 
-    if (data === 'tool_questions' || data === 'tool_resume' || data === 'tool_interview') {
+    if (isToolButton) {
       if (!user.target_role) {
         await tg('answerCallbackQuery', { callback_query_id: cq.id, text: 'Please run /start first to set up your profile.' })
         return
       }
       if (await hasUsedAnyToolToday(userId, user)) {
+        // Answer once with toast — this is the only answerCallbackQuery call for this press
         await tg('answerCallbackQuery', { callback_query_id: cq.id, text: '1/1 used today — come back tomorrow! 🗓️' })
-        return sendPlainMessage(chatId, DAILY_LIMIT_MSG, CTA_BUTTONS)
+        return sendPlainMessage(chatId, DAILY_LIMIT_MSG, LIMIT_BUTTONS)
       }
+      await answerCbq(cq.id)  // answer silently — limit not hit, tool will run
       if (data === 'tool_questions') return handleQuestions(chatId, userId, user)
       if (data === 'tool_resume') return handleResumeChecker(chatId, userId, user)
       if (data === 'tool_interview') return handleInterviewStart(chatId, userId, user)
@@ -550,6 +566,13 @@ async function handleUpdate(update) {
     return sendMessage(chatId, menuText, MAIN_MENU)
   }
 
+  if (text === '/cleartoday') {
+    if (!ADMIN_IDS.includes(userId)) return
+    const today = new Date().toISOString().split('T')[0]
+    await supabase.from('tool_usage').delete().eq('telegram_id', userId).eq('used_date', today)
+    return sendMessage(chatId, `🗑️ *Today's usage cleared!*\n\nYou can now test all tools again fresh.`)
+  }
+
   if (text === '/testmode') {
     if (!ADMIN_IDS.includes(userId)) return
     const currentTestMode = user?.session_data?.test_mode === true
@@ -572,7 +595,7 @@ async function handleUpdate(update) {
 
   if (text === '/help') {
     const adminNote = ADMIN_IDS.includes(userId)
-      ? `\n/testmode — Toggle between admin and test user mode`
+      ? `\n/testmode — Toggle between admin and test user mode\n/cleartoday — Reset today's usage (for testing)`
       : ''
     return sendMessage(
       chatId,
