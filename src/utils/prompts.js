@@ -240,7 +240,7 @@ Analyze the JD and predict the most likely interview questions. Return ONLY vali
   ]
 }
 
-Generate 12-15 questions covering all categories. Prioritize questions specific to this role and JD, not generic interview questions.`,
+Generate exactly 10 questions covering all categories. Prioritize questions specific to this role and JD, not generic interview questions.`,
 
   toneAnalyzer: (answer, drillMode) => `You are a communication coach analyzing interview answer quality.
 
@@ -326,19 +326,19 @@ Return ONLY valid JSON:
   "letters": [
     {
       "tone": "Corporate",
-      "body": "Full cover letter body (4-5 paragraphs). Professional, formal, metrics-focused.",
+      "body": "Cover letter body — MAXIMUM 120 words, 3 short punchy paragraphs. Professional, formal, metrics-focused. No filler.",
       "clarityScore": 0,
       "confidenceScore": 0
     },
     {
       "tone": "Creative",
-      "body": "Full cover letter body. Opens with a hook, shows personality, still professional.",
+      "body": "Cover letter body — MAXIMUM 120 words, 3 short punchy paragraphs. Opens with a hook, shows personality, still professional.",
       "clarityScore": 0,
       "confidenceScore": 0
     },
     {
       "tone": "Casual",
-      "body": "Full cover letter body. Warm, conversational, authentic — like a smart email to a friend of a friend.",
+      "body": "Cover letter body — MAXIMUM 120 words, 3 short punchy paragraphs. Warm, conversational, authentic — like a smart email to a friend of a friend.",
       "clarityScore": 0,
       "confidenceScore": 0
     }
@@ -405,6 +405,34 @@ Audit this LinkedIn profile and return ONLY valid JSON:
 }
 Score guidelines: 80+ strong, 60-79 needs work, below 60 significant gaps.
 Return ONLY valid JSON, no other text.`,
+
+  summarizeNotes: (topicTitle, notes) => `You are a concise study assistant.
+
+Topic: "${topicTitle}"
+
+Notes to summarize:
+${notes}
+
+Write a clean, structured summary of these notes. Use headings and bullet points. Cover the key concepts, important distinctions, and anything worth memorizing. Keep it tight — aim for 200-300 words. Do NOT pad or repeat — every sentence should add value.
+
+Return plain text with markdown formatting (##, -, **bold**).`,
+
+  cheatCard: (topicTitle, notes) => `You are an expert at creating concise study cheat sheets.
+
+Topic: "${topicTitle}"
+
+Source notes:
+${notes}
+
+Create a dense, scannable cheat card for this topic. Format it like a study reference card:
+- Group by theme/concept
+- Use very short bullet points (max 10 words each)
+- Include key terms, definitions, and formulas
+- Include 3-5 "memory hooks" (mnemonics, analogies, or memorable phrases)
+- Flag the top 3 most exam/interview-likely points with ⭐
+
+Keep the entire cheat card under 400 words. Make it printable and useful.
+Return plain text with markdown formatting.`,
 
   senseiTip: (profile, stats) => `You are JobSensei, a career coach. Generate a brief, personalized daily tip for this job seeker.
 
