@@ -4,7 +4,7 @@ import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
-import { Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X, Search, Star, DollarSign, Zap } from 'lucide-react'
+import { Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X, Search, Star, DollarSign, Zap, Trash2 } from 'lucide-react'
 import GapAnalysis from '../GapAnalysis/GapAnalysis'
 import STARBuilder from '../STARBuilder/STARBuilder'
 import NegotiationSim from '../NegotiationSim/NegotiationSim'
@@ -26,6 +26,8 @@ const TOOLS = [
 
 const FILTER_LABELS = {
   all: 'All',
+  gap: 'Gap Analysis',
+  negotiation: 'Negotiation Sim',
   predictor: 'Question Predictor',
   transferable: 'Transferable Skills',
   tone: 'Tone Analyzer',
@@ -44,6 +46,8 @@ export default function Tools() {
   const { getProjectData, updateProjectData } = useProject()
   const resume = getProjectData('resume')
   const toolsHistory = getProjectData('toolsHistory') || []
+  const gapResults = getProjectData('gapResults') || []
+  const negotiationSessions = getProjectData('negotiationSessions') || []
 
   function saveHistory(tool, toolLabel, inputs, result) {
     const entry = { id: generateId(), date: new Date().toISOString(), tool, toolLabel, inputs, result }
@@ -54,37 +58,78 @@ export default function Tools() {
     return toolsHistory.filter(h => h.tool === tool)
   }
 
+  function deleteHistory(id) {
+    updateProjectData('toolsHistory', toolsHistory.filter(h => h.id !== id))
+    if (selectedResult?.id === id) setSelectedResult(null)
+  }
+
+  function deleteGapResult(id) {
+    updateProjectData('gapResults', gapResults.filter(g => g.id !== id))
+    if (selectedResult?.id === id) setSelectedResult(null)
+  }
+
+  function deleteNegotiationSession(id) {
+    updateProjectData('negotiationSessions', negotiationSessions.filter(n => n.id !== id))
+    if (selectedResult?.id === id) setSelectedResult(null)
+  }
+
+  // Normalize gap & negotiation into the shared shape
+  const normalizedGap = gapResults.map(g => ({
+    id: g.id, date: g.date, tool: 'gap', toolLabel: 'Gap Analysis',
+    inputs: { jd: g.jdSnippet || '' },
+    result: { gapResult: g.gapResult, scoreResult: g.scoreResult, redFlags: g.redFlags, tab: g.tab },
+  }))
+  const normalizedNeg = negotiationSessions.map(n => ({
+    id: n.id, date: n.date, tool: 'negotiation', toolLabel: 'Negotiation Sim',
+    inputs: { offer: n.offerDetails || '' },
+    result: { messages: n.messages, coachingTriggered: n.coachingTriggered },
+  }))
+
+  const allHistory = [...toolsHistory, ...normalizedGap, ...normalizedNeg]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+
   if (activeTool === 'gap') return <GapAnalysis onBack={() => setActiveTool(null)} />
   if (activeTool === 'star') return <STARBuilder onBack={() => setActiveTool(null)} />
   if (activeTool === 'negotiation') return <NegotiationSim onBack={() => setActiveTool(null)} embedded />
 
-  if (activeTool === 'predictor') return <QuestionPredictor onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('predictor', 'Question Predictor', i, r)} history={historyFor('predictor')} />
-  if (activeTool === 'transferable') return <TransferableSkillsTool onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('transferable', 'Transferable Skills Coach', i, r)} history={historyFor('transferable')} />
-  if (activeTool === 'tone') return <ToneAnalyzer onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('tone', 'Tone Analyzer', i, r)} history={historyFor('tone')} />
-  if (activeTool === 'followup') return <FollowUpEmail onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('followup', 'Follow-up Email', i, r)} history={historyFor('followup')} />
-  if (activeTool === 'pitch') return <ElevatorPitch onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('pitch', 'Elevator Pitch', i, r)} history={historyFor('pitch')} />
-  if (activeTool === 'coverletter') return <CoverLetterOptimizer onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('coverletter', 'Cover Letter Optimizer', i, r)} history={historyFor('coverletter')} />
-  if (activeTool === 'resumechecker') return <ResumeChecker onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('resumechecker', 'Resume Checker', i, r)} history={historyFor('resumechecker')} />
-  if (activeTool === 'linkedin') return <LinkedInAuditor onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('linkedin', 'LinkedIn Auditor', i, r)} history={historyFor('linkedin')} />
-  if (activeTool === 'visualreview') return <VisualResumeReview onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('visualreview', 'Visual Design Review', i, r)} history={historyFor('visualreview')} />
+  if (activeTool === 'predictor') return <QuestionPredictor onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('predictor', 'Question Predictor', i, r)} history={historyFor('predictor')} onDelete={deleteHistory} />
+  if (activeTool === 'transferable') return <TransferableSkillsTool onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('transferable', 'Transferable Skills Coach', i, r)} history={historyFor('transferable')} onDelete={deleteHistory} />
+  if (activeTool === 'tone') return <ToneAnalyzer onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('tone', 'Tone Analyzer', i, r)} history={historyFor('tone')} onDelete={deleteHistory} />
+  if (activeTool === 'followup') return <FollowUpEmail onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('followup', 'Follow-up Email', i, r)} history={historyFor('followup')} onDelete={deleteHistory} />
+  if (activeTool === 'pitch') return <ElevatorPitch onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('pitch', 'Elevator Pitch', i, r)} history={historyFor('pitch')} onDelete={deleteHistory} />
+  if (activeTool === 'coverletter') return <CoverLetterOptimizer onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('coverletter', 'Cover Letter Optimizer', i, r)} history={historyFor('coverletter')} onDelete={deleteHistory} />
+  if (activeTool === 'resumechecker') return <ResumeChecker onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('resumechecker', 'Resume Checker', i, r)} history={historyFor('resumechecker')} onDelete={deleteHistory} />
+  if (activeTool === 'linkedin') return <LinkedInAuditor onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('linkedin', 'LinkedIn Auditor', i, r)} history={historyFor('linkedin')} onDelete={deleteHistory} />
+  if (activeTool === 'visualreview') return <VisualResumeReview onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('visualreview', 'Visual Design Review', i, r)} history={historyFor('visualreview')} onDelete={deleteHistory} />
 
   // Inline result detail view (clicked from Recent Results)
-  if (selectedResult) return (
-    <div className="p-4 md:p-6 animate-in">
-      <button onClick={() => setSelectedResult(null)} className="btn-ghost mb-4"><ArrowLeft size={16} /> Recent Results</button>
-      <div className="flex items-center gap-3 mb-4">
-        <span className="font-display font-bold text-white">{selectedResult.toolLabel}</span>
-        <span className="text-slate-400 text-sm">{new Date(selectedResult.date).toLocaleDateString()}</span>
+  if (selectedResult) {
+    const isGap = selectedResult.tool === 'gap'
+    const isNeg = selectedResult.tool === 'negotiation'
+    const onDelete = isGap ? deleteGapResult : isNeg ? deleteNegotiationSession : deleteHistory
+    return (
+      <div className="p-4 md:p-6 animate-in">
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={() => setSelectedResult(null)} className="btn-ghost"><ArrowLeft size={16} /> Recent Results</button>
+          <button
+            onClick={() => { if (confirm('Delete this result?')) onDelete(selectedResult.id) }}
+            className="btn-ghost text-xs text-red-400 hover:text-red-300"
+          ><Trash2 size={14}/> Delete</button>
+        </div>
+        <div className="flex items-center gap-3 mb-4">
+          <span className="font-display font-bold text-white">{selectedResult.toolLabel}</span>
+          <span className="text-slate-400 text-sm">{new Date(selectedResult.date).toLocaleDateString()}</span>
+        </div>
+        <FullHistoryResult item={selectedResult} />
       </div>
-      <FullHistoryResult item={selectedResult} />
-    </div>
-  )
+    )
+  }
 
   // Determine which filter chips to show based on what's actually in history
-  const presentTools = [...new Set(toolsHistory.map(h => h.tool))]
+  const presentTools = [...new Set(allHistory.map(h => h.tool))]
   const activeFilters = ['all', ...presentTools.filter(t => FILTER_LABELS[t])]
 
-  const filteredRecent = toolsHistory
+  const filteredRecent = allHistory
     .filter(h => recentFilter === 'all' || h.tool === recentFilter)
     .slice(0, 8)
 
@@ -108,7 +153,7 @@ export default function Tools() {
         ))}
       </div>
 
-      {filteredRecent.length > 0 || toolsHistory.length > 0 ? (
+      {filteredRecent.length > 0 || allHistory.length > 0 ? (
         <div className="mt-6">
           <h3 className="font-display font-semibold text-slate-400 text-sm mb-3 flex items-center gap-2">
             <Clock size={14}/> Recent Results
@@ -152,12 +197,20 @@ export default function Tools() {
 
 // ─── Shared: per-tool history tab view ────────────────────────────────────────
 
-function ToolHistoryView({ history, toolLabel, onBack }) {
+function ToolHistoryView({ history, toolLabel, onBack, onDelete }) {
   const [selected, setSelected] = useState(null)
 
   if (selected) return (
     <div className="p-4 md:p-6 animate-in">
-      <button onClick={() => setSelected(null)} className="btn-ghost mb-4"><ArrowLeft size={16} /> {toolLabel} History</button>
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={() => setSelected(null)} className="btn-ghost"><ArrowLeft size={16} /> {toolLabel} History</button>
+        {onDelete && (
+          <button
+            onClick={() => { if (confirm('Delete this result?')) { onDelete(selected.id); setSelected(null) } }}
+            className="btn-ghost text-xs text-red-400 hover:text-red-300"
+          ><Trash2 size={14}/> Delete</button>
+        )}
+      </div>
       <div className="text-slate-400 text-xs mb-4">{new Date(selected.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}</div>
       <FullHistoryResult item={selected} />
     </div>
@@ -173,13 +226,21 @@ function ToolHistoryView({ history, toolLabel, onBack }) {
       ) : (
         <div className="space-y-2">
           {history.map(h => (
-            <button key={h.id} onClick={() => setSelected(h)} className="card-hover w-full text-left">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-white font-body font-medium text-sm">{h.toolLabel}</span>
-                <span className="text-slate-500 text-xs">{new Date(h.date).toLocaleDateString()}</span>
-              </div>
-              <HistorySummary item={h} />
-            </button>
+            <div key={h.id} className="card-hover flex items-center gap-2">
+              <button onClick={() => setSelected(h)} className="flex-1 text-left min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-white font-body font-medium text-sm">{h.toolLabel}</span>
+                  <span className="text-slate-500 text-xs">{new Date(h.date).toLocaleDateString()}</span>
+                </div>
+                <HistorySummary item={h} />
+              </button>
+              {onDelete && (
+                <button
+                  onClick={() => { if (confirm('Delete?')) onDelete(h.id) }}
+                  className="text-slate-600 hover:text-red-400 p-1.5 flex-shrink-0 transition-colors"
+                ><Trash2 size={14}/></button>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -190,6 +251,10 @@ function ToolHistoryView({ history, toolLabel, onBack }) {
 // ─── History summary (one-liner per tool) ─────────────────────────────────────
 
 function HistorySummary({ item }) {
+  if (item.tool === 'gap')
+    return <p className="text-slate-400 text-xs truncate">JD: {item.inputs?.jd || '—'}</p>
+  if (item.tool === 'negotiation')
+    return <p className="text-slate-400 text-xs truncate">{item.result?.messages?.length || 0} messages · {item.inputs?.offer?.slice(0, 60) || '—'}</p>
   if (item.tool === 'predictor' && item.result?.questions)
     return <p className="text-slate-400 text-xs">{item.result.questions.length} questions predicted · {item.inputs?.jd || ''}</p>
   if (item.tool === 'transferable' && item.inputs?.targetRole)
@@ -214,6 +279,49 @@ function HistorySummary({ item }) {
 // ─── Full history result renderer ─────────────────────────────────────────────
 
 function FullHistoryResult({ item }) {
+  if (item.tool === 'gap' && item.result) {
+    const { gapResult, scoreResult, redFlags } = item.result
+    return (
+      <div className="space-y-4">
+        {scoreResult && (
+          <div className="grid grid-cols-3 gap-2">
+            {Object.entries(scoreResult).filter(([k]) => k !== 'rationale').map(([k, v]) => (
+              <div key={k} className="card text-center">
+                <div className={`font-display font-bold text-2xl mb-1 ${v >= 80 ? 'text-green-400' : v >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{v}</div>
+                <div className="text-slate-400 text-xs capitalize">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {redFlags?.length > 0 && (
+          <div className="card border-red-500/20">
+            <h4 className="font-display font-semibold text-white text-sm mb-2">🚩 Red Flags</h4>
+            <ul className="space-y-1">{redFlags.map((f, i) => <li key={i} className="text-red-300 text-xs">• {f}</li>)}</ul>
+          </div>
+        )}
+        {gapResult && (
+          <div className="card">
+            <h4 className="font-display font-semibold text-white text-sm mb-2">Gap Analysis</h4>
+            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{typeof gapResult === 'string' ? gapResult : JSON.stringify(gapResult, null, 2)}</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+  if (item.tool === 'negotiation' && item.result) {
+    const msgs = item.result.messages || []
+    return (
+      <div className="space-y-2">
+        {msgs.map((m, i) => (
+          <div key={i} className={`rounded-xl px-4 py-3 text-sm ${m.role === 'user' ? 'chat-user ml-auto max-w-[85%]' : 'chat-ai max-w-[85%]'}`}>
+            <span className="text-xs opacity-60 block mb-1 font-display">{m.role === 'user' ? 'You' : 'Alex Chen (Recruiter)'}</span>
+            {m.content}
+          </div>
+        ))}
+        {msgs.length === 0 && <p className="text-slate-500 text-sm">No conversation recorded.</p>}
+      </div>
+    )
+  }
   if (item.tool === 'predictor' && item.result?.questions) {
     const PROB_COLORS = { High: 'badge-red', Medium: 'badge-yellow', Low: 'badge-teal' }
     const CAT_COLORS = { Technical: 'badge-indigo', Behavioral: 'badge-teal', Culture: 'badge-green', Curveball: 'badge-yellow', 'Role-Specific': 'badge-red' }
@@ -382,7 +490,7 @@ function FullHistoryResult({ item }) {
 
 // ─── Transferable Skills Coach ─────────────────────────────────────────────────
 
-function TransferableSkillsTool({ onBack, resume, saveHistory, history }) {
+function TransferableSkillsTool({ onBack, resume, saveHistory, history, onDelete }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
   const [experience, setExperience] = useState(resume || (profile?.currentRole ? `I worked as ${profile.currentRole} for ${profile.experience} in ${profile.industry}.` : ''))
@@ -391,7 +499,7 @@ function TransferableSkillsTool({ onBack, resume, saveHistory, history }) {
   const [loading, setLoading] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Transferable Skills Coach" onBack={() => setShowHistory(false)} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel="Transferable Skills Coach" onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function analyze() {
     setLoading(true); setResult('')
@@ -450,7 +558,7 @@ function TransferableSkillsTool({ onBack, resume, saveHistory, history }) {
 
 // ─── Question Predictor ────────────────────────────────────────────────────────
 
-function QuestionPredictor({ onBack, resume, saveHistory, history }) {
+function QuestionPredictor({ onBack, resume, saveHistory, history, onDelete }) {
   const { profile } = useApp()
   const { callAI, isConnected } = useAI()
   const [jd, setJd] = useState('')
@@ -462,7 +570,7 @@ function QuestionPredictor({ onBack, resume, saveHistory, history }) {
   const PROB_COLORS = { High: 'badge-red', Medium: 'badge-yellow', Low: 'badge-teal' }
   const CAT_COLORS = { Technical: 'badge-indigo', Behavioral: 'badge-teal', Culture: 'badge-green', Curveball: 'badge-yellow', 'Role-Specific': 'badge-red' }
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Question Predictor" onBack={() => setShowHistory(false)} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel="Question Predictor" onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function predict() {
     setLoading(true); setResult(null)
@@ -517,14 +625,14 @@ function QuestionPredictor({ onBack, resume, saveHistory, history }) {
 
 // ─── Tone Analyzer ─────────────────────────────────────────────────────────────
 
-function ToneAnalyzer({ onBack, saveHistory, history }) {
+function ToneAnalyzer({ onBack, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Tone Analyzer" onBack={() => setShowHistory(false)} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel="Tone Analyzer" onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function analyze() {
     setLoading(true); setResult(null)
@@ -598,7 +706,7 @@ function ToneAnalyzer({ onBack, saveHistory, history }) {
 
 // ─── Follow-up Email ───────────────────────────────────────────────────────────
 
-function FollowUpEmail({ onBack, saveHistory, history }) {
+function FollowUpEmail({ onBack, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
   const [company, setCompany] = useState('')
   const [interviewer, setInterviewer] = useState('')
@@ -609,7 +717,7 @@ function FollowUpEmail({ onBack, saveHistory, history }) {
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Follow-up Email" onBack={() => setShowHistory(false)} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel="Follow-up Email" onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function generate() {
     setLoading(true); setResult(null)
@@ -663,7 +771,7 @@ function FollowUpEmail({ onBack, saveHistory, history }) {
 
 // ─── Elevator Pitch ────────────────────────────────────────────────────────────
 
-function ElevatorPitch({ onBack, resume, saveHistory, history }) {
+function ElevatorPitch({ onBack, resume, saveHistory, history, onDelete }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
   const [role, setRole] = useState(profile?.targetRole || '')
@@ -672,7 +780,7 @@ function ElevatorPitch({ onBack, resume, saveHistory, history }) {
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Elevator Pitch" onBack={() => setShowHistory(false)} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel="Elevator Pitch" onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function generate() {
     setLoading(true); setResult(null)
@@ -731,7 +839,7 @@ function ElevatorPitch({ onBack, resume, saveHistory, history }) {
 
 // ─── Cover Letter Optimizer ────────────────────────────────────────────────────
 
-function CoverLetterOptimizer({ onBack, resume, saveHistory, history }) {
+function CoverLetterOptimizer({ onBack, resume, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
   const [jd, setJd] = useState('')
   const [resumeText, setResumeText] = useState(resume || '')
@@ -740,7 +848,7 @@ function CoverLetterOptimizer({ onBack, resume, saveHistory, history }) {
   const [activeTab, setActiveTab] = useState(0)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Cover Letter Optimizer" onBack={() => setShowHistory(false)} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel="Cover Letter Optimizer" onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function generate() {
     setLoading(true); setResult(null)
@@ -817,7 +925,7 @@ function CoverLetterOptimizer({ onBack, resume, saveHistory, history }) {
 
 // ─── Resume Checker ────────────────────────────────────────────────────────────
 
-function ResumeChecker({ onBack, resume, saveHistory, history }) {
+function ResumeChecker({ onBack, resume, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
   const [resumeText, setResumeText] = useState(resume || '')
   const [jd, setJd] = useState('')
@@ -825,7 +933,7 @@ function ResumeChecker({ onBack, resume, saveHistory, history }) {
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Resume Checker" onBack={() => setShowHistory(false)} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel="Resume Checker" onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function analyze() {
     setLoading(true); setResult(null)
@@ -908,7 +1016,7 @@ function ResumeChecker({ onBack, resume, saveHistory, history }) {
 
 // ─── Visual Design Review ──────────────────────────────────────────────────────
 
-function VisualResumeReview({ onBack, saveHistory, history }) {
+function VisualResumeReview({ onBack, saveHistory, history, onDelete }) {
   const { callAI, isConnected, provider, PROVIDERS, bmacToken, apiKey } = useAI()
   const isDeepSeekActive = (bmacToken && !apiKey) || (apiKey && provider === PROVIDERS.DEEPSEEK)
   const imageInputRef = useRef(null)
@@ -918,7 +1026,7 @@ function VisualResumeReview({ onBack, saveHistory, history }) {
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Visual Design Review" onBack={() => setShowHistory(false)} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel="Visual Design Review" onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function handleImageFile(e) {
     const file = e.target.files[0]; if (!file) return
@@ -994,14 +1102,14 @@ function VisualResumeReview({ onBack, saveHistory, history }) {
 
 // ─── LinkedIn Auditor ──────────────────────────────────────────────────────────
 
-function LinkedInAuditor({ onBack, saveHistory, history }) {
+function LinkedInAuditor({ onBack, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
   const [profileText, setProfileText] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="LinkedIn Auditor" onBack={() => setShowHistory(false)} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel="LinkedIn Auditor" onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function audit() {
     setLoading(true); setResult(null)

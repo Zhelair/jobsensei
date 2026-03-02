@@ -181,7 +181,7 @@ Transform this into a polished STAR answer. Return ONLY valid JSON:
   "targetQuestions": ["What interview questions this story answers well"]
 }`,
 
-  transferableSkills: (experience, targetRole, drillMode) => `You are a career pivot coach specializing in helping professionals reframe their experience for new contexts.
+  transferableSkills: (experience, targetRole, drillMode) => `You are a career pivot coach helping professionals reframe their experience for new contexts.
 
 CANDIDATE'S CURRENT EXPERIENCE:
 ${experience}
@@ -189,13 +189,15 @@ ${experience}
 TARGET ROLE/CONTEXT:
 ${targetRole}
 
-Provide:
-1. **Reframed Talking Points** (5-7 bullet points): How to describe their experience using language relevant to the target role
-2. **Key Translations**: Specific terminology swaps (e.g., "individual user fraud" → "merchant-level behavioral risk patterns")  
-3. **Strongest Transferable Skills**: Top 3-5 skills that directly map
-4. **Interview Strategy**: How to address the pivot question "You don't have direct X experience — why should we hire you?"
-5. **Phrases to Use**: 5 specific phrases that bridge their background to the new context
-6. **Phrases to Avoid**: Language that highlights the gap rather than the fit
+Write a CONCISE coaching response of 100-300 words maximum. Use 3-6 short bullet-point sections with bold headers. Focus only on the most impactful insights:
+
+1. **Top Transferable Skills** – 3-4 skills that directly map
+2. **Key Reframes** – 2-3 specific terminology/framing swaps
+3. **Interview Strategy** – 1-2 sentences on how to handle the pivot question
+4. **Phrases to Use** – 2-3 specific bridge phrases
+5. **One Phrase to Avoid** – the most common mistake to skip
+
+Be blunt, practical, and specific. No filler. Every sentence must add value.
 ${toneModifier(drillMode)}`,
 
   negotiationSim: (offerDetails, context, drillMode) => `You are a recruiter conducting a salary negotiation call. Stay in character.

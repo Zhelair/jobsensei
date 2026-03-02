@@ -6,7 +6,7 @@ import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { sm2, getNextReviewDate, isDueToday } from '../../utils/spacedRepetition'
 import ChatWindow from '../shared/ChatWindow'
-import { BookOpen, Plus, Brain, Check, ArrowLeft, Edit3, Trash2, X, ChevronRight, History, FileText, Copy, Download, Printer, Save, StickyNote, Sparkles } from 'lucide-react'
+import { BookOpen, Plus, Brain, Check, ArrowLeft, Edit3, Trash2, X, ChevronRight, History, FileText, Copy, Download, Printer, Save, StickyNote, Sparkles, Image } from 'lucide-react'
 import VoiceChatBar from '../shared/VoiceChatBar'
 
 const STARTER_TOPICS = [
@@ -116,7 +116,11 @@ export default function LearningSection() {
     <QuizMode topic={selectedTopic} onBack={() => { setView('library'); setSelectedTopic(null) }} onUpdate={updateTopic} onQuizComplete={saveQuizHistory} callAI={callAI} isConnected={isConnected} />
   )
   if (view === 'quizHistory') return (
-    <QuizHistory history={quizHistory} onBack={() => setView('library')} />
+    <QuizHistory
+      history={quizHistory}
+      onBack={() => setView('library')}
+      onDeleteQuiz={(id) => updateProjectData('quizHistory', quizHistory.filter(q => q.id !== id))}
+    />
   )
   if (view === 'notes') return (
     <NotesView
@@ -564,6 +568,65 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
     setAiLoading(false)
   }
 
+  function downloadAsImage(title, content, filename) {
+    const canvas = document.createElement('canvas')
+    const width = 900
+    const padding = 44
+    const lineH = 22
+    const ctx = canvas.getContext('2d')
+    // Measure lines
+    const lines = []
+    content.split('\n').forEach(line => {
+      if (line.startsWith('## ') || line.startsWith('# ') || (line.startsWith('**') && line.endsWith('**'))) {
+        lines.push({ text: line.replace(/^#+\s*/, '').replace(/\*\*/g, ''), bold: true, size: 16, gap: 8 })
+      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        lines.push({ text: '• ' + line.slice(2), bold: false, size: 14, gap: 2 })
+      } else if (line.trim() === '') {
+        lines.push({ text: '', bold: false, size: 14, gap: 6 })
+      } else {
+        lines.push({ text: line, bold: false, size: 14, gap: 2 })
+      }
+    })
+    // Word-wrap all lines
+    const wrapped = []
+    const maxW = width - padding * 2
+    lines.forEach(l => {
+      if (!l.text) { wrapped.push({ ...l }); return }
+      ctx.font = `${l.bold ? 'bold ' : ''}${l.size}px system-ui,sans-serif`
+      const words = l.text.split(' ')
+      let cur = ''
+      words.forEach(w => {
+        const test = cur ? cur + ' ' + w : w
+        if (ctx.measureText(test).width > maxW) { wrapped.push({ ...l, text: cur }); cur = w }
+        else cur = test
+      })
+      if (cur) wrapped.push({ ...l, text: cur })
+    })
+    const headerH = 60
+    const totalH = headerH + wrapped.reduce((acc, l) => acc + lineH + (l.gap || 0), 0) + padding * 2
+    canvas.width = width; canvas.height = Math.max(totalH, 200)
+    // Background
+    ctx.fillStyle = '#0F172A'; ctx.fillRect(0, 0, width, canvas.height)
+    // Header bar
+    ctx.fillStyle = '#14B8A6'; ctx.fillRect(0, 0, width, headerH)
+    ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 18px system-ui,sans-serif'
+    ctx.fillText(title, padding, 36)
+    // Content
+    let y = headerH + padding
+    wrapped.forEach(l => {
+      if (l.text) {
+        ctx.font = `${l.bold ? 'bold ' : ''}${l.size}px system-ui,sans-serif`
+        ctx.fillStyle = l.bold ? '#F1F5F9' : '#CBD5E1'
+        ctx.fillText(l.text, padding, y)
+      }
+      y += lineH + (l.gap || 0)
+    })
+    const link = document.createElement('a')
+    link.download = `${filename}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+  }
+
   function downloadTxt(content, filename) {
     const blob = new Blob([content], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
@@ -687,7 +750,7 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
                 <span className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wider">
                   {aiMode === 'cheatcard' ? '📋 Cheat Card' : '📝 Summary'}
                 </span>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button onClick={() => navigator.clipboard?.writeText(aiResult)} className="btn-ghost text-xs">
                     <Copy size={12}/> Copy
                   </button>
@@ -695,16 +758,24 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
                     onClick={() => downloadTxt(aiResult, `${(currentTopic?.title || 'notes').replace(/\s+/g, '_')}_${aiMode}.txt`)}
                     className="btn-ghost text-xs"
                   >
-                    <Download size={12}/> Download .txt
+                    <Download size={12}/> .txt
                   </button>
-                  {aiMode === 'cheatcard' && (
-                    <button
-                      onClick={() => printCheatCard(currentTopic?.title || 'Notes', cheatCard)}
-                      className="btn-secondary text-xs"
-                    >
-                      <Printer size={12}/> Print / PDF
-                    </button>
-                  )}
+                  <button
+                    onClick={() => printCheatCard(currentTopic?.title || 'Notes', aiResult)}
+                    className="btn-ghost text-xs"
+                  >
+                    <Printer size={12}/> PDF
+                  </button>
+                  <button
+                    onClick={() => downloadAsImage(
+                      `${aiMode === 'cheatcard' ? '📋 Cheat Card' : '📝 Summary'}: ${currentTopic?.title || 'Notes'}`,
+                      aiResult,
+                      `${(currentTopic?.title || 'notes').replace(/\s+/g, '_')}_${aiMode}`
+                    )}
+                    className="btn-secondary text-xs"
+                  >
+                    <Image size={12}/> Download .png
+                  </button>
                 </div>
               </div>
               <div className="bg-navy-900 rounded-xl p-4">
@@ -727,7 +798,7 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
 
 // ─── Quiz History ──────────────────────────────────────────────────────────────
 
-function QuizHistory({ history, onBack }) {
+function QuizHistory({ history, onBack, onDeleteQuiz }) {
   const [selected, setSelected] = useState(null)
 
   if (selected) return (
@@ -766,18 +837,26 @@ function QuizHistory({ history, onBack }) {
       ) : (
         <div className="space-y-2">
           {history.map(h => (
-            <button key={h.id} onClick={() => setSelected(h)} className="card-hover w-full text-left">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-white font-body font-medium text-sm">{h.topicTitle}</span>
-                <span className={`font-display font-semibold text-sm ${h.score >= 8 ? 'text-green-400' : h.score >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>
-                  {h.correct}/{h.total} correct
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 text-xs">{new Date(h.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
-                <span className={`badge ${h.score >= 8 ? 'badge-green' : h.score >= 6 ? 'badge-yellow' : 'badge-red'}`}>{h.score}/10</span>
-              </div>
-            </button>
+            <div key={h.id} className="card-hover flex items-center gap-2">
+              <button onClick={() => setSelected(h)} className="flex-1 text-left min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-white font-body font-medium text-sm">{h.topicTitle}</span>
+                  <span className={`font-display font-semibold text-sm ${h.score >= 8 ? 'text-green-400' : h.score >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>
+                    {h.correct}/{h.total} correct
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 text-xs">{new Date(h.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
+                  <span className={`badge ${h.score >= 8 ? 'badge-green' : h.score >= 6 ? 'badge-yellow' : 'badge-red'}`}>{h.score}/10</span>
+                </div>
+              </button>
+              {onDeleteQuiz && (
+                <button
+                  onClick={() => { if (confirm('Delete this quiz result?')) { onDeleteQuiz(h.id); if (selected?.id === h.id) setSelected(null) } }}
+                  className="text-slate-600 hover:text-red-400 p-1.5 flex-shrink-0 transition-colors"
+                ><Trash2 size={14}/></button>
+              )}
+            </div>
           ))}
         </div>
       )}
