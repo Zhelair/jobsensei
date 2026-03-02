@@ -92,6 +92,15 @@ export function AIProvider({ children }) {
     setIsConnected(!!apiKey)
   }
 
+  function restoreToProxy() {
+    setApiKey('')
+    setProvider(PROVIDERS.DEEPSEEK)
+    setModel('deepseek-chat')
+    setCustomBaseUrl('')
+    localStorage.setItem('js_ai_config', JSON.stringify({ provider: PROVIDERS.DEEPSEEK, apiKey: '', model: 'deepseek-chat', customBaseUrl: '' }))
+    setIsConnected(!!bmacToken)
+  }
+
   async function verifyBmac(email) {
     const res = await fetch('/api/verify-member', {
       method: 'POST',
@@ -286,7 +295,7 @@ export function AIProvider({ children }) {
       provider, model, apiKey, customBaseUrl, isConnected, isThinking,
       bmacToken, bmacEmail,
       showPaywall, openPaywall: () => setShowPaywall(true), closePaywall: () => setShowPaywall(false),
-      saveConfig, callAI, verifyBmac, clearBmacToken,
+      saveConfig, callAI, verifyBmac, clearBmacToken, restoreToProxy,
       PROVIDER_CONFIGS, PROVIDERS,
     }}>
       {children}

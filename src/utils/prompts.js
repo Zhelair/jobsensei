@@ -181,7 +181,7 @@ Transform this into a polished STAR answer. Return ONLY valid JSON:
   "targetQuestions": ["What interview questions this story answers well"]
 }`,
 
-  transferableSkills: (experience, targetRole, drillMode) => `You are a career pivot coach specializing in helping professionals reframe their experience for new contexts.
+  transferableSkills: (experience, targetRole, drillMode) => `You are a career pivot coach helping professionals reframe their experience for new contexts.
 
 CANDIDATE'S CURRENT EXPERIENCE:
 ${experience}
@@ -189,13 +189,15 @@ ${experience}
 TARGET ROLE/CONTEXT:
 ${targetRole}
 
-Provide:
-1. **Reframed Talking Points** (5-7 bullet points): How to describe their experience using language relevant to the target role
-2. **Key Translations**: Specific terminology swaps (e.g., "individual user fraud" → "merchant-level behavioral risk patterns")  
-3. **Strongest Transferable Skills**: Top 3-5 skills that directly map
-4. **Interview Strategy**: How to address the pivot question "You don't have direct X experience — why should we hire you?"
-5. **Phrases to Use**: 5 specific phrases that bridge their background to the new context
-6. **Phrases to Avoid**: Language that highlights the gap rather than the fit
+Write a CONCISE coaching response of 100-300 words maximum. Use 3-6 short bullet-point sections with bold headers. Focus only on the most impactful insights:
+
+1. **Top Transferable Skills** – 3-4 skills that directly map
+2. **Key Reframes** – 2-3 specific terminology/framing swaps
+3. **Interview Strategy** – 1-2 sentences on how to handle the pivot question
+4. **Phrases to Use** – 2-3 specific bridge phrases
+5. **One Phrase to Avoid** – the most common mistake to skip
+
+Be blunt, practical, and specific. No filler. Every sentence must add value.
 ${toneModifier(drillMode)}`,
 
   negotiationSim: (offerDetails, context, drillMode) => `You are a recruiter conducting a salary negotiation call. Stay in character.
@@ -240,7 +242,7 @@ Analyze the JD and predict the most likely interview questions. Return ONLY vali
   ]
 }
 
-Generate 12-15 questions covering all categories. Prioritize questions specific to this role and JD, not generic interview questions.`,
+Generate exactly 10 questions covering all categories. Prioritize questions specific to this role and JD, not generic interview questions.`,
 
   toneAnalyzer: (answer, drillMode) => `You are a communication coach analyzing interview answer quality.
 
@@ -326,19 +328,19 @@ Return ONLY valid JSON:
   "letters": [
     {
       "tone": "Corporate",
-      "body": "Full cover letter body (4-5 paragraphs). Professional, formal, metrics-focused.",
+      "body": "Cover letter body — MAXIMUM 120 words, 3 short punchy paragraphs. Professional, formal, metrics-focused. No filler.",
       "clarityScore": 0,
       "confidenceScore": 0
     },
     {
       "tone": "Creative",
-      "body": "Full cover letter body. Opens with a hook, shows personality, still professional.",
+      "body": "Cover letter body — MAXIMUM 120 words, 3 short punchy paragraphs. Opens with a hook, shows personality, still professional.",
       "clarityScore": 0,
       "confidenceScore": 0
     },
     {
       "tone": "Casual",
-      "body": "Full cover letter body. Warm, conversational, authentic — like a smart email to a friend of a friend.",
+      "body": "Cover letter body — MAXIMUM 120 words, 3 short punchy paragraphs. Warm, conversational, authentic — like a smart email to a friend of a friend.",
       "clarityScore": 0,
       "confidenceScore": 0
     }
@@ -405,6 +407,34 @@ Audit this LinkedIn profile and return ONLY valid JSON:
 }
 Score guidelines: 80+ strong, 60-79 needs work, below 60 significant gaps.
 Return ONLY valid JSON, no other text.`,
+
+  summarizeNotes: (topicTitle, notes) => `You are a concise study assistant.
+
+Topic: "${topicTitle}"
+
+Notes to summarize:
+${notes}
+
+Write a clean, structured summary of these notes. Use headings and bullet points. Cover the key concepts, important distinctions, and anything worth memorizing. Keep it tight — aim for 200-300 words. Do NOT pad or repeat — every sentence should add value.
+
+Return plain text with markdown formatting (##, -, **bold**).`,
+
+  cheatCard: (topicTitle, notes) => `You are an expert at creating concise study cheat sheets.
+
+Topic: "${topicTitle}"
+
+Source notes:
+${notes}
+
+Create a dense, scannable cheat card for this topic. Format it like a study reference card:
+- Group by theme/concept
+- Use very short bullet points (max 10 words each)
+- Include key terms, definitions, and formulas
+- Include 3-5 "memory hooks" (mnemonics, analogies, or memorable phrases)
+- Flag the top 3 most exam/interview-likely points with ⭐
+
+Keep the entire cheat card under 400 words. Make it printable and useful.
+Return plain text with markdown formatting.`,
 
   senseiTip: (profile, stats) => `You are JobSensei, a career coach. Generate a brief, personalized daily tip for this job seeker.
 

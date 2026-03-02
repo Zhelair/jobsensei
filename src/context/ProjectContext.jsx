@@ -15,6 +15,7 @@ const EMPTY_PROJECT_DATA = {
   topics: [],               // learning topics
   resume: '',               // resume text
   notes: '',                // free notes
+  topicNotes: [],           // saved notes from learning sessions
   currentJD: '',            // persistent JD field across gap/interview
   interviewMode: 'hr',      // last interview mode used
   negotiationOffer: '',     // last negotiation offer text

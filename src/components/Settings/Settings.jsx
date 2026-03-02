@@ -6,7 +6,7 @@ import { Zap, Check, Trash2, Eye, EyeOff, GraduationCap, FileText, Upload, Downl
 import DeepSeekGuide from './DeepSeekGuide'
 
 export default function Settings() {
-  const { provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS, bmacToken, bmacEmail, verifyBmac, clearBmacToken } = useAI()
+  const { provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS, bmacToken, bmacEmail, verifyBmac, clearBmacToken, restoreToProxy } = useAI()
   const { profile, saveProfile, setShowOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData, exportProject, exportAll, importProjects } = useProject()
 
@@ -261,6 +261,18 @@ export default function Settings() {
                 </div>
                 {testResult === 'success' && <p className="text-green-400 text-sm text-center">✅ Connected!</p>}
                 {testResult === 'error' && <p className="text-red-400 text-sm text-center">❌ Failed. Check key and model name.</p>}
+
+                {apiKey && (
+                  <div className="pt-2 border-t border-navy-700">
+                    <button
+                      onClick={() => { restoreToProxy(); setForm(f => ({ ...f, apiKey: '', provider: PROVIDERS.DEEPSEEK, model: 'deepseek-chat' })) }}
+                      className="btn-ghost text-xs text-yellow-400 hover:text-yellow-300 w-full justify-center"
+                    >
+                      <Coffee size={13}/> Restore to JobSensei API
+                    </button>
+                    <p className="text-slate-600 text-xs text-center mt-1">Clears your key and uses supporter access again.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
