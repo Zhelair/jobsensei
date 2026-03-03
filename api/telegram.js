@@ -24,7 +24,7 @@ const DAILY_LIMIT_MSG = `⏰ You've used your free tool for today!
 
 Come back tomorrow to try another one. 🗓️
 
-Want unlimited access? Try the JobSensei app — 20+ AI tools:
+Want more? Try the JobSensei app — 20+ Job Hunting tools:
 
 🎤 Interview Simulator — practice with an AI hiring manager (HR, technical, competency, stress modes). Full voice mode — AI speaks, you reply aloud in real time.
 🔍 Gap Analysis — paste any job posting → fit score, gaps & red-flag detection
@@ -552,7 +552,7 @@ async function handleUpdate(update) {
     await updateUser(userId, { current_step: 'awaiting_role' })
     return sendMessage(
       chatId,
-      `👋 Hey! Welcome to *JobSensei* 🚀\n\nI'll help you crush your next interview with AI-powered practice.\n\nFirst — *what role are you targeting?*\n\n_e.g. Software Engineer, Product Manager, Data Analyst_`
+      `👋 Welcome to *JobSensei Bot* 🚀\n\nTest AI-powered job hunting tools — *no sign-up needed!*\n\n*What you can do here (1 free tool per day):*\n\n1️⃣ *Interview Simulator* — 5 realistic interview questions + AI feedback on your answers\n2️⃣ *Resume\\/CV Optimizer* — Paste your resume → AI feedback + improvement suggestions\n3️⃣ *10 Mock Interview Questions* — Tailored practice questions with tips for your role\n\n_Each tool resets daily. Get a taste of JobSensei's 20\\+ tools — the full app link appears in every result!_\n\n—\n\nFirst — *what role are you targeting?*\n\n_e.g. Software Engineer, Product Manager, Data Analyst_`
     )
   }
 
