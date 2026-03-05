@@ -603,6 +603,45 @@
   box-shadow: 0 2px 12px rgba(226,114,91,0.40);
 }
 
+/* ── Daylight: fractional-opacity inline Tailwind overrides ── */
+
+/* Teal tints (Project Switcher button, filter active, recording popup btns) */
+[data-theme="daylight"] .bg-teal-500\/10   { background-color: rgba(13,148,136,0.09); }
+[data-theme="daylight"] .bg-teal-500\/20   { background-color: rgba(13,148,136,0.14); }
+[data-theme="daylight"] .bg-teal-500\/25   { background-color: rgba(13,148,136,0.16); }
+[data-theme="daylight"] .border-teal-500\/20 { border-color: rgba(13,148,136,0.42); }
+[data-theme="daylight"] .border-teal-500\/30 { border-color: rgba(13,148,136,0.42); }
+[data-theme="daylight"] .border-teal-500\/40 { border-color: rgba(13,148,136,0.50); }
+[data-theme="daylight"] .hover\:bg-teal-500\/15:hover { background-color: rgba(13,148,136,0.13); }
+[data-theme="daylight"] .hover\:bg-teal-500\/30:hover { background-color: rgba(13,148,136,0.22); }
+[data-theme="daylight"] .text-teal-300 { color: #0A7A6B; }
+
+/* Indigo tints (filter active category buttons) */
+[data-theme="daylight"] .bg-indigo-500\/20   { background-color: rgba(79,70,229,0.12); }
+[data-theme="daylight"] .border-indigo-500\/40 { border-color: rgba(79,70,229,0.44); }
+[data-theme="daylight"] .text-indigo-300 { color: #3730A3; }
+
+/* VoiceChatBar: transcript box bg (bg-navy-900/60 stays dark without this) */
+[data-theme="daylight"] .bg-navy-900\/60 { background-color: rgba(248,244,238,0.92); }
+
+/* Red tints (Discard button, error banners) */
+[data-theme="daylight"] .text-red-400 { color: #991B1B; }
+[data-theme="daylight"] .text-red-300 { color: #B91C1C; }
+[data-theme="daylight"] .hover\:text-red-400:hover { color: #7F1D1D; }
+[data-theme="daylight"] .bg-red-500\/10  { background-color: rgba(220,38,38,0.08); }
+[data-theme="daylight"] .bg-red-500\/15  { background-color: rgba(220,38,38,0.10); }
+[data-theme="daylight"] .border-red-500\/25 { border-color: rgba(220,38,38,0.32); }
+[data-theme="daylight"] .border-red-500\/30 { border-color: rgba(220,38,38,0.35); }
+
+/* Amber tints (paused recording, muted warning) */
+[data-theme="daylight"] .text-amber-400 { color: #92400E; }
+[data-theme="daylight"] .text-amber-300 { color: #78350F; }
+[data-theme="daylight"] .bg-amber-400   { background-color: #D97706; }
+[data-theme="daylight"] .bg-amber-500\/10 { background-color: rgba(146,64,14,0.09); }
+[data-theme="daylight"] .bg-amber-500\/20 { background-color: rgba(146,64,14,0.13); }
+[data-theme="daylight"] .border-amber-500\/30 { border-color: rgba(146,64,14,0.32); }
+[data-theme="daylight"] .border-amber-500\/40 { border-color: rgba(146,64,14,0.38); }
+
 /* ======================================================
    MYSPACE NEON THEME
    ====================================================== */
