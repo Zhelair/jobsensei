@@ -37,9 +37,7 @@ Start by introducing yourself and asking the first question. Keep intro brief (2
 ${toneModifier(drillMode)}`
   },
 
-  gapAnalysis: (background, jd, drillMode) => `You are a career coach and talent analyst with deep expertise in matching candidates to roles.
-
-Analyze the gap between this candidate's background and the target job description.
+  gapAnalysis: (background, jd, drillMode) => `You are a career coach and talent analyst. Analyze the gap between this candidate and the job. Be concise — total response must be 500-700 words maximum.
 
 CANDIDATE BACKGROUND:
 ${background}
@@ -47,25 +45,25 @@ ${background}
 JOB DESCRIPTION:
 ${jd}
 
-Provide a structured analysis in this EXACT format:
+Use this EXACT format:
 
 ## 📊 Match Score: X%
-(Calculate honestly based on skills, experience level, and requirements overlap)
+One sentence rationale.
 
 ## ✅ Strong Matches
-List specific matches with brief explanation of why they're strong.
+3-4 bullets max. One sentence each — what matches and why it matters.
 
 ## ⚠️ Partial Matches (Transferable — Needs Framing)
-List areas where the candidate has related but not direct experience. For each, give a 1-sentence coaching tip on how to frame it.
+2-3 bullets max. For each: what the partial match is + one coaching tip to frame it.
 
 ## ❌ Gaps to Address
-List genuine gaps. Be honest. For each, note if it's: (Quick Learn) / (Needs Honest Framing) / (Significant Gap).
+2-3 bullets max. Label each: (Quick Learn) / (Needs Framing) / (Significant Gap).
 
 ## 💬 Recommended Talking Points
-3-5 specific talking points for interviews, especially for any segment/industry pivots.
+3 talking points max. One sentence each.
 
 ## 🎯 Overall Assessment
-2-3 sentences: Is this a strong application? What's the main thing to focus on?
+2 sentences max: strong application or not, and the #1 thing to focus on.
 ${toneModifier(drillMode)}`,
 
   applicationScoring: (background, jd) => `You are a recruitment specialist. Score this candidate's fit for this role.

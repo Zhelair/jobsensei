@@ -284,25 +284,48 @@ function FullHistoryResult({ item }) {
     return (
       <div className="space-y-4">
         {scoreResult && (
-          <div className="grid grid-cols-3 gap-2">
-            {Object.entries(scoreResult).filter(([k]) => k !== 'rationale').map(([k, v]) => (
-              <div key={k} className="card text-center">
-                <div className={`font-display font-bold text-2xl mb-1 ${v >= 80 ? 'text-green-400' : v >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{v}</div>
-                <div className="text-slate-400 text-xs capitalize">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
+          <div className="space-y-3">
+            <div className="card flex items-center gap-4">
+              <div className={`text-3xl font-display font-bold ${scoreResult.overallScore >= 75 ? 'text-green-400' : scoreResult.overallScore >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
+                {scoreResult.overallScore}%
               </div>
-            ))}
+              <div>
+                <div className="text-white font-medium text-sm">{scoreResult.verdict}</div>
+                {scoreResult.recommendation && <div className="text-slate-400 text-xs mt-0.5">{scoreResult.recommendation}</div>}
+                {scoreResult.applyAdvice && <span className={`badge mt-1 ${scoreResult.applyAdvice?.includes('Yes') ? 'badge-green' : 'badge-yellow'}`}>{scoreResult.applyAdvice}</span>}
+              </div>
+            </div>
+            {scoreResult.breakdown && (
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(scoreResult.breakdown).map(([k, v]) => (
+                  <div key={k} className="card text-center">
+                    <div className={`font-display font-bold text-2xl mb-1 ${v >= 80 ? 'text-green-400' : v >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{v}</div>
+                    <div className="text-slate-400 text-xs capitalize">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {scoreResult.topStrengths?.length > 0 && <div className="flex flex-wrap gap-2">{scoreResult.topStrengths.map((s, i) => <span key={i} className="badge-green">{s}</span>)}</div>}
+            {scoreResult.keyGaps?.length > 0 && <div className="flex flex-wrap gap-2">{scoreResult.keyGaps.map((s, i) => <span key={i} className="badge-red">{s}</span>)}</div>}
           </div>
         )}
         {redFlags?.length > 0 && (
           <div className="card border-red-500/20">
             <h4 className="font-display font-semibold text-white text-sm mb-2">🚩 Red Flags</h4>
-            <ul className="space-y-1">{redFlags.map((f, i) => <li key={i} className="text-red-300 text-xs">• {f}</li>)}</ul>
+            <ul className="space-y-1">{redFlags.map((f, i) => <li key={i} className="text-red-300 text-xs">• {f.flag || f.detail || String(f)}</li>)}</ul>
           </div>
         )}
         {gapResult && (
           <div className="card">
             <h4 className="font-display font-semibold text-white text-sm mb-2">Gap Analysis</h4>
-            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{typeof gapResult === 'string' ? gapResult : JSON.stringify(gapResult, null, 2)}</p>
+            <div className="space-y-1">
+              {String(gapResult).split('\n').map((line, i) => {
+                if (line.startsWith('## ')) return <h3 key={i} className="font-display font-bold text-white text-base mt-4 mb-2">{line.slice(3)}</h3>
+                if (line.startsWith('- ') || line.startsWith('* ')) return <p key={i} className="text-slate-300 text-sm ml-3 mb-1">• {line.slice(2)}</p>
+                if (line.trim() === '') return <div key={i} className="h-1" />
+                return <p key={i} className="text-slate-300 text-sm mb-1">{line}</p>
+              })}
+            </div>
           </div>
         )}
       </div>
