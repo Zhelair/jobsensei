@@ -38,7 +38,7 @@ function exportToJSON(applications, notes) {
 }
 
 export default function JobTracker() {
-  const { getProjectData, updateProjectData } = useProject()
+  const { getProjectData, updateProjectData, updateProjectDataMultiple } = useProject()
   const applications = getProjectData('applications')
   const notes = getProjectData('companyNotes')
 
@@ -63,9 +63,13 @@ export default function JobTracker() {
     if (!newApp.company.trim()) return
     const { notes: prepNote, ...appFields } = newApp
     const app = { ...appFields, id: generateId(), date: new Date().toISOString() }
-    setApplications(prev => [...prev, app])
     if (prepNote.trim()) {
-      setNotes(prev => ({ ...prev, [app.id]: { ...(prev[app.id] || {}), prepNotes: prepNote } }))
+      updateProjectDataMultiple({
+        applications: [...applications, app],
+        companyNotes: { ...notes, [app.id]: { ...(notes[app.id] || {}), prepNotes: prepNote } },
+      })
+    } else {
+      setApplications(prev => [...prev, app])
     }
     setNewApp({ company: '', role: '', stage: 'Researching', jdUrl: '', notes: '' })
     setShowAdd(false)
