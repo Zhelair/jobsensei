@@ -130,6 +130,19 @@ export function ProjectProvider({ children }) {
     persist(updated)
   }
 
+  function updateProjectDataMultiple(updates) {
+    if (!activeProject) return
+    const updated = projects.map(p => {
+      if (p.id !== activeProjectId) return p
+      return {
+        ...p,
+        updatedAt: new Date().toISOString(),
+        data: { ...p.data, ...updates }
+      }
+    })
+    persist(updated)
+  }
+
   function getProjectData(key) {
     return activeProject?.data?.[key] ?? EMPTY_PROJECT_DATA[key]
   }
@@ -197,6 +210,7 @@ export function ProjectProvider({ children }) {
       deleteProject,
       renameProject,
       updateProjectData,
+      updateProjectDataMultiple,
       getProjectData,
       exportProject,
       exportAll,

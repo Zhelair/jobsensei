@@ -22,7 +22,7 @@ const STARTER_TOPICS = [
 ]
 const DIFF_COLORS = { Beginner: 'badge-green', Intermediate: 'badge-yellow', Advanced: 'badge-red' }
 const DIFFICULTIES = ['Beginner', 'Intermediate', 'Advanced']
-const CATEGORIES = ['FRAML', 'AML', 'Payments', 'Regulatory', 'Career', 'Technical', 'Marketing', 'Sales', 'Custom']
+const CATEGORIES = ['FRAML', 'AML', 'Payments', 'Regulatory', 'Career', 'Technical', 'Marketing', 'Sales', 'Finance', 'Engineering', 'Product', 'Design', 'Data', 'Legal', 'HR', 'Operations', 'Custom']
 
 // ─── Main Learning Section ─────────────────────────────────────────────────────
 
@@ -40,6 +40,9 @@ export default function LearningSection() {
   const [showAdd, setShowAdd] = useState(false)
   const [editingTopic, setEditingTopic] = useState(null)
   const [newTopic, setNewTopic] = useState({ title: '', category: 'Custom', difficulty: 'Intermediate' })
+  const [customCategory, setCustomCategory] = useState('')
+  const [filterCategory, setFilterCategory] = useState('All')
+  const [filterStatus, setFilterStatus] = useState('All')
 
   function setTopics(updater) {
     const next = typeof updater === 'function' ? updater(topics) : updater
@@ -48,13 +51,17 @@ export default function LearningSection() {
 
   function addTopic() {
     if (!newTopic.title.trim()) return
+    const resolvedCategory = newTopic.category === 'Custom' && customCategory.trim()
+      ? customCategory.trim()
+      : newTopic.category
     const topic = {
-      id: generateId(), ...newTopic,
+      id: generateId(), ...newTopic, category: resolvedCategory,
       status: 'Not Started', messages: [],
       quizScores: [], repetitions: 0, easeFactor: 2.5, interval: 0, nextReview: null,
     }
     setTopics(prev => [...prev, topic])
     setNewTopic({ title: '', category: 'Custom', difficulty: 'Intermediate' })
+    setCustomCategory('')
     setShowAdd(false)
   }
 
@@ -99,6 +106,11 @@ export default function LearningSection() {
   }
 
   const dueTopics = topics.filter(t => isDueToday(t.nextReview) && t.status === 'In Progress')
+  const categoryOptions = ['All', ...Array.from(new Set(topics.map(t => t.category))).sort()]
+  const filteredTopics = topics.filter(t =>
+    (filterCategory === 'All' || t.category === filterCategory) &&
+    (filterStatus === 'All' || t.status === filterStatus)
+  )
 
   if (view === 'tutor' && selectedTopic) return (
     <TopicTutor
@@ -168,6 +180,9 @@ export default function LearningSection() {
                 {DIFFICULTIES.map(d => <option key={d}>{d}</option>)}
               </select>
             </div>
+            {newTopic.category === 'Custom' && (
+              <input className="input-field" placeholder="Custom category name…" value={customCategory} onChange={e => setCustomCategory(e.target.value)} />
+            )}
           </div>
           <div className="flex gap-2">
             <button onClick={addTopic} disabled={!newTopic.title.trim()} className="btn-primary">Add Topic</button>
@@ -220,6 +235,9 @@ export default function LearningSection() {
                   <button onClick={() => { setSelectedTopic(t); setView('quiz') }} className="btn-primary text-xs py-1 px-2">
                     <Brain size={12}/> Quiz
                   </button>
+                  <button onClick={() => updateTopic(t.id, { nextReview: getNextReviewDate(1) })} className="text-yellow-600 hover:text-yellow-400 transition-colors p-1" title="Snooze to tomorrow">
+                    <X size={13}/>
+                  </button>
                 </div>
               </div>
             ))}
@@ -268,9 +286,31 @@ export default function LearningSection() {
         </div>
       )}
 
+      {/* Filters */}
+      {topics.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          <div className="flex gap-1 flex-wrap">
+            {['All', 'In Progress', 'Not Started', 'Completed'].map(s => (
+              <button key={s} onClick={() => setFilterStatus(s)}
+                className={`text-xs px-2.5 py-1 rounded-lg border transition-all font-body ${filterStatus === s ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'bg-navy-800 border-navy-600 text-slate-400 hover:text-slate-200'}`}>
+                {s}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1 flex-wrap">
+            {categoryOptions.map(c => (
+              <button key={c} onClick={() => setFilterCategory(c)}
+                className={`text-xs px-2.5 py-1 rounded-lg border transition-all font-body ${filterCategory === c ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300' : 'bg-navy-800 border-navy-600 text-slate-400 hover:text-slate-200'}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Topic grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {topics.map(topic => {
+        {filteredTopics.map(topic => {
           const due = isDueToday(topic.nextReview) && topic.status === 'In Progress'
           const noteCount = topicNotes.filter(n => n.topicId === topic.id).length
           return (

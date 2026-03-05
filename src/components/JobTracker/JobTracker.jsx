@@ -38,7 +38,7 @@ function exportToJSON(applications, notes) {
 }
 
 export default function JobTracker() {
-  const { getProjectData, updateProjectData } = useProject()
+  const { getProjectData, updateProjectData, updateProjectDataMultiple } = useProject()
   const applications = getProjectData('applications')
   const notes = getProjectData('companyNotes')
 
@@ -61,14 +61,15 @@ export default function JobTracker() {
 
   function addApplication() {
     if (!newApp.company.trim()) return
-    const app = { ...newApp, id: generateId(), date: new Date().toISOString() }
-    setApplications(prev => [...prev, app])
-    // Pre-populate Company Notes > "My prep notes" from the creation note field
-    if (newApp.notes.trim()) {
-      setNotes(prev => ({
-        ...prev,
-        [app.id]: { ...(prev[app.id] || {}), prepNotes: newApp.notes }
-      }))
+    const { notes: prepNote, ...appFields } = newApp
+    const app = { ...appFields, id: generateId(), date: new Date().toISOString() }
+    if (prepNote.trim()) {
+      updateProjectDataMultiple({
+        applications: [...applications, app],
+        companyNotes: { ...notes, [app.id]: { ...(notes[app.id] || {}), prepNotes: prepNote } },
+      })
+    } else {
+      setApplications(prev => [...prev, app])
     }
     setNewApp({ company: '', role: '', stage: 'Researching', jdUrl: '', notes: '' })
     setShowAdd(false)
@@ -175,7 +176,7 @@ export default function JobTracker() {
           </div>
           <textarea className="textarea-field h-16 mb-1" placeholder="Initial prep note (optional)…"
             value={newApp.notes} onChange={e => setNewApp(p => ({ ...p, notes: e.target.value }))} />
-          <p className="text-slate-600 text-xs mb-3">↳ This note will appear in <strong className="text-slate-500">Company Notes → My prep notes</strong></p>
+          <p className="text-slate-600 text-xs mb-3">↳ Saved to <strong className="text-slate-500">Company Notes → My prep notes</strong></p>
           <div className="flex gap-2">
             <button onClick={addApplication} disabled={!newApp.company.trim()} className="btn-primary">Add</button>
             <button onClick={() => setShowAdd(false)} className="btn-ghost">Cancel</button>
