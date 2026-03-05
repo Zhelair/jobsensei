@@ -22,7 +22,7 @@ const STARTER_TOPICS = [
 ]
 const DIFF_COLORS = { Beginner: 'badge-green', Intermediate: 'badge-yellow', Advanced: 'badge-red' }
 const DIFFICULTIES = ['Beginner', 'Intermediate', 'Advanced']
-const CATEGORIES = ['FRAML', 'AML', 'Payments', 'Regulatory', 'Career', 'Technical', 'Marketing', 'Sales', 'Custom']
+const CATEGORIES = ['FRAML', 'AML', 'Payments', 'Regulatory', 'Career', 'Technical', 'Marketing', 'Sales', 'Finance', 'Engineering', 'Product', 'Design', 'Data', 'Legal', 'HR', 'Operations', 'Custom']
 
 // ─── Main Learning Section ─────────────────────────────────────────────────────
 
@@ -40,6 +40,8 @@ export default function LearningSection() {
   const [showAdd, setShowAdd] = useState(false)
   const [editingTopic, setEditingTopic] = useState(null)
   const [newTopic, setNewTopic] = useState({ title: '', category: 'Custom', difficulty: 'Intermediate' })
+  const [customCategory, setCustomCategory] = useState('')
+  const [dismissedReviews, setDismissedReviews] = useState(false)
 
   function setTopics(updater) {
     const next = typeof updater === 'function' ? updater(topics) : updater
@@ -48,13 +50,17 @@ export default function LearningSection() {
 
   function addTopic() {
     if (!newTopic.title.trim()) return
+    const resolvedCategory = newTopic.category === 'Custom' && customCategory.trim()
+      ? customCategory.trim()
+      : newTopic.category
     const topic = {
-      id: generateId(), ...newTopic,
+      id: generateId(), ...newTopic, category: resolvedCategory,
       status: 'Not Started', messages: [],
       quizScores: [], repetitions: 0, easeFactor: 2.5, interval: 0, nextReview: null,
     }
     setTopics(prev => [...prev, topic])
     setNewTopic({ title: '', category: 'Custom', difficulty: 'Intermediate' })
+    setCustomCategory('')
     setShowAdd(false)
   }
 
@@ -168,6 +174,9 @@ export default function LearningSection() {
                 {DIFFICULTIES.map(d => <option key={d}>{d}</option>)}
               </select>
             </div>
+            {newTopic.category === 'Custom' && (
+              <input className="input-field" placeholder="Custom category name…" value={customCategory} onChange={e => setCustomCategory(e.target.value)} />
+            )}
           </div>
           <div className="flex gap-2">
             <button onClick={addTopic} disabled={!newTopic.title.trim()} className="btn-primary">Add Topic</button>
@@ -204,10 +213,15 @@ export default function LearningSection() {
       )}
 
       {/* Due reviews — with Study + Quiz buttons */}
-      {dueTopics.length > 0 && (
+      {dueTopics.length > 0 && !dismissedReviews && (
         <div className="card mb-4 border-yellow-500/30 bg-yellow-500/5">
-          <div className="text-yellow-400 text-sm font-display font-semibold mb-3">
-            📚 {dueTopics.length} review{dueTopics.length !== 1 ? 's' : ''} due today
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-yellow-400 text-sm font-display font-semibold">
+              📚 {dueTopics.length} review{dueTopics.length !== 1 ? 's' : ''} due today
+            </div>
+            <button onClick={() => setDismissedReviews(true)} className="text-yellow-600 hover:text-yellow-400 transition-colors" title="Dismiss">
+              <X size={14}/>
+            </button>
           </div>
           <div className="space-y-2">
             {dueTopics.map(t => (
