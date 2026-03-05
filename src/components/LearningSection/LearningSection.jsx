@@ -41,7 +41,8 @@ export default function LearningSection() {
   const [editingTopic, setEditingTopic] = useState(null)
   const [newTopic, setNewTopic] = useState({ title: '', category: 'Custom', difficulty: 'Intermediate' })
   const [customCategory, setCustomCategory] = useState('')
-  const [dismissedReviews, setDismissedReviews] = useState(false)
+  const [filterCategory, setFilterCategory] = useState('All')
+  const [filterStatus, setFilterStatus] = useState('All')
 
   function setTopics(updater) {
     const next = typeof updater === 'function' ? updater(topics) : updater
@@ -105,6 +106,11 @@ export default function LearningSection() {
   }
 
   const dueTopics = topics.filter(t => isDueToday(t.nextReview) && t.status === 'In Progress')
+  const categoryOptions = ['All', ...Array.from(new Set(topics.map(t => t.category))).sort()]
+  const filteredTopics = topics.filter(t =>
+    (filterCategory === 'All' || t.category === filterCategory) &&
+    (filterStatus === 'All' || t.status === filterStatus)
+  )
 
   if (view === 'tutor' && selectedTopic) return (
     <TopicTutor
@@ -213,15 +219,10 @@ export default function LearningSection() {
       )}
 
       {/* Due reviews — with Study + Quiz buttons */}
-      {dueTopics.length > 0 && !dismissedReviews && (
+      {dueTopics.length > 0 && (
         <div className="card mb-4 border-yellow-500/30 bg-yellow-500/5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-yellow-400 text-sm font-display font-semibold">
-              📚 {dueTopics.length} review{dueTopics.length !== 1 ? 's' : ''} due today
-            </div>
-            <button onClick={() => setDismissedReviews(true)} className="text-yellow-600 hover:text-yellow-400 transition-colors" title="Dismiss">
-              <X size={14}/>
-            </button>
+          <div className="text-yellow-400 text-sm font-display font-semibold mb-3">
+            📚 {dueTopics.length} review{dueTopics.length !== 1 ? 's' : ''} due today
           </div>
           <div className="space-y-2">
             {dueTopics.map(t => (
@@ -233,6 +234,9 @@ export default function LearningSection() {
                   </button>
                   <button onClick={() => { setSelectedTopic(t); setView('quiz') }} className="btn-primary text-xs py-1 px-2">
                     <Brain size={12}/> Quiz
+                  </button>
+                  <button onClick={() => updateTopic(t.id, { nextReview: getNextReviewDate(1) })} className="text-yellow-600 hover:text-yellow-400 transition-colors p-1" title="Snooze to tomorrow">
+                    <X size={13}/>
                   </button>
                 </div>
               </div>
@@ -282,9 +286,31 @@ export default function LearningSection() {
         </div>
       )}
 
+      {/* Filters */}
+      {topics.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          <div className="flex gap-1 flex-wrap">
+            {['All', 'In Progress', 'Not Started', 'Completed'].map(s => (
+              <button key={s} onClick={() => setFilterStatus(s)}
+                className={`text-xs px-2.5 py-1 rounded-lg border transition-all font-body ${filterStatus === s ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'bg-navy-800 border-navy-600 text-slate-400 hover:text-slate-200'}`}>
+                {s}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1 flex-wrap">
+            {categoryOptions.map(c => (
+              <button key={c} onClick={() => setFilterCategory(c)}
+                className={`text-xs px-2.5 py-1 rounded-lg border transition-all font-body ${filterCategory === c ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300' : 'bg-navy-800 border-navy-600 text-slate-400 hover:text-slate-200'}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Topic grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {topics.map(topic => {
+        {filteredTopics.map(topic => {
           const due = isDueToday(topic.nextReview) && topic.status === 'In Progress'
           const noteCount = topicNotes.filter(n => n.topicId === topic.id).length
           return (

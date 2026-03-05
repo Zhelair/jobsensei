@@ -44,7 +44,7 @@ export default function JobTracker() {
 
   const [tab, setTab] = useState(0)
   const [showAdd, setShowAdd] = useState(false)
-  const [newApp, setNewApp] = useState({ company: '', role: '', stage: 'Researching', jdUrl: '' })
+  const [newApp, setNewApp] = useState({ company: '', role: '', stage: 'Researching', jdUrl: '', notes: '' })
   const [selectedApp, setSelectedApp] = useState(null)
   const [editingApp, setEditingApp] = useState(null)
   const [importMsg, setImportMsg] = useState('')
@@ -61,9 +61,13 @@ export default function JobTracker() {
 
   function addApplication() {
     if (!newApp.company.trim()) return
-    const app = { ...newApp, id: generateId(), date: new Date().toISOString() }
+    const { notes: prepNote, ...appFields } = newApp
+    const app = { ...appFields, id: generateId(), date: new Date().toISOString() }
     setApplications(prev => [...prev, app])
-    setNewApp({ company: '', role: '', stage: 'Researching', jdUrl: '' })
+    if (prepNote.trim()) {
+      setNotes(prev => ({ ...prev, [app.id]: { ...(prev[app.id] || {}), prepNotes: prepNote } }))
+    }
+    setNewApp({ company: '', role: '', stage: 'Researching', jdUrl: '', notes: '' })
     setShowAdd(false)
   }
 
@@ -166,6 +170,9 @@ export default function JobTracker() {
             <input className="input-field" placeholder="JD URL (optional)" value={newApp.jdUrl}
               onChange={e => setNewApp(p => ({ ...p, jdUrl: e.target.value }))} />
           </div>
+          <textarea className="textarea-field h-16 mb-1" placeholder="Initial prep note (optional)…"
+            value={newApp.notes} onChange={e => setNewApp(p => ({ ...p, notes: e.target.value }))} />
+          <p className="text-slate-600 text-xs mb-3">↳ Saved to <strong className="text-slate-500">Company Notes → My prep notes</strong></p>
           <div className="flex gap-2">
             <button onClick={addApplication} disabled={!newApp.company.trim()} className="btn-primary">Add</button>
             <button onClick={() => setShowAdd(false)} className="btn-ghost">Cancel</button>
