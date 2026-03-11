@@ -25,7 +25,10 @@ export default function Sidebar() {
           <GraduationCap size={16} className="text-white" />
         </div>
         {sidebarOpen && (
-          <span className="font-display font-bold text-white text-lg">JobSensei</span>
+          <div className="flex flex-col">
+            <span className="font-display font-bold text-white text-lg leading-tight">JobSensei</span>
+            <span className="text-xs text-teal-400/60 font-medium leading-tight">Confidence through realistic practice</span>
+          </div>
         )}
       </div>
 

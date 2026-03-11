@@ -121,7 +121,10 @@ export default function TopBar() {
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500 to-indigo-500 flex items-center justify-center">
           <GraduationCap size={14} className="text-white" />
         </div>
-        <span className="font-display font-bold text-white">JobSensei</span>
+        <div className="flex flex-col">
+          <span className="font-display font-bold text-white leading-tight">JobSensei</span>
+          <span className="text-xs text-teal-400/60 font-medium leading-tight">Confidence through realistic practice</span>
+        </div>
       </div>
 
       {/* Desktop title */}
