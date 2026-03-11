@@ -27,7 +27,7 @@ export default function Sidebar() {
         {sidebarOpen && (
           <div className="flex flex-col gap-0.5">
             <span className="font-display font-bold text-white text-lg leading-tight tracking-tight">JobSensei</span>
-            <span className="logo-mantra text-xs leading-tight">Train Real. Be Confident.</span>
+            <span className="logo-mantra text-xs leading-tight">Be confident. Get hired.</span>
           </div>
         )}
       </div>
