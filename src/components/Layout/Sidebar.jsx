@@ -2,7 +2,7 @@ import React from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import {
   LayoutDashboard, Mic, BookOpen,
-  Wrench, Briefcase, Settings, ChevronLeft, ChevronRight, GraduationCap
+  Wrench, Briefcase, Settings, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import ProjectSwitcher from '../Projects/ProjectSwitcher'
 
@@ -22,12 +22,12 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-navy-700">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-indigo-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-          <GraduationCap size={18} className="text-white" />
+          <span className="text-lg leading-none">🥷</span>
         </div>
         {sidebarOpen && (
           <div className="flex flex-col gap-0.5">
-            <span className="font-display font-bold text-white text-lg leading-tight tracking-tight">JobSensei</span>
-            <span className="logo-mantra text-xs leading-tight">Train Real. Be Confident.</span>
+            <span className="font-display font-bold text-white text-xl leading-tight tracking-tight">JobSensei</span>
+            <span className="logo-mantra text-xs leading-tight">Be confident. Get hired.</span>
           </div>
         )}
       </div>
