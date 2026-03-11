@@ -674,6 +674,16 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(200).json({ ok: true })
 
+  // Verify Telegram webhook secret token (set TELEGRAM_WEBHOOK_SECRET env var and
+  // register it via setWebhook: https://api.telegram.org/bot<TOKEN>/setWebhook?url=...&secret_token=<SECRET>)
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
+  if (webhookSecret) {
+    const incomingSecret = req.headers['x-telegram-bot-api-secret-token']
+    if (incomingSecret !== webhookSecret) {
+      return res.status(401).json({ ok: false })
+    }
+  }
+
   try {
     await handleUpdate(req.body)
   } catch (err) {

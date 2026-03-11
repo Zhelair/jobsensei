@@ -32,6 +32,9 @@ export default async function handler(req, res) {
     if (!code.trim()) {
       return res.status(400).json({ error: 'Access code is required' })
     }
+    if (code.length > 200) {
+      return res.status(400).json({ error: 'Invalid access code' })
+    }
 
     const validCodes = process.env.ACCESS_CODES
       .split(',')

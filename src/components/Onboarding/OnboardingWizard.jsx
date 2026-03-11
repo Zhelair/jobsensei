@@ -84,11 +84,11 @@ export default function OnboardingWizard() {
         <div className="space-y-4">
           <div>
             <label className="text-sm text-slate-400 font-body mb-1.5 block">Your name</label>
-            <input className="input-field" placeholder="Nikita" value={data.name} onChange={e => update('name', e.target.value)} />
+            <input className="input-field" placeholder="Ivan" value={data.name} onChange={e => update('name', e.target.value)} />
           </div>
           <div>
             <label className="text-sm text-slate-400 font-body mb-1.5 block">Current / most recent role</label>
-            <input className="input-field" placeholder="Financial Crime Investigations Expert" value={data.currentRole} onChange={e => update('currentRole', e.target.value)} />
+            <input className="input-field" placeholder="Marketing Manager" value={data.currentRole} onChange={e => update('currentRole', e.target.value)} />
           </div>
           <div>
             <label className="text-sm text-slate-400 font-body mb-1.5 block">Years of experience</label>

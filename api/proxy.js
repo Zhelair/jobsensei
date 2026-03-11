@@ -43,6 +43,13 @@ export default async function handler(req, res) {
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Invalid request body' })
   }
+  if (messages.length > 50) {
+    return res.status(400).json({ error: 'Too many messages in request' })
+  }
+  const totalChars = messages.reduce((sum, m) => sum + (typeof m.content === 'string' ? m.content.length : 0), 0)
+  if (totalChars > 100_000) {
+    return res.status(400).json({ error: 'Request payload too large' })
+  }
 
   try {
     const deepseekRes = await fetch('https://api.deepseek.com/v1/chat/completions', {
