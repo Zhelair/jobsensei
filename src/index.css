@@ -22,6 +22,13 @@
 }
 
 @layer components {
+  /* Logo mantra tagline — theme-aware via CSS overrides below */
+  .logo-mantra {
+    color: rgba(45, 212, 191, 0.6);
+    font-weight: 500;
+    letter-spacing: 0.025em;
+  }
+
   .glass {
     background: rgba(30, 41, 59, 0.7);
     backdrop-filter: blur(12px);
@@ -909,3 +916,7 @@
   color: #FFFFFF;
   box-shadow: 0 8px 28px rgba(0,0,0,0.12), 0 0 16px rgba(226,114,91,0.25);
 }
+
+/* Logo mantra theme overrides */
+[data-theme="daylight"] .logo-mantra { color: rgba(226, 114, 91, 0.85); }
+[data-theme="myspace"] .logo-mantra  { color: rgba(255, 0, 110, 0.65); }
