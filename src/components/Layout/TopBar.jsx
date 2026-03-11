@@ -3,7 +3,7 @@ import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 import { useVisuals } from '../../context/VisualsContext'
-import { Settings, GraduationCap, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2 } from 'lucide-react'
+import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2 } from 'lucide-react'
 
 const THEME_ICONS = {
   [THEMES.DARK]: Moon,
@@ -119,10 +119,10 @@ export default function TopBar() {
       {/* Mobile logo */}
       <div className="flex items-center gap-2 md:hidden">
         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-400 to-indigo-500 flex items-center justify-center shadow-md">
-          <GraduationCap size={15} className="text-white" />
+          <span className="text-base leading-none">🥷</span>
         </div>
         <div className="flex flex-col gap-0.5">
-          <span className="font-display font-bold text-white leading-tight tracking-tight">JobSensei</span>
+          <span className="font-display font-bold text-white text-base leading-tight tracking-tight">JobSensei</span>
           <span className="logo-mantra text-xs leading-tight">Be confident. Get hired.</span>
         </div>
       </div>
