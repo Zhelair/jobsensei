@@ -118,12 +118,12 @@ export default function TopBar() {
     <header className="bg-navy-900 border-b border-navy-700 px-4 md:px-6 py-3 flex items-center justify-between flex-shrink-0 relative">
       {/* Mobile logo */}
       <div className="flex items-center gap-2 md:hidden">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500 to-indigo-500 flex items-center justify-center">
-          <GraduationCap size={14} className="text-white" />
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-400 to-indigo-500 flex items-center justify-center shadow-md">
+          <GraduationCap size={15} className="text-white" />
         </div>
-        <div className="flex flex-col">
-          <span className="font-display font-bold text-white leading-tight">JobSensei</span>
-          <span className="text-xs text-teal-400/60 font-medium leading-tight">Confidence through realistic practice</span>
+        <div className="flex flex-col gap-0.5">
+          <span className="font-display font-bold text-white leading-tight tracking-tight">JobSensei</span>
+          <span className="logo-mantra text-xs leading-tight">Confidence through realistic practice</span>
         </div>
       </div>
 
