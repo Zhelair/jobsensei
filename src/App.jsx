@@ -18,7 +18,7 @@ import JobTracker from './components/JobTracker/JobTracker'
 import Settings from './components/Settings/Settings'
 
 function AppContent() {
-  const { activeSection, showOnboarding } = useApp()
+  const { activeSection, showOnboarding, navKey } = useApp()
 
   const sections = {
     [SECTIONS.DASHBOARD]: Dashboard,
@@ -42,7 +42,7 @@ function AppContent() {
       <div className="flex flex-col flex-1 min-w-0">
         <TopBar />
         <main className={`flex-1 ${isFullHeight ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'} pb-16 md:pb-0`}>
-          <ActiveSection />
+          <ActiveSection key={navKey} />
         </main>
       </div>
       <BottomNav />

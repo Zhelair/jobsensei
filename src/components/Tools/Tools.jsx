@@ -486,16 +486,54 @@ function FullHistoryResult({ item }) {
     )
   }
   if (item.tool === 'linkedin' && item.result) {
+    const r = item.result
     return (
-      <div className="space-y-3">
-        <div className="card text-center py-4">
-          <div className={`font-display font-bold text-4xl mb-1 ${item.result.overallScore >= 80 ? 'text-green-400' : item.result.overallScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{item.result.overallScore}</div>
+      <div className="space-y-4">
+        <div className="card text-center py-6">
+          <div className={`font-display font-bold text-5xl mb-2 ${r.overallScore >= 80 ? 'text-green-400' : r.overallScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{r.overallScore}</div>
           <div className="text-slate-400 text-sm">Overall LinkedIn Score</div>
+          {r.ctaPresent === false && <div className="text-yellow-400 text-xs mt-2">⚠ No call-to-action detected</div>}
         </div>
-        {item.result.quickWins?.length > 0 && (
+        {r.summary && <div className="card border-indigo-500/20 bg-indigo-500/5"><p className="text-slate-200 text-sm leading-relaxed">{r.summary}</p></div>}
+        {r.sections && Object.entries(r.sections).map(([key, section]) =>
+          key !== 'keywords' && section.score !== undefined ? (
+            <div key={key} className="card">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-display font-semibold text-white text-sm capitalize">{key}</h4>
+                <span className={`font-display font-bold text-lg ${section.score >= 80 ? 'text-green-400' : section.score >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{section.score}/100</span>
+              </div>
+              <p className="text-slate-400 text-xs mb-2">{section.feedback}</p>
+              {section.suggestion && <p className="text-teal-400 text-xs">💡 {section.suggestion}</p>}
+            </div>
+          ) : null
+        )}
+        {r.sections?.keywords && (
+          <div className="card">
+            <h4 className="font-display font-semibold text-white text-sm mb-3">Keywords</h4>
+            {r.sections.keywords.found?.length > 0 && (
+              <div className="mb-3">
+                <span className="text-green-400 text-xs font-display font-semibold">✓ Already there</span>
+                <div className="flex flex-wrap gap-1.5 mt-2">{r.sections.keywords.found.map((kw, i) => <span key={i} className="badge-green">{kw}</span>)}</div>
+              </div>
+            )}
+            {r.sections.keywords.missing?.length > 0 && (
+              <div>
+                <span className="text-yellow-400 text-xs font-display font-semibold">⚠ Add these for discoverability</span>
+                <div className="flex flex-wrap gap-1.5 mt-2">{r.sections.keywords.missing.map((kw, i) => <span key={i} className="badge-yellow">{kw}</span>)}</div>
+              </div>
+            )}
+          </div>
+        )}
+        {r.quickWins?.length > 0 && (
           <div className="card border-teal-500/20">
             <h4 className="font-display font-semibold text-white text-sm mb-2">⚡ Quick Wins</h4>
-            <ul className="space-y-1">{item.result.quickWins.map((w, i) => <li key={i} className="text-slate-300 text-xs">• {w}</li>)}</ul>
+            <ul className="space-y-1">{r.quickWins.map((w, i) => <li key={i} className="text-slate-300 text-xs">• {w}</li>)}</ul>
+          </div>
+        )}
+        {r.strengths?.length > 0 && (
+          <div className="card border-green-500/20">
+            <h4 className="font-display font-semibold text-white text-sm mb-2">✅ Already Strong</h4>
+            <ul className="space-y-1">{r.strengths.map((s, i) => <li key={i} className="text-slate-300 text-xs">• {s}</li>)}</ul>
           </div>
         )}
       </div>
