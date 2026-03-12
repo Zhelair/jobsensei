@@ -15,7 +15,7 @@ const MOBILE_NAV = [
 ]
 
 export default function BottomNav() {
-  const { activeSection, setActiveSection } = useApp()
+  const { activeSection, setActiveSection, setNavKey } = useApp()
   const {
     projects, activeProject,
     switchProject, createProject, deleteProject, renameProject,
@@ -32,6 +32,7 @@ export default function BottomNav() {
   const fileRef = useRef(null)
 
   function handleNavClick(id) {
+    if (activeSection === id) setNavKey(k => k + 1)
     setActiveSection(id)
     setShowProjects(false)
   }

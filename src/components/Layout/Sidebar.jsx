@@ -15,7 +15,12 @@ const NAV_ITEMS = [
 ]
 
 export default function Sidebar() {
-  const { activeSection, setActiveSection, sidebarOpen, setSidebarOpen } = useApp()
+  const { activeSection, setActiveSection, sidebarOpen, setSidebarOpen, navKey, setNavKey } = useApp()
+
+  function handleNavClick(id) {
+    if (activeSection === id) setNavKey(k => k + 1)
+    setActiveSection(id)
+  }
 
   return (
     <aside className={`hidden md:flex flex-col bg-navy-900 border-r border-navy-700 transition-all duration-300 ${sidebarOpen ? 'w-56' : 'w-16'} flex-shrink-0`}>
@@ -37,7 +42,7 @@ export default function Sidebar() {
         {NAV_ITEMS.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
-            onClick={() => setActiveSection(id)}
+            onClick={() => handleNavClick(id)}
             title={!sidebarOpen ? label : undefined}
             className={`nav-item w-full ${activeSection === id ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-0' : ''}`}
           >

@@ -500,10 +500,13 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
         <div className="space-y-3">
           {questions.map(q => {
             const fb = feedback[q.id]
+            const passed = fb?.correct !== false && (fb?.score === undefined || fb?.score >= 6)
             return (
-              <div key={q.id} className={`card border ${fb?.correct === false || (fb?.score !== undefined && fb.score < 6) ? 'border-red-500/20' : 'border-green-500/20'}`}>
+              <div key={q.id} className={`card border ${passed ? 'border-green-500/20' : 'border-red-500/20'}`}>
                 <p className="text-white text-sm mb-2">{q.question}</p>
-                {(fb?.explanation || fb?.feedback) && <p className="text-slate-400 text-xs">{fb.explanation || fb.feedback}</p>}
+                {(fb?.explanation || fb?.feedback) && (
+                  <p className={`text-xs ${passed ? 'text-green-300' : 'text-red-300'}`}>{fb.explanation || fb.feedback}</p>
+                )}
               </div>
             )
           })}
