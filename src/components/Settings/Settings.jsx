@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react'
 import { useAI } from '../../context/AIContext'
 import { useApp } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
-import { Zap, Check, Trash2, Eye, EyeOff, GraduationCap, FileText, Upload, Download, X, Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink } from 'lucide-react'
+import { Zap, Check, Trash2, Eye, EyeOff, FileText, Upload, Download, X, Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
 
 export default function Settings() {
@@ -320,7 +320,7 @@ export default function Settings() {
           {/* Project management */}
           <div className="card">
             <h3 className="font-display font-semibold text-white mb-3 flex items-center gap-2">
-              <GraduationCap size={16} className="text-teal-400"/> Project: {activeProject?.name}
+              <FileText size={16} className="text-teal-400"/> Project: {activeProject?.name}
             </h3>
             <div className="flex flex-wrap gap-2">
               <button onClick={() => activeProject && exportProject(activeProject.id)} className="btn-secondary text-xs">
@@ -350,8 +350,8 @@ export default function Settings() {
       </div>
 
       <div className="card text-center">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-indigo-500 flex items-center justify-center mx-auto mb-2">
-          <GraduationCap size={20} className="text-white"/>
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-indigo-500 flex items-center justify-center mx-auto mb-2">
+          <span className="text-xl leading-none">🥷</span>
         </div>
         <div className="font-display font-bold text-white mb-1">JobSensei v1.1</div>
         <p className="text-slate-500 text-xs">Projects · Voice · Export/Import · Resume Upload</p>

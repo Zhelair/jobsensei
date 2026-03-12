@@ -27,6 +27,7 @@ const TOOLS = [
 const FILTER_LABELS = {
   all: 'All',
   gap: 'Gap Analysis',
+  star: 'STAR Builder',
   negotiation: 'Negotiation Sim',
   predictor: 'Question Predictor',
   transferable: 'Transferable Skills',
@@ -85,7 +86,14 @@ export default function Tools() {
     result: { messages: n.messages, coachingTriggered: n.coachingTriggered },
   }))
 
-  const allHistory = [...toolsHistory, ...normalizedGap, ...normalizedNeg]
+  const starStories = getProjectData('starStories')
+  const normalizedStar = starStories.map(s => ({
+    id: s.id, date: s.date, tool: 'star', toolLabel: 'STAR Builder',
+    inputs: { situation: s.situation || '' },
+    result: { fullAnswer: s.fullAnswer, situation: s.situation, task: s.task, action: s.action, result: s.result, weaknesses: s.weaknesses, suggestedTags: s.suggestedTags, targetQuestions: s.targetQuestions },
+  }))
+
+  const allHistory = [...toolsHistory, ...normalizedGap, ...normalizedNeg, ...normalizedStar]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
   if (activeTool === 'gap') return <GapAnalysis onBack={() => setActiveTool(null)} />
@@ -273,6 +281,8 @@ function HistorySummary({ item }) {
     return <p className="text-slate-400 text-xs">Overall score {item.result.overallScore}/100</p>
   if (item.tool === 'visualreview' && item.result?.analysis)
     return <p className="text-slate-400 text-xs line-clamp-1">{item.result.analysis.slice(0, 100)}…</p>
+  if (item.tool === 'star' && item.inputs?.situation)
+    return <p className="text-slate-400 text-xs truncate">{item.inputs.situation}</p>
   return null
 }
 
@@ -534,6 +544,45 @@ function FullHistoryResult({ item }) {
           <div className="card border-green-500/20">
             <h4 className="font-display font-semibold text-white text-sm mb-2">✅ Already Strong</h4>
             <ul className="space-y-1">{r.strengths.map((s, i) => <li key={i} className="text-slate-300 text-xs">• {s}</li>)}</ul>
+          </div>
+        )}
+      </div>
+    )
+  }
+  if (item.tool === 'star' && item.result) {
+    const r = item.result
+    return (
+      <div className="space-y-4">
+        <div className="card border-teal-500/20">
+          <h3 className="font-display font-semibold text-white text-sm mb-3">Interview-Ready Answer</h3>
+          <p className="text-slate-200 text-sm font-body leading-relaxed">{r.fullAnswer}</p>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {[['S','Situation',r.situation,'teal'],['T','Task',r.task,'indigo'],['A','Action',r.action,'teal'],['R','Result',r.result,'indigo']].map(([l,label,content,c]) => (
+            <div key={label} className="card">
+              <div className={`w-7 h-7 rounded-lg mb-2 flex items-center justify-center font-display font-bold text-sm ${c==='teal'?'bg-teal-500/20 text-teal-400':'bg-indigo-500/20 text-indigo-400'}`}>{l}</div>
+              <div className="text-slate-400 text-xs mb-1">{label}</div>
+              <p className="text-slate-200 text-sm">{content}</p>
+            </div>
+          ))}
+        </div>
+        {r.weaknesses?.length > 0 && (
+          <div className="card border-yellow-500/20 bg-yellow-500/5">
+            <div className="text-yellow-400 text-sm font-display font-semibold mb-2">⚠️ Areas to strengthen</div>
+            {r.weaknesses.map((w, i) => <p key={i} className="text-slate-400 text-xs">• {w}</p>)}
+          </div>
+        )}
+        {(r.suggestedTags?.length > 0 || r.targetQuestions?.length > 0) && (
+          <div className="card">
+            {r.suggestedTags?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">{r.suggestedTags.map((t,i) => <span key={i} className="badge-indigo text-xs">{t}</span>)}</div>
+            )}
+            {r.targetQuestions?.length > 0 && (
+              <>
+                <div className="text-slate-400 text-xs mb-1">Answers questions like:</div>
+                {r.targetQuestions.map((q,i) => <p key={i} className="text-slate-300 text-xs">• {q}</p>)}
+              </>
+            )}
           </div>
         )}
       </div>
