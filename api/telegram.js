@@ -674,6 +674,13 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(200).json({ ok: true })
 
+  // Verify Telegram webhook secret (set TELEGRAM_WEBHOOK_SECRET in Vercel env vars)
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
+  if (webhookSecret) {
+    const incoming = req.headers['x-telegram-bot-api-secret-token']
+    if (incoming !== webhookSecret) return res.status(401).json({ ok: false })
+  }
+
   try {
     await handleUpdate(req.body)
   } catch (err) {
