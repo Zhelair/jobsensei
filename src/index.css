@@ -70,6 +70,10 @@
     @apply text-slate-400 hover:text-white hover:bg-navy-700 font-body font-medium px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm;
   }
 
+  .visuals-active {
+    color: #FBBF24;
+  }
+
   .card {
     @apply bg-navy-800 border border-navy-700 rounded-2xl p-5;
   }
@@ -201,6 +205,7 @@
 /* ── FIX: yellow/green/red Tailwind inline classes ── */
 /* Without these, text-yellow-400 is blinding yellow on warm bg */
 [data-theme="daylight"] .text-yellow-400 { color: #92400E; }
+[data-theme="daylight"] .visuals-active  { color: #92400E; }
 [data-theme="daylight"] .text-yellow-300 { color: #78350F; }
 [data-theme="daylight"] .text-yellow-200 { color: #6B3010; }
 [data-theme="daylight"] .text-green-400  { color: #166534; }

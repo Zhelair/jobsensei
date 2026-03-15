@@ -155,7 +155,7 @@ export default function LearningSection() {
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
           {quizHistory.length > 0 && (
-            <button onClick={() => setView('quizHistory')} className="btn-ghost text-xs">
+            <button onClick={() => setView('quizHistory')} className="btn-secondary text-xs">
               <History size={14}/> Quiz History ({quizHistory.length})
             </button>
           )}
