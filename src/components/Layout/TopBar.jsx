@@ -169,7 +169,7 @@ export default function TopBar() {
             setVisualsEnabled(next)
             if (next) triggerConfetti(70)
           }}
-          className={`hidden sm:flex btn-ghost ${visualsEnabled ? 'text-yellow-400' : 'text-slate-400'}`}
+          className={`hidden sm:flex btn-ghost ${visualsEnabled ? 'visuals-active ring-1 ring-current' : 'text-slate-400'}`}
           title={visualsEnabled ? 'Visuals ON — click to disable' : 'Visuals OFF — click to enable'}
         >
           <Wand2 size={16} />
