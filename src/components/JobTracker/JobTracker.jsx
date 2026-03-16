@@ -71,13 +71,32 @@ export default function JobTracker() {
     updateProjectData('offerComparisons', { ...offerData, [appId]: data })
   }
 
+  const { callAI, isConnected } = useAI()
+
   const [tab, setTab] = useState(0)
   const [showAdd, setShowAdd] = useState(false)
   const [newApp, setNewApp] = useState({ company: '', role: '', stage: 'Researching', jdUrl: '', notes: '' })
+  const [pendingResearch, setPendingResearch] = useState(null)
+  const [researchLoading, setResearchLoading] = useState(false)
   const [selectedApp, setSelectedApp] = useState(null)
   const [editingApp, setEditingApp] = useState(null)
   const [importMsg, setImportMsg] = useState('')
   const importRef = useRef(null)
+
+  async function researchForAdd() {
+    if (!newApp.company.trim()) return
+    setResearchLoading(true)
+    try {
+      const raw = await callAI({
+        systemPrompt: prompts.companyResearch(newApp.company, newApp.role),
+        messages: [{ role: 'user', content: 'Research this company.' }],
+        temperature: 0.5,
+      })
+      const parsed = tryParseJSON(raw)
+      if (parsed) setPendingResearch(parsed)
+    } catch {}
+    setResearchLoading(false)
+  }
 
   function setApplications(updater) {
     const next = typeof updater === 'function' ? updater(applications) : updater
@@ -92,15 +111,20 @@ export default function JobTracker() {
     if (!newApp.company.trim()) return
     const { notes: prepNote, ...appFields } = newApp
     const app = { ...appFields, id: generateId(), date: new Date().toISOString(), stageUpdatedAt: new Date().toISOString() }
-    if (prepNote.trim()) {
+    const mergedNotes = {
+      ...(prepNote.trim() ? { prepNotes: prepNote } : {}),
+      ...(pendingResearch || {}),
+    }
+    if (Object.keys(mergedNotes).length > 0) {
       updateProjectDataMultiple({
         applications: [...applications, app],
-        companyNotes: { ...notes, [app.id]: { ...(notes[app.id] || {}), prepNotes: prepNote } },
+        companyNotes: { ...notes, [app.id]: mergedNotes },
       })
     } else {
       setApplications(prev => [...prev, app])
     }
     setNewApp({ company: '', role: '', stage: 'Researching', jdUrl: '', notes: '' })
+    setPendingResearch(null)
     setShowAdd(false)
   }
 
@@ -202,7 +226,7 @@ export default function JobTracker() {
           <h3 className="font-display font-semibold text-white text-sm mb-3">Add Application</h3>
           <div className="grid sm:grid-cols-2 gap-3 mb-3">
             <input className="input-field" placeholder="Company *" value={newApp.company}
-              onChange={e => setNewApp(p => ({ ...p, company: e.target.value }))}
+              onChange={e => { setNewApp(p => ({ ...p, company: e.target.value })); setPendingResearch(null) }}
               onKeyDown={e => e.key === 'Enter' && addApplication()} />
             <input className="input-field" placeholder="Role title" value={newApp.role}
               onChange={e => setNewApp(p => ({ ...p, role: e.target.value }))} />
@@ -215,12 +239,28 @@ export default function JobTracker() {
             <input className="input-field" placeholder="JD URL (optional)" value={newApp.jdUrl}
               onChange={e => setNewApp(p => ({ ...p, jdUrl: e.target.value }))} />
           </div>
+
+          {newApp.company.trim() && (
+            <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 mb-3">
+              <div className="text-xs">
+                {pendingResearch
+                  ? <span className="text-teal-400">✓ Research ready — tech stack, culture & prep notes will be saved automatically</span>
+                  : <span className="text-slate-400">Research <strong className="text-white">{newApp.company}</strong> with AI before adding</span>
+                }
+              </div>
+              <button onClick={researchForAdd} disabled={researchLoading || !isConnected}
+                className="btn-ghost text-xs flex-shrink-0">
+                <Search size={12}/> {researchLoading ? 'Researching...' : pendingResearch ? 'Re-run' : 'Research'}
+              </button>
+            </div>
+          )}
+
           <textarea className="textarea-field h-16 mb-1" placeholder="Initial prep note (optional)…"
             value={newApp.notes} onChange={e => setNewApp(p => ({ ...p, notes: e.target.value }))} />
           <p className="text-slate-600 text-xs mb-3">↳ Saved to <strong className="text-slate-500">Company Notes → My prep notes</strong></p>
           <div className="flex gap-2">
             <button onClick={addApplication} disabled={!newApp.company.trim()} className="btn-primary">Add</button>
-            <button onClick={() => setShowAdd(false)} className="btn-ghost">Cancel</button>
+            <button onClick={() => { setShowAdd(false); setPendingResearch(null) }} className="btn-ghost">Cancel</button>
           </div>
         </div>
       )}
