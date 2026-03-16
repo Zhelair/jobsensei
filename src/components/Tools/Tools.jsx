@@ -4,7 +4,7 @@ import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
-import { Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X, Search, Star, DollarSign, Zap, Trash2 } from 'lucide-react'
+import { Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X, Search, Star, DollarSign, Zap, Trash2, TrendingUp } from 'lucide-react'
 import GapAnalysis from '../GapAnalysis/GapAnalysis'
 import STARBuilder from '../STARBuilder/STARBuilder'
 import NegotiationSim from '../NegotiationSim/NegotiationSim'
@@ -22,6 +22,7 @@ const TOOLS = [
   { id: 'resumechecker', icon: ClipboardCheck, label: 'Resume Checker', desc: 'ATS score + recruiter lens on your resume' },
   { id: 'linkedin', icon: Globe, label: 'LinkedIn Auditor', desc: 'Score your profile and get quick wins' },
   { id: 'visualreview', icon: Camera, label: 'Visual Design Review', desc: 'AI analyzes your resume design, layout, and visual impact' },
+  { id: 'salarycoach', icon: TrendingUp, label: 'Salary Coach', desc: 'Know your market value and negotiate smarter' },
 ]
 
 const FILTER_LABELS = {
@@ -38,6 +39,7 @@ const FILTER_LABELS = {
   resumechecker: 'Resume Checker',
   linkedin: 'LinkedIn',
   visualreview: 'Visual Review',
+  salarycoach: 'Salary Coach',
 }
 
 export default function Tools() {
@@ -109,6 +111,7 @@ export default function Tools() {
   if (activeTool === 'resumechecker') return <ResumeChecker onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('resumechecker', 'Resume Checker', i, r)} history={historyFor('resumechecker')} onDelete={deleteHistory} />
   if (activeTool === 'linkedin') return <LinkedInAuditor onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('linkedin', 'LinkedIn Auditor', i, r)} history={historyFor('linkedin')} onDelete={deleteHistory} />
   if (activeTool === 'visualreview') return <VisualResumeReview onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('visualreview', 'Visual Design Review', i, r)} history={historyFor('visualreview')} onDelete={deleteHistory} />
+  if (activeTool === 'salarycoach') return <SalaryCoach onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('salarycoach', 'Salary Coach', i, r)} history={historyFor('salarycoach')} onDelete={deleteHistory} />
 
   // Inline result detail view (clicked from Recent Results)
   if (selectedResult) {
@@ -283,6 +286,8 @@ function HistorySummary({ item }) {
     return <p className="text-slate-400 text-xs line-clamp-1">{item.result.analysis.slice(0, 100)}…</p>
   if (item.tool === 'star' && item.inputs?.situation)
     return <p className="text-slate-400 text-xs truncate">{item.inputs.situation}</p>
+  if (item.tool === 'salarycoach' && item.inputs?.role)
+    return <p className="text-slate-400 text-xs">{item.inputs.role}{item.inputs.city ? ` · ${item.inputs.city}` : ''}</p>
   return null
 }
 
@@ -595,6 +600,22 @@ function FullHistoryResult({ item }) {
         <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{item.result.analysis}</div>
       </div>
     )
+  if (item.tool === 'salarycoach' && item.result) {
+    const msgs = item.result.messages || []
+    return (
+      <div className="space-y-3">
+        <div className="card border-yellow-500/20 bg-yellow-500/5">
+          <p className="text-yellow-300 text-xs">⚠️ Salary estimates based on AI training data. Cross-check on Zaplata.bg, Jobs.bg, or LinkedIn Salary Insights.</p>
+        </div>
+        {msgs.map((m, i) => (
+          <div key={i} className={`rounded-xl px-4 py-3 text-sm ${m.role === 'user' ? 'chat-user ml-auto max-w-[85%]' : 'chat-ai max-w-full'}`}>
+            <span className="text-xs opacity-60 block mb-1 font-display">{m.role === 'user' ? 'You' : 'Salary Coach'}</span>
+            <div className="whitespace-pre-wrap">{m.content}</div>
+          </div>
+        ))}
+      </div>
+    )
+  }
   return <p className="text-slate-500 text-sm">No preview available.</p>
 }
 
@@ -1296,6 +1317,164 @@ function LinkedInAuditor({ onBack, saveHistory, history, onDelete }) {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Salary Coach ──────────────────────────────────────────────────────────────
+
+function SalaryCoach({ onBack, saveHistory, history, onDelete }) {
+  const { profile } = useApp()
+  const { callAI, isConnected } = useAI()
+  const [form, setForm] = useState({
+    role: profile?.targetRole || '',
+    experience: profile?.experience || '',
+    city: '',
+    companySize: 'Any',
+    workStyle: 'Hybrid',
+  })
+  const [messages, setMessages] = useState([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [started, setStarted] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const bottomRef = useRef(null)
+
+  React.useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+
+  if (showHistory) return <ToolHistoryView history={history} toolLabel="Salary Coach" onBack={() => setShowHistory(false)} onDelete={onDelete} />
+
+  async function start() {
+    setLoading(true)
+    setStarted(true)
+    const sysPrompt = prompts.salaryCoach(form.role, form.experience, form.city, form.companySize, form.workStyle)
+    let full = ''
+    try {
+      await callAI({
+        systemPrompt: sysPrompt,
+        messages: [{ role: 'user', content: 'Give me my salary analysis.' }],
+        temperature: 0.6,
+        onChunk: (_, acc) => { full = acc; setMessages([{ role: 'assistant', content: acc }]) },
+      })
+      saveHistory({ role: form.role, city: form.city }, { messages: [{ role: 'assistant', content: full }] })
+    } catch {}
+    setLoading(false)
+  }
+
+  async function sendMessage() {
+    if (!input.trim() || loading) return
+    const userMsg = { role: 'user', content: input }
+    const nextMessages = [...messages, userMsg]
+    setMessages(nextMessages)
+    setInput('')
+    setLoading(true)
+    let full = ''
+    try {
+      await callAI({
+        systemPrompt: prompts.salaryCoach(form.role, form.experience, form.city, form.companySize, form.workStyle),
+        messages: nextMessages,
+        temperature: 0.6,
+        onChunk: (_, acc) => { full = acc; setMessages([...nextMessages, { role: 'assistant', content: acc }]) },
+      })
+    } catch {}
+    setLoading(false)
+  }
+
+  if (!started) return (
+    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> Tools</button>
+        {history.length > 0 && (
+          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
+        )}
+      </div>
+      <h2 className="section-title mb-1">Salary Coach</h2>
+      <p className="section-sub mb-4">Know your market value. Negotiate smarter.</p>
+
+      <div className="card border-yellow-500/20 bg-yellow-500/5 mb-5">
+        <p className="text-yellow-300 text-xs">⚠️ Salary estimates are based on AI training data and may not reflect current local market conditions. Always cross-check on <strong>Zaplata.bg</strong>, <strong>Jobs.bg</strong>, or <strong>LinkedIn Salary Insights</strong>.</p>
+      </div>
+
+      <div className="space-y-3 mb-5">
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label className="text-sm text-slate-400 mb-1.5 block">Target role *</label>
+            <input className="input-field" placeholder="e.g. Senior Product Manager" value={form.role}
+              onChange={e => setForm(f => ({ ...f, role: e.target.value }))} />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 mb-1.5 block">Years of experience</label>
+            <input className="input-field" placeholder="e.g. 5" value={form.experience}
+              onChange={e => setForm(f => ({ ...f, experience: e.target.value }))} />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm text-slate-400 mb-1.5 block">City / Country</label>
+          <input className="input-field" placeholder="e.g. Sofia, Bulgaria or Remote (EU)" value={form.city}
+            onChange={e => setForm(f => ({ ...f, city: e.target.value }))} />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label className="text-sm text-slate-400 mb-1.5 block">Company size</label>
+            <select className="input-field" value={form.companySize}
+              onChange={e => setForm(f => ({ ...f, companySize: e.target.value }))}>
+              {['Startup (1-50)', 'SME (50-500)', 'Enterprise (500+)', 'Any'].map(s => <option key={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 mb-1.5 block">Work style</label>
+            <select className="input-field" value={form.workStyle}
+              onChange={e => setForm(f => ({ ...f, workStyle: e.target.value }))}>
+              {['Remote', 'Hybrid', 'Office', 'Flexible'].map(s => <option key={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+      </div>
+      <button onClick={start} disabled={!form.role.trim() || !isConnected} className="btn-primary">
+        <TrendingUp size={16} /> Get Salary Insights
+      </button>
+    </div>
+  )
+
+  return (
+    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in flex flex-col" style={{ minHeight: '70vh' }}>
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={() => { setStarted(false); setMessages([]) }} className="btn-ghost"><ArrowLeft size={16} /> New Search</button>
+        <span className="text-slate-400 text-xs truncate max-w-xs">{form.role}{form.city ? ` · ${form.city}` : ''}</span>
+      </div>
+
+      <div className="card border-yellow-500/20 bg-yellow-500/5 mb-3">
+        <p className="text-yellow-300 text-xs">⚠️ Estimates based on AI training data. Cross-check on Zaplata.bg, Jobs.bg, or LinkedIn Salary Insights.</p>
+      </div>
+
+      <div className="flex-1 space-y-3 mb-4 overflow-y-auto">
+        {messages.map((m, i) => (
+          <div key={i} className={`rounded-xl px-4 py-3 text-sm ${m.role === 'user' ? 'chat-user ml-auto max-w-[85%]' : 'chat-ai max-w-full'}`}>
+            {m.role === 'assistant' ? (
+              <div>
+                {m.content.split('\n').map((line, j) => {
+                  if (line.startsWith('**') && line.endsWith('**') && line.length > 4) return <h4 key={j} className="font-display font-semibold text-white mt-3 mb-1.5">{line.slice(2, -2)}</h4>
+                  if (line.startsWith('- ') || line.startsWith('* ')) return <p key={j} className="text-slate-200 text-sm ml-3 mb-1">• {line.slice(2)}</p>
+                  if (line.trim() === '') return <div key={j} className="h-1"/>
+                  return <p key={j} className="text-slate-200 text-sm mb-1">{line}</p>
+                })}
+              </div>
+            ) : (
+              <span>{m.content}</span>
+            )}
+          </div>
+        ))}
+        {loading && <div className="chat-ai rounded-xl px-4 py-3 text-sm text-slate-400 animate-pulse">Researching compensation data...</div>}
+        <div ref={bottomRef}/>
+      </div>
+
+      <div className="flex gap-2">
+        <input className="input-field flex-1" placeholder="Ask a follow-up question..."
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && sendMessage()} />
+        <button onClick={sendMessage} disabled={!input.trim() || loading} className="btn-primary px-4">Send</button>
+      </div>
     </div>
   )
 }

@@ -1,9 +1,20 @@
 import React, { useState, useRef } from 'react'
 import { useProject } from '../../context/ProjectContext'
 import { generateId, formatDate, timeAgo } from '../../utils/helpers'
-import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3 } from 'lucide-react'
+import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock } from 'lucide-react'
 
 const STAGES = ['Researching', 'Applied', 'Screening', 'Interviewing', 'Awaiting', 'Offer', 'Rejected']
+const FOLLOWUP_DAYS = { Applied: 7, Screening: 5, Interviewing: 3, Awaiting: 5 }
+
+function getOverdueApps(apps) {
+  const now = new Date()
+  return apps.filter(app => {
+    const days = FOLLOWUP_DAYS[app.stage]
+    if (!days) return false
+    const since = new Date(app.stageUpdatedAt || app.date)
+    return (now - since) / (1000 * 60 * 60 * 24) >= days
+  })
+}
 const STAGE_COLORS = {
   Researching: 'text-slate-400 bg-slate-400/10 border-slate-400/20',
   Applied: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
@@ -62,7 +73,7 @@ export default function JobTracker() {
   function addApplication() {
     if (!newApp.company.trim()) return
     const { notes: prepNote, ...appFields } = newApp
-    const app = { ...appFields, id: generateId(), date: new Date().toISOString() }
+    const app = { ...appFields, id: generateId(), date: new Date().toISOString(), stageUpdatedAt: new Date().toISOString() }
     if (prepNote.trim()) {
       updateProjectDataMultiple({
         applications: [...applications, app],
@@ -76,8 +87,9 @@ export default function JobTracker() {
   }
 
   function updateApp(id, updates) {
-    setApplications(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a))
-    if (selectedApp?.id === id) setSelectedApp(a => ({ ...a, ...updates }))
+    const stageUpdate = updates.stage ? { stageUpdatedAt: new Date().toISOString() } : {}
+    setApplications(prev => prev.map(a => a.id === id ? { ...a, ...updates, ...stageUpdate } : a))
+    if (selectedApp?.id === id) setSelectedApp(a => ({ ...a, ...updates, ...stageUpdate }))
   }
 
   function saveEdit(updated) {
@@ -104,6 +116,8 @@ export default function JobTracker() {
     setTimeout(() => setImportMsg(''), 3000)
     e.target.value = ''
   }
+
+  const overdueApps = getOverdueApps(applications)
 
   if (selectedApp) return (
     <CompanyNotesView
@@ -190,6 +204,28 @@ export default function JobTracker() {
             className={`flex-1 py-2 rounded-lg text-sm font-body font-medium transition-all ${tab === i ? 'bg-navy-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{t}</button>
         ))}
       </div>
+
+      {tab === 0 && overdueApps.length > 0 && (
+        <div className="mb-3 card border-yellow-500/20 bg-yellow-500/5">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock size={14} className="text-yellow-400"/>
+            <span className="text-yellow-400 text-xs font-display font-semibold">Follow Up Today ({overdueApps.length})</span>
+          </div>
+          <div className="space-y-1.5">
+            {overdueApps.map(app => (
+              <div key={app.id} className="flex items-center justify-between gap-2 flex-wrap">
+                <button onClick={() => setSelectedApp(app)} className="text-white text-xs hover:text-teal-400 text-left flex-1 truncate">
+                  {app.company}{app.role ? ` — ${app.role}` : ''}
+                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`badge text-xs border ${STAGE_COLORS[app.stage]}`}>{app.stage}</span>
+                  <span className="text-slate-500 text-xs">{timeAgo(app.stageUpdatedAt || app.date)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {tab === 0 && (
         <div className="overflow-x-auto -mx-4 px-4">
