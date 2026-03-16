@@ -87,13 +87,27 @@ export default function JobTracker() {
     if (!newApp.company.trim()) return
     setResearchLoading(true)
     try {
+      let searchContext = null
+      try {
+        const searchRes = await fetch('/api/research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company: newApp.company, role: newApp.role }),
+        })
+        const searchData = await searchRes.json()
+        if (!searchData.fallback && searchData.snippets) {
+          searchContext = searchData.answer
+            ? `Summary: ${searchData.answer}\n\n${searchData.snippets}`
+            : searchData.snippets
+        }
+      } catch {}
       const raw = await callAI({
-        systemPrompt: prompts.companyResearch(newApp.company, newApp.role),
+        systemPrompt: prompts.companyResearch(newApp.company, newApp.role, searchContext),
         messages: [{ role: 'user', content: 'Research this company.' }],
         temperature: 0.5,
       })
       const parsed = tryParseJSON(raw)
-      if (parsed) setPendingResearch(parsed)
+      if (parsed) setPendingResearch({ ...parsed, _liveData: !!searchContext })
     } catch {}
     setResearchLoading(false)
   }
@@ -244,7 +258,7 @@ export default function JobTracker() {
             <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 mb-3">
               <div className="text-xs">
                 {pendingResearch
-                  ? <span className="text-teal-400">✓ Research ready — tech stack, culture & prep notes will be saved automatically</span>
+                  ? <span className="text-teal-400">✓ Research ready {pendingResearch._liveData ? '(live web data)' : '(AI knowledge)'} — tech stack, culture & prep notes will be saved automatically</span>
                   : <span className="text-slate-400">Research <strong className="text-white">{newApp.company}</strong> with AI before adding</span>
                 }
               </div>
@@ -502,8 +516,22 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
     setResearching(true)
     setResearchMsg('')
     try {
+      let searchContext = null
+      try {
+        const searchRes = await fetch('/api/research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company: app.company, role: app.role }),
+        })
+        const searchData = await searchRes.json()
+        if (!searchData.fallback && searchData.snippets) {
+          searchContext = searchData.answer
+            ? `Summary: ${searchData.answer}\n\n${searchData.snippets}`
+            : searchData.snippets
+        }
+      } catch {}
       const raw = await callAI({
-        systemPrompt: prompts.companyResearch(app.company, app.role),
+        systemPrompt: prompts.companyResearch(app.company, app.role, searchContext),
         messages: [{ role: 'user', content: 'Research this company.' }],
         temperature: 0.5,
       })
@@ -516,7 +544,9 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
           openQ: parsed.openQ || f.openQ,
           prepNotes: parsed.prepNotes || f.prepNotes,
         }))
-        setResearchMsg('✓ Notes pre-filled — review and save when ready')
+        setResearchMsg(searchContext
+          ? '✓ Notes pre-filled with live web data — review and save when ready'
+          : '✓ Notes pre-filled — review and save when ready')
       } else {
         setResearchMsg('Could not parse research. Try again.')
       }

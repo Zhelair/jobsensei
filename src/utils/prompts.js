@@ -434,11 +434,11 @@ Create a dense, scannable cheat card for this topic. Format it like a study refe
 Keep the entire cheat card under 400 words. Make it printable and useful.
 Return plain text with markdown formatting.`,
 
-  companyResearch: (company, role) => `You are a job interview research assistant. Provide concise company intelligence for interview prep.
+  companyResearch: (company, role, searchContext) => `You are a job interview research assistant. Provide concise company intelligence for interview prep.
 
 Company: ${company}
 Role: ${role || 'not specified'}
-
+${searchContext ? `\nREAL-TIME SEARCH DATA (use this as your primary source — it is more accurate than your training data):\n${searchContext}\n` : ''}
 Return ONLY valid JSON:
 {
   "techStack": "Key technologies, tools, and platforms this company uses — 2-3 short bullet points separated by newlines",
