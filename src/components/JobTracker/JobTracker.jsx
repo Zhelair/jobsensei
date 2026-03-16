@@ -609,7 +609,7 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
         ].map(([key, label, ph]) => (
           <div key={key}>
             <label className="text-sm text-slate-400 mb-1.5 block">{label}</label>
-            <textarea className="textarea-field h-16" placeholder={ph}
+            <textarea className="textarea-field h-28" placeholder={ph}
               value={form[key] || ''} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
           </div>
         ))}
