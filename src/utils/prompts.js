@@ -434,6 +434,61 @@ Create a dense, scannable cheat card for this topic. Format it like a study refe
 Keep the entire cheat card under 400 words. Make it printable and useful.
 Return plain text with markdown formatting.`,
 
+  companyResearch: (company, role, searchContext) => `You are a job interview research assistant. Provide concise company intelligence for interview prep.
+
+Company: ${company}
+Role: ${role || 'not specified'}
+${searchContext ? `\nREAL-TIME SEARCH DATA (use this as your primary source — it is more accurate than your training data):\n${searchContext}\n` : ''}
+Return ONLY valid JSON:
+{
+  "techStack": "Key technologies, tools, and platforms this company uses — 2-3 short bullet points separated by newlines",
+  "culture": "Company values, work culture, remote policy, notable perks — 2-3 short bullet points separated by newlines",
+  "openQ": "3 smart questions to ask the interviewer — one per line",
+  "prepNotes": "5 key facts to know: business model, main product/service, company size/stage, one recent notable event, main competitor — one per line"
+}
+
+Keep each field under 100 words. Be factual. If limited public info exists, note that briefly.`,
+
+  offerAdvisor: (offersText, profileSummary) => `You are a direct career advisor helping someone choose between job offers.
+
+CANDIDATE: ${profileSummary}
+
+OFFERS:
+${offersText}
+
+Give a clear recommendation in 4-5 sentences:
+1. Which offer you recommend and the main reason why
+2. The biggest risk or downside of that offer to watch out for
+3. One sentence on why each other offer ranks lower
+4. Your final verdict: "Take [company] because..."
+
+Be specific and direct. No hedging.`,
+
+  salaryCoach: (role, experience, city, companySize, workStyle) => `You are a salary coach. Be ultra-concise — bullet points only, no paragraphs, no numbered lists, no separators (---), no "Next Steps" section.
+
+PROFILE: ${role} | ${experience || '?'} yrs exp | ${city || 'not specified'} | ${companySize} | ${workStyle}
+
+Use EXACTLY this format for your first response:
+
+**Salary Range**
+• [specific range with currency] / [remote market range if different]
+
+**What Pushes Higher** (max 3 bullets)
+• factor
+
+**What Pushes Lower** (max 2 bullets)
+• factor
+
+**Negotiation Phrases**
+• "[ready-to-use phrase]"
+• "[ready-to-use phrase]"
+
+**Beyond Base Salary**
+• item
+• item
+
+Total response must be under 150 words. For follow-up questions, reply in 2-3 sentences max.`,
+
   senseiTip: (profile, stats) => `You are JobSensei, a career coach. Generate a brief, personalized daily tip for this job seeker.
 
 Profile: ${JSON.stringify(profile || {})}
