@@ -434,6 +434,36 @@ Create a dense, scannable cheat card for this topic. Format it like a study refe
 Keep the entire cheat card under 400 words. Make it printable and useful.
 Return plain text with markdown formatting.`,
 
+  companyResearch: (company, role) => `You are a job interview research assistant. Provide concise company intelligence for interview prep.
+
+Company: ${company}
+Role: ${role || 'not specified'}
+
+Return ONLY valid JSON:
+{
+  "techStack": "Key technologies, tools, and platforms this company uses — 2-3 short bullet points separated by newlines",
+  "culture": "Company values, work culture, remote policy, notable perks — 2-3 short bullet points separated by newlines",
+  "openQ": "3 smart questions to ask the interviewer — one per line",
+  "prepNotes": "5 key facts to know: business model, main product/service, company size/stage, one recent notable event, main competitor — one per line"
+}
+
+Keep each field under 100 words. Be factual. If limited public info exists, note that briefly.`,
+
+  offerAdvisor: (offersText, profileSummary) => `You are a direct career advisor helping someone choose between job offers.
+
+CANDIDATE: ${profileSummary}
+
+OFFERS:
+${offersText}
+
+Give a clear recommendation in 4-5 sentences:
+1. Which offer you recommend and the main reason why
+2. The biggest risk or downside of that offer to watch out for
+3. One sentence on why each other offer ranks lower
+4. Your final verdict: "Take [company] because..."
+
+Be specific and direct. No hedging.`,
+
   salaryCoach: (role, experience, city, companySize, workStyle) => `You are a salary coach. Be ultra-concise — bullet points only, no paragraphs, no numbered lists, no separators (---), no "Next Steps" section.
 
 PROFILE: ${role} | ${experience || '?'} yrs exp | ${city || 'not specified'} | ${companySize} | ${workStyle}

@@ -1,7 +1,10 @@
 import React, { useState, useRef } from 'react'
 import { useProject } from '../../context/ProjectContext'
-import { generateId, formatDate, timeAgo } from '../../utils/helpers'
-import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock } from 'lucide-react'
+import { useAI } from '../../context/AIContext'
+import { useApp } from '../../context/AppContext'
+import { prompts } from '../../utils/prompts'
+import { generateId, formatDate, timeAgo, tryParseJSON } from '../../utils/helpers'
+import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale } from 'lucide-react'
 
 const STAGES = ['Researching', 'Applied', 'Screening', 'Interviewing', 'Awaiting', 'Offer', 'Rejected']
 const FOLLOWUP_DAYS = { Applied: 7, Screening: 5, Interviewing: 3, Awaiting: 5 }
@@ -25,7 +28,16 @@ const STAGE_COLORS = {
   Offer: 'text-green-400 bg-green-400/10 border-green-400/20',
   Rejected: 'text-red-400 bg-red-400/10 border-red-400/20',
 }
-const TABS = ['Kanban', 'Stats', 'Company Notes']
+const TABS = ['Kanban', 'Stats', 'Company Notes', 'Offers']
+
+const OFFER_FIELDS = [
+  { key: 'salaryScore', label: 'Salary', defaultWeight: 30 },
+  { key: 'growth',      label: 'Growth', defaultWeight: 25 },
+  { key: 'cultureFit',  label: 'Culture', defaultWeight: 20 },
+  { key: 'workLife',    label: 'Work-Life', defaultWeight: 15 },
+  { key: 'benefits',    label: 'Benefits', defaultWeight: 7 },
+  { key: 'remote',      label: 'Flexibility', defaultWeight: 3 },
+]
 
 function exportToCSV(applications) {
   const headers = ['Company', 'Role', 'Stage', 'Date Applied', 'JD URL', 'Notes']
@@ -53,6 +65,11 @@ export default function JobTracker() {
   const { getProjectData, updateProjectData, updateProjectDataMultiple } = useProject()
   const applications = getProjectData('applications')
   const notes = getProjectData('companyNotes')
+  const offerData = getProjectData('offerComparisons') || {}
+
+  function updateOfferData(appId, data) {
+    updateProjectData('offerComparisons', { ...offerData, [appId]: data })
+  }
 
   const [tab, setTab] = useState(0)
   const [showAdd, setShowAdd] = useState(false)
@@ -211,7 +228,7 @@ export default function JobTracker() {
       <div className="flex gap-1 bg-navy-900 p-1 rounded-xl mb-4">
         {TABS.map((t, i) => (
           <button key={t} onClick={() => setTab(i)}
-            className={`flex-1 py-2 rounded-lg text-sm font-body font-medium transition-all ${tab === i ? 'bg-navy-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{t}</button>
+            className={`flex-1 py-2 rounded-lg text-xs font-body font-medium transition-all ${tab === i ? 'bg-navy-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{t}</button>
         ))}
       </div>
 
@@ -322,6 +339,15 @@ export default function JobTracker() {
           ))}
         </div>
       )}
+
+      {tab === 3 && (
+        <OfferComparison
+          applications={applications}
+          offerData={offerData}
+          onUpdateOfferData={updateOfferData}
+          onSelectApp={app => setSelectedApp(app)}
+        />
+      )}
     </div>
   )
 }
@@ -420,19 +446,50 @@ function TrackerStats({ applications }) {
 
 // ── Company Notes View ──────────────────────────────────────────────────────
 function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
+  const { callAI, isConnected } = useAI()
   const [form, setForm] = useState({
     people: '', theyMentioned: '', techStack: '', culture: '', openQ: '', prepNotes: '', ...notes
   })
   const [saved, setSaved] = useState(false)
+  const [researching, setResearching] = useState(false)
+  const [researchMsg, setResearchMsg] = useState('')
 
   function save() {
     onSaveNotes(form); setSaved(true); setTimeout(() => setSaved(false), 2000)
   }
 
+  async function runResearch() {
+    setResearching(true)
+    setResearchMsg('')
+    try {
+      const raw = await callAI({
+        systemPrompt: prompts.companyResearch(app.company, app.role),
+        messages: [{ role: 'user', content: 'Research this company.' }],
+        temperature: 0.5,
+      })
+      const parsed = tryParseJSON(raw)
+      if (parsed) {
+        setForm(f => ({
+          ...f,
+          techStack: parsed.techStack || f.techStack,
+          culture: parsed.culture || f.culture,
+          openQ: parsed.openQ || f.openQ,
+          prepNotes: parsed.prepNotes || f.prepNotes,
+        }))
+        setResearchMsg('✓ Notes pre-filled — review and save when ready')
+      } else {
+        setResearchMsg('Could not parse research. Try again.')
+      }
+    } catch {
+      setResearchMsg('Research failed. Check your AI connection.')
+    }
+    setResearching(false)
+  }
+
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
       <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16}/> Back to Tracker</button>
-      <div className="flex items-start justify-between mb-5 gap-3">
+      <div className="flex items-start justify-between mb-4 gap-3">
         <div>
           <h2 className="section-title">{app.company}</h2>
           <p className="section-sub">{app.role}</p>
@@ -444,7 +501,7 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
       </div>
 
       {app.jdUrl && (
-        <div className="mb-4">
+        <div className="mb-3">
           <a href={app.jdUrl} target="_blank" rel="noopener noreferrer"
             className="text-teal-400 text-sm hover:text-teal-300 underline underline-offset-2">
             🔗 View Job Description
@@ -452,14 +509,33 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
         </div>
       )}
 
+      {/* Research banner */}
+      <div className="card border-teal-500/20 bg-teal-500/5 mb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-white text-sm font-display font-semibold">Research this company</div>
+            <div className="text-slate-400 text-xs">AI fills tech stack, culture, open questions & prep notes</div>
+          </div>
+          <button onClick={runResearch} disabled={!isConnected || researching}
+            className="btn-primary text-xs flex-shrink-0">
+            <Search size={13}/> {researching ? 'Researching...' : 'Auto-fill Notes'}
+          </button>
+        </div>
+        {researchMsg && (
+          <p className={`text-xs mt-2 ${researchMsg.startsWith('✓') ? 'text-teal-400' : 'text-red-400'}`}>
+            {researchMsg}
+          </p>
+        )}
+      </div>
+
       <div className="space-y-3">
         {[
           ['people', "People I've spoken to", 'Names, titles, LinkedIn…'],
           ['theyMentioned', 'Things they mentioned', 'Pain points, team, priorities…'],
-          ['techStack', 'Tech stack / tools', 'Systems, platforms…'],
-          ['culture', 'Culture signals', 'Remote policy, values, vibe…'],
-          ['openQ', 'Open questions', 'Things to ask or research…'],
-          ['prepNotes', 'My prep notes', 'Key points to emphasize… (pre-filled from creation note)'],
+          ['techStack', 'Tech stack / tools', 'Systems, platforms… (auto-filled by Research)'],
+          ['culture', 'Culture signals', 'Remote policy, values, vibe… (auto-filled by Research)'],
+          ['openQ', 'Open questions', 'Things to ask or research… (auto-filled by Research)'],
+          ['prepNotes', 'My prep notes', 'Key points to emphasize… (auto-filled by Research)'],
         ].map(([key, label, ph]) => (
           <div key={key}>
             <label className="text-sm text-slate-400 mb-1.5 block">{label}</label>
@@ -472,6 +548,161 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
       <button onClick={save} className={`btn-primary mt-4 ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
         {saved ? <><Check size={16}/> Saved!</> : <>Save Notes</>}
       </button>
+    </div>
+  )
+}
+
+// ── Offer Comparison ─────────────────────────────────────────────────────────
+function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectApp }) {
+  const { callAI, isConnected } = useAI()
+  const { profile } = useApp()
+  const offerApps = applications.filter(a => a.stage === 'Offer')
+  const [weights, setWeights] = useState(() =>
+    Object.fromEntries(OFFER_FIELDS.map(f => [f.key, f.defaultWeight]))
+  )
+  const [showWeights, setShowWeights] = useState(false)
+  const [advice, setAdvice] = useState('')
+  const [loadingAdvice, setLoadingAdvice] = useState(false)
+
+  function getScore(appId) {
+    const d = offerData[appId] || {}
+    return Math.round(OFFER_FIELDS.reduce((sum, f) => sum + (d[f.key] || 3) * 20 * (weights[f.key] / 100), 0))
+  }
+
+  function updateField(appId, field, value) {
+    onUpdateOfferData(appId, { ...(offerData[appId] || {}), [field]: value })
+  }
+
+  async function getAdvice() {
+    setLoadingAdvice(true); setAdvice('')
+    const offersText = offerApps.map(app => {
+      const d = offerData[app.id] || {}
+      return `${app.company} (${app.role || 'role n/a'}): Score ${getScore(app.id)}/100 | Salary: ${d.baseSalary || 'not listed'} | Bonus: ${d.bonus || 'n/a'} | ${OFFER_FIELDS.map(f => `${f.label}: ${d[f.key] || 3}/5`).join(', ')}`
+    }).join('\n')
+    const profileSummary = `${profile?.currentRole || 'professional'}, targeting ${profile?.targetRole || 'new role'}`
+    try {
+      await callAI({
+        systemPrompt: prompts.offerAdvisor(offersText, profileSummary),
+        messages: [{ role: 'user', content: 'Which offer should I take?' }],
+        temperature: 0.6,
+        onChunk: (_, acc) => setAdvice(acc),
+      })
+    } catch {}
+    setLoadingAdvice(false)
+  }
+
+  if (offerApps.length === 0) return (
+    <div className="card text-center py-12 animate-in">
+      <Scale size={32} className="text-slate-600 mx-auto mb-3"/>
+      <div className="text-white font-display font-semibold mb-1">No Offers Yet</div>
+      <div className="text-slate-400 text-sm">Move an application to "Offer" stage to compare here.</div>
+    </div>
+  )
+
+  const sortedOffers = [...offerApps].sort((a, b) => getScore(b.id) - getScore(a.id))
+  const weightTotal = Object.values(weights).reduce((s, v) => s + v, 0)
+
+  return (
+    <div className="space-y-4 animate-in">
+      {/* Weights */}
+      <div className="card">
+        <button onClick={() => setShowWeights(!showWeights)} className="flex items-center justify-between w-full">
+          <span className="text-white text-sm font-display font-semibold">What matters to you?</span>
+          <span className="text-teal-400 text-xs">{showWeights ? 'Hide ↑' : 'Customize weights ↓'}</span>
+        </button>
+        {showWeights && (
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {OFFER_FIELDS.map(f => (
+              <div key={f.key}>
+                <label className="text-xs text-slate-400 mb-1 block">{f.label} <span className="text-teal-400">{weights[f.key]}%</span></label>
+                <input type="range" min="0" max="50" value={weights[f.key]}
+                  onChange={e => setWeights(w => ({ ...w, [f.key]: parseInt(e.target.value) }))}
+                  className="w-full accent-teal-500"/>
+              </div>
+            ))}
+            <div className="col-span-2 sm:col-span-3">
+              <p className={`text-xs ${weightTotal !== 100 ? 'text-yellow-400' : 'text-green-400'}`}>
+                Total: {weightTotal}% {weightTotal !== 100 ? '— adjust sliders to reach 100%' : '✓'}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Winner badge */}
+      {sortedOffers.length > 1 && (
+        <div className="card border-green-500/20 bg-green-500/5 text-center py-3">
+          <div className="text-green-400 text-xs font-display font-semibold mb-0.5">Current Leader</div>
+          <div className="text-white font-display font-bold text-lg">{sortedOffers[0].company}</div>
+          <div className="text-slate-400 text-xs">{sortedOffers[0].role} · Score {getScore(sortedOffers[0].id)}/100</div>
+        </div>
+      )}
+
+      {/* Offer cards */}
+      {sortedOffers.map((app, rank) => {
+        const d = offerData[app.id] || {}
+        const score = getScore(app.id)
+        return (
+          <div key={app.id} className={`card ${rank === 0 && sortedOffers.length > 1 ? 'border-green-500/30' : ''}`}>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <button onClick={() => onSelectApp(app)} className="text-white font-display font-semibold hover:text-teal-400 text-left text-sm">
+                  {app.company}
+                </button>
+                <div className="text-slate-400 text-xs">{app.role}</div>
+              </div>
+              <div className={`text-2xl font-display font-bold ${score >= 70 ? 'text-green-400' : score >= 50 ? 'text-yellow-400' : 'text-slate-400'}`}>
+                {score}<span className="text-slate-500 text-xs font-normal">/100</span>
+              </div>
+            </div>
+
+            {/* Text fields */}
+            <div className="grid sm:grid-cols-2 gap-2 mb-3">
+              <input className="input-field text-xs" placeholder="Base salary (e.g. BGN 80,000)"
+                value={d.baseSalary || ''} onChange={e => updateField(app.id, 'baseSalary', e.target.value)}/>
+              <input className="input-field text-xs" placeholder="Bonus / equity (e.g. 10% + options)"
+                value={d.bonus || ''} onChange={e => updateField(app.id, 'bonus', e.target.value)}/>
+            </div>
+
+            {/* Rating rows */}
+            <div className="space-y-2">
+              {OFFER_FIELDS.map(f => (
+                <div key={f.key} className="flex items-center gap-3">
+                  <span className="text-slate-400 text-xs w-20 flex-shrink-0">{f.label}</span>
+                  <div className="flex gap-1">
+                    {[1,2,3,4,5].map(v => (
+                      <button key={v} onClick={() => updateField(app.id, f.key, v)}
+                        className={`w-7 h-7 rounded-lg text-xs font-display font-semibold transition-all ${(d[f.key] || 3) === v ? 'bg-teal-500 text-white' : 'bg-navy-700 text-slate-400 hover:bg-navy-600'}`}>
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-slate-600 text-xs flex-shrink-0">{weights[f.key]}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+
+      {/* AI Offer Advisor */}
+      <div className="card border-indigo-500/20">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-white text-sm font-display font-semibold">AI Offer Advisor</div>
+            <div className="text-slate-400 text-xs">Get a direct recommendation based on your ratings</div>
+          </div>
+          <button onClick={getAdvice} disabled={loadingAdvice || !isConnected || offerApps.length < 1}
+            className="btn-primary text-xs">
+            {loadingAdvice ? 'Analyzing...' : 'Get Advice'}
+          </button>
+        </div>
+        {advice && (
+          <div className="bg-navy-900 rounded-xl p-3">
+            <p className="text-slate-200 text-sm leading-relaxed">{advice}</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
