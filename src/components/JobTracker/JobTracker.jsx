@@ -11,6 +11,7 @@ function getOverdueApps(apps) {
   return apps.filter(app => {
     const days = FOLLOWUP_DAYS[app.stage]
     if (!days) return false
+    if (app.followupSnoozedUntil && new Date(app.followupSnoozedUntil) > now) return false
     const since = new Date(app.stageUpdatedAt || app.date)
     return (now - since) / (1000 * 60 * 60 * 24) >= days
   })
@@ -87,9 +88,18 @@ export default function JobTracker() {
   }
 
   function updateApp(id, updates) {
-    const stageUpdate = updates.stage ? { stageUpdatedAt: new Date().toISOString() } : {}
+    const stageUpdate = updates.stage ? { stageUpdatedAt: new Date().toISOString(), followupSnoozedUntil: null } : {}
     setApplications(prev => prev.map(a => a.id === id ? { ...a, ...updates, ...stageUpdate } : a))
     if (selectedApp?.id === id) setSelectedApp(a => ({ ...a, ...updates, ...stageUpdate }))
+  }
+
+  function snoozeApp(id, days) {
+    const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
+    updateApp(id, { followupSnoozedUntil: until })
+  }
+
+  function dismissApp(id) {
+    updateApp(id, { followupSnoozedUntil: '9999-12-31T00:00:00.000Z' })
   }
 
   function saveEdit(updated) {
@@ -211,15 +221,29 @@ export default function JobTracker() {
             <Clock size={14} className="text-yellow-400"/>
             <span className="text-yellow-400 text-xs font-display font-semibold">Follow Up Today ({overdueApps.length})</span>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {overdueApps.map(app => (
-              <div key={app.id} className="flex items-center justify-between gap-2 flex-wrap">
-                <button onClick={() => setSelectedApp(app)} className="text-white text-xs hover:text-teal-400 text-left flex-1 truncate">
+              <div key={app.id} className="flex items-center gap-2 flex-wrap">
+                <button onClick={() => setSelectedApp(app)} className="text-white text-xs hover:text-teal-400 text-left flex-1 min-w-0 truncate">
                   {app.company}{app.role ? ` — ${app.role}` : ''}
                 </button>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   <span className={`badge text-xs border ${STAGE_COLORS[app.stage]}`}>{app.stage}</span>
                   <span className="text-slate-500 text-xs">{timeAgo(app.stageUpdatedAt || app.date)}</span>
+                  <select
+                    className="bg-navy-800 border border-navy-600 rounded-lg px-1.5 py-0.5 text-xs text-slate-400 focus:outline-none focus:border-teal-500 cursor-pointer"
+                    defaultValue=""
+                    onChange={e => { if (e.target.value) { snoozeApp(app.id, parseInt(e.target.value)); e.target.value = '' } }}
+                    title="Snooze reminder"
+                  >
+                    <option value="" disabled>⏰</option>
+                    <option value="3">3 days</option>
+                    <option value="7">7 days</option>
+                    <option value="14">14 days</option>
+                  </select>
+                  <button onClick={() => dismissApp(app.id)} className="text-slate-500 hover:text-red-400 transition-colors" title="Dismiss">
+                    <X size={13}/>
+                  </button>
                 </div>
               </div>
             ))}

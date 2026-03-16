@@ -1344,19 +1344,27 @@ function SalaryCoach({ onBack, saveHistory, history, onDelete }) {
 
   if (showHistory) return <ToolHistoryView history={history} toolLabel="Salary Coach" onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
+  function renderAIMessage(content) {
+    return content.split('\n').map((line, j) => {
+      if (line.startsWith('### ') || line.startsWith('## ')) return <h4 key={j} className="font-display font-semibold text-white mt-3 mb-1.5">{line.replace(/^#{2,3}\s*/, '').replace(/\*\*/g, '')}</h4>
+      if (line.startsWith('**') && line.endsWith('**') && line.length > 4) return <h4 key={j} className="font-display font-semibold text-white mt-3 mb-1.5">{line.slice(2, -2)}</h4>
+      if (line.startsWith('- ') || line.startsWith('* ') || line.startsWith('• ')) return <p key={j} className="text-slate-200 text-sm ml-3 mb-1">• {line.replace(/^[-*•]\s*/, '')}</p>
+      if (line.match(/^\d+\.\s/)) return <p key={j} className="text-slate-200 text-sm ml-3 mb-1">• {line.replace(/^\d+\.\s*/, '')}</p>
+      if (line.trim() === '' || line.trim() === '---') return <div key={j} className="h-1"/>
+      return <p key={j} className="text-slate-200 text-sm mb-1">{line}</p>
+    })
+  }
+
   async function start() {
     setLoading(true)
     setStarted(true)
-    const sysPrompt = prompts.salaryCoach(form.role, form.experience, form.city, form.companySize, form.workStyle)
-    let full = ''
     try {
       await callAI({
-        systemPrompt: sysPrompt,
+        systemPrompt: prompts.salaryCoach(form.role, form.experience, form.city, form.companySize, form.workStyle),
         messages: [{ role: 'user', content: 'Give me my salary analysis.' }],
         temperature: 0.6,
-        onChunk: (_, acc) => { full = acc; setMessages([{ role: 'assistant', content: acc }]) },
+        onChunk: (_, acc) => setMessages([{ role: 'assistant', content: acc }]),
       })
-      saveHistory({ role: form.role, city: form.city }, { messages: [{ role: 'assistant', content: full }] })
     } catch {}
     setLoading(false)
   }
@@ -1368,16 +1376,20 @@ function SalaryCoach({ onBack, saveHistory, history, onDelete }) {
     setMessages(nextMessages)
     setInput('')
     setLoading(true)
-    let full = ''
     try {
       await callAI({
         systemPrompt: prompts.salaryCoach(form.role, form.experience, form.city, form.companySize, form.workStyle),
         messages: nextMessages,
         temperature: 0.6,
-        onChunk: (_, acc) => { full = acc; setMessages([...nextMessages, { role: 'assistant', content: acc }]) },
+        onChunk: (_, acc) => setMessages([...nextMessages, { role: 'assistant', content: acc }]),
       })
     } catch {}
     setLoading(false)
+  }
+
+  function handleSaveAndEnd() {
+    if (messages.length > 0) saveHistory({ role: form.role, city: form.city }, { messages })
+    onBack()
   }
 
   if (!started) return (
@@ -1392,7 +1404,7 @@ function SalaryCoach({ onBack, saveHistory, history, onDelete }) {
       <p className="section-sub mb-4">Know your market value. Negotiate smarter.</p>
 
       <div className="card border-yellow-500/20 bg-yellow-500/5 mb-5">
-        <p className="text-yellow-300 text-xs">⚠️ Salary estimates are based on AI training data and may not reflect current local market conditions. Always cross-check on <strong>Zaplata.bg</strong>, <strong>Jobs.bg</strong>, or <strong>LinkedIn Salary Insights</strong>.</p>
+        <p className="text-yellow-300 text-xs">⚠️ Estimates based on AI training data. Always cross-check on <strong>Zaplata.bg</strong>, <strong>Jobs.bg</strong>, or <strong>LinkedIn Salary Insights</strong>.</p>
       </div>
 
       <div className="space-y-3 mb-5">
@@ -1439,8 +1451,13 @@ function SalaryCoach({ onBack, saveHistory, history, onDelete }) {
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in flex flex-col" style={{ minHeight: '70vh' }}>
       <div className="flex items-center justify-between mb-3">
-        <button onClick={() => { setStarted(false); setMessages([]) }} className="btn-ghost"><ArrowLeft size={16} /> New Search</button>
-        <span className="text-slate-400 text-xs truncate max-w-xs">{form.role}{form.city ? ` · ${form.city}` : ''}</span>
+        <button onClick={() => { setStarted(false); setMessages([]) }} className="btn-ghost text-xs"><ArrowLeft size={14} /> New Search</button>
+        <div className="flex items-center gap-2">
+          <span className="text-slate-500 text-xs truncate max-w-[140px]">{form.role}{form.city ? ` · ${form.city}` : ''}</span>
+          <button onClick={handleSaveAndEnd} disabled={messages.length === 0 || loading} className="btn-primary text-xs px-3 py-1.5">
+            Save & End Chat
+          </button>
+        </div>
       </div>
 
       <div className="card border-yellow-500/20 bg-yellow-500/5 mb-3">
@@ -1450,21 +1467,10 @@ function SalaryCoach({ onBack, saveHistory, history, onDelete }) {
       <div className="flex-1 space-y-3 mb-4 overflow-y-auto">
         {messages.map((m, i) => (
           <div key={i} className={`rounded-xl px-4 py-3 text-sm ${m.role === 'user' ? 'chat-user ml-auto max-w-[85%]' : 'chat-ai max-w-full'}`}>
-            {m.role === 'assistant' ? (
-              <div>
-                {m.content.split('\n').map((line, j) => {
-                  if (line.startsWith('**') && line.endsWith('**') && line.length > 4) return <h4 key={j} className="font-display font-semibold text-white mt-3 mb-1.5">{line.slice(2, -2)}</h4>
-                  if (line.startsWith('- ') || line.startsWith('* ')) return <p key={j} className="text-slate-200 text-sm ml-3 mb-1">• {line.slice(2)}</p>
-                  if (line.trim() === '') return <div key={j} className="h-1"/>
-                  return <p key={j} className="text-slate-200 text-sm mb-1">{line}</p>
-                })}
-              </div>
-            ) : (
-              <span>{m.content}</span>
-            )}
+            {m.role === 'assistant' ? renderAIMessage(m.content) : <span>{m.content}</span>}
           </div>
         ))}
-        {loading && <div className="chat-ai rounded-xl px-4 py-3 text-sm text-slate-400 animate-pulse">Researching compensation data...</div>}
+        {loading && <div className="chat-ai rounded-xl px-4 py-3 text-sm text-slate-400 animate-pulse">Researching...</div>}
         <div ref={bottomRef}/>
       </div>
 
