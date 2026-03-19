@@ -455,31 +455,26 @@ Keep each field under 100 words. Be factual. If limited public info exists, note
 Company: ${company}
 Role: ${role || 'not specified'}
 
-RESEARCH & NOTES:
-${notes || 'Use your general knowledge of this company.'}
+NOTES (your ONLY source — do NOT add, invent, or assume anything not written below):
+${notes || '(no notes provided)'}
 
-Create a dense, scannable interview cheat sheet. Format as a quick-reference card:
+STRICT RULES:
+- Only include sections where the notes above contain relevant information
+- If a section has no data in the notes, skip it entirely
+- Do not invent facts, guess, or add anything not in the notes above
+- Keep it purely as a structured summary of the notes
+
+Create a scannable cheat sheet using only the provided notes. Use only these section headers (skip any with no data):
 
 ## 🏢 Company Snapshot
-- 3-4 must-know facts (size, main product/service, stage, key metric)
-
 ## ⭐ Wow Fact to Drop
-- 1-2 impressive recent news or achievements to casually mention — shows you prepared
-
-## 🎯 Why This Role Fits
-- 3 alignment talking points between the role and your profile (frame as strengths)
-
-## 💬 Key Talking Points
-- 4-5 prepared points specific to this company and role
-
-## ❓ Smart Questions to Ask
-- 3 questions that show genuine insight into the company
-
+## 🛠 Tools & Systems
+## 🎯 Key Talking Points
+## ❓ Questions to Ask
 ## ⚡ Culture Signals
-- 2-3 bullets on their values/work style — use their own language
+## 👥 People / Context
 
-Keep the entire cheat sheet under 400 words. Make it readable in 2 minutes before walking into an interview.
-Return plain text with markdown formatting (##, -, **bold**).`,
+Keep each bullet under 15 words. Return plain text with markdown formatting (##, -, **bold**).`,
 
   offerAdvisor: (offersText, profileSummary) => `You are a direct career advisor helping someone choose between job offers.
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useProject } from '../../context/ProjectContext'
 import { useAI } from '../../context/AIContext'
 import { useApp } from '../../context/AppContext'
@@ -38,6 +38,17 @@ const OFFER_FIELDS = [
   { key: 'benefits',    label: 'Benefits', defaultWeight: 7 },
   { key: 'remote',      label: 'Flexibility', defaultWeight: 3 },
 ]
+
+function AutoTextarea({ className, value, onChange, placeholder }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    if (ref.current) { ref.current.style.height = 'auto'; ref.current.style.height = ref.current.scrollHeight + 'px' }
+  }, [value])
+  return (
+    <textarea ref={ref} className={className} value={value} onChange={onChange} placeholder={placeholder}
+      style={{ resize: 'none', overflow: 'hidden', minHeight: '5rem' }} />
+  )
+}
 
 function exportToCSV(applications) {
   const headers = ['Company', 'Role', 'Stage', 'Date Applied', 'JD URL', 'Notes']
@@ -312,7 +323,7 @@ export default function JobTracker() {
             </div>
           )}
 
-          <textarea className="textarea-field h-16 mb-1" placeholder="Initial prep note (optional)…"
+          <AutoTextarea className="textarea-field mb-1" placeholder="Initial prep note (optional)…"
             value={newApp.notes} onChange={e => setNewApp(p => ({ ...p, notes: e.target.value }))} />
           <p className="text-slate-600 text-xs mb-3">↳ Saved to <strong className="text-slate-500">Company Notes → My prep notes</strong></p>
           <div className="flex gap-2">
@@ -722,7 +733,7 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
       )}
 
       {/* Research banner */}
-      <div className="card border-teal-500/20 bg-teal-500/5 mb-4">
+      <div className="card border-teal-500/20 bg-teal-500/5 mb-3">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-white text-sm font-display font-semibold">Research this company</div>
@@ -740,36 +751,14 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
         )}
       </div>
 
-      <div className="space-y-3">
-        {[
-          ['people', "People I've spoken to", 'Names, titles, LinkedIn…'],
-          ['theyMentioned', 'Things they mentioned', 'Pain points, team, priorities…'],
-          ['wowFacts', 'Wow facts & recent news ⭐', 'Recent news, funding, product launch, stock… (auto-filled by Research)'],
-          ['techStack', 'Tools & systems', 'Software, platforms, processes for this role… (auto-filled by Research)'],
-          ['culture', 'Culture signals', 'Remote policy, values, vibe… (auto-filled by Research)'],
-          ['openQ', 'Open questions', 'Things to ask or research… (auto-filled by Research)'],
-          ['prepNotes', 'My prep notes', 'Key points to emphasize… (auto-filled by Research)'],
-        ].map(([key, label, ph]) => (
-          <div key={key}>
-            <label className="text-sm text-slate-400 mb-1.5 block">{label}</label>
-            <textarea className="textarea-field h-28" placeholder={ph}
-              value={form[key] || ''} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
-          </div>
-        ))}
-      </div>
-
-      <button onClick={save} className={`btn-primary mt-4 ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-        {saved ? <><Check size={16}/> Saved!</> : <>Save Notes</>}
-      </button>
-
-      {/* Interview Cheat Sheet */}
-      <div className="card border-indigo-500/20 bg-indigo-500/5 mt-6">
+      {/* Interview Cheat Sheet — shown before form fields */}
+      <div className="card border-indigo-500/20 bg-indigo-500/5 mb-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-white text-sm font-display font-semibold flex items-center gap-2">
               <Sparkles size={14} className="text-indigo-400"/> Interview Cheat Sheet
             </div>
-            <div className="text-slate-400 text-xs">Generate a quick-reference card from your research & notes</div>
+            <div className="text-slate-400 text-xs">Generates from your saved notes — fill the fields below first</div>
           </div>
           <button onClick={generateCheatSheet} disabled={!isConnected || cheatLoading}
             className="btn-primary text-xs flex-shrink-0">
@@ -806,6 +795,28 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
           </div>
         )}
       </div>
+
+      <div className="space-y-3">
+        {[
+          ['people', "People I've spoken to", 'Names, titles, LinkedIn…'],
+          ['theyMentioned', 'Things they mentioned', 'Pain points, team, priorities…'],
+          ['wowFacts', 'Wow facts & recent news ⭐', 'Recent news, funding, product launch, stock… (auto-filled by Research)'],
+          ['techStack', 'Tools & systems', 'Software, platforms, processes for this role… (auto-filled by Research)'],
+          ['culture', 'Culture signals', 'Remote policy, values, vibe… (auto-filled by Research)'],
+          ['openQ', 'Open questions', 'Things to ask or research… (auto-filled by Research)'],
+          ['prepNotes', 'My prep notes', 'Key points to emphasize… (auto-filled by Research)'],
+        ].map(([key, label, ph]) => (
+          <div key={key}>
+            <label className="text-sm text-slate-400 mb-1.5 block">{label}</label>
+            <AutoTextarea className="textarea-field" placeholder={ph}
+              value={form[key] || ''} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
+          </div>
+        ))}
+      </div>
+
+      <button onClick={save} className={`btn-primary mt-4 mb-6 ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
+        {saved ? <><Check size={16}/> Saved!</> : <>Save Notes</>}
+      </button>
     </div>
   )
 }
