@@ -98,5 +98,3 @@ Works in Chrome/Edge/Safari on mobile. Voice input is supported on Chrome and Ed
 ---
 
 ## 📄 License
-
-MIT — use it, fork it, build on it.
