@@ -441,13 +441,45 @@ Role: ${role || 'not specified'}
 ${searchContext ? `\nREAL-TIME SEARCH DATA (use this as your primary source — it is more accurate than your training data):\n${searchContext}\n` : ''}
 Return ONLY valid JSON:
 {
-  "techStack": "Key technologies, tools, and platforms this company uses — 2-3 short bullet points separated by newlines",
-  "culture": "Company values, work culture, remote policy, notable perks — 2-3 short bullet points separated by newlines",
-  "openQ": "3 smart questions to ask the interviewer — one per line",
-  "prepNotes": "5 key facts to know: business model, main product/service, company size/stage, one recent notable event, main competitor — one per line"
+  "wowFacts": "2-3 impressive recent facts to casually drop in interview — recent news, funding round, product launch, expansion, award, or stock milestone. If public company, mention investor/analyst sentiment. One fact per line.",
+  "techStack": "Key tools, platforms, software, or processes relevant to this specific role — applicable to any industry, not just IT. 2-3 short bullet points separated by newlines",
+  "culture": "Company values, work style, remote policy, notable perks — 2-3 short bullet points separated by newlines",
+  "openQ": "3 smart questions to ask the interviewer — tailored to this company and role. One per line",
+  "prepNotes": "5 key facts: business model, main product/service, company size/stage, one recent notable event, main competitor — one per line"
 }
 
-Keep each field under 100 words. Be factual. If limited public info exists, note that briefly.`,
+Keep each field under 100 words. Be factual. If limited public info exists, note that briefly. Prioritize real-time search data for wowFacts.`,
+
+  interviewCheatSheet: (company, role, notes) => `You are an expert interview coach creating a quick-reference cheat sheet.
+
+Company: ${company}
+Role: ${role || 'not specified'}
+
+RESEARCH & NOTES:
+${notes || 'Use your general knowledge of this company.'}
+
+Create a dense, scannable interview cheat sheet. Format as a quick-reference card:
+
+## 🏢 Company Snapshot
+- 3-4 must-know facts (size, main product/service, stage, key metric)
+
+## ⭐ Wow Fact to Drop
+- 1-2 impressive recent news or achievements to casually mention — shows you prepared
+
+## 🎯 Why This Role Fits
+- 3 alignment talking points between the role and your profile (frame as strengths)
+
+## 💬 Key Talking Points
+- 4-5 prepared points specific to this company and role
+
+## ❓ Smart Questions to Ask
+- 3 questions that show genuine insight into the company
+
+## ⚡ Culture Signals
+- 2-3 bullets on their values/work style — use their own language
+
+Keep the entire cheat sheet under 400 words. Make it readable in 2 minutes before walking into an interview.
+Return plain text with markdown formatting (##, -, **bold**).`,
 
   offerAdvisor: (offersText, profileSummary) => `You are a direct career advisor helping someone choose between job offers.
 

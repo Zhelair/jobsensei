@@ -20,8 +20,8 @@ export default async function handler(req, res) {
   }
 
   const query = role
-    ? `${company} company culture tech stack engineering ${role} interview`
-    : `${company} company culture tech stack engineering interview prep`
+    ? `${company} company news 2025 recent developments culture work environment ${role} interview`
+    : `${company} company news 2025 recent developments culture work environment interview preparation`
 
   try {
     const tavilyRes = await fetch('https://api.tavily.com/search', {
