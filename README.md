@@ -16,54 +16,7 @@
 | 🛠️ **Tools** | Question Predictor, Tone Analyzer, Follow-up Email Generator, Elevator Pitch Builder |
 | 📊 **Job Tracker** | Kanban board, company notes wiki, conversion stats |
 
----
-
-## 🚀 Quick Start
-
-```bash
-# Clone and install
-git clone https://github.com/yourusername/jobsensei.git
-cd jobsensei
-npm install
-
-# Run locally
-npm run dev
-```
-
-Then open `http://localhost:5173`, go through the 3-step onboarding, and paste your API key.
-
----
-
-## 🔑 API Key Setup
-
-JobSensei works with any of these providers. You need an API key from one of them:
-
-| Provider | Get key at | Default model |
-|---|---|---|
-| **DeepSeek** (recommended — cheap & great) | platform.deepseek.com | deepseek-chat |
-| **OpenAI** | platform.openai.com | gpt-4o |
-| **Anthropic** | console.anthropic.com | claude-sonnet-4-6 |
-| **Custom** | Any OpenAI-compatible endpoint | your choice |
-
-Your key is stored in your browser's `localStorage` only — it never leaves your device except when calling the AI provider you chose.
-
----
-
-## 🌐 Deploy to GitHub Pages
-
-```bash
-npm run build
-# Then deploy the /dist folder to GitHub Pages
-```
-
-Add to `vite.config.js`:
-```js
-base: '/jobsensei/', // replace with your repo name
-```
-
-Or deploy instantly to **Vercel** — just connect your repo, zero config needed.
-
----
+------
 
 ## 📱 Mobile
 
@@ -73,7 +26,6 @@ Works in Chrome/Edge/Safari on mobile. Voice input is supported on Chrome and Ed
 
 ## 🔐 Privacy
 
-- **Zero backend.** No server, no database.
 - **Your data lives in your browser.** localStorage only.
 - **Your API key** is only ever sent to the AI provider you configure.
 - **No analytics, no tracking, no cookies.**
