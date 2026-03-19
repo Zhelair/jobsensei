@@ -1,10 +1,10 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useProject } from '../../context/ProjectContext'
 import { useAI } from '../../context/AIContext'
 import { useApp } from '../../context/AppContext'
 import { prompts } from '../../utils/prompts'
 import { generateId, formatDate, timeAgo, tryParseJSON } from '../../utils/helpers'
-import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale } from 'lucide-react'
+import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale, Copy, Printer, Save, Sparkles } from 'lucide-react'
 
 const STAGES = ['Researching', 'Applied', 'Screening', 'Interviewing', 'Awaiting', 'Offer', 'Rejected']
 const FOLLOWUP_DAYS = { Applied: 7, Screening: 5, Interviewing: 3, Awaiting: 5 }
@@ -38,6 +38,17 @@ const OFFER_FIELDS = [
   { key: 'benefits',    label: 'Benefits', defaultWeight: 7 },
   { key: 'remote',      label: 'Flexibility', defaultWeight: 3 },
 ]
+
+function AutoTextarea({ className, value, onChange, placeholder }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    if (ref.current) { ref.current.style.height = 'auto'; ref.current.style.height = ref.current.scrollHeight + 'px' }
+  }, [value])
+  return (
+    <textarea ref={ref} className={className} value={value} onChange={onChange} placeholder={placeholder}
+      style={{ resize: 'none', overflow: 'hidden', minHeight: '5rem' }} />
+  )
+}
 
 function exportToCSV(applications) {
   const headers = ['Company', 'Role', 'Stage', 'Date Applied', 'JD URL', 'Notes']
@@ -81,7 +92,14 @@ export default function JobTracker() {
   const [selectedApp, setSelectedApp] = useState(null)
   const [editingApp, setEditingApp] = useState(null)
   const [importMsg, setImportMsg] = useState('')
+  const [synced, setSynced] = useState(false)
   const importRef = useRef(null)
+
+  function syncToProject() {
+    updateProjectDataMultiple({ applications, companyNotes: notes, offerComparisons: offerData })
+    setSynced(true)
+    setTimeout(() => setSynced(false), 2000)
+  }
 
   async function researchForAdd() {
     if (!newApp.company.trim()) return
@@ -107,7 +125,10 @@ export default function JobTracker() {
         temperature: 0.5,
       })
       const parsed = tryParseJSON(raw)
-      if (parsed) setPendingResearch({ ...parsed, _liveData: !!searchContext })
+      if (parsed) {
+        setPendingResearch({ ...parsed, _liveData: !!searchContext })
+        if (parsed.prepNotes) setNewApp(p => ({ ...p, notes: parsed.prepNotes }))
+      }
     } catch {}
     setResearchLoading(false)
   }
@@ -173,9 +194,24 @@ export default function JobTracker() {
       const text = await file.text()
       const parsed = JSON.parse(text)
       if (parsed.applications) {
-        setApplications(prev => [...prev, ...parsed.applications.map(a => ({ ...a, id: generateId() }))])
-        if (parsed.notes) setNotes(prev => ({ ...prev, ...parsed.notes }))
-        setImportMsg(`✅ Imported ${parsed.applications.length} applications`)
+        const idMap = {}
+        const importedApps = parsed.applications.map(a => {
+          const newId = generateId()
+          idMap[a.id] = newId
+          return { ...a, id: newId }
+        })
+        const importedNotes = {}
+        if (parsed.notes) {
+          Object.entries(parsed.notes).forEach(([oldId, noteData]) => {
+            const newId = idMap[oldId]
+            if (newId) importedNotes[newId] = noteData
+          })
+        }
+        updateProjectDataMultiple({
+          applications: [...applications, ...importedApps],
+          companyNotes: { ...notes, ...importedNotes },
+        })
+        setImportMsg(`✅ Imported ${importedApps.length} applications`)
       } else throw new Error()
     } catch { setImportMsg('❌ Invalid file') }
     setTimeout(() => setImportMsg(''), 3000)
@@ -229,6 +265,9 @@ export default function JobTracker() {
           </div>
           <button onClick={() => importRef.current?.click()} className="btn-ghost text-xs"><Upload size={14}/> Import</button>
           <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImport}/>
+          <button onClick={syncToProject} className={`btn-ghost text-xs transition-colors ${synced ? 'text-green-400' : ''}`}>
+            <Save size={14}/> {synced ? 'Synced ✓' : 'Sync'}
+          </button>
           <button onClick={() => setShowAdd(!showAdd)} className="btn-primary text-xs"><Plus size={14}/> Add</button>
         </div>
       </div>
@@ -255,21 +294,36 @@ export default function JobTracker() {
           </div>
 
           {newApp.company.trim() && (
-            <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 mb-3">
-              <div className="text-xs">
-                {pendingResearch
-                  ? <span className="text-teal-400">✓ Research ready {pendingResearch._liveData ? '(live web data)' : '(AI knowledge)'} — tech stack, culture & prep notes will be saved automatically</span>
-                  : <span className="text-slate-400">Research <strong className="text-white">{newApp.company}</strong> with AI before adding</span>
-                }
+            <div className={`flex items-center justify-between gap-3 p-3 rounded-xl border mb-3 transition-all ${pendingResearch ? 'bg-teal-500/10 border-teal-500/30' : 'bg-indigo-500/5 border-indigo-500/25'}`}>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${pendingResearch ? 'bg-teal-500/20' : 'bg-indigo-500/20'}`}>
+                  {pendingResearch ? <Check size={14} className="text-teal-400"/> : <Search size={14} className="text-indigo-400"/>}
+                </div>
+                <div className="min-w-0">
+                  {pendingResearch
+                    ? <>
+                        <div className="text-teal-400 text-xs font-semibold">Research ready {pendingResearch._liveData ? '(live data)' : '(AI)'}</div>
+                        <div className="text-slate-500 text-xs">Wow facts, culture & prep notes auto-filled below</div>
+                      </>
+                    : <>
+                        <div className="text-white text-xs font-semibold">Research <span className="text-indigo-300">{newApp.company}</span> with AI</div>
+                        <div className="text-slate-500 text-xs">Get wow facts, news, culture & prep notes</div>
+                      </>
+                  }
+                </div>
               </div>
               <button onClick={researchForAdd} disabled={researchLoading || !isConnected}
-                className="btn-ghost text-xs flex-shrink-0">
+                className={`text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 flex-shrink-0 transition-all ${
+                  pendingResearch
+                    ? 'bg-teal-500/20 text-teal-300 hover:bg-teal-500/30'
+                    : 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-md shadow-indigo-500/25'
+                }`}>
                 <Search size={12}/> {researchLoading ? 'Researching...' : pendingResearch ? 'Re-run' : 'Research'}
               </button>
             </div>
           )}
 
-          <textarea className="textarea-field h-16 mb-1" placeholder="Initial prep note (optional)…"
+          <AutoTextarea className="textarea-field mb-1" placeholder="Initial prep note (optional)…"
             value={newApp.notes} onChange={e => setNewApp(p => ({ ...p, notes: e.target.value }))} />
           <p className="text-slate-600 text-xs mb-3">↳ Saved to <strong className="text-slate-500">Company Notes → My prep notes</strong></p>
           <div className="flex gap-2">
@@ -377,15 +431,16 @@ export default function JobTracker() {
         <div className="space-y-2">
           {applications.length === 0 ? (
             <div className="card text-center py-10 text-slate-500">Add applications first.</div>
-          ) : applications.map(app => (
+          ) : [...applications].sort((a, b) => new Date(b.date) - new Date(a.date)).map(app => (
             <button key={app.id} onClick={() => setSelectedApp(app)}
               className="card-hover w-full text-left flex items-center gap-3">
               <Building2 size={18} className="text-slate-500 flex-shrink-0"/>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="text-white font-body font-medium text-sm">{app.company}</div>
                 <div className="text-slate-500 text-xs">{app.role}</div>
+                <div className="text-slate-600 text-xs">{timeAgo(app.date)}</div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <span className={`badge text-xs border ${STAGE_COLORS[app.stage]}`}>{app.stage}</span>
                 <span className="text-slate-600 text-xs">{notes[app.id] ? '📝' : '+'}</span>
               </div>
@@ -502,11 +557,13 @@ function TrackerStats({ applications }) {
 function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
   const { callAI, isConnected } = useAI()
   const [form, setForm] = useState({
-    people: '', theyMentioned: '', techStack: '', culture: '', openQ: '', prepNotes: '', ...notes
+    people: '', theyMentioned: '', techStack: '', culture: '', openQ: '', prepNotes: '', wowFacts: '', ...notes
   })
   const [saved, setSaved] = useState(false)
   const [researching, setResearching] = useState(false)
   const [researchMsg, setResearchMsg] = useState('')
+  const [cheatSheet, setCheatSheet] = useState('')
+  const [cheatLoading, setCheatLoading] = useState(false)
 
   function save() {
     onSaveNotes(form); setSaved(true); setTimeout(() => setSaved(false), 2000)
@@ -539,13 +596,14 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
       if (parsed) {
         setForm(f => ({
           ...f,
+          wowFacts: parsed.wowFacts || f.wowFacts,
           techStack: parsed.techStack || f.techStack,
           culture: parsed.culture || f.culture,
           openQ: parsed.openQ || f.openQ,
           prepNotes: parsed.prepNotes || f.prepNotes,
         }))
         setResearchMsg(searchContext
-          ? '✓ Notes pre-filled with live web data — review and save when ready'
+          ? '✓ Notes pre-filled with live data (wow facts, culture & tools) — review and save when ready'
           : '✓ Notes pre-filled — review and save when ready')
       } else {
         setResearchMsg('Could not parse research. Try again.')
@@ -554,6 +612,101 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
       setResearchMsg('Research failed. Check your AI connection.')
     }
     setResearching(false)
+  }
+
+  async function generateCheatSheet() {
+    const notesText = [
+      form.wowFacts && `Wow Facts & Recent News:\n${form.wowFacts}`,
+      form.techStack && `Tools & Systems:\n${form.techStack}`,
+      form.culture && `Culture:\n${form.culture}`,
+      form.openQ && `Open Questions:\n${form.openQ}`,
+      form.prepNotes && `Prep Notes:\n${form.prepNotes}`,
+      form.people && `People spoken to:\n${form.people}`,
+      form.theyMentioned && `Things they mentioned:\n${form.theyMentioned}`,
+    ].filter(Boolean).join('\n\n')
+
+    setCheatLoading(true)
+    setCheatSheet('')
+    try {
+      let full = ''
+      await callAI({
+        systemPrompt: prompts.interviewCheatSheet(app.company, app.role, notesText),
+        messages: [{ role: 'user', content: 'Generate interview cheat sheet.' }],
+        temperature: 0.5,
+        onChunk: (_, acc) => { full = acc; setCheatSheet(acc) },
+      })
+    } catch {}
+    setCheatLoading(false)
+  }
+
+  function downloadCheatAsPng(title, content) {
+    const canvas = document.createElement('canvas')
+    const width = 900
+    const padding = 44
+    const lineH = 22
+    const ctx = canvas.getContext('2d')
+    const lines = []
+    content.split('\n').forEach(line => {
+      if (line.startsWith('## ') || line.startsWith('# ') || (line.startsWith('**') && line.endsWith('**'))) {
+        lines.push({ text: line.replace(/^#+\s*/, '').replace(/\*\*/g, ''), bold: true, size: 16, gap: 8 })
+      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        lines.push({ text: '• ' + line.slice(2), bold: false, size: 14, gap: 2 })
+      } else if (line.trim() === '') {
+        lines.push({ text: '', bold: false, size: 14, gap: 6 })
+      } else {
+        lines.push({ text: line, bold: false, size: 14, gap: 2 })
+      }
+    })
+    const wrapped = []
+    const maxW = width - padding * 2
+    lines.forEach(l => {
+      if (!l.text) { wrapped.push({ ...l }); return }
+      ctx.font = `${l.bold ? 'bold ' : ''}${l.size}px system-ui,sans-serif`
+      const words = l.text.split(' ')
+      let cur = ''
+      words.forEach(w => {
+        const test = cur ? cur + ' ' + w : w
+        if (ctx.measureText(test).width > maxW) { wrapped.push({ ...l, text: cur }); cur = w }
+        else cur = test
+      })
+      if (cur) wrapped.push({ ...l, text: cur })
+    })
+    const headerH = 60
+    const totalH = headerH + wrapped.reduce((acc, l) => acc + lineH + (l.gap || 0), 0) + padding * 2
+    canvas.width = width; canvas.height = Math.max(totalH, 200)
+    ctx.fillStyle = '#0F172A'; ctx.fillRect(0, 0, width, canvas.height)
+    ctx.fillStyle = '#14B8A6'; ctx.fillRect(0, 0, width, headerH)
+    ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 18px system-ui,sans-serif'
+    ctx.fillText(title, padding, 36)
+    let y = headerH + padding
+    wrapped.forEach(l => {
+      if (l.text) {
+        ctx.font = `${l.bold ? 'bold ' : ''}${l.size}px system-ui,sans-serif`
+        ctx.fillStyle = l.bold ? '#F1F5F9' : '#CBD5E1'
+        ctx.fillText(l.text, padding, y)
+      }
+      y += lineH + (l.gap || 0)
+    })
+    const link = document.createElement('a')
+    link.download = `${app.company.replace(/\s+/g, '_')}_cheatsheet.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+  }
+
+  function printCheatAsPdf() {
+    const win = window.open('', '_blank')
+    win.document.write(`<!DOCTYPE html><html><head><title>Interview Cheat Sheet – ${app.company}</title><style>
+      body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#111;line-height:1.6}
+      h1{font-size:1.4rem;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:16px}
+      h2{font-size:1.1rem;margin-top:20px;margin-bottom:6px}
+      ul{padding-left:20px;margin:6px 0}li{margin-bottom:4px}
+      @media print{body{margin:10px}@page{margin:1cm}}
+    </style></head><body>
+      <h1>📋 Interview Cheat Sheet: ${app.company}${app.role ? ` — ${app.role}` : ''}</h1>
+      <pre style="white-space:pre-wrap;font-family:inherit;font-size:0.9rem">${cheatSheet}</pre>
+    </body></html>`)
+    win.document.close()
+    setTimeout(() => win.print(), 300)
   }
 
   return (
@@ -580,11 +733,11 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
       )}
 
       {/* Research banner */}
-      <div className="card border-teal-500/20 bg-teal-500/5 mb-4">
+      <div className="card border-teal-500/20 bg-teal-500/5 mb-3">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-white text-sm font-display font-semibold">Research this company</div>
-            <div className="text-slate-400 text-xs">AI fills tech stack, culture, open questions & prep notes</div>
+            <div className="text-slate-400 text-xs">AI fills wow facts, tools & systems, culture, open questions & prep notes</div>
           </div>
           <button onClick={runResearch} disabled={!isConnected || researching}
             className="btn-primary text-xs flex-shrink-0">
@@ -598,24 +751,70 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
         )}
       </div>
 
+      {/* Interview Cheat Sheet — shown before form fields */}
+      <div className="card border-indigo-500/20 bg-indigo-500/5 mb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-white text-sm font-display font-semibold flex items-center gap-2">
+              <Sparkles size={14} className="text-indigo-400"/> Interview Cheat Sheet
+            </div>
+            <div className="text-slate-400 text-xs">Generates from your saved notes — fill the fields below first</div>
+          </div>
+          <button onClick={generateCheatSheet} disabled={!isConnected || cheatLoading}
+            className="btn-primary text-xs flex-shrink-0">
+            {cheatLoading ? 'Generating...' : cheatSheet ? 'Regenerate' : 'Generate'}
+          </button>
+        </div>
+
+        {cheatSheet && (
+          <div className="mt-4 animate-in">
+            <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+              <span className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wider">📋 Cheat Sheet</span>
+              <div className="flex gap-2">
+                <button onClick={() => navigator.clipboard?.writeText(cheatSheet)} className="btn-ghost text-xs">
+                  <Copy size={12}/> Copy
+                </button>
+                <button onClick={printCheatAsPdf} className="btn-ghost text-xs">
+                  <Printer size={12}/> PDF
+                </button>
+                <button onClick={() => downloadCheatAsPng(`${app.company} — Interview Cheat Sheet`, cheatSheet)} className="btn-secondary text-xs">
+                  <Download size={12}/> PNG
+                </button>
+              </div>
+            </div>
+            <div className="bg-navy-900 rounded-xl p-4">
+              {cheatSheet.split('\n').map((line, i) => {
+                if (line.startsWith('## ')) return <h3 key={i} className="font-display font-semibold text-white text-sm mt-3 mb-1">{line.slice(3)}</h3>
+                if (line.startsWith('# ')) return <h2 key={i} className="font-display font-bold text-white mb-2">{line.slice(2)}</h2>
+                if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="text-white font-semibold text-sm mt-2 mb-1">{line.slice(2, -2)}</p>
+                if (line.startsWith('- ') || line.startsWith('* ')) return <p key={i} className="text-slate-300 text-sm ml-3 mb-1">• {line.slice(2)}</p>
+                if (line.trim() === '') return <div key={i} className="h-2"/>
+                return <p key={i} className="text-slate-300 text-sm mb-1">{line}</p>
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="space-y-3">
         {[
           ['people', "People I've spoken to", 'Names, titles, LinkedIn…'],
           ['theyMentioned', 'Things they mentioned', 'Pain points, team, priorities…'],
-          ['techStack', 'Tech stack / tools', 'Systems, platforms… (auto-filled by Research)'],
+          ['wowFacts', 'Wow facts & recent news ⭐', 'Recent news, funding, product launch, stock… (auto-filled by Research)'],
+          ['techStack', 'Tools & systems', 'Software, platforms, processes for this role… (auto-filled by Research)'],
           ['culture', 'Culture signals', 'Remote policy, values, vibe… (auto-filled by Research)'],
           ['openQ', 'Open questions', 'Things to ask or research… (auto-filled by Research)'],
           ['prepNotes', 'My prep notes', 'Key points to emphasize… (auto-filled by Research)'],
         ].map(([key, label, ph]) => (
           <div key={key}>
             <label className="text-sm text-slate-400 mb-1.5 block">{label}</label>
-            <textarea className="textarea-field h-28" placeholder={ph}
+            <AutoTextarea className="textarea-field" placeholder={ph}
               value={form[key] || ''} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
           </div>
         ))}
       </div>
 
-      <button onClick={save} className={`btn-primary mt-4 ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
+      <button onClick={save} className={`btn-primary mt-4 mb-6 ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
         {saved ? <><Check size={16}/> Saved!</> : <>Save Notes</>}
       </button>
     </div>

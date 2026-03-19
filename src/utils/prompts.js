@@ -441,13 +441,40 @@ Role: ${role || 'not specified'}
 ${searchContext ? `\nREAL-TIME SEARCH DATA (use this as your primary source — it is more accurate than your training data):\n${searchContext}\n` : ''}
 Return ONLY valid JSON:
 {
-  "techStack": "Key technologies, tools, and platforms this company uses — 2-3 short bullet points separated by newlines",
-  "culture": "Company values, work culture, remote policy, notable perks — 2-3 short bullet points separated by newlines",
-  "openQ": "3 smart questions to ask the interviewer — one per line",
-  "prepNotes": "5 key facts to know: business model, main product/service, company size/stage, one recent notable event, main competitor — one per line"
+  "wowFacts": "2-3 impressive recent facts to casually drop in interview — recent news, funding round, product launch, expansion, award, or stock milestone. If public company, mention investor/analyst sentiment. One fact per line.",
+  "techStack": "Key tools, platforms, software, or processes relevant to this specific role — applicable to any industry, not just IT. 2-3 short bullet points separated by newlines",
+  "culture": "Company values, work style, remote policy, notable perks — 2-3 short bullet points separated by newlines",
+  "openQ": "3 smart questions to ask the interviewer — tailored to this company and role. One per line",
+  "prepNotes": "5 key facts: business model, main product/service, company size/stage, one recent notable event, main competitor — one per line"
 }
 
-Keep each field under 100 words. Be factual. If limited public info exists, note that briefly.`,
+Keep each field under 100 words. Be factual. If limited public info exists, note that briefly. Prioritize real-time search data for wowFacts.`,
+
+  interviewCheatSheet: (company, role, notes) => `You are an expert interview coach creating a quick-reference cheat sheet.
+
+Company: ${company}
+Role: ${role || 'not specified'}
+
+NOTES (your ONLY source — do NOT add, invent, or assume anything not written below):
+${notes || '(no notes provided)'}
+
+STRICT RULES:
+- Only include sections where the notes above contain relevant information
+- If a section has no data in the notes, skip it entirely
+- Do not invent facts, guess, or add anything not in the notes above
+- Keep it purely as a structured summary of the notes
+
+Create a scannable cheat sheet using only the provided notes. Use only these section headers (skip any with no data):
+
+## 🏢 Company Snapshot
+## ⭐ Wow Fact to Drop
+## 🛠 Tools & Systems
+## 🎯 Key Talking Points
+## ❓ Questions to Ask
+## ⚡ Culture Signals
+## 👥 People / Context
+
+Keep each bullet under 15 words. Return plain text with markdown formatting (##, -, **bold**).`,
 
   offerAdvisor: (offersText, profileSummary) => `You are a direct career advisor helping someone choose between job offers.
 
