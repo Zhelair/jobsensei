@@ -8,9 +8,9 @@ import ProjectSwitcher from '../Projects/ProjectSwitcher'
 
 const NAV_ITEMS = [
   { id: SECTIONS.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
-  { id: SECTIONS.INTERVIEW, icon: Mic, label: 'Interview Sim' },
+  { id: SECTIONS.INTERVIEW, icon: Mic, label: 'Interview Prep' },
   { id: SECTIONS.LEARNING, icon: BookOpen, label: 'Learning' },
-  { id: SECTIONS.TOOLS, icon: Wrench, label: 'Tools' },
+  { id: SECTIONS.TOOLS, icon: Wrench, label: 'Prep Tools' },
   { id: SECTIONS.TRACKER, icon: Briefcase, label: 'Job Tracker' },
 ]
 

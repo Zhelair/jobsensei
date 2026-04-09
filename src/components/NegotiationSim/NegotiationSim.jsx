@@ -9,7 +9,7 @@ import VoiceChatBar from '../shared/VoiceChatBar'
 import { Play, X, History, ArrowLeft } from 'lucide-react'
 import { useVisuals } from '../../context/VisualsContext'
 
-export default function NegotiationSim({ onBack, embedded }) {
+export default function NegotiationSim({ onBack, embedded, backLabel = 'Back' }) {
   const { drillMode } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData } = useProject()
@@ -100,7 +100,7 @@ export default function NegotiationSim({ onBack, embedded }) {
   if (view === 'setup') return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in">
       {onBack && (
-        <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> {backLabel}</button>
       )}
       <div className="flex items-center justify-between mb-1">
         <div>
