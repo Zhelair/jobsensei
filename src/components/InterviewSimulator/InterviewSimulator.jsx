@@ -19,17 +19,18 @@ const MODES = [
 export default function InterviewSimulator() {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
-  const { getProjectData, updateProjectData } = useProject()
+  const { getProjectData, updateProjectData, activeApplication } = useProject()
   const { triggerConfetti, showToast } = useVisuals()
 
   const sessions = getProjectData('interviewSessions')
   const resume = getProjectData('resume')
   const persistedJD = getProjectData('currentJD')
+  const activeContextJD = activeApplication ? (activeApplication.jdText || '') : persistedJD
   const persistedMode = getProjectData('interviewMode')
 
   const [view, setView] = useState('setup')
   const [mode, setMode] = useState(persistedMode || 'hr')
-  const [jd, setJd] = useState(persistedJD || '')
+  const [jd, setJd] = useState(activeContextJD || '')
   const [background, setBackground] = useState('')
   const [questionCount, setQuestionCount] = useState(10)
   const [messages, setMessages] = useState([])
@@ -52,12 +53,17 @@ export default function InterviewSimulator() {
   useEffect(() => { questionsAskedRef.current = questionsAsked }, [questionsAsked])
   useEffect(() => { sessionScoreRef.current = sessionScore }, [sessionScore])
 
+  useEffect(() => {
+    setJd(activeContextJD || '')
+  }, [activeApplication?.id, activeContextJD])
+
   // Persist JD + mode
   useEffect(() => { updateProjectData('interviewMode', mode) }, [mode])
   useEffect(() => {
+    if (activeApplication?.id) return
     const t = setTimeout(() => updateProjectData('currentJD', jd), 600)
     return () => clearTimeout(t)
-  }, [jd])
+  }, [jd, activeApplication?.id])
 
   useEffect(() => {
     const bg = resume || (profile?.currentRole
@@ -194,6 +200,25 @@ export default function InterviewSimulator() {
           ))}
         </div>
       </div>
+
+      {activeApplication && (
+        <div className="card border-teal-500/20 bg-teal-500/5">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <div className="text-white text-sm font-display font-semibold">Active Job Context</div>
+              <div className="text-teal-300 text-sm">{activeApplication.company}{activeApplication.role ? ` - ${activeApplication.role}` : ''}</div>
+              <div className="text-slate-400 text-xs mt-1">
+                {activeContextJD.trim()
+                  ? 'This saved tracker JD is prefilled below. You can still tweak it for this interview.'
+                  : 'This application is active, but it does not have a saved JD yet.'}
+              </div>
+            </div>
+            <span className={`text-xs px-2.5 py-1 rounded-full border ${activeContextJD.trim() ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
+              {activeContextJD.trim() ? 'JD attached' : 'No JD saved'}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* 2-col: JD left / background + questions + start right */}
       <div className="grid md:grid-cols-2 gap-5">

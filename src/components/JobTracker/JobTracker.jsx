@@ -73,10 +73,11 @@ function exportToJSON(applications, notes) {
 }
 
 export default function JobTracker() {
-  const { getProjectData, updateProjectData, updateProjectDataMultiple } = useProject()
+  const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId, setActiveApplication } = useProject()
   const applications = getProjectData('applications')
   const notes = getProjectData('companyNotes')
   const offerData = getProjectData('offerComparisons') || {}
+  const currentJD = getProjectData('currentJD')
 
   function updateOfferData(appId, data) {
     updateProjectData('offerComparisons', { ...offerData, [appId]: data })
@@ -86,7 +87,7 @@ export default function JobTracker() {
 
   const [tab, setTab] = useState(0)
   const [showAdd, setShowAdd] = useState(false)
-  const [newApp, setNewApp] = useState({ company: '', role: '', stage: 'Researching', jdUrl: '', notes: '' })
+  const [newApp, setNewApp] = useState({ company: '', role: '', stage: 'Researching', jdUrl: '', jdText: '', notes: '' })
   const [pendingResearch, setPendingResearch] = useState(null)
   const [researchLoading, setResearchLoading] = useState(false)
   const [selectedApp, setSelectedApp] = useState(null)
@@ -99,6 +100,14 @@ export default function JobTracker() {
     updateProjectDataMultiple({ applications, companyNotes: notes, offerComparisons: offerData })
     setSynced(true)
     setTimeout(() => setSynced(false), 2000)
+  }
+
+  function openApplication(app) {
+    setSelectedApp(app)
+    setActiveApplication(app.id)
+    if (app.jdText?.trim()) {
+      updateProjectData('currentJD', app.jdText)
+    }
   }
 
   async function researchForAdd() {
@@ -150,22 +159,29 @@ export default function JobTracker() {
       ...(prepNote.trim() ? { prepNotes: prepNote } : {}),
       ...(pendingResearch || {}),
     }
-    if (Object.keys(mergedNotes).length > 0) {
-      updateProjectDataMultiple({
-        applications: [...applications, app],
-        companyNotes: { ...notes, [app.id]: mergedNotes },
-      })
-    } else {
-      setApplications(prev => [...prev, app])
-    }
-    setNewApp({ company: '', role: '', stage: 'Researching', jdUrl: '', notes: '' })
+    const nextApplications = [...applications, app]
+    const nextCompanyNotes = Object.keys(mergedNotes).length > 0
+      ? { ...notes, [app.id]: mergedNotes }
+      : notes
+
+    updateProjectDataMultiple({
+      applications: nextApplications,
+      companyNotes: nextCompanyNotes,
+      activeApplicationId: app.id,
+      currentJD: app.jdText?.trim() ? app.jdText : currentJD,
+    })
+    setNewApp({ company: '', role: '', stage: 'Researching', jdUrl: '', jdText: '', notes: '' })
     setPendingResearch(null)
     setShowAdd(false)
   }
 
   function updateApp(id, updates) {
     const stageUpdate = updates.stage ? { stageUpdatedAt: new Date().toISOString(), followupSnoozedUntil: null } : {}
-    setApplications(prev => prev.map(a => a.id === id ? { ...a, ...updates, ...stageUpdate } : a))
+    const nextApplications = applications.map(a => a.id === id ? { ...a, ...updates, ...stageUpdate } : a)
+    updateProjectData('applications', nextApplications)
+    if (activeApplicationId === id && updates.jdText?.trim()) {
+      updateProjectData('currentJD', updates.jdText)
+    }
     if (selectedApp?.id === id) setSelectedApp(a => ({ ...a, ...updates, ...stageUpdate }))
   }
 
@@ -179,13 +195,27 @@ export default function JobTracker() {
   }
 
   function saveEdit(updated) {
-    setApplications(prev => prev.map(a => a.id === updated.id ? updated : a))
+    const nextApplications = applications.map(a => a.id === updated.id ? updated : a)
+    updateProjectData('applications', nextApplications)
+    if (activeApplicationId === updated.id && updated.jdText?.trim()) {
+      updateProjectData('currentJD', updated.jdText)
+    }
     if (selectedApp?.id === updated.id) setSelectedApp(updated)
     setEditingApp(null)
   }
 
   function deleteApp(id) {
-    setApplications(prev => prev.filter(a => a.id !== id))
+    const nextApplications = applications.filter(a => a.id !== id)
+    const nextActiveId = activeApplicationId === id ? nextApplications[0]?.id || null : activeApplicationId
+    const nextActiveApp = nextApplications.find(app => app.id === nextActiveId)
+    updateProjectDataMultiple({
+      applications: nextApplications,
+      activeApplicationId: nextActiveId,
+      currentJD: nextActiveApp?.jdText?.trim() ? nextActiveApp.jdText : currentJD,
+    })
+    if (selectedApp?.id === id) {
+      setSelectedApp(null)
+    }
   }
 
   async function handleImport(e) {
@@ -292,6 +322,11 @@ export default function JobTracker() {
             <input className="input-field" placeholder="JD URL (optional)" value={newApp.jdUrl}
               onChange={e => setNewApp(p => ({ ...p, jdUrl: e.target.value }))} />
           </div>
+          <div className="mb-3">
+            <label className="text-sm text-slate-400 mb-1.5 block">Job Description</label>
+            <AutoTextarea className="textarea-field" placeholder="Paste the job description once to make this application available across the main tools..."
+              value={newApp.jdText} onChange={e => setNewApp(p => ({ ...p, jdText: e.target.value }))} />
+          </div>
 
           {newApp.company.trim() && (
             <div className={`flex items-center justify-between gap-3 p-3 rounded-xl border mb-3 transition-all ${pendingResearch ? 'bg-teal-500/10 border-teal-500/30' : 'bg-indigo-500/5 border-indigo-500/25'}`}>
@@ -349,7 +384,7 @@ export default function JobTracker() {
           <div className="space-y-2">
             {overdueApps.map(app => (
               <div key={app.id} className="flex items-center gap-2 flex-wrap">
-                <button onClick={() => setSelectedApp(app)} className="text-white text-xs hover:text-teal-400 text-left flex-1 min-w-0 truncate">
+                <button onClick={() => openApplication(app)} className="text-white text-xs hover:text-teal-400 text-left flex-1 min-w-0 truncate">
                   {app.company}{app.role ? ` — ${app.role}` : ''}
                 </button>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -388,9 +423,9 @@ export default function JobTracker() {
                   </div>
                   <div className="space-y-2 min-h-16">
                     {stageApps.map(app => (
-                      <div key={app.id} className="card p-3">
+                      <div key={app.id} className={`card p-3 ${activeApplicationId === app.id ? 'border border-teal-500/30 bg-teal-500/5' : ''}`}>
                         <div className="flex items-start justify-between gap-1 mb-1">
-                          <button onClick={() => setSelectedApp(app)}
+                          <button onClick={() => openApplication(app)}
                             className="text-white text-xs font-body font-semibold hover:text-teal-400 text-left leading-snug flex-1">
                             {app.company}
                           </button>
@@ -407,6 +442,7 @@ export default function JobTracker() {
                           </div>
                         </div>
                         {app.role && <div className="text-slate-500 text-xs mb-1.5 leading-snug">{app.role}</div>}
+                        {activeApplicationId === app.id && <span className="badge-teal mb-1.5 inline-flex">Active</span>}
                         <div className="text-slate-600 text-xs mb-2">{timeAgo(app.date)}</div>
                         <select
                           className="w-full bg-navy-900 border border-navy-600 rounded-lg px-2 py-1 text-xs text-slate-400 focus:outline-none focus:border-teal-500 cursor-pointer"
@@ -432,7 +468,7 @@ export default function JobTracker() {
           {applications.length === 0 ? (
             <div className="card text-center py-10 text-slate-500">Add applications first.</div>
           ) : [...applications].sort((a, b) => new Date(b.date) - new Date(a.date)).map(app => (
-            <button key={app.id} onClick={() => setSelectedApp(app)}
+            <button key={app.id} onClick={() => openApplication(app)}
               className="card-hover w-full text-left flex items-center gap-3">
               <Building2 size={18} className="text-slate-500 flex-shrink-0"/>
               <div className="flex-1 min-w-0">
@@ -441,6 +477,7 @@ export default function JobTracker() {
                 <div className="text-slate-600 text-xs">{timeAgo(app.date)}</div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
+                {activeApplicationId === app.id && <span className="badge-teal">Active</span>}
                 <span className={`badge text-xs border ${STAGE_COLORS[app.stage]}`}>{app.stage}</span>
                 <span className="text-slate-600 text-xs">{notes[app.id] ? '📝' : '+'}</span>
               </div>
@@ -454,7 +491,7 @@ export default function JobTracker() {
           applications={applications}
           offerData={offerData}
           onUpdateOfferData={updateOfferData}
-          onSelectApp={app => setSelectedApp(app)}
+          onSelectApp={app => openApplication(app)}
         />
       )}
     </div>
@@ -497,6 +534,11 @@ function EditJobModal({ app, onSave, onClose }) {
               <input className="input-field" placeholder="https://…" value={form.jdUrl || ''}
                 onChange={e => setForm(f => ({ ...f, jdUrl: e.target.value }))} />
             </div>
+          </div>
+          <div>
+            <label className="text-xs text-slate-400 mb-1 block">Job Description</label>
+            <AutoTextarea className="textarea-field" placeholder="Paste the saved job description for this application..."
+              value={form.jdText || ''} onChange={e => setForm(f => ({ ...f, jdText: e.target.value }))} />
           </div>
         </div>
         <div className="flex gap-2">
@@ -559,6 +601,7 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
   const [form, setForm] = useState({
     people: '', theyMentioned: '', techStack: '', culture: '', openQ: '', prepNotes: '', wowFacts: '', ...notes
   })
+  const [jdText, setJdText] = useState(app.jdText || '')
   const [saved, setSaved] = useState(false)
   const [researching, setResearching] = useState(false)
   const [researchMsg, setResearchMsg] = useState('')
@@ -566,7 +609,12 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
   const [cheatLoading, setCheatLoading] = useState(false)
 
   function save() {
-    onSaveNotes(form); setSaved(true); setTimeout(() => setSaved(false), 2000)
+    onSaveNotes(form)
+    if (jdText !== (app.jdText || '')) {
+      onUpdateApp({ jdText })
+    }
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   async function runResearch() {
@@ -731,6 +779,21 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
           </a>
         </div>
       )}
+
+      <div className="card border-teal-500/20 bg-teal-500/5 mb-4">
+        <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+          <div>
+            <div className="text-white text-sm font-display font-semibold">Active job context</div>
+            <div className="text-slate-400 text-xs">This tracker application now pre-fills the main JD-based tools.</div>
+          </div>
+          <span className={`text-xs px-2.5 py-1 rounded-full border ${jdText.trim() ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
+            {jdText.trim() ? 'JD attached' : 'Add JD to prefill tools'}
+          </span>
+        </div>
+        <label className="text-sm text-slate-400 mb-1.5 block">Saved Job Description</label>
+        <AutoTextarea className="textarea-field" placeholder="Paste the job description once. Interview Sim, Gap Analysis, Question Predictor, Cover Letter, and Resume Checker will use it."
+          value={jdText} onChange={e => setJdText(e.target.value)} />
+      </div>
 
       {/* Research banner */}
       <div className="card border-teal-500/20 bg-teal-500/5 mb-3">

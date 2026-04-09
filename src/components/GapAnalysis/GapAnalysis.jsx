@@ -12,23 +12,29 @@ const TABS = ['Gap Analysis', 'App Scoring', 'Red Flags']
 export default function GapAnalysis({ onBack }) {
   const { profile, drillMode } = useApp()
   const { callAI, isConnected } = useAI()
-  const { getProjectData, updateProjectData } = useProject()
+  const { getProjectData, updateProjectData, activeApplication } = useProject()
 
   const resume = getProjectData('resume')
   const savedResults = getProjectData('gapResults')
   const persistedJD = getProjectData('currentJD')
+  const activeContextJD = activeApplication ? (activeApplication.jdText || '') : persistedJD
 
   const [tab, setTab] = useState(0)
-  const [jd, setJd] = useState(persistedJD || '')
+  const [jd, setJd] = useState(activeContextJD || '')
   const [background, setBackground] = useState(
     resume || (profile ? `${profile.currentRole}, ${profile.experience} experience in ${profile.industry}.` : '')
   )
 
-  // Persist JD to project so switching pages doesn't lose it
   React.useEffect(() => {
+    setJd(activeContextJD || '')
+  }, [activeApplication?.id, activeContextJD])
+
+  // Persist JD to project only when no tracker application is driving context
+  React.useEffect(() => {
+    if (activeApplication?.id) return
     const t = setTimeout(() => updateProjectData('currentJD', jd), 600)
     return () => clearTimeout(t)
-  }, [jd])
+  }, [jd, activeApplication?.id])
   const [loading, setLoading] = useState(false)
   const [gapResult, setGapResult] = useState('')
   const [scoreResult, setScoreResult] = useState(null)
@@ -151,6 +157,25 @@ export default function GapAnalysis({ onBack }) {
             className={`flex-1 py-2 rounded-lg text-sm font-body font-medium transition-all ${tab === i ? 'bg-navy-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{t}</button>
         ))}
       </div>
+
+      {activeApplication && (
+        <div className="card border-teal-500/20 bg-teal-500/5 mb-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <div className="text-white text-sm font-display font-semibold">Active Job Context</div>
+              <div className="text-teal-300 text-sm">{activeApplication.company}{activeApplication.role ? ` - ${activeApplication.role}` : ''}</div>
+              <div className="text-slate-400 text-xs mt-1">
+                {activeContextJD.trim()
+                  ? 'Using the saved JD from Job Tracker. You can still edit the field below for this run.'
+                  : 'This application is active, but it does not have a saved JD yet.'}
+              </div>
+            </div>
+            <span className={`text-xs px-2.5 py-1 rounded-full border ${activeContextJD.trim() ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
+              {activeContextJD.trim() ? 'JD attached' : 'No JD saved'}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3 mb-4">
         <div>

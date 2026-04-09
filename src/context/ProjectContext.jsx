@@ -17,8 +17,19 @@ const EMPTY_PROJECT_DATA = {
   notes: '',                // free notes
   topicNotes: [],           // saved notes from learning sessions
   currentJD: '',            // persistent JD field across gap/interview
+  activeApplicationId: null,// tracker application currently driving tool context
   interviewMode: 'hr',      // last interview mode used
   negotiationOffer: '',     // last negotiation offer text
+}
+
+function normalizeProject(project) {
+  return {
+    ...project,
+    data: {
+      ...EMPTY_PROJECT_DATA,
+      ...(project?.data || {}),
+    },
+  }
 }
 
 function makeProject(name) {
@@ -41,13 +52,14 @@ export function ProjectProvider({ children }) {
     const activeId = localStorage.getItem('js_active_project')
 
     if (saved) {
-      const parsed = JSON.parse(saved)
+      const parsed = JSON.parse(saved).map(normalizeProject)
       setProjects(parsed)
+      localStorage.setItem('js_projects', JSON.stringify(parsed))
       // Migrate old data into default project if no projects exist yet
       if (parsed.length === 0) {
         initDefaultProject()
       } else {
-        setActiveProjectId(activeId || parsed[0].id)
+        setActiveProjectId(parsed.some(p => p.id === activeId) ? activeId : parsed[0].id)
       }
     } else {
       initDefaultProject()
@@ -77,11 +89,14 @@ export function ProjectProvider({ children }) {
   }
 
   function persist(updatedProjects) {
-    setProjects(updatedProjects)
-    localStorage.setItem('js_projects', JSON.stringify(updatedProjects))
+    const normalized = updatedProjects.map(normalizeProject)
+    setProjects(normalized)
+    localStorage.setItem('js_projects', JSON.stringify(normalized))
   }
 
   const activeProject = projects.find(p => p.id === activeProjectId) || projects[0] || null
+  const activeApplicationId = activeProject?.data?.activeApplicationId ?? null
+  const activeApplication = (activeProject?.data?.applications || []).find(app => app.id === activeApplicationId) || null
 
   function switchProject(id) {
     setActiveProjectId(id)
@@ -147,6 +162,10 @@ export function ProjectProvider({ children }) {
     return activeProject?.data?.[key] ?? EMPTY_PROJECT_DATA[key]
   }
 
+  function setActiveApplication(id) {
+    updateProjectData('activeApplicationId', id || null)
+  }
+
   // Export single project as JSON
   function exportProject(id) {
     const project = projects.find(p => p.id === id)
@@ -205,6 +224,8 @@ export function ProjectProvider({ children }) {
       projects,
       activeProject,
       activeProjectId,
+      activeApplication,
+      activeApplicationId,
       switchProject,
       createProject,
       deleteProject,
@@ -212,6 +233,7 @@ export function ProjectProvider({ children }) {
       updateProjectData,
       updateProjectDataMultiple,
       getProjectData,
+      setActiveApplication,
       exportProject,
       exportAll,
       importProjects,
