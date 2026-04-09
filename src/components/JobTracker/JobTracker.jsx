@@ -880,7 +880,7 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
             <label className="text-sm text-slate-400 mb-1.5 block">Saved Job Description</label>
             <textarea
               className="textarea-field h-40"
-              placeholder="Paste the job description once. Interview Sim, Gap Analysis, Question Predictor, Cover Letter, and Resume Checker will use it."
+              placeholder="Paste the job description once. Interview Prep, Gap Analysis, Question Predictor, Cover Letter, and Resume Checker will use it."
               value={jdText}
               onChange={e => setJdText(e.target.value)}
             />

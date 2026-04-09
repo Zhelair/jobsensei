@@ -9,7 +9,7 @@ import { Search, AlertTriangle, Zap, Save, Clock, Trash2, ArrowLeft } from 'luci
 
 const TABS = ['Gap Analysis', 'App Scoring', 'Red Flags']
 
-export default function GapAnalysis({ onBack }) {
+export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
   const { profile, drillMode } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData, activeApplication } = useProject()
@@ -139,7 +139,7 @@ export default function GapAnalysis({ onBack }) {
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto animate-in">
       {onBack && (
-        <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> {backLabel}</button>
       )}
       <div className="flex items-center justify-between mb-4">
         <div>

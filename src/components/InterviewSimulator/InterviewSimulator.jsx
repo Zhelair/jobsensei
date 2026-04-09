@@ -6,7 +6,7 @@ import { prompts } from '../../utils/prompts'
 import { generateId } from '../../utils/helpers'
 import ChatWindow from '../shared/ChatWindow'
 import VoiceChatBar from '../shared/VoiceChatBar'
-import { X, History, Play } from 'lucide-react'
+import { X, History, Play, ArrowLeft } from 'lucide-react'
 import { useVisuals } from '../../context/VisualsContext'
 
 const MODES = [
@@ -16,7 +16,7 @@ const MODES = [
   { id: 'stress', label: 'Stress Interview', desc: "Devil's advocate, pushback" },
 ]
 
-export default function InterviewSimulator() {
+export default function InterviewSimulator({ onExit = null, hubLabel = 'Interview Prep' }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData, activeApplication } = useProject()
@@ -175,6 +175,11 @@ export default function InterviewSimulator() {
   if (view === 'setup') return (
     <div className="overflow-y-auto h-full">
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5 animate-in">
+      {onExit && (
+        <button onClick={onExit} className="btn-ghost">
+          <ArrowLeft size={16} /> {hubLabel}
+        </button>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="section-title">Interview Simulator</h2>

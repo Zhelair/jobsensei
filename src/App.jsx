@@ -11,7 +11,6 @@ import TopBar from './components/Layout/TopBar'
 import BottomNav from './components/Layout/BottomNav'
 import OnboardingWizard from './components/Onboarding/OnboardingWizard'
 import Dashboard from './components/Dashboard/Dashboard'
-import InterviewSimulator from './components/InterviewSimulator/InterviewSimulator'
 import LearningSection from './components/LearningSection/LearningSection'
 import Tools from './components/Tools/Tools'
 import JobTracker from './components/JobTracker/JobTracker'
@@ -22,9 +21,9 @@ function AppContent() {
 
   const sections = {
     [SECTIONS.DASHBOARD]: Dashboard,
-    [SECTIONS.INTERVIEW]: InterviewSimulator,
+    [SECTIONS.INTERVIEW]: () => <Tools mode="interview-prep" />,
     [SECTIONS.LEARNING]: LearningSection,
-    [SECTIONS.TOOLS]: Tools,
+    [SECTIONS.TOOLS]: () => <Tools mode="prep-tools" />,
     [SECTIONS.TRACKER]: JobTracker,
     [SECTIONS.SETTINGS]: Settings,
   }

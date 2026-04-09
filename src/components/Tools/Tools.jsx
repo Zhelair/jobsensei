@@ -4,12 +4,31 @@ import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
-import { Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X, Search, Star, DollarSign, Zap, Trash2, TrendingUp } from 'lucide-react'
+import { Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X, Search, Star, DollarSign, Zap, Trash2, TrendingUp, Mic } from 'lucide-react'
 import GapAnalysis from '../GapAnalysis/GapAnalysis'
 import STARBuilder from '../STARBuilder/STARBuilder'
 import NegotiationSim from '../NegotiationSim/NegotiationSim'
+import InterviewSimulator from '../InterviewSimulator/InterviewSimulator'
 
-const TOOLS = [
+const HUBS = {
+  'interview-prep': {
+    title: 'Interview Prep',
+    subtitle: 'Practice interviews, predict likely questions, and sharpen how you show up.',
+    toolIds: ['interview', 'predictor', 'star', 'tone', 'followup', 'pitch'],
+    recentTitle: 'Recent Prep History',
+    emptyHistory: 'No interview prep history yet.',
+  },
+  'prep-tools': {
+    title: 'Prep Tools',
+    subtitle: 'Documents, fit checks, negotiation, and support tools for your job hunt.',
+    toolIds: ['gap', 'coverletter', 'resumechecker', 'linkedin', 'visualreview', 'negotiation', 'transferable', 'salarycoach'],
+    recentTitle: 'Recent Results',
+    emptyHistory: 'No prep tool history yet.',
+  },
+}
+
+const TOOL_CARDS = [
+  { id: 'interview', icon: Mic, label: 'Interview Simulator', desc: 'Run mock interviews with saved session history' },
   { id: 'gap', icon: Search, label: 'Gap Analysis', desc: 'Match to JD, score application, detect red flags' },
   { id: 'star', icon: Star, label: 'STAR Builder', desc: 'Structure interview answers and build your story bank' },
   { id: 'negotiation', icon: DollarSign, label: 'Negotiation Sim', desc: 'Roleplay salary negotiation with AI recruiter Alex Chen' },
@@ -27,6 +46,7 @@ const TOOLS = [
 
 const FILTER_LABELS = {
   all: 'All',
+  interview: 'Interview Simulator',
   gap: 'Gap Analysis',
   star: 'STAR Builder',
   negotiation: 'Negotiation Sim',
@@ -54,11 +74,13 @@ function hasPrepNotes(noteData = {}) {
   return ['prepNotes', 'people', 'theyMentioned'].some(key => (noteData[key] || '').trim())
 }
 
-export default function Tools() {
+export default function Tools({ mode = 'prep-tools' }) {
   const [activeTool, setActiveTool] = useState(null)
   const [selectedResult, setSelectedResult] = useState(null)
   const [recentFilter, setRecentFilter] = useState('all')
   const [showContextJd, setShowContextJd] = useState(false)
+  const hub = HUBS[mode] || HUBS['prep-tools']
+  const isInterviewHub = mode === 'interview-prep'
   const { setActiveSection } = useApp()
   const {
     getProjectData,
@@ -72,7 +94,12 @@ export default function Tools() {
   const toolsHistory = getProjectData('toolsHistory') || []
   const gapResults = getProjectData('gapResults') || []
   const negotiationSessions = getProjectData('negotiationSessions') || []
+  const interviewSessions = getProjectData('interviewSessions') || []
+  const starStories = getProjectData('starStories') || []
   const companyNotes = getProjectData('companyNotes') || {}
+  const hubCards = hub.toolIds
+    .map(id => TOOL_CARDS.find(tool => tool.id === id))
+    .filter(Boolean)
   const activeContext = activeApplication ? {
     application: activeApplication,
     jd: activeApplication.jdText || '',
@@ -125,7 +152,34 @@ export default function Tools() {
     if (selectedResult?.id === id) setSelectedResult(null)
   }
 
-  // Normalize gap & negotiation into the shared shape
+  function deleteInterviewSession(id) {
+    updateProjectData('interviewSessions', interviewSessions.filter(session => session.id !== id))
+    if (selectedResult?.id === id) setSelectedResult(null)
+  }
+
+  function renderHubScreen(content, options = {}) {
+    if (!isInterviewHub) return content
+    return (
+      <div className={options.fullHeight ? 'h-full' : 'overflow-y-auto h-full'}>
+        {content}
+      </div>
+    )
+  }
+
+  // Normalize saved results into the shared shape
+  const normalizedInterview = interviewSessions.map(session => ({
+    id: session.id,
+    date: session.date,
+    tool: 'interview',
+    toolLabel: 'Interview Simulator',
+    inputs: { mode: session.mode, jd: session.jdSnippet || '' },
+    result: {
+      messages: session.messages,
+      score: session.score,
+      questionCount: session.questionCount,
+      mode: session.mode,
+    },
+  }))
   const normalizedGap = gapResults.map(g => ({
     id: g.id, date: g.date, tool: 'gap', toolLabel: 'Gap Analysis',
     inputs: { jd: g.jdSnippet || '' },
@@ -137,37 +191,44 @@ export default function Tools() {
     result: { messages: n.messages, coachingTriggered: n.coachingTriggered },
   }))
 
-  const starStories = getProjectData('starStories')
   const normalizedStar = starStories.map(s => ({
     id: s.id, date: s.date, tool: 'star', toolLabel: 'STAR Builder',
     inputs: { situation: s.situation || '' },
     result: { fullAnswer: s.fullAnswer, situation: s.situation, task: s.task, action: s.action, result: s.result, weaknesses: s.weaknesses, suggestedTags: s.suggestedTags, targetQuestions: s.targetQuestions },
   }))
 
-  const allHistory = [...toolsHistory, ...normalizedGap, ...normalizedNeg, ...normalizedStar]
+  const allHistory = [...toolsHistory, ...normalizedInterview, ...normalizedGap, ...normalizedNeg, ...normalizedStar]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
+  const relevantHistory = allHistory.filter(item => hub.toolIds.includes(item.tool))
 
-  if (activeTool === 'gap') return <GapAnalysis onBack={() => setActiveTool(null)} />
-  if (activeTool === 'star') return <STARBuilder onBack={() => setActiveTool(null)} />
-  if (activeTool === 'negotiation') return <NegotiationSim onBack={() => setActiveTool(null)} embedded />
+  if (activeTool === 'interview') {
+    return renderHubScreen(
+      <InterviewSimulator onExit={() => setActiveTool(null)} hubLabel={hub.title} />,
+      { fullHeight: true }
+    )
+  }
+  if (activeTool === 'gap') return renderHubScreen(<GapAnalysis onBack={() => setActiveTool(null)} backLabel={hub.title} />)
+  if (activeTool === 'star') return renderHubScreen(<STARBuilder onBack={() => setActiveTool(null)} backLabel={hub.title} />)
+  if (activeTool === 'negotiation') return renderHubScreen(<NegotiationSim onBack={() => setActiveTool(null)} embedded backLabel={hub.title} />, { fullHeight: true })
 
-  if (activeTool === 'predictor') return <QuestionPredictor onBack={() => setActiveTool(null)} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('predictor', 'Question Predictor', i, r)} history={historyFor('predictor')} onDelete={deleteHistory} />
-  if (activeTool === 'transferable') return <TransferableSkillsTool onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('transferable', 'Transferable Skills Coach', i, r)} history={historyFor('transferable')} onDelete={deleteHistory} />
-  if (activeTool === 'tone') return <ToneAnalyzer onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('tone', 'Tone Analyzer', i, r)} history={historyFor('tone')} onDelete={deleteHistory} />
-  if (activeTool === 'followup') return <FollowUpEmail onBack={() => setActiveTool(null)} activeContext={activeContext} saveHistory={(i, r) => saveHistory('followup', 'Follow-up Email', i, r)} history={historyFor('followup')} onDelete={deleteHistory} />
-  if (activeTool === 'pitch') return <ElevatorPitch onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('pitch', 'Elevator Pitch', i, r)} history={historyFor('pitch')} onDelete={deleteHistory} />
-  if (activeTool === 'coverletter') return <CoverLetterOptimizer onBack={() => setActiveTool(null)} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('coverletter', 'Cover Letter Optimizer', i, r)} history={historyFor('coverletter')} onDelete={deleteHistory} />
-  if (activeTool === 'resumechecker') return <ResumeChecker onBack={() => setActiveTool(null)} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('resumechecker', 'Resume Checker', i, r)} history={historyFor('resumechecker')} onDelete={deleteHistory} />
-  if (activeTool === 'linkedin') return <LinkedInAuditor onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('linkedin', 'LinkedIn Auditor', i, r)} history={historyFor('linkedin')} onDelete={deleteHistory} />
-  if (activeTool === 'visualreview') return <VisualResumeReview onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('visualreview', 'Visual Design Review', i, r)} history={historyFor('visualreview')} onDelete={deleteHistory} />
-  if (activeTool === 'salarycoach') return <SalaryCoach onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('salarycoach', 'Salary Coach', i, r)} history={historyFor('salarycoach')} onDelete={deleteHistory} />
+  if (activeTool === 'predictor') return renderHubScreen(<QuestionPredictor onBack={() => setActiveTool(null)} hubLabel={hub.title} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('predictor', 'Question Predictor', i, r)} history={historyFor('predictor')} onDelete={deleteHistory} />)
+  if (activeTool === 'transferable') return renderHubScreen(<TransferableSkillsTool onBack={() => setActiveTool(null)} hubLabel={hub.title} resume={resume} saveHistory={(i, r) => saveHistory('transferable', 'Transferable Skills Coach', i, r)} history={historyFor('transferable')} onDelete={deleteHistory} />)
+  if (activeTool === 'tone') return renderHubScreen(<ToneAnalyzer onBack={() => setActiveTool(null)} hubLabel={hub.title} saveHistory={(i, r) => saveHistory('tone', 'Tone Analyzer', i, r)} history={historyFor('tone')} onDelete={deleteHistory} />)
+  if (activeTool === 'followup') return renderHubScreen(<FollowUpEmail onBack={() => setActiveTool(null)} hubLabel={hub.title} activeContext={activeContext} saveHistory={(i, r) => saveHistory('followup', 'Follow-up Email', i, r)} history={historyFor('followup')} onDelete={deleteHistory} />)
+  if (activeTool === 'pitch') return renderHubScreen(<ElevatorPitch onBack={() => setActiveTool(null)} hubLabel={hub.title} resume={resume} saveHistory={(i, r) => saveHistory('pitch', 'Elevator Pitch', i, r)} history={historyFor('pitch')} onDelete={deleteHistory} />)
+  if (activeTool === 'coverletter') return renderHubScreen(<CoverLetterOptimizer onBack={() => setActiveTool(null)} hubLabel={hub.title} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('coverletter', 'Cover Letter Optimizer', i, r)} history={historyFor('coverletter')} onDelete={deleteHistory} />)
+  if (activeTool === 'resumechecker') return renderHubScreen(<ResumeChecker onBack={() => setActiveTool(null)} hubLabel={hub.title} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('resumechecker', 'Resume Checker', i, r)} history={historyFor('resumechecker')} onDelete={deleteHistory} />)
+  if (activeTool === 'linkedin') return renderHubScreen(<LinkedInAuditor onBack={() => setActiveTool(null)} hubLabel={hub.title} saveHistory={(i, r) => saveHistory('linkedin', 'LinkedIn Auditor', i, r)} history={historyFor('linkedin')} onDelete={deleteHistory} />)
+  if (activeTool === 'visualreview') return renderHubScreen(<VisualResumeReview onBack={() => setActiveTool(null)} hubLabel={hub.title} saveHistory={(i, r) => saveHistory('visualreview', 'Visual Design Review', i, r)} history={historyFor('visualreview')} onDelete={deleteHistory} />)
+  if (activeTool === 'salarycoach') return renderHubScreen(<SalaryCoach onBack={() => setActiveTool(null)} hubLabel={hub.title} saveHistory={(i, r) => saveHistory('salarycoach', 'Salary Coach', i, r)} history={historyFor('salarycoach')} onDelete={deleteHistory} />)
 
   // Inline result detail view (clicked from Recent Results)
   if (selectedResult) {
     const isGap = selectedResult.tool === 'gap'
     const isNeg = selectedResult.tool === 'negotiation'
-    const onDelete = isGap ? deleteGapResult : isNeg ? deleteNegotiationSession : deleteHistory
-    return (
+    const isInterview = selectedResult.tool === 'interview'
+    const onDelete = isGap ? deleteGapResult : isNeg ? deleteNegotiationSession : isInterview ? deleteInterviewSession : deleteHistory
+    return renderHubScreen(
       <div className="p-4 md:p-6 animate-in">
         <div className="flex items-center justify-between mb-4">
           <button onClick={() => setSelectedResult(null)} className="btn-ghost"><ArrowLeft size={16} /> Recent Results</button>
@@ -186,18 +247,18 @@ export default function Tools() {
   }
 
   // Determine which filter chips to show based on what's actually in history
-  const presentTools = [...new Set(allHistory.map(h => h.tool))]
+  const presentTools = [...new Set(relevantHistory.map(h => h.tool))]
   const activeFilters = ['all', ...presentTools.filter(t => FILTER_LABELS[t])]
 
-  const filteredRecent = allHistory
+  const filteredRecent = relevantHistory
     .filter(h => recentFilter === 'all' || h.tool === recentFilter)
     .slice(0, 8)
 
-  return (
+  return renderHubScreen(
     <div className="p-4 md:p-6 animate-in">
-      <h2 className="section-title mb-1">Tools</h2>
-      <p className="section-sub mb-5">Utility belt for your job hunt.</p>
-
+      <h2 className="section-title mb-1">{hub.title}</h2>
+      <p className="section-sub mb-5">{hub.subtitle}</p>
+ 
       {applications.length > 0 && (
         <div className="card border-teal-500/20 bg-teal-500/5 mb-5">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -228,7 +289,7 @@ export default function Tools() {
               </div>
               <div className="text-slate-400 text-xs mt-1">
                 {activeContext?.jd?.trim()
-                  ? 'JD-based tools will use this tracker application first.'
+                  ? `${hub.title} will use this tracker application first.`
                   : 'Pick a tracker job and add a JD there to prefill the main tools.'}
               </div>
             </div>
@@ -270,7 +331,7 @@ export default function Tools() {
       )}
 
       <div className="grid sm:grid-cols-2 gap-3">
-        {TOOLS.map(({ id, icon: Icon, label, desc }) => (
+        {hubCards.map(({ id, icon: Icon, label, desc }) => (
           <button key={id} onClick={() => setActiveTool(id)} className="card-hover text-left flex gap-4 items-start">
             <div className="w-10 h-10 rounded-xl bg-teal-500/15 flex items-center justify-center flex-shrink-0">
               <Icon size={20} className="text-teal-400" />
@@ -284,13 +345,12 @@ export default function Tools() {
         ))}
       </div>
 
-      {filteredRecent.length > 0 || allHistory.length > 0 ? (
+      {filteredRecent.length > 0 || relevantHistory.length > 0 ? (
         <div className="mt-6">
           <h3 className="font-display font-semibold text-slate-400 text-sm mb-3 flex items-center gap-2">
-            <Clock size={14}/> Recent Results
+            <Clock size={14}/> {hub.recentTitle}
           </h3>
 
-          {/* Filter chips */}
           {activeFilters.length > 1 && (
             <div className="flex flex-wrap gap-1.5 mb-3">
               {activeFilters.map(f => (
@@ -306,7 +366,7 @@ export default function Tools() {
           )}
 
           {filteredRecent.length === 0 ? (
-            <p className="text-slate-500 text-sm">No results match this filter.</p>
+            <p className="text-slate-500 text-sm">{recentFilter === 'all' ? hub.emptyHistory : 'No results match this filter.'}</p>
           ) : (
             <div className="space-y-2">
               {filteredRecent.map(h => (
@@ -323,8 +383,8 @@ export default function Tools() {
         </div>
       ) : null}
     </div>
-  )
-}
+    )
+  }
 
 // ─── Shared: per-tool history tab view ────────────────────────────────────────
 
@@ -408,6 +468,8 @@ function ActiveJobContextCard({ activeContext, note }) {
 }
 
 function HistorySummary({ item }) {
+  if (item.tool === 'interview')
+    return <p className="text-slate-400 text-xs truncate">{item.result?.mode || 'Interview'} · {item.result?.questionCount || 0} exchanges{item.result?.score != null ? ` · ${item.result.score}/10` : ''}</p>
   if (item.tool === 'gap')
     return <p className="text-slate-400 text-xs truncate">JD: {item.inputs?.jd || '—'}</p>
   if (item.tool === 'negotiation')
@@ -440,6 +502,30 @@ function HistorySummary({ item }) {
 // ─── Full history result renderer ─────────────────────────────────────────────
 
 function FullHistoryResult({ item }) {
+  if (item.tool === 'interview' && item.result) {
+    const msgs = item.result.messages || []
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {item.result.mode && <span className="badge badge-indigo">{item.result.mode}</span>}
+          {item.result.score != null && (
+            <span className={`badge ${item.result.score >= 8 ? 'badge-green' : item.result.score >= 6 ? 'badge-yellow' : 'badge-red'}`}>
+              {Number.isInteger(item.result.score) ? item.result.score : Number(item.result.score).toFixed(1)}/10
+            </span>
+          )}
+          <span className="badge badge-slate">{item.result.questionCount || 0} exchanges</span>
+        </div>
+        <div className="space-y-2">
+          {msgs.map((m, i) => (
+            <div key={i} className={`rounded-xl px-4 py-3 text-sm ${m.role === 'user' ? 'chat-user ml-auto max-w-[85%]' : 'chat-ai max-w-[85%]'}`}>
+              <span className="text-xs opacity-60 block mb-1 font-display">{m.role === 'user' ? 'You' : 'Jordan Mitchell'}</span>
+              <span className="whitespace-pre-wrap">{m.content}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
   if (item.tool === 'gap' && item.result) {
     const { gapResult, scoreResult, redFlags } = item.result
     return (
@@ -767,7 +853,7 @@ function FullHistoryResult({ item }) {
 
 // ─── Transferable Skills Coach ─────────────────────────────────────────────────
 
-function TransferableSkillsTool({ onBack, resume, saveHistory, history, onDelete }) {
+function TransferableSkillsTool({ onBack, hubLabel = 'Back', resume, saveHistory, history, onDelete }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
   const [experience, setExperience] = useState(resume || (profile?.currentRole ? `I worked as ${profile.currentRole} for ${profile.experience} in ${profile.industry}.` : ''))
@@ -796,7 +882,7 @@ function TransferableSkillsTool({ onBack, resume, saveHistory, history, onDelete
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
           <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs">
             <History size={14}/> History ({history.length})
@@ -835,7 +921,7 @@ function TransferableSkillsTool({ onBack, resume, saveHistory, history, onDelete
 
 // ─── Question Predictor ────────────────────────────────────────────────────────
 
-function QuestionPredictor({ onBack, resume, activeContext, saveHistory, history, onDelete }) {
+function QuestionPredictor({ onBack, hubLabel = 'Back', resume, activeContext, saveHistory, history, onDelete }) {
   const { profile } = useApp()
   const { callAI, isConnected } = useAI()
   const [jd, setJd] = useState(activeContext?.jd || '')
@@ -862,7 +948,7 @@ function QuestionPredictor({ onBack, resume, activeContext, saveHistory, history
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
           <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
         )}
@@ -903,7 +989,7 @@ function QuestionPredictor({ onBack, resume, activeContext, saveHistory, history
 
 // ─── Tone Analyzer ─────────────────────────────────────────────────────────────
 
-function ToneAnalyzer({ onBack, saveHistory, history, onDelete }) {
+function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
@@ -925,7 +1011,7 @@ function ToneAnalyzer({ onBack, saveHistory, history, onDelete }) {
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
           <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
         )}
@@ -984,7 +1070,7 @@ function ToneAnalyzer({ onBack, saveHistory, history, onDelete }) {
 
 // ─── Follow-up Email ───────────────────────────────────────────────────────────
 
-function FollowUpEmail({ onBack, activeContext, saveHistory, history, onDelete }) {
+function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
   const [company, setCompany] = useState(activeContext?.application?.company || '')
   const [interviewer, setInterviewer] = useState('')
@@ -1010,7 +1096,7 @@ function FollowUpEmail({ onBack, activeContext, saveHistory, history, onDelete }
   return (
     <div className="p-4 md:p-6 max-w-xl mx-auto animate-in">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
           <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
         )}
@@ -1050,7 +1136,7 @@ function FollowUpEmail({ onBack, activeContext, saveHistory, history, onDelete }
 
 // ─── Elevator Pitch ────────────────────────────────────────────────────────────
 
-function ElevatorPitch({ onBack, resume, saveHistory, history, onDelete }) {
+function ElevatorPitch({ onBack, hubLabel = 'Back', resume, saveHistory, history, onDelete }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
   const [role, setRole] = useState(profile?.targetRole || '')
@@ -1074,7 +1160,7 @@ function ElevatorPitch({ onBack, resume, saveHistory, history, onDelete }) {
   return (
     <div className="p-4 md:p-6 max-w-xl mx-auto animate-in">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
           <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
         )}
@@ -1118,7 +1204,7 @@ function ElevatorPitch({ onBack, resume, saveHistory, history, onDelete }) {
 
 // ─── Cover Letter Optimizer ────────────────────────────────────────────────────
 
-function CoverLetterOptimizer({ onBack, resume, activeContext, saveHistory, history, onDelete }) {
+function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
   const [jd, setJd] = useState(activeContext?.jd || '')
   const [resumeText, setResumeText] = useState(resume || '')
@@ -1142,7 +1228,7 @@ function CoverLetterOptimizer({ onBack, resume, activeContext, saveHistory, hist
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
           <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
         )}
@@ -1205,7 +1291,7 @@ function CoverLetterOptimizer({ onBack, resume, activeContext, saveHistory, hist
 
 // ─── Resume Checker ────────────────────────────────────────────────────────────
 
-function ResumeChecker({ onBack, resume, activeContext, saveHistory, history, onDelete }) {
+function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
   const [resumeText, setResumeText] = useState(resume || '')
   const [jd, setJd] = useState(activeContext?.jd || '')
@@ -1228,7 +1314,7 @@ function ResumeChecker({ onBack, resume, activeContext, saveHistory, history, on
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
           <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
         )}
@@ -1297,7 +1383,7 @@ function ResumeChecker({ onBack, resume, activeContext, saveHistory, history, on
 
 // ─── Visual Design Review ──────────────────────────────────────────────────────
 
-function VisualResumeReview({ onBack, saveHistory, history, onDelete }) {
+function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, onDelete }) {
   const { callAI, isConnected, provider, PROVIDERS, bmacToken, apiKey } = useAI()
   const isDeepSeekActive = (bmacToken && !apiKey) || (apiKey && provider === PROVIDERS.DEEPSEEK)
   const imageInputRef = useRef(null)
@@ -1337,7 +1423,7 @@ function VisualResumeReview({ onBack, saveHistory, history, onDelete }) {
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
           <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
         )}
@@ -1383,7 +1469,7 @@ function VisualResumeReview({ onBack, saveHistory, history, onDelete }) {
 
 // ─── LinkedIn Auditor ──────────────────────────────────────────────────────────
 
-function LinkedInAuditor({ onBack, saveHistory, history, onDelete }) {
+function LinkedInAuditor({ onBack, hubLabel = 'Back', saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
   const [profileText, setProfileText] = useState('')
   const [loading, setLoading] = useState(false)
@@ -1405,7 +1491,7 @@ function LinkedInAuditor({ onBack, saveHistory, history, onDelete }) {
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
           <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
         )}
@@ -1473,7 +1559,7 @@ function LinkedInAuditor({ onBack, saveHistory, history, onDelete }) {
 
 // ─── Salary Coach ──────────────────────────────────────────────────────────────
 
-function SalaryCoach({ onBack, saveHistory, history, onDelete }) {
+function SalaryCoach({ onBack, hubLabel = 'Back', saveHistory, history, onDelete }) {
   const { profile } = useApp()
   const { callAI, isConnected } = useAI()
   const [form, setForm] = useState({
@@ -1545,7 +1631,7 @@ function SalaryCoach({ onBack, saveHistory, history, onDelete }) {
   if (!started) return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> Tools</button>
+        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
           <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
         )}

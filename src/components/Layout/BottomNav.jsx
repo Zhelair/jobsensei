@@ -10,7 +10,7 @@ const MOBILE_NAV = [
   { id: SECTIONS.DASHBOARD, icon: LayoutDashboard, label: 'Home' },
   { id: SECTIONS.INTERVIEW, icon: Mic, label: 'Interview' },
   { id: SECTIONS.LEARNING, icon: BookOpen, label: 'Learn' },
-  { id: SECTIONS.TOOLS, icon: Wrench, label: 'Tools' },
+  { id: SECTIONS.TOOLS, icon: Wrench, label: 'Prep Tools' },
   { id: SECTIONS.TRACKER, icon: Briefcase, label: 'Tracker' },
 ]
 

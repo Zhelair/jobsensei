@@ -19,12 +19,12 @@ const THEME_LABELS = {
 
 const SECTION_TITLES = {
   dashboard: 'Dashboard',
-  interview: 'Interview Simulator',
+  interview: 'Interview Prep',
   gap: 'Gap Analysis',
   learning: 'Learning',
   star: 'STAR Builder',
   negotiation: 'Negotiation Simulator',
-  tools: 'Tools',
+  tools: 'Prep Tools',
   tracker: 'Job Tracker',
   notes: 'Notes & Workbook',
   settings: 'Settings',
@@ -37,9 +37,9 @@ const SECTION_HELP = {
     tips: ['Check your streak and interview count here', 'Quick-jump to any tool from the cards below'],
   },
   interview: {
-    title: 'Interview Simulator',
-    desc: 'Practice mock interviews with AI. Choose HR, Technical, Competency, or Stress mode.',
-    tips: ['Pick an interview type, then click Start', 'Answer out loud or type your response', 'AI gives real-time feedback after each answer'],
+    title: 'Interview Prep',
+    desc: 'Practice interviews, predict likely questions, polish STAR stories, and tighten your follow-up.',
+    tips: ['Use the Interview Simulator for full mock sessions', 'Question Predictor and STAR Builder now live under this prep hub', 'Saved prep history still stays inside each tool'],
   },
   gap: {
     title: 'Gap Analysis',
@@ -62,9 +62,9 @@ const SECTION_HELP = {
     tips: ['Enter your target salary and the initial offer', 'Negotiate in real-time chat', 'Get a debrief with tactics you used or missed'],
   },
   tools: {
-    title: 'Tools',
-    desc: 'Utility tools: salary calculator, resume analyzer, cover letter helper, and more.',
-    tips: ['Each tool card is self-contained', 'Results are saved to your project history'],
+    title: 'Prep Tools',
+    desc: 'Document, fit-check, negotiation, and profile tools for your active application.',
+    tips: ['Run Gap Analysis, Resume Checker, and Cover Letter from here', 'Recent results stay saved to the current project history'],
   },
   tracker: {
     title: 'Job Tracker',
