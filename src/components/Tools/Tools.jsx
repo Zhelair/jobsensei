@@ -42,13 +42,33 @@ const FILTER_LABELS = {
   salarycoach: 'Salary Coach',
 }
 
+function applicationLabel(app) {
+  return `${app.company}${app.role ? ` - ${app.role}` : ''}`
+}
+
+function hasResearchData(noteData = {}) {
+  return ['wowFacts', 'techStack', 'culture', 'openQ'].some(key => (noteData[key] || '').trim())
+}
+
+function hasPrepNotes(noteData = {}) {
+  return ['prepNotes', 'people', 'theyMentioned'].some(key => (noteData[key] || '').trim())
+}
+
 export default function Tools() {
   const [activeTool, setActiveTool] = useState(null)
   const [selectedResult, setSelectedResult] = useState(null)
   const [recentFilter, setRecentFilter] = useState('all')
+  const [showContextJd, setShowContextJd] = useState(false)
   const { setActiveSection } = useApp()
-  const { getProjectData, updateProjectData, activeApplication } = useProject()
+  const {
+    getProjectData,
+    updateProjectData,
+    activeApplication,
+    activeApplicationId,
+    setActiveApplication,
+  } = useProject()
   const resume = getProjectData('resume')
+  const applications = getProjectData('applications') || []
   const toolsHistory = getProjectData('toolsHistory') || []
   const gapResults = getProjectData('gapResults') || []
   const negotiationSessions = getProjectData('negotiationSessions') || []
@@ -58,6 +78,17 @@ export default function Tools() {
     jd: activeApplication.jdText || '',
     notes: companyNotes[activeApplication.id] || {},
   } : null
+  const activeHasResearch = hasResearchData(activeContext?.notes)
+  const activeHasNotes = hasPrepNotes(activeContext?.notes)
+
+  function switchActiveApplication(nextId) {
+    const nextApp = applications.find(app => app.id === nextId)
+    setActiveApplication(nextId)
+    setShowContextJd(false)
+    if (nextApp?.jdText?.trim()) {
+      updateProjectData('currentJD', nextApp.jdText)
+    }
+  }
 
   function saveHistory(tool, toolLabel, inputs, result) {
     const entry = {
@@ -167,28 +198,73 @@ export default function Tools() {
       <h2 className="section-title mb-1">Tools</h2>
       <p className="section-sub mb-5">Utility belt for your job hunt.</p>
 
-      {activeContext?.application && (
+      {applications.length > 0 && (
         <div className="card border-teal-500/20 bg-teal-500/5 mb-5">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <div className="text-white text-sm font-display font-semibold">Active Job Context</div>
-              <div className="text-teal-300 text-sm">
-                {activeContext.application.company}{activeContext.application.role ? ` - ${activeContext.application.role}` : ''}
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-white text-sm font-display font-semibold">Active Application</span>
+                {activeContext?.application?.stage && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-800 text-slate-300">
+                    {activeContext.application.stage}
+                  </span>
+                )}
+                <span className={`px-2.5 py-1 rounded-full text-[11px] border ${activeContext?.jd?.trim() ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
+                  {activeContext?.jd?.trim() ? 'JD ready' : 'No JD'}
+                </span>
+                {activeHasResearch && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
+                    Research
+                  </span>
+                )}
+                {activeHasNotes && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
+                    Notes
+                  </span>
+                )}
+              </div>
+              <div className="text-teal-300 text-sm mt-2">
+                {activeContext?.application ? applicationLabel(activeContext.application) : 'Choose a tracker application'}
               </div>
               <div className="text-slate-400 text-xs mt-1">
-                {activeContext.jd.trim()
-                  ? 'Gap Analysis, Question Predictor, Cover Letter, Resume Checker, and Interview Sim will use this tracker JD first.'
-                  : 'This application is active, but it does not have a saved JD yet.'}
+                {activeContext?.jd?.trim()
+                  ? 'JD-based tools will use this tracker application first.'
+                  : 'Pick a tracker job and add a JD there to prefill the main tools.'}
               </div>
             </div>
-            <button onClick={() => setActiveSection(SECTIONS.TRACKER)} className="btn-ghost text-xs">
-              Open Tracker
-            </button>
+
+            <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+              {(applications.length > 1 || !activeApplicationId) && (
+                <select
+                  className="input-field h-10 min-w-[220px] text-xs"
+                  value={activeApplicationId || ''}
+                  onChange={e => switchActiveApplication(e.target.value)}
+                >
+                  {!activeApplicationId && <option value="">Choose tracker application</option>}
+                  {applications.map(app => (
+                    <option key={app.id} value={app.id}>
+                      {applicationLabel(app)}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {activeContext?.jd?.trim() && (
+                <button onClick={() => setShowContextJd(prev => !prev)} className="btn-ghost text-xs">
+                  {showContextJd ? 'Hide JD' : 'Preview JD'}
+                </button>
+              )}
+              <button onClick={() => setActiveSection(SECTIONS.TRACKER)} className="btn-ghost text-xs">
+                Open Tracker
+              </button>
+            </div>
           </div>
-          {activeContext.jd.trim() && (
-            <p className="text-slate-500 text-xs mt-3 max-w-3xl whitespace-pre-wrap">
-              {activeContext.jd.slice(0, 220)}{activeContext.jd.length > 220 ? '...' : ''}
-            </p>
+
+          {showContextJd && activeContext?.jd?.trim() && (
+            <div className="mt-3 rounded-2xl border border-navy-600 bg-navy-950/70 p-3">
+              <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto pr-1">
+                {activeContext.jd}
+              </div>
+            </div>
           )}
         </div>
       )}
