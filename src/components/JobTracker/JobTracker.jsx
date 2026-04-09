@@ -9,6 +9,14 @@ import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload
 const STAGES = ['Researching', 'Applied', 'Screening', 'Interviewing', 'Awaiting', 'Offer', 'Rejected']
 const FOLLOWUP_DAYS = { Applied: 7, Screening: 5, Interviewing: 3, Awaiting: 5 }
 
+function hasResearchData(noteData = {}) {
+  return ['wowFacts', 'techStack', 'culture', 'openQ'].some(key => (noteData[key] || '').trim())
+}
+
+function hasPrepNotes(noteData = {}) {
+  return ['prepNotes', 'people', 'theyMentioned'].some(key => (noteData[key] || '').trim())
+}
+
 function getOverdueApps(apps) {
   const now = new Date()
   return apps.filter(app => {
@@ -96,6 +104,13 @@ export default function JobTracker() {
   const [synced, setSynced] = useState(false)
   const importRef = useRef(null)
 
+  function activateApplication(app) {
+    setActiveApplication(app.id)
+    if (app.jdText?.trim()) {
+      updateProjectData('currentJD', app.jdText)
+    }
+  }
+
   function syncToProject() {
     updateProjectDataMultiple({ applications, companyNotes: notes, offerComparisons: offerData })
     setSynced(true)
@@ -104,10 +119,7 @@ export default function JobTracker() {
 
   function openApplication(app) {
     setSelectedApp(app)
-    setActiveApplication(app.id)
-    if (app.jdText?.trim()) {
-      updateProjectData('currentJD', app.jdText)
-    }
+    activateApplication(app)
   }
 
   async function researchForAdd() {
@@ -442,7 +454,33 @@ export default function JobTracker() {
                           </div>
                         </div>
                         {app.role && <div className="text-slate-500 text-xs mb-1.5 leading-snug">{app.role}</div>}
-                        {activeApplicationId === app.id && <span className="badge-teal mb-1.5 inline-flex">Active</span>}
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {activeApplicationId === app.id ? (
+                            <span className="badge-teal inline-flex">Active</span>
+                          ) : (
+                            <button
+                              onClick={() => activateApplication(app)}
+                              className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300 hover:border-teal-500/40 hover:text-teal-300 transition-colors"
+                            >
+                              Set Active
+                            </button>
+                          )}
+                          {app.jdText?.trim() && (
+                            <span className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
+                              JD
+                            </span>
+                          )}
+                          {hasResearchData(notes[app.id]) && (
+                            <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
+                              Research
+                            </span>
+                          )}
+                          {hasPrepNotes(notes[app.id]) && (
+                            <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
+                              Notes
+                            </span>
+                          )}
+                        </div>
                         <div className="text-slate-600 text-xs mb-2">{timeAgo(app.date)}</div>
                         <select
                           className="w-full bg-navy-900 border border-navy-600 rounded-lg px-2 py-1 text-xs text-slate-400 focus:outline-none focus:border-teal-500 cursor-pointer"
@@ -468,20 +506,44 @@ export default function JobTracker() {
           {applications.length === 0 ? (
             <div className="card text-center py-10 text-slate-500">Add applications first.</div>
           ) : [...applications].sort((a, b) => new Date(b.date) - new Date(a.date)).map(app => (
-            <button key={app.id} onClick={() => openApplication(app)}
-              className="card-hover w-full text-left flex items-center gap-3">
-              <Building2 size={18} className="text-slate-500 flex-shrink-0"/>
-              <div className="flex-1 min-w-0">
-                <div className="text-white font-body font-medium text-sm">{app.company}</div>
-                <div className="text-slate-500 text-xs">{app.role}</div>
-                <div className="text-slate-600 text-xs">{timeAgo(app.date)}</div>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {activeApplicationId === app.id && <span className="badge-teal">Active</span>}
+            <div key={app.id} className="card-hover w-full flex items-center gap-3">
+              <button onClick={() => openApplication(app)} className="flex items-center gap-3 text-left flex-1 min-w-0">
+                <Building2 size={18} className="text-slate-500 flex-shrink-0"/>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white font-body font-medium text-sm">{app.company}</div>
+                  <div className="text-slate-500 text-xs">{app.role}</div>
+                  <div className="text-slate-600 text-xs">{timeAgo(app.date)}</div>
+                </div>
+              </button>
+              <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                {activeApplicationId === app.id ? (
+                  <span className="badge-teal">Active</span>
+                ) : (
+                  <button
+                    onClick={() => activateApplication(app)}
+                    className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300 hover:border-teal-500/40 hover:text-teal-300 transition-colors"
+                  >
+                    Set Active
+                  </button>
+                )}
+                {app.jdText?.trim() && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
+                    JD
+                  </span>
+                )}
+                {hasResearchData(notes[app.id]) && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
+                    Research
+                  </span>
+                )}
+                {hasPrepNotes(notes[app.id]) && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
+                    Notes
+                  </span>
+                )}
                 <span className={`badge text-xs border ${STAGE_COLORS[app.stage]}`}>{app.stage}</span>
-                <span className="text-slate-600 text-xs">{notes[app.id] ? '📝' : '+'}</span>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}
@@ -602,6 +664,8 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
     people: '', theyMentioned: '', techStack: '', culture: '', openQ: '', prepNotes: '', wowFacts: '', ...notes
   })
   const [jdText, setJdText] = useState(app.jdText || '')
+  const [showJdEditor, setShowJdEditor] = useState(!(app.jdText || '').trim())
+  const [isJdExpanded, setIsJdExpanded] = useState(false)
   const [saved, setSaved] = useState(false)
   const [researching, setResearching] = useState(false)
   const [researchMsg, setResearchMsg] = useState('')
@@ -786,13 +850,43 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
             <div className="text-white text-sm font-display font-semibold">Active job context</div>
             <div className="text-slate-400 text-xs">This tracker application now pre-fills the main JD-based tools.</div>
           </div>
-          <span className={`text-xs px-2.5 py-1 rounded-full border ${jdText.trim() ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
-            {jdText.trim() ? 'JD attached' : 'Add JD to prefill tools'}
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <span className={`text-xs px-2.5 py-1 rounded-full border ${jdText.trim() ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
+              {jdText.trim() ? 'JD attached' : 'Add JD to prefill tools'}
+            </span>
+            <button onClick={() => setShowJdEditor(prev => !prev)} className="btn-ghost text-xs">
+              {showJdEditor ? 'Close Editor' : jdText.trim() ? 'Edit JD' : 'Add JD'}
+            </button>
+            {jdText.trim() && (
+              <button onClick={() => setIsJdExpanded(prev => !prev)} className="btn-ghost text-xs">
+                {isJdExpanded ? 'Collapse' : 'Expand'}
+              </button>
+            )}
+          </div>
         </div>
-        <label className="text-sm text-slate-400 mb-1.5 block">Saved Job Description</label>
-        <AutoTextarea className="textarea-field" placeholder="Paste the job description once. Interview Sim, Gap Analysis, Question Predictor, Cover Letter, and Resume Checker will use it."
-          value={jdText} onChange={e => setJdText(e.target.value)} />
+
+        {jdText.trim() ? (
+          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 p-3">
+            <div className={`text-slate-300 text-sm leading-relaxed whitespace-pre-wrap ${isJdExpanded ? 'max-h-64 overflow-y-auto pr-1' : 'line-clamp-4'}`}>
+              {jdText}
+            </div>
+          </div>
+        ) : (
+          <p className="text-slate-500 text-xs">No JD saved yet. Add one here and the main tools will pick it up from this application.</p>
+        )}
+
+        {showJdEditor && (
+          <div className="mt-3">
+            <label className="text-sm text-slate-400 mb-1.5 block">Saved Job Description</label>
+            <textarea
+              className="textarea-field h-40"
+              placeholder="Paste the job description once. Interview Sim, Gap Analysis, Question Predictor, Cover Letter, and Resume Checker will use it."
+              value={jdText}
+              onChange={e => setJdText(e.target.value)}
+            />
+            <p className="text-slate-500 text-xs mt-2">Save Notes below to keep any JD changes for this application.</p>
+          </div>
+        )}
       </div>
 
       {/* Research banner */}

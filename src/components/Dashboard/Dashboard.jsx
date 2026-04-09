@@ -7,6 +7,18 @@ import { generateId } from '../../utils/helpers'
 import { Mic, Search, BookOpen, Plus, TrendingUp, Award, Target, Sparkles, FolderOpen } from 'lucide-react'
 import { isDueToday } from '../../utils/spacedRepetition'
 
+function applicationLabel(app) {
+  return `${app.company}${app.role ? ` - ${app.role}` : ''}`
+}
+
+function hasResearchData(noteData = {}) {
+  return ['wowFacts', 'techStack', 'culture', 'openQ'].some(key => (noteData[key] || '').trim())
+}
+
+function hasPrepNotes(noteData = {}) {
+  return ['prepNotes', 'people', 'theyMentioned'].some(key => (noteData[key] || '').trim())
+}
+
 export default function Dashboard() {
   const { setActiveSection, profile, stats } = useApp()
   const { callAI, isConnected } = useAI()
@@ -16,6 +28,7 @@ export default function Dashboard() {
     activeApplicationId,
     getProjectData,
     setActiveApplication,
+    updateProjectData,
     updateProjectDataMultiple,
   } = useProject()
 
@@ -25,11 +38,24 @@ export default function Dashboard() {
   const [jdDraft, setJdDraft] = useState('')
   const [newApplication, setNewApplication] = useState({ company: '', role: '' })
   const [jdSaveState, setJdSaveState] = useState('')
+  const [showJdEditor, setShowJdEditor] = useState(false)
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [isJdExpanded, setIsJdExpanded] = useState(false)
 
   const sessions = getProjectData('interviewSessions')
   const topics = getProjectData('topics')
   const applications = getProjectData('applications')
+  const companyNotes = getProjectData('companyNotes') || {}
   const currentJD = getProjectData('currentJD')
+
+  const selectedApplication = applications.find(app => app.id === selectedAppId) || null
+  const selectedNotes = selectedApplication ? companyNotes[selectedApplication.id] || {} : {}
+  const selectedSavedJd = selectedApplication?.jdText || ''
+  const selectedJd = jdDraft.trim()
+  const hasSavedJd = !!selectedSavedJd.trim()
+  const hasUnsavedJdChanges = !!selectedApplication && jdDraft.trim() !== selectedSavedJd.trim()
+  const selectedHasResearch = hasResearchData(selectedNotes)
+  const selectedHasNotes = hasPrepNotes(selectedNotes)
 
   const dueTopics = topics.filter(t => isDueToday(t.nextReview) && t.status === 'In Progress').length
   const completedTopics = topics.filter(t => t.status === 'Completed').length
@@ -44,20 +70,34 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (activeApplicationId && applications.some(app => app.id === activeApplicationId)) {
+      const nextActive = applications.find(app => app.id === activeApplicationId)
       setSelectedAppId(activeApplicationId)
-      setJdDraft(activeApplication?.jdText || currentJD || '')
+      setJdDraft(nextActive?.jdText || currentJD || '')
+      setShowJdEditor(!nextActive?.jdText?.trim())
+      setIsJdExpanded(false)
       return
     }
 
     if (applications[0]) {
       setSelectedAppId(applications[0].id)
       setJdDraft(applications[0].jdText || currentJD || '')
+      setShowJdEditor(!applications[0].jdText?.trim())
+      setIsJdExpanded(false)
       return
     }
 
     setSelectedAppId('')
     setJdDraft(currentJD || '')
-  }, [activeApplicationId, activeApplication?.id, applications, currentJD])
+    setShowJdEditor(true)
+    setShowCreateForm(true)
+    setIsJdExpanded(false)
+  }, [activeApplicationId, applications, currentJD])
+
+  useEffect(() => {
+    if (applications.length === 0) {
+      setShowCreateForm(true)
+    }
+  }, [applications.length])
 
   async function fetchTip() {
     setLoadingTip(true)
@@ -86,6 +126,8 @@ export default function Dashboard() {
       currentJD: trimmedJd,
     })
     setJdSaveState('saved')
+    setShowJdEditor(false)
+    setIsJdExpanded(false)
     setTimeout(() => setJdSaveState(''), 2000)
   }
 
@@ -112,16 +154,23 @@ export default function Dashboard() {
     })
     setSelectedAppId(app.id)
     setNewApplication({ company: '', role: '' })
+    setShowCreateForm(false)
+    setShowJdEditor(false)
     setJdSaveState('created')
     setTimeout(() => setJdSaveState(''), 2000)
   }
 
   function handleApplicationChange(nextId) {
-    setSelectedAppId(nextId)
     const nextApp = applications.find(app => app.id === nextId)
+    setSelectedAppId(nextId)
     setJdDraft(nextApp?.jdText || '')
+    setShowJdEditor(!nextApp?.jdText?.trim())
+    setIsJdExpanded(false)
     if (nextId) {
       setActiveApplication(nextId)
+      if (nextApp?.jdText?.trim()) {
+        updateProjectData('currentJD', nextApp.jdText)
+      }
     }
   }
 
@@ -169,94 +218,170 @@ export default function Dashboard() {
       <div className="card border-teal-500/20 bg-teal-500/5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-2xl">
-            <h3 className="font-display font-semibold text-white text-base mb-1">Job Description Hub</h3>
+            <h3 className="font-display font-semibold text-white text-base mb-1">Active Application</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Paste a JD once here and JobSensei will reuse it across the main tools for your active application.
+              Choose the tracker job that should drive your JD-based tools. The saved JD follows that active application.
             </p>
-            {activeApplication ? (
-              <p className="text-teal-300 text-xs mt-2">
-                Active: {activeApplication.company}{activeApplication.role ? ` - ${activeApplication.role}` : ''}
-              </p>
-            ) : (
-              <p className="text-slate-500 text-xs mt-2">
-                No active application yet. Save this JD into an existing tracker job or create a new one below.
-              </p>
-            )}
           </div>
           <button onClick={() => setActiveSection(SECTIONS.TRACKER)} className="btn-ghost text-xs self-start">
             <FolderOpen size={14}/> Open Tracker
           </button>
         </div>
 
-        <div className="mt-4 space-y-3">
-          {applications.length > 0 && (
-            <div>
-              <label className="text-sm text-slate-400 mb-1.5 block">Use this tracker application</label>
-              <select
-                className="input-field"
-                value={selectedAppId}
-                onChange={e => handleApplicationChange(e.target.value)}
-              >
-                {applications.map(app => (
-                  <option key={app.id} value={app.id}>
-                    {app.company}{app.role ? ` - ${app.role}` : ''}
-                  </option>
-                ))}
-              </select>
+        <div className="mt-4 space-y-4">
+          {applications.length > 0 ? (
+            <>
+              <div>
+                <label className="text-sm text-slate-400 mb-1.5 block">Tracker application</label>
+                <select
+                  className="input-field"
+                  value={selectedAppId}
+                  onChange={e => handleApplicationChange(e.target.value)}
+                >
+                  {applications.map(app => (
+                    <option key={app.id} value={app.id}>
+                      {applicationLabel(app)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedApplication && (
+                <div className="rounded-2xl border border-navy-600 bg-navy-900/70 p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="text-white text-sm font-display font-semibold">{applicationLabel(selectedApplication)}</div>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-800 text-slate-300">
+                          {selectedApplication.stage}
+                        </span>
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] border ${hasSavedJd ? 'border-teal-500/30 bg-teal-500/10 text-teal-300' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'}`}>
+                          {hasSavedJd ? 'JD saved' : 'No JD'}
+                        </span>
+                        {hasUnsavedJdChanges && (
+                          <span className="px-2.5 py-1 rounded-full text-[11px] border border-yellow-500/30 bg-yellow-500/10 text-yellow-300">
+                            Draft edits
+                          </span>
+                        )}
+                        {selectedHasResearch && (
+                          <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
+                            Research
+                          </span>
+                        )}
+                        {selectedHasNotes && (
+                          <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
+                            Notes
+                          </span>
+                        )}
+                        {activeApplication?.id === selectedApplication.id && (
+                          <span className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={() => setShowJdEditor(prev => !prev)} className="btn-ghost text-xs">
+                        {showJdEditor ? 'Close Editor' : selectedJd ? 'Edit JD' : 'Add JD'}
+                      </button>
+                      {selectedJd && (
+                        <button onClick={() => setIsJdExpanded(prev => !prev)} className="btn-ghost text-xs">
+                          {isJdExpanded ? 'Collapse' : 'Expand'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {selectedJd ? (
+                    <div className="mt-3 rounded-xl border border-navy-600 bg-navy-950/70 p-3">
+                      <div className={`text-slate-300 text-sm leading-relaxed whitespace-pre-wrap ${isJdExpanded ? 'max-h-64 overflow-y-auto pr-1' : 'line-clamp-4'}`}>
+                        {selectedJd}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-slate-500 text-xs mt-3">
+                      No JD saved yet. Add one here and the main tools will reuse it automatically.
+                    </p>
+                  )}
+
+                  {showJdEditor && (
+                    <div className="mt-3">
+                      <label className="text-sm text-slate-400 mb-1.5 block">Job Description</label>
+                      <textarea
+                        className="textarea-field h-32"
+                        placeholder="Paste the job description once for this application."
+                        value={jdDraft}
+                        onChange={e => setJdDraft(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={saveJdToApplication}
+                  disabled={!selectedAppId || !jdDraft.trim()}
+                  className="btn-primary text-xs"
+                >
+                  <Search size={14}/> Save JD Changes
+                </button>
+                <button onClick={() => setActiveSection(SECTIONS.TOOLS)} className="btn-ghost text-xs">
+                  <Target size={14}/> Open Tools
+                </button>
+                <button onClick={() => setShowCreateForm(prev => !prev)} className="btn-ghost text-xs">
+                  <Plus size={14}/> {showCreateForm ? 'Hide New Application' : 'New Application from JD'}
+                </button>
+                {jdSaveState === 'saved' && <span className="text-teal-300 text-xs">JD saved to the active tracker application.</span>}
+                {jdSaveState === 'created' && <span className="text-teal-300 text-xs">New application created and set active.</span>}
+              </div>
+            </>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-navy-600 bg-navy-900/50 p-4">
+              <div className="text-white text-sm font-display font-semibold mb-1">No tracker applications yet</div>
+              <p className="text-slate-400 text-sm">Create your first application here and save the JD once so the main tools can reuse it.</p>
+              <div className="mt-3">
+                <label className="text-sm text-slate-400 mb-1.5 block">Job Description</label>
+                <textarea
+                  className="textarea-field h-32"
+                  placeholder="Paste the job description once for the new application."
+                  value={jdDraft}
+                  onChange={e => setJdDraft(e.target.value)}
+                />
+              </div>
             </div>
           )}
 
-          <div>
-            <label className="text-sm text-slate-400 mb-1.5 block">Job Description</label>
-            <textarea
-              className="textarea-field h-32"
-              placeholder="Paste the job description once. The main tools will pick it up from here."
-              value={jdDraft}
-              onChange={e => setJdDraft(e.target.value)}
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={saveJdToApplication}
-              disabled={!applications.length || !selectedAppId || !jdDraft.trim()}
-              className="btn-primary text-xs"
-            >
-              <Search size={14}/> Save JD to Active Application
-            </button>
-            <button onClick={() => setActiveSection(SECTIONS.TOOLS)} className="btn-ghost text-xs">
-              <Target size={14}/> Open Tools
-            </button>
-          </div>
-
-          <div className="divider" />
-
-          <div className="grid sm:grid-cols-2 gap-3">
-            <input
-              className="input-field"
-              placeholder="New company name"
-              value={newApplication.company}
-              onChange={e => setNewApplication(prev => ({ ...prev, company: e.target.value }))}
-            />
-            <input
-              className="input-field"
-              placeholder="Role title (optional)"
-              value={newApplication.role}
-              onChange={e => setNewApplication(prev => ({ ...prev, role: e.target.value }))}
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={createApplicationFromJd}
-              disabled={!newApplication.company.trim() || !jdDraft.trim()}
-              className="btn-secondary text-xs"
-            >
-              <Plus size={14}/> Create Application with This JD
-            </button>
-            {jdSaveState === 'saved' && <span className="text-teal-300 text-xs">JD saved to tracker and ready across tools.</span>}
-            {jdSaveState === 'created' && <span className="text-teal-300 text-xs">New application created and set as active.</span>}
-          </div>
+          {showCreateForm && (
+            <div className="rounded-2xl border border-navy-600 bg-navy-900/70 p-4">
+              <div className="text-white text-sm font-display font-semibold mb-3">Create New Application</div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <input
+                  className="input-field"
+                  placeholder="Company name"
+                  value={newApplication.company}
+                  onChange={e => setNewApplication(prev => ({ ...prev, company: e.target.value }))}
+                />
+                <input
+                  className="input-field"
+                  placeholder="Role title (optional)"
+                  value={newApplication.role}
+                  onChange={e => setNewApplication(prev => ({ ...prev, role: e.target.value }))}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <button
+                  onClick={createApplicationFromJd}
+                  disabled={!newApplication.company.trim() || !jdDraft.trim()}
+                  className="btn-secondary text-xs"
+                >
+                  <Plus size={14}/> Create Application with This JD
+                </button>
+                <span className="text-slate-500 text-xs">The new application will become active right away.</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
