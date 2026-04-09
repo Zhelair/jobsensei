@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useProject } from '../../context/ProjectContext'
 import { useAI } from '../../context/AIContext'
-import { useApp } from '../../context/AppContext'
+import { useApp, SECTIONS } from '../../context/AppContext'
 import { prompts } from '../../utils/prompts'
 import { generateId, formatDate, timeAgo, tryParseJSON } from '../../utils/helpers'
-import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale, Copy, Printer, Save, Sparkles } from 'lucide-react'
+import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale, Copy, Printer, Save, Sparkles, FileText, Mic, Target, Star, Gauge, Mail, Megaphone, ClipboardCheck, Globe, Camera, Zap, TrendingUp } from 'lucide-react'
 
 const STAGES = ['Researching', 'Applied', 'Screening', 'Interviewing', 'Awaiting', 'Offer', 'Rejected']
 const FOLLOWUP_DAYS = { Applied: 7, Screening: 5, Interviewing: 3, Awaiting: 5 }
@@ -36,7 +36,15 @@ const STAGE_COLORS = {
   Offer: 'text-green-400 bg-green-400/10 border-green-400/20',
   Rejected: 'text-red-400 bg-red-400/10 border-red-400/20',
 }
-const TABS = ['Kanban', 'Stats', 'Company Notes', 'Offers']
+const TABS = ['Kanban', 'Stats', 'Workspace', 'Offers']
+const WORKSPACE_TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'jd', label: 'JD' },
+  { id: 'research', label: 'Research' },
+  { id: 'prep', label: 'Prep' },
+  { id: 'tools', label: 'Prep Tools' },
+  { id: 'notes', label: 'Notes' },
+]
 
 const OFFER_FIELDS = [
   { key: 'salaryScore', label: 'Salary', defaultWeight: 30 },
@@ -106,9 +114,7 @@ export default function JobTracker() {
 
   function activateApplication(app) {
     setActiveApplication(app.id)
-    if (app.jdText?.trim()) {
-      updateProjectData('currentJD', app.jdText)
-    }
+    updateProjectData('currentJD', app.jdText || '')
   }
 
   function syncToProject() {
@@ -180,7 +186,7 @@ export default function JobTracker() {
       applications: nextApplications,
       companyNotes: nextCompanyNotes,
       activeApplicationId: app.id,
-      currentJD: app.jdText?.trim() ? app.jdText : currentJD,
+      currentJD: app.jdText || '',
     })
     setNewApp({ company: '', role: '', stage: 'Researching', jdUrl: '', jdText: '', notes: '' })
     setPendingResearch(null)
@@ -191,8 +197,8 @@ export default function JobTracker() {
     const stageUpdate = updates.stage ? { stageUpdatedAt: new Date().toISOString(), followupSnoozedUntil: null } : {}
     const nextApplications = applications.map(a => a.id === id ? { ...a, ...updates, ...stageUpdate } : a)
     updateProjectData('applications', nextApplications)
-    if (activeApplicationId === id && updates.jdText?.trim()) {
-      updateProjectData('currentJD', updates.jdText)
+    if (activeApplicationId === id && Object.prototype.hasOwnProperty.call(updates, 'jdText')) {
+      updateProjectData('currentJD', updates.jdText || '')
     }
     if (selectedApp?.id === id) setSelectedApp(a => ({ ...a, ...updates, ...stageUpdate }))
   }
@@ -209,8 +215,8 @@ export default function JobTracker() {
   function saveEdit(updated) {
     const nextApplications = applications.map(a => a.id === updated.id ? updated : a)
     updateProjectData('applications', nextApplications)
-    if (activeApplicationId === updated.id && updated.jdText?.trim()) {
-      updateProjectData('currentJD', updated.jdText)
+    if (activeApplicationId === updated.id) {
+      updateProjectData('currentJD', updated.jdText || '')
     }
     if (selectedApp?.id === updated.id) setSelectedApp(updated)
     setEditingApp(null)
@@ -223,7 +229,7 @@ export default function JobTracker() {
     updateProjectDataMultiple({
       applications: nextApplications,
       activeApplicationId: nextActiveId,
-      currentJD: nextActiveApp?.jdText?.trim() ? nextActiveApp.jdText : currentJD,
+      currentJD: nextActiveApp?.jdText || '',
     })
     if (selectedApp?.id === id) {
       setSelectedApp(null)
@@ -263,7 +269,7 @@ export default function JobTracker() {
   const overdueApps = getOverdueApps(applications)
 
   if (selectedApp) return (
-    <CompanyNotesView
+    <ApplicationWorkspaceView
       app={selectedApp}
       notes={notes[selectedApp.id] || {}}
       onSaveNotes={n => setNotes(prev => ({ ...prev, [selectedApp.id]: n }))}
@@ -658,6 +664,561 @@ function TrackerStats({ applications }) {
 }
 
 // ── Company Notes View ──────────────────────────────────────────────────────
+function ApplicationWorkspaceView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
+  const { callAI, isConnected } = useAI()
+  const { launchTool } = useApp()
+  const [workspaceTab, setWorkspaceTab] = useState('overview')
+  const [form, setForm] = useState({
+    people: '',
+    theyMentioned: '',
+    techStack: '',
+    culture: '',
+    openQ: '',
+    prepNotes: '',
+    wowFacts: '',
+    ...notes,
+  })
+  const [jdText, setJdText] = useState(app.jdText || '')
+  const [showJdEditor, setShowJdEditor] = useState(!(app.jdText || '').trim())
+  const [isJdExpanded, setIsJdExpanded] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [researching, setResearching] = useState(false)
+  const [researchMsg, setResearchMsg] = useState('')
+  const [cheatSheet, setCheatSheet] = useState('')
+  const [cheatLoading, setCheatLoading] = useState(false)
+
+  const hasJd = jdText.trim().length > 0
+  const hasResearch = hasResearchData(form)
+  const hasPrep = hasPrepNotes(form)
+  const noteCount = Object.values(form).filter(value => (value || '').trim()).length
+
+  const researchFields = [
+    ['wowFacts', 'Wow facts & recent news', 'Recent news, product launches, market shifts, or memorable company details.'],
+    ['techStack', 'Tools & systems', 'Software, processes, or systems likely used in this role.'],
+    ['culture', 'Culture signals', 'Values, interview style, team habits, or what the company rewards.'],
+    ['openQ', 'Open questions', 'Things to ask or research before the next step.'],
+  ]
+  const prepFields = [
+    ['people', "People I've spoken to", 'Names, titles, LinkedIn notes, or who to mention in follow-up.'],
+    ['theyMentioned', 'Things they mentioned', 'Pain points, priorities, hiring goals, or details you should respond to.'],
+    ['prepNotes', 'My prep notes', 'Stories to tell, reminders for yourself, and key points to emphasize.'],
+  ]
+  const allNoteFields = [...prepFields, ...researchFields]
+  const prepActions = [
+    { id: 'interview', label: 'Interview Simulator', desc: 'Run a mock interview with this application context.', icon: Mic },
+    { id: 'predictor', label: 'Question Predictor', desc: 'Generate likely interview questions from this JD.', icon: Target },
+    { id: 'star', label: 'STAR Builder', desc: 'Shape strong stories before the interview.', icon: Star },
+    { id: 'tone', label: 'Tone Analyzer', desc: 'Check clarity and confidence in your answers.', icon: Gauge },
+    { id: 'followup', label: 'Follow-up Email', desc: 'Draft the right post-interview message.', icon: Mail },
+    { id: 'pitch', label: 'Elevator Pitch', desc: 'Sharpen your why-you answer for this role.', icon: Megaphone },
+  ]
+  const toolActions = [
+    { id: 'gap', label: 'Gap Analysis', desc: 'Check fit, score alignment, and spot red flags.', icon: Search },
+    { id: 'coverletter', label: 'Cover Letter Optimizer', desc: 'Generate cover letters tied to this job.', icon: FileText },
+    { id: 'resumechecker', label: 'Resume Checker', desc: 'Review ATS fit against this JD.', icon: ClipboardCheck },
+    { id: 'linkedin', label: 'LinkedIn Auditor', desc: 'Polish your profile before recruiters check it.', icon: Globe },
+    { id: 'visualreview', label: 'Visual Review', desc: 'Analyze the design quality of your resume.', icon: Camera },
+    { id: 'negotiation', label: 'Negotiation Sim', desc: 'Practice offer and salary conversations.', icon: Scale },
+    { id: 'transferable', label: 'Transferable Skills Coach', desc: 'Reframe your experience for this opportunity.', icon: Zap },
+    { id: 'salarycoach', label: 'Salary Coach', desc: 'Pressure-test compensation expectations.', icon: TrendingUp },
+  ]
+
+  function saveWorkspace(showFeedback = true) {
+    onSaveNotes(form)
+    if (jdText !== (app.jdText || '')) {
+      onUpdateApp({ jdText })
+    }
+    if (showFeedback) {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    }
+  }
+
+  function launchWorkspaceTool(section, toolId) {
+    saveWorkspace(false)
+    launchTool(section, toolId)
+  }
+
+  async function runResearch() {
+    setResearching(true)
+    setResearchMsg('')
+    try {
+      let searchContext = null
+      try {
+        const searchRes = await fetch('/api/research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company: app.company, role: app.role }),
+        })
+        const searchData = await searchRes.json()
+        if (!searchData.fallback && searchData.snippets) {
+          searchContext = searchData.answer
+            ? `Summary: ${searchData.answer}\n\n${searchData.snippets}`
+            : searchData.snippets
+        }
+      } catch {}
+      const raw = await callAI({
+        systemPrompt: prompts.companyResearch(app.company, app.role, searchContext),
+        messages: [{ role: 'user', content: 'Research this company.' }],
+        temperature: 0.5,
+      })
+      const parsed = tryParseJSON(raw)
+      if (parsed) {
+        setForm(prev => ({
+          ...prev,
+          wowFacts: parsed.wowFacts || prev.wowFacts,
+          techStack: parsed.techStack || prev.techStack,
+          culture: parsed.culture || prev.culture,
+          openQ: parsed.openQ || prev.openQ,
+          prepNotes: parsed.prepNotes || prev.prepNotes,
+        }))
+        setResearchMsg(searchContext
+          ? 'Notes pre-filled with live data. Review and save when ready.'
+          : 'Notes pre-filled. Review and save when ready.')
+      } else {
+        setResearchMsg('Could not parse research. Try again.')
+      }
+    } catch {
+      setResearchMsg('Research failed. Check your AI connection.')
+    }
+    setResearching(false)
+  }
+
+  async function generateCheatSheet() {
+    const notesText = [
+      form.wowFacts && `Wow Facts & Recent News:\n${form.wowFacts}`,
+      form.techStack && `Tools & Systems:\n${form.techStack}`,
+      form.culture && `Culture:\n${form.culture}`,
+      form.openQ && `Open Questions:\n${form.openQ}`,
+      form.prepNotes && `Prep Notes:\n${form.prepNotes}`,
+      form.people && `People spoken to:\n${form.people}`,
+      form.theyMentioned && `Things they mentioned:\n${form.theyMentioned}`,
+    ].filter(Boolean).join('\n\n')
+
+    setCheatLoading(true)
+    setCheatSheet('')
+    try {
+      await callAI({
+        systemPrompt: prompts.interviewCheatSheet(app.company, app.role, notesText),
+        messages: [{ role: 'user', content: 'Generate interview cheat sheet.' }],
+        temperature: 0.5,
+        onChunk: (_, acc) => setCheatSheet(acc),
+      })
+    } catch {}
+    setCheatLoading(false)
+  }
+
+  function downloadCheatAsPng(title, content) {
+    const canvas = document.createElement('canvas')
+    const width = 900
+    const padding = 44
+    const lineH = 22
+    const ctx = canvas.getContext('2d')
+    const lines = []
+    content.split('\n').forEach(line => {
+      if (line.startsWith('## ') || line.startsWith('# ') || (line.startsWith('**') && line.endsWith('**'))) {
+        lines.push({ text: line.replace(/^#+\s*/, '').replace(/\*\*/g, ''), bold: true, size: 16, gap: 8 })
+      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        lines.push({ text: '- ' + line.slice(2), bold: false, size: 14, gap: 2 })
+      } else if (line.trim() === '') {
+        lines.push({ text: '', bold: false, size: 14, gap: 6 })
+      } else {
+        lines.push({ text: line, bold: false, size: 14, gap: 2 })
+      }
+    })
+    const wrapped = []
+    const maxW = width - padding * 2
+    lines.forEach(line => {
+      if (!line.text) {
+        wrapped.push({ ...line })
+        return
+      }
+      ctx.font = `${line.bold ? 'bold ' : ''}${line.size}px system-ui,sans-serif`
+      const words = line.text.split(' ')
+      let current = ''
+      words.forEach(word => {
+        const test = current ? `${current} ${word}` : word
+        if (ctx.measureText(test).width > maxW) {
+          wrapped.push({ ...line, text: current })
+          current = word
+        } else {
+          current = test
+        }
+      })
+      if (current) wrapped.push({ ...line, text: current })
+    })
+    const headerH = 60
+    const totalH = headerH + wrapped.reduce((acc, line) => acc + lineH + (line.gap || 0), 0) + padding * 2
+    canvas.width = width
+    canvas.height = Math.max(totalH, 200)
+    ctx.fillStyle = '#0F172A'
+    ctx.fillRect(0, 0, width, canvas.height)
+    ctx.fillStyle = '#14B8A6'
+    ctx.fillRect(0, 0, width, headerH)
+    ctx.fillStyle = '#FFFFFF'
+    ctx.font = 'bold 18px system-ui,sans-serif'
+    ctx.fillText(title, padding, 36)
+    let y = headerH + padding
+    wrapped.forEach(line => {
+      if (line.text) {
+        ctx.font = `${line.bold ? 'bold ' : ''}${line.size}px system-ui,sans-serif`
+        ctx.fillStyle = line.bold ? '#F1F5F9' : '#CBD5E1'
+        ctx.fillText(line.text, padding, y)
+      }
+      y += lineH + (line.gap || 0)
+    })
+    const link = document.createElement('a')
+    link.download = `${app.company.replace(/\s+/g, '_')}_cheatsheet.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+  }
+
+  function printCheatAsPdf() {
+    const win = window.open('', '_blank')
+    win.document.write(`<!DOCTYPE html><html><head><title>Interview Cheat Sheet - ${app.company}</title><style>
+      body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#111;line-height:1.6}
+      h1{font-size:1.4rem;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:16px}
+      h2{font-size:1.1rem;margin-top:20px;margin-bottom:6px}
+      ul{padding-left:20px;margin:6px 0}li{margin-bottom:4px}
+      @media print{body{margin:10px}@page{margin:1cm}}
+    </style></head><body>
+      <h1>Interview Cheat Sheet: ${app.company}${app.role ? ` - ${app.role}` : ''}</h1>
+      <pre style="white-space:pre-wrap;font-family:inherit;font-size:0.9rem">${cheatSheet}</pre>
+    </body></html>`)
+    win.document.close()
+    setTimeout(() => win.print(), 300)
+  }
+
+  function renderField(key, label, placeholder) {
+    return (
+      <div key={key}>
+        <label className="text-sm text-slate-400 mb-1.5 block">{label}</label>
+        <AutoTextarea
+          className="textarea-field"
+          placeholder={placeholder}
+          value={form[key] || ''}
+          onChange={e => setForm(prev => ({ ...prev, [key]: e.target.value }))}
+        />
+      </div>
+    )
+  }
+
+  function renderActionGrid(items, section) {
+    return (
+      <div className="grid sm:grid-cols-2 gap-3">
+        {items.map(({ id, label, desc, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => launchWorkspaceTool(section, id)}
+            className="card-hover text-left flex gap-3 items-start"
+          >
+            <div className="w-10 h-10 rounded-xl bg-teal-500/15 flex items-center justify-center flex-shrink-0">
+              <Icon size={18} className="text-teal-400" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-white font-body font-medium text-sm mb-1">{label}</div>
+              <div className="text-slate-400 text-xs">{desc}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  function renderJdPanel() {
+    return (
+      <div className="card border-teal-500/20 bg-teal-500/5">
+        <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+          <div>
+            <div className="text-white text-sm font-display font-semibold">Active job context</div>
+            <div className="text-slate-400 text-xs">This saved JD now powers the main application-aware tools.</div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className={`text-xs px-2.5 py-1 rounded-full border ${hasJd ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
+              {hasJd ? 'JD attached' : 'Add JD to prefill tools'}
+            </span>
+            <button onClick={() => setShowJdEditor(prev => !prev)} className="btn-ghost text-xs">
+              {showJdEditor ? 'Close Editor' : hasJd ? 'Edit JD' : 'Add JD'}
+            </button>
+            {hasJd && (
+              <button onClick={() => setIsJdExpanded(prev => !prev)} className="btn-ghost text-xs">
+                {isJdExpanded ? 'Collapse' : 'Expand'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {app.jdUrl && (
+          <a
+            href={app.jdUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-teal-400 text-xs hover:text-teal-300 underline underline-offset-2 mb-3"
+          >
+            View job description
+          </a>
+        )}
+
+        {hasJd ? (
+          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 p-3">
+            <div className={`text-slate-300 text-sm leading-relaxed whitespace-pre-wrap ${isJdExpanded ? 'max-h-80 overflow-y-auto pr-1' : 'line-clamp-4'}`}>
+              {jdText}
+            </div>
+          </div>
+        ) : (
+          <p className="text-slate-500 text-xs">No JD saved yet. Paste it once here and the main tools will pick it up from this application.</p>
+        )}
+
+        {showJdEditor && (
+          <div className="mt-3">
+            <label className="text-sm text-slate-400 mb-1.5 block">Saved Job Description</label>
+            <textarea
+              className="textarea-field h-40"
+              placeholder="Paste the job description once. Interview Prep, Gap Analysis, Question Predictor, Cover Letter, and Resume Checker will use it."
+              value={jdText}
+              onChange={e => setJdText(e.target.value)}
+            />
+            <p className="text-slate-500 text-xs mt-2">Use Save Workspace to keep JD changes for this application.</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  function renderOverviewTab() {
+    return (
+      <div className="space-y-4">
+        <div className="grid sm:grid-cols-3 gap-3">
+          <button onClick={() => setWorkspaceTab('jd')} className="card text-left hover:border-teal-500/30 transition-colors">
+            <div className="flex items-center gap-2 mb-2">
+              <FileText size={15} className="text-teal-400" />
+              <span className="text-white text-sm font-display font-semibold">Job Description</span>
+            </div>
+            <div className={`text-xs ${hasJd ? 'text-teal-300' : 'text-yellow-300'}`}>
+              {hasJd ? 'Saved and ready across the app.' : 'Add the JD to unlock better prep.'}
+            </div>
+          </button>
+          <button onClick={() => setWorkspaceTab('research')} className="card text-left hover:border-indigo-500/30 transition-colors">
+            <div className="flex items-center gap-2 mb-2">
+              <Search size={15} className="text-indigo-400" />
+              <span className="text-white text-sm font-display font-semibold">Research</span>
+            </div>
+            <div className={`text-xs ${hasResearch ? 'text-indigo-300' : 'text-slate-400'}`}>
+              {hasResearch ? 'Company notes are filled and ready.' : 'Run research to prefill company context.'}
+            </div>
+          </button>
+          <button onClick={() => setWorkspaceTab('prep')} className="card text-left hover:border-yellow-500/30 transition-colors">
+            <div className="flex items-center gap-2 mb-2">
+              <Mic size={15} className="text-yellow-400" />
+              <span className="text-white text-sm font-display font-semibold">Prep</span>
+            </div>
+            <div className={`text-xs ${hasPrep ? 'text-yellow-300' : 'text-slate-400'}`}>
+              {hasPrep ? `${noteCount} workspace note${noteCount === 1 ? '' : 's'} saved.` : 'Add prep notes before the interview.'}
+            </div>
+          </button>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <div className="text-white text-sm font-display font-semibold">Interview Prep</div>
+              <div className="text-slate-400 text-xs">Launch the interview tools with this application context.</div>
+            </div>
+            <button onClick={() => setWorkspaceTab('prep')} className="btn-ghost text-xs">Open Prep Tab</button>
+          </div>
+          {renderActionGrid(prepActions, SECTIONS.INTERVIEW)}
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <div className="text-white text-sm font-display font-semibold">Prep Tools</div>
+              <div className="text-slate-400 text-xs">Documents and support tools tied to this application.</div>
+            </div>
+            <button onClick={() => setWorkspaceTab('tools')} className="btn-ghost text-xs">Open Prep Tools</button>
+          </div>
+          {renderActionGrid(toolActions.slice(0, 4), SECTIONS.TOOLS)}
+        </div>
+      </div>
+    )
+  }
+
+  function renderResearchTab() {
+    return (
+      <div className="space-y-4">
+        <div className="card border-teal-500/20 bg-teal-500/5">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <div className="text-white text-sm font-display font-semibold">Research this company</div>
+              <div className="text-slate-400 text-xs">AI fills wow facts, tools & systems, culture, open questions, and prep notes.</div>
+            </div>
+            <button onClick={runResearch} disabled={!isConnected || researching} className="btn-primary text-xs flex-shrink-0">
+              <Search size={13} /> {researching ? 'Researching...' : 'Auto-fill Notes'}
+            </button>
+          </div>
+          {researchMsg && (
+            <p className={`text-xs mt-2 ${researchMsg.toLowerCase().includes('failed') || researchMsg.toLowerCase().includes('could not') ? 'text-red-400' : 'text-teal-400'}`}>
+              {researchMsg}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          {researchFields.map(([key, label, placeholder]) => renderField(key, label, placeholder))}
+        </div>
+      </div>
+    )
+  }
+
+  function renderPrepTab() {
+    return (
+      <div className="space-y-4">
+        <div className="card">
+          <div className="text-white text-sm font-display font-semibold mb-1">Interview shortcuts</div>
+          <div className="text-slate-400 text-xs mb-3">Open the prep tools with your current workspace data.</div>
+          {renderActionGrid(prepActions, SECTIONS.INTERVIEW)}
+        </div>
+
+        <div className="card border-indigo-500/20 bg-indigo-500/5">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <div className="text-white text-sm font-display font-semibold flex items-center gap-2">
+                <Sparkles size={14} className="text-indigo-400" /> Interview Cheat Sheet
+              </div>
+              <div className="text-slate-400 text-xs">Generate a cheat sheet from your saved research and prep notes.</div>
+            </div>
+            <button onClick={generateCheatSheet} disabled={!isConnected || cheatLoading} className="btn-primary text-xs flex-shrink-0">
+              {cheatLoading ? 'Generating...' : cheatSheet ? 'Regenerate' : 'Generate'}
+            </button>
+          </div>
+
+          {cheatSheet && (
+            <div className="mt-4 animate-in">
+              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                <span className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wider">Cheat Sheet</span>
+                <div className="flex gap-2">
+                  <button onClick={() => navigator.clipboard?.writeText(cheatSheet)} className="btn-ghost text-xs">
+                    <Copy size={12} /> Copy
+                  </button>
+                  <button onClick={printCheatAsPdf} className="btn-ghost text-xs">
+                    <Printer size={12} /> PDF
+                  </button>
+                  <button onClick={() => downloadCheatAsPng(`${app.company} - Interview Cheat Sheet`, cheatSheet)} className="btn-secondary text-xs">
+                    <Download size={12} /> PNG
+                  </button>
+                </div>
+              </div>
+              <div className="bg-navy-900 rounded-xl p-4">
+                {cheatSheet.split('\n').map((line, i) => {
+                  if (line.startsWith('## ')) return <h3 key={i} className="font-display font-semibold text-white text-sm mt-3 mb-1">{line.slice(3)}</h3>
+                  if (line.startsWith('# ')) return <h2 key={i} className="font-display font-bold text-white mb-2">{line.slice(2)}</h2>
+                  if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="text-white font-semibold text-sm mt-2 mb-1">{line.slice(2, -2)}</p>
+                  if (line.startsWith('- ') || line.startsWith('* ')) return <p key={i} className="text-slate-300 text-sm ml-3 mb-1">- {line.slice(2)}</p>
+                  if (line.trim() === '') return <div key={i} className="h-2" />
+                  return <p key={i} className="text-slate-300 text-sm mb-1">{line}</p>
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          {prepFields.map(([key, label, placeholder]) => renderField(key, label, placeholder))}
+        </div>
+      </div>
+    )
+  }
+
+  function renderToolsTab() {
+    return (
+      <div className="space-y-4">
+        <div className="card border-teal-500/20 bg-teal-500/5">
+          <div className="text-white text-sm font-display font-semibold mb-1">Prep Tools</div>
+          <div className="text-slate-400 text-xs">These tools open with your active application context and latest saved JD.</div>
+        </div>
+        {renderActionGrid(toolActions, SECTIONS.TOOLS)}
+      </div>
+    )
+  }
+
+  function renderNotesTab() {
+    return (
+      <div className="space-y-3">
+        {allNoteFields.map(([key, label, placeholder]) => renderField(key, label, placeholder))}
+      </div>
+    )
+  }
+
+  function renderCurrentTab() {
+    if (workspaceTab === 'overview') return renderOverviewTab()
+    if (workspaceTab === 'jd') return renderJdPanel()
+    if (workspaceTab === 'research') return renderResearchTab()
+    if (workspaceTab === 'prep') return renderPrepTab()
+    if (workspaceTab === 'tools') return renderToolsTab()
+    if (workspaceTab === 'notes') return renderNotesTab()
+    return null
+  }
+
+  return (
+    <div className="p-4 md:p-6 max-w-5xl mx-auto animate-in">
+      <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+        <div>
+          <button onClick={onBack} className="btn-ghost mb-3"><ArrowLeft size={16} /> Back to Tracker</button>
+          <h2 className="section-title">{app.company}</h2>
+          <p className="section-sub">{app.role}</p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <span className={`px-2.5 py-1 rounded-full text-[11px] border ${hasJd ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
+            {hasJd ? 'JD attached' : 'No JD'}
+          </span>
+          {hasResearch && (
+            <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
+              Research ready
+            </span>
+          )}
+          {hasPrep && (
+            <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
+              Prep notes
+            </span>
+          )}
+          <select className="input-field w-36" value={app.stage} onChange={e => onUpdateApp({ stage: e.target.value })}>
+            {STAGES.map(s => <option key={s}>{s}</option>)}
+          </select>
+          <button onClick={() => saveWorkspace(true)} className={`btn-primary ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
+            {saved ? <><Check size={16} /> Saved!</> : <>Save Workspace</>}
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 mb-5">
+        <div className="flex gap-2 min-w-max">
+          {WORKSPACE_TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setWorkspaceTab(tab.id)}
+              className={`px-4 py-2 rounded-xl text-sm font-body transition-all whitespace-nowrap ${
+                workspaceTab === tab.id
+                  ? 'bg-navy-700 text-white border border-navy-600'
+                  : 'bg-navy-900 text-slate-400 border border-transparent hover:text-slate-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {renderCurrentTab()}
+
+      <div className="flex items-center justify-end gap-2 mt-5 mb-6">
+        <button onClick={() => saveWorkspace(true)} className={`btn-primary ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
+          {saved ? <><Check size={16} /> Saved!</> : <>Save Workspace</>}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
   const { callAI, isConnected } = useAI()
   const [form, setForm] = useState({

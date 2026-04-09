@@ -19,6 +19,7 @@ export function AppProvider({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
   const [navKey, setNavKey] = useState(0)
+  const [pendingToolRequest, setPendingToolRequest] = useState(null)
 
   // Stats tracking
   const [stats, setStats] = useState({
@@ -67,6 +68,16 @@ export function AppProvider({ children }) {
     })
   }
 
+  function launchTool(section, toolId) {
+    setPendingToolRequest({ section, toolId, requestedAt: Date.now() })
+    setNavKey(prev => prev + 1)
+    setActiveSection(section)
+  }
+
+  function clearPendingToolRequest() {
+    setPendingToolRequest(null)
+  }
+
   return (
     <AppContext.Provider value={{
       activeSection, setActiveSection,
@@ -77,6 +88,7 @@ export function AppProvider({ children }) {
       sidebarOpen, setSidebarOpen,
       isMuted, setIsMuted,
       navKey, setNavKey,
+      pendingToolRequest, launchTool, clearPendingToolRequest,
     }}>
       {children}
     </AppContext.Provider>

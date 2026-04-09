@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
@@ -81,7 +81,7 @@ export default function Tools({ mode = 'prep-tools' }) {
   const [showContextJd, setShowContextJd] = useState(false)
   const hub = HUBS[mode] || HUBS['prep-tools']
   const isInterviewHub = mode === 'interview-prep'
-  const { setActiveSection } = useApp()
+  const { setActiveSection, clearPendingToolRequest, pendingToolRequest } = useApp()
   const {
     getProjectData,
     updateProjectData,
@@ -107,6 +107,15 @@ export default function Tools({ mode = 'prep-tools' }) {
   } : null
   const activeHasResearch = hasResearchData(activeContext?.notes)
   const activeHasNotes = hasPrepNotes(activeContext?.notes)
+  const currentSection = isInterviewHub ? SECTIONS.INTERVIEW : SECTIONS.TOOLS
+
+  useEffect(() => {
+    if (!pendingToolRequest) return
+    if (pendingToolRequest.section !== currentSection) return
+    if (!hub.toolIds.includes(pendingToolRequest.toolId)) return
+    setActiveTool(pendingToolRequest.toolId)
+    clearPendingToolRequest()
+  }, [pendingToolRequest, currentSection, hub.toolIds, clearPendingToolRequest])
 
   function switchActiveApplication(nextId) {
     const nextApp = applications.find(app => app.id === nextId)
