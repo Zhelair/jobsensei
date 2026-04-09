@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
@@ -46,14 +46,32 @@ export default function Tools() {
   const [activeTool, setActiveTool] = useState(null)
   const [selectedResult, setSelectedResult] = useState(null)
   const [recentFilter, setRecentFilter] = useState('all')
-  const { getProjectData, updateProjectData } = useProject()
+  const { setActiveSection } = useApp()
+  const { getProjectData, updateProjectData, activeApplication } = useProject()
   const resume = getProjectData('resume')
   const toolsHistory = getProjectData('toolsHistory') || []
   const gapResults = getProjectData('gapResults') || []
   const negotiationSessions = getProjectData('negotiationSessions') || []
+  const companyNotes = getProjectData('companyNotes') || {}
+  const activeContext = activeApplication ? {
+    application: activeApplication,
+    jd: activeApplication.jdText || '',
+    notes: companyNotes[activeApplication.id] || {},
+  } : null
 
   function saveHistory(tool, toolLabel, inputs, result) {
-    const entry = { id: generateId(), date: new Date().toISOString(), tool, toolLabel, inputs, result }
+    const entry = {
+      id: generateId(),
+      date: new Date().toISOString(),
+      tool,
+      toolLabel,
+      inputs,
+      result,
+      applicationId: activeContext?.application?.id || null,
+      applicationLabel: activeContext?.application
+        ? `${activeContext.application.company}${activeContext.application.role ? ` - ${activeContext.application.role}` : ''}`
+        : null,
+    }
     updateProjectData('toolsHistory', [entry, ...toolsHistory].slice(0, 100))
   }
 
@@ -102,13 +120,13 @@ export default function Tools() {
   if (activeTool === 'star') return <STARBuilder onBack={() => setActiveTool(null)} />
   if (activeTool === 'negotiation') return <NegotiationSim onBack={() => setActiveTool(null)} embedded />
 
-  if (activeTool === 'predictor') return <QuestionPredictor onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('predictor', 'Question Predictor', i, r)} history={historyFor('predictor')} onDelete={deleteHistory} />
+  if (activeTool === 'predictor') return <QuestionPredictor onBack={() => setActiveTool(null)} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('predictor', 'Question Predictor', i, r)} history={historyFor('predictor')} onDelete={deleteHistory} />
   if (activeTool === 'transferable') return <TransferableSkillsTool onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('transferable', 'Transferable Skills Coach', i, r)} history={historyFor('transferable')} onDelete={deleteHistory} />
   if (activeTool === 'tone') return <ToneAnalyzer onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('tone', 'Tone Analyzer', i, r)} history={historyFor('tone')} onDelete={deleteHistory} />
-  if (activeTool === 'followup') return <FollowUpEmail onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('followup', 'Follow-up Email', i, r)} history={historyFor('followup')} onDelete={deleteHistory} />
+  if (activeTool === 'followup') return <FollowUpEmail onBack={() => setActiveTool(null)} activeContext={activeContext} saveHistory={(i, r) => saveHistory('followup', 'Follow-up Email', i, r)} history={historyFor('followup')} onDelete={deleteHistory} />
   if (activeTool === 'pitch') return <ElevatorPitch onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('pitch', 'Elevator Pitch', i, r)} history={historyFor('pitch')} onDelete={deleteHistory} />
-  if (activeTool === 'coverletter') return <CoverLetterOptimizer onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('coverletter', 'Cover Letter Optimizer', i, r)} history={historyFor('coverletter')} onDelete={deleteHistory} />
-  if (activeTool === 'resumechecker') return <ResumeChecker onBack={() => setActiveTool(null)} resume={resume} saveHistory={(i, r) => saveHistory('resumechecker', 'Resume Checker', i, r)} history={historyFor('resumechecker')} onDelete={deleteHistory} />
+  if (activeTool === 'coverletter') return <CoverLetterOptimizer onBack={() => setActiveTool(null)} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('coverletter', 'Cover Letter Optimizer', i, r)} history={historyFor('coverletter')} onDelete={deleteHistory} />
+  if (activeTool === 'resumechecker') return <ResumeChecker onBack={() => setActiveTool(null)} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('resumechecker', 'Resume Checker', i, r)} history={historyFor('resumechecker')} onDelete={deleteHistory} />
   if (activeTool === 'linkedin') return <LinkedInAuditor onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('linkedin', 'LinkedIn Auditor', i, r)} history={historyFor('linkedin')} onDelete={deleteHistory} />
   if (activeTool === 'visualreview') return <VisualResumeReview onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('visualreview', 'Visual Design Review', i, r)} history={historyFor('visualreview')} onDelete={deleteHistory} />
   if (activeTool === 'salarycoach') return <SalaryCoach onBack={() => setActiveTool(null)} saveHistory={(i, r) => saveHistory('salarycoach', 'Salary Coach', i, r)} history={historyFor('salarycoach')} onDelete={deleteHistory} />
@@ -148,6 +166,32 @@ export default function Tools() {
     <div className="p-4 md:p-6 animate-in">
       <h2 className="section-title mb-1">Tools</h2>
       <p className="section-sub mb-5">Utility belt for your job hunt.</p>
+
+      {activeContext?.application && (
+        <div className="card border-teal-500/20 bg-teal-500/5 mb-5">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <div className="text-white text-sm font-display font-semibold">Active Job Context</div>
+              <div className="text-teal-300 text-sm">
+                {activeContext.application.company}{activeContext.application.role ? ` - ${activeContext.application.role}` : ''}
+              </div>
+              <div className="text-slate-400 text-xs mt-1">
+                {activeContext.jd.trim()
+                  ? 'Gap Analysis, Question Predictor, Cover Letter, Resume Checker, and Interview Sim will use this tracker JD first.'
+                  : 'This application is active, but it does not have a saved JD yet.'}
+              </div>
+            </div>
+            <button onClick={() => setActiveSection(SECTIONS.TRACKER)} className="btn-ghost text-xs">
+              Open Tracker
+            </button>
+          </div>
+          {activeContext.jd.trim() && (
+            <p className="text-slate-500 text-xs mt-3 max-w-3xl whitespace-pre-wrap">
+              {activeContext.jd.slice(0, 220)}{activeContext.jd.length > 220 ? '...' : ''}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="grid sm:grid-cols-2 gap-3">
         {TOOLS.map(({ id, icon: Icon, label, desc }) => (
@@ -260,6 +304,32 @@ function ToolHistoryView({ history, toolLabel, onBack, onDelete }) {
 }
 
 // ─── History summary (one-liner per tool) ─────────────────────────────────────
+
+function ActiveJobContextCard({ activeContext, note }) {
+  if (!activeContext?.application) return null
+
+  const label = `${activeContext.application.company}${activeContext.application.role ? ` - ${activeContext.application.role}` : ''}`
+  const hasJD = !!activeContext.jd.trim()
+
+  return (
+    <div className="card border-teal-500/20 bg-teal-500/5 mb-4">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="text-white text-sm font-display font-semibold">Active Job Context</div>
+          <div className="text-teal-300 text-sm">{label}</div>
+          <div className="text-slate-400 text-xs mt-1">
+            {note || (hasJD
+              ? 'Using the tracker JD here first. You can still edit the fields below for this run.'
+              : 'This application is active, but it does not have a saved JD yet.')}
+          </div>
+        </div>
+        <span className={`text-xs px-2.5 py-1 rounded-full border ${hasJD ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
+          {hasJD ? 'JD attached' : 'No JD saved'}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 function HistorySummary({ item }) {
   if (item.tool === 'gap')
@@ -689,10 +759,10 @@ function TransferableSkillsTool({ onBack, resume, saveHistory, history, onDelete
 
 // ─── Question Predictor ────────────────────────────────────────────────────────
 
-function QuestionPredictor({ onBack, resume, saveHistory, history, onDelete }) {
+function QuestionPredictor({ onBack, resume, activeContext, saveHistory, history, onDelete }) {
   const { profile } = useApp()
   const { callAI, isConnected } = useAI()
-  const [jd, setJd] = useState('')
+  const [jd, setJd] = useState(activeContext?.jd || '')
   const [background, setBackground] = useState(resume || profile?.currentRole || '')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
@@ -723,6 +793,7 @@ function QuestionPredictor({ onBack, resume, saveHistory, history, onDelete }) {
       </div>
       <h2 className="section-title mb-1">Interview Question Predictor</h2>
       <p className="section-sub mb-5">See the 10 most likely questions before you walk in.</p>
+      <ActiveJobContextCard activeContext={activeContext} />
       <div className="space-y-3 mb-4">
         <textarea className="textarea-field h-28" placeholder="Paste the job description..." value={jd} onChange={e => setJd(e.target.value)} />
         <input className="input-field" placeholder="Your background (optional)..." value={background} onChange={e => setBackground(e.target.value)} />
@@ -837,12 +908,12 @@ function ToneAnalyzer({ onBack, saveHistory, history, onDelete }) {
 
 // ─── Follow-up Email ───────────────────────────────────────────────────────────
 
-function FollowUpEmail({ onBack, saveHistory, history, onDelete }) {
+function FollowUpEmail({ onBack, activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
-  const [company, setCompany] = useState('')
+  const [company, setCompany] = useState(activeContext?.application?.company || '')
   const [interviewer, setInterviewer] = useState('')
-  const [role, setRole] = useState('')
-  const [notes, setNotes] = useState('')
+  const [role, setRole] = useState(activeContext?.application?.role || '')
+  const [notes, setNotes] = useState(activeContext?.notes?.prepNotes || '')
   const [tone, setTone] = useState('Professional')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
@@ -870,6 +941,7 @@ function FollowUpEmail({ onBack, saveHistory, history, onDelete }) {
       </div>
       <h2 className="section-title mb-1">Follow-up Email</h2>
       <p className="section-sub mb-5">Generate the perfect post-interview thank you email.</p>
+      <ActiveJobContextCard activeContext={activeContext} note="Company, role, and prep notes were pulled from your active tracker application. Add interviewer details below." />
       <div className="space-y-3 mb-4">
         <div className="grid grid-cols-2 gap-3">
           <input className="input-field" placeholder="Company" value={company} onChange={e => setCompany(e.target.value)} />
@@ -970,9 +1042,9 @@ function ElevatorPitch({ onBack, resume, saveHistory, history, onDelete }) {
 
 // ─── Cover Letter Optimizer ────────────────────────────────────────────────────
 
-function CoverLetterOptimizer({ onBack, resume, saveHistory, history, onDelete }) {
+function CoverLetterOptimizer({ onBack, resume, activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
-  const [jd, setJd] = useState('')
+  const [jd, setJd] = useState(activeContext?.jd || '')
   const [resumeText, setResumeText] = useState(resume || '')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
@@ -1001,6 +1073,7 @@ function CoverLetterOptimizer({ onBack, resume, saveHistory, history, onDelete }
       </div>
       <h2 className="section-title mb-1">Cover Letter Optimizer</h2>
       <p className="section-sub mb-5">3 punchy versions (60-120 words each) — Corporate, Creative, Casual.</p>
+      <ActiveJobContextCard activeContext={activeContext} />
       <div className="space-y-3 mb-4">
         <textarea className="textarea-field h-28" placeholder="Paste the job description..." value={jd} onChange={e => setJd(e.target.value)} />
         <textarea className="textarea-field h-28" placeholder="Paste your resume or key experience..." value={resumeText} onChange={e => setResumeText(e.target.value)} />
@@ -1056,10 +1129,10 @@ function CoverLetterOptimizer({ onBack, resume, saveHistory, history, onDelete }
 
 // ─── Resume Checker ────────────────────────────────────────────────────────────
 
-function ResumeChecker({ onBack, resume, saveHistory, history, onDelete }) {
+function ResumeChecker({ onBack, resume, activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
   const [resumeText, setResumeText] = useState(resume || '')
-  const [jd, setJd] = useState('')
+  const [jd, setJd] = useState(activeContext?.jd || '')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
@@ -1086,6 +1159,7 @@ function ResumeChecker({ onBack, resume, saveHistory, history, onDelete }) {
       </div>
       <h2 className="section-title mb-1">Resume Checker</h2>
       <p className="section-sub mb-5">ATS scanner + recruiter lens — see your resume like they do.</p>
+      <ActiveJobContextCard activeContext={activeContext} />
       <div className="space-y-3 mb-4">
         <textarea className="textarea-field h-40" placeholder="Paste your resume text here..." value={resumeText} onChange={e => setResumeText(e.target.value)} />
         <textarea className="textarea-field h-20" placeholder="Job description (optional — enables gap analysis)..." value={jd} onChange={e => setJd(e.target.value)} />
