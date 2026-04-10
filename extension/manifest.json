@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "JobSensei Capture",
+  "version": "0.1.0",
+  "description": "Capture the current job page and send it into JobSensei.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://jobsensei.app/*",
+    "https://*.vercel.app/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Capture job for JobSensei",
+    "default_popup": "popup.html"
+  }
+}

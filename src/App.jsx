@@ -10,6 +10,7 @@ import Sidebar from './components/Layout/Sidebar'
 import TopBar from './components/Layout/TopBar'
 import BottomNav from './components/Layout/BottomNav'
 import OnboardingWizard from './components/Onboarding/OnboardingWizard'
+import ExtensionCaptureBridge from './components/shared/ExtensionCaptureBridge'
 import Dashboard from './components/Dashboard/Dashboard'
 import LearningSection from './components/LearningSection/LearningSection'
 import Tools from './components/Tools/Tools'
@@ -37,6 +38,7 @@ function AppContent() {
   return (
     <div className="flex h-screen overflow-hidden bg-mesh">
       {showOnboarding && <OnboardingWizard />}
+      <ExtensionCaptureBridge />
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0">
         <TopBar />

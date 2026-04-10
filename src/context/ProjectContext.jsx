@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { generateId } from '../utils/helpers'
+import { makeTrackerApplication, normalizeApplicationUrl } from '../utils/jobIntake'
 
 const ProjectContext = createContext(null)
 
@@ -166,6 +167,72 @@ export function ProjectProvider({ children }) {
     updateProjectData('activeApplicationId', id || null)
   }
 
+  function ingestCapturedApplication(capture) {
+    if (!activeProject) return null
+
+    const applications = activeProject.data.applications || []
+    const normalizedUrl = normalizeApplicationUrl(capture?.url || capture?.jdUrl || '') || ''
+    const jdText = (capture?.jdText || capture?.jd || '').trim()
+    const company = (capture?.company || '').trim() || (capture?.pageTitle || 'Captured Application').trim()
+    const role = (capture?.role || '').trim()
+    const captureSource = (capture?.source || 'chrome-extension').trim()
+    const capturedAt = capture?.capturedAt || new Date().toISOString()
+
+    const existingApp = applications.find(app => {
+      if (!normalizedUrl || !app.jdUrl) return false
+      return normalizeApplicationUrl(app.jdUrl) === normalizedUrl
+    })
+
+    let targetApp
+    let nextApplications
+
+    if (existingApp) {
+      targetApp = {
+        ...existingApp,
+        company: company || existingApp.company,
+        role: role || existingApp.role,
+        jdUrl: normalizedUrl || existingApp.jdUrl,
+        jdText: jdText || existingApp.jdText || '',
+        captureSource,
+        capturedAt,
+      }
+      nextApplications = applications.map(app => app.id === existingApp.id ? targetApp : app)
+    } else {
+      targetApp = {
+        ...makeTrackerApplication({
+          company,
+          role,
+          stage: 'Researching',
+          jdUrl: normalizedUrl,
+          jdText,
+        }),
+        captureSource,
+        capturedAt,
+      }
+      nextApplications = [...applications, targetApp]
+    }
+
+    const updates = {
+      applications: nextApplications,
+      activeApplicationId: targetApp.id,
+      currentJD: targetApp.jdText || '',
+    }
+
+    const updated = projects.map(project => {
+      if (project.id !== activeProjectId) return project
+      return {
+        ...project,
+        updatedAt: new Date().toISOString(),
+        data: {
+          ...project.data,
+          ...updates,
+        },
+      }
+    })
+    persist(updated)
+    return targetApp
+  }
+
   // Export single project as JSON
   function exportProject(id) {
     const project = projects.find(p => p.id === id)
@@ -234,6 +301,7 @@ export function ProjectProvider({ children }) {
       updateProjectDataMultiple,
       getProjectData,
       setActiveApplication,
+      ingestCapturedApplication,
       exportProject,
       exportAll,
       importProjects,
