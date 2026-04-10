@@ -9,13 +9,38 @@ import { Search, AlertTriangle, Zap, Save, Clock, Trash2, ArrowLeft } from 'luci
 
 const TABS = ['Gap Analysis', 'App Scoring', 'Red Flags']
 
+function normalizeStudyTopic(value = '') {
+  return value
+    .replace(/^[-*•]\s*/, '')
+    .replace(/\((Quick Learn|Needs Framing|Significant Gap)\)\s*/ig, '')
+    .replace(/^#+\s*/, '')
+    .replace(/^Gaps to Address:?/i, '')
+    .replace(/^Key Gaps:?/i, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[.:;,\s-]+$/, '')
+    .trim()
+}
+
+function extractStudyTopicsFromGapText(gapText = '') {
+  const sectionMatch = gapText.match(/##\s+.*Gaps to Address[\s\S]*?(?=\n##\s|$)/i)
+  const section = sectionMatch ? sectionMatch[0] : gapText
+
+  return section
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.startsWith('- ') || line.startsWith('* '))
+    .map(line => normalizeStudyTopic(line))
+    .filter(Boolean)
+}
+
 export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
-  const { profile, drillMode } = useApp()
+  const { profile, drillMode, openLearningTopic } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData, activeApplication } = useProject()
 
   const resume = getProjectData('resume')
   const savedResults = getProjectData('gapResults')
+  const topics = getProjectData('topics') || []
   const persistedJD = getProjectData('currentJD')
   const activeContextJD = activeApplication ? (activeApplication.jdText || '') : persistedJD
 
@@ -40,6 +65,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
   const [scoreResult, setScoreResult] = useState(null)
   const [redFlags, setRedFlags] = useState(null)
   const [error, setError] = useState('')
+  const [studyMsg, setStudyMsg] = useState('')
   const [showHistory, setShowHistory] = useState(false)
 
   React.useEffect(() => {
@@ -109,6 +135,56 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
     if (entry.redFlags) { setRedFlags(entry.redFlags); setTab(2) }
     setShowHistory(false)
   }
+
+  function addStudyTopic(topicLabel) {
+    const normalizedTitle = normalizeStudyTopic(topicLabel)
+    if (!normalizedTitle) return
+
+    const existingTopic = topics.find(topic => topic.title.toLowerCase() === normalizedTitle.toLowerCase())
+    if (existingTopic) {
+      if (existingTopic.status === 'Not Started') {
+        updateProjectData(
+          'topics',
+          topics.map(topic => topic.id === existingTopic.id ? { ...topic, status: 'In Progress' } : topic)
+        )
+      }
+      openLearningTopic(existingTopic.id, 'tutor')
+      setStudyMsg(`Opened study topic: ${existingTopic.title}`)
+      return
+    }
+
+    const newTopic = {
+      id: generateId(),
+      title: normalizedTitle,
+      category: 'Career',
+      difficulty: 'Intermediate',
+      status: 'In Progress',
+      messages: [],
+      quizScores: [],
+      repetitions: 0,
+      easeFactor: 2.5,
+      interval: 0,
+      nextReview: null,
+      source: 'gap-analysis',
+      applicationId: activeApplication?.id || null,
+      applicationLabel: activeApplication
+        ? `${activeApplication.company}${activeApplication.role ? ` - ${activeApplication.role}` : ''}`
+        : '',
+    }
+
+    updateProjectData('topics', [...topics, newTopic])
+    openLearningTopic(newTopic.id, 'tutor')
+    setStudyMsg(`Added study topic: ${newTopic.title}`)
+  }
+
+  const suggestedStudyTopics = Array.from(new Set([
+    ...(scoreResult?.keyGaps || []),
+    ...extractStudyTopicsFromGapText(gapResult || ''),
+  ].map(normalizeStudyTopic).filter(Boolean).map(value => value.toLowerCase()))).map(lowered => {
+    const original = [...(scoreResult?.keyGaps || []), ...extractStudyTopicsFromGapText(gapResult || '')]
+      .find(item => normalizeStudyTopic(item).toLowerCase() === lowered)
+    return normalizeStudyTopic(original || lowered)
+  }).slice(0, 5)
 
   const severityClass = { low: 'badge-teal', medium: 'badge-yellow', high: 'badge-red' }
 
@@ -203,15 +279,31 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
       </div>
 
       {error && <div className="badge-red mb-4 py-2 px-3 rounded-xl">{error}</div>}
+      {studyMsg && <div className="badge-green mb-4 py-2 px-3 rounded-xl">{studyMsg}</div>}
 
       {tab === 0 && gapResult && (
-        <div className="card animate-in">
+        <div className="space-y-4 animate-in">
+          <div className="card">
           {gapResult.split('\n').map((line, i) => {
             if (line.startsWith('## ')) return <h3 key={i} className="font-display font-bold text-white text-base mt-4 mb-2">{line.slice(3)}</h3>
             if (line.startsWith('- ') || line.startsWith('* ')) return <p key={i} className="text-slate-300 text-sm ml-3 mb-1">• {line.slice(2)}</p>
             if (line.trim() === '') return <div key={i} className="h-1" />
             return <p key={i} className="text-slate-300 text-sm mb-1">{line}</p>
           })}
+          </div>
+          {suggestedStudyTopics.length > 0 && (
+            <div className="card border-teal-500/20 bg-teal-500/5">
+              <div className="text-white text-sm font-display font-semibold mb-1">Study from this analysis</div>
+              <div className="text-slate-400 text-xs mb-3">Send the biggest gaps into Learning and open tutor mode right away.</div>
+              <div className="flex flex-wrap gap-2">
+                {suggestedStudyTopics.map(topic => (
+                  <button key={topic} onClick={() => addStudyTopic(topic)} className="btn-secondary text-xs py-1.5 px-3">
+                    Study: {topic}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -240,7 +332,21 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
             ))}
           </div>
           {scoreResult.topStrengths?.length > 0 && <div><div className="text-slate-400 text-xs mb-2">Top Strengths</div><div className="flex flex-wrap gap-2">{scoreResult.topStrengths.map((s, i) => <span key={i} className="badge-green">{s}</span>)}</div></div>}
-          {scoreResult.keyGaps?.length > 0 && <div><div className="text-slate-400 text-xs mb-2">Key Gaps</div><div className="flex flex-wrap gap-2">{scoreResult.keyGaps.map((s, i) => <span key={i} className="badge-red">{s}</span>)}</div></div>}
+          {scoreResult.keyGaps?.length > 0 && (
+            <div className="space-y-3">
+              <div><div className="text-slate-400 text-xs mb-2">Key Gaps</div><div className="flex flex-wrap gap-2">{scoreResult.keyGaps.map((s, i) => <span key={i} className="badge-red">{s}</span>)}</div></div>
+              <div>
+                <div className="text-slate-400 text-xs mb-2">Study These Gaps</div>
+                <div className="flex flex-wrap gap-2">
+                  {suggestedStudyTopics.map(topic => (
+                    <button key={topic} onClick={() => addStudyTopic(topic)} className="btn-secondary text-xs py-1.5 px-3">
+                      Study: {topic}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

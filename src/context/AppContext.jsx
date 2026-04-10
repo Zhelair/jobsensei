@@ -20,6 +20,7 @@ export function AppProvider({ children }) {
   const [isMuted, setIsMuted] = useState(false)
   const [navKey, setNavKey] = useState(0)
   const [pendingToolRequest, setPendingToolRequest] = useState(null)
+  const [pendingLearningRequest, setPendingLearningRequest] = useState(null)
 
   // Stats tracking
   const [stats, setStats] = useState({
@@ -78,6 +79,16 @@ export function AppProvider({ children }) {
     setPendingToolRequest(null)
   }
 
+  function openLearningTopic(topicId, view = 'tutor') {
+    setPendingLearningRequest({ topicId, view, requestedAt: Date.now() })
+    setNavKey(prev => prev + 1)
+    setActiveSection(SECTIONS.LEARNING)
+  }
+
+  function clearPendingLearningRequest() {
+    setPendingLearningRequest(null)
+  }
+
   return (
     <AppContext.Provider value={{
       activeSection, setActiveSection,
@@ -89,6 +100,7 @@ export function AppProvider({ children }) {
       isMuted, setIsMuted,
       navKey, setNavKey,
       pendingToolRequest, launchTool, clearPendingToolRequest,
+      pendingLearningRequest, openLearningTopic, clearPendingLearningRequest,
     }}>
       {children}
     </AppContext.Provider>
