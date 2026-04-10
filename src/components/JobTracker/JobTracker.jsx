@@ -92,6 +92,7 @@ function exportToJSON(applications, notes) {
 
 export default function JobTracker() {
   const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId, setActiveApplication } = useProject()
+  const { pendingTrackerRequest, clearPendingTrackerRequest } = useApp()
   const applications = getProjectData('applications')
   const notes = getProjectData('companyNotes')
   const offerData = getProjectData('offerComparisons') || {}
@@ -118,6 +119,15 @@ export default function JobTracker() {
   const [importMsg, setImportMsg] = useState('')
   const [synced, setSynced] = useState(false)
   const importRef = useRef(null)
+
+  useEffect(() => {
+    if (!pendingTrackerRequest?.applicationId) return
+    const targetApp = applications.find(app => app.id === pendingTrackerRequest.applicationId)
+    if (!targetApp) return
+    setSelectedApp(targetApp)
+    activateApplication(targetApp)
+    clearPendingTrackerRequest()
+  }, [pendingTrackerRequest, applications, clearPendingTrackerRequest])
 
   function activateApplication(app) {
     setActiveApplication(app.id)

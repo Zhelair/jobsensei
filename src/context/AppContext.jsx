@@ -21,6 +21,7 @@ export function AppProvider({ children }) {
   const [navKey, setNavKey] = useState(0)
   const [pendingToolRequest, setPendingToolRequest] = useState(null)
   const [pendingLearningRequest, setPendingLearningRequest] = useState(null)
+  const [pendingTrackerRequest, setPendingTrackerRequest] = useState(null)
 
   // Stats tracking
   const [stats, setStats] = useState({
@@ -89,6 +90,16 @@ export function AppProvider({ children }) {
     setPendingLearningRequest(null)
   }
 
+  function openTrackerApplication(applicationId) {
+    setPendingTrackerRequest({ applicationId, requestedAt: Date.now() })
+    setNavKey(prev => prev + 1)
+    setActiveSection(SECTIONS.TRACKER)
+  }
+
+  function clearPendingTrackerRequest() {
+    setPendingTrackerRequest(null)
+  }
+
   return (
     <AppContext.Provider value={{
       activeSection, setActiveSection,
@@ -101,6 +112,7 @@ export function AppProvider({ children }) {
       navKey, setNavKey,
       pendingToolRequest, launchTool, clearPendingToolRequest,
       pendingLearningRequest, openLearningTopic, clearPendingLearningRequest,
+      pendingTrackerRequest, openTrackerApplication, clearPendingTrackerRequest,
     }}>
       {children}
     </AppContext.Provider>
