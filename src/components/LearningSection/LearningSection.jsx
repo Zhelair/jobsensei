@@ -27,7 +27,7 @@ const CATEGORIES = ['FRAML', 'AML', 'Payments', 'Regulatory', 'Career', 'Technic
 // ─── Main Learning Section ─────────────────────────────────────────────────────
 
 export default function LearningSection() {
-  const { drillMode, profile } = useApp()
+  const { drillMode, profile, pendingLearningRequest, clearPendingLearningRequest } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData } = useProject()
 
@@ -43,6 +43,15 @@ export default function LearningSection() {
   const [customCategory, setCustomCategory] = useState('')
   const [filterCategory, setFilterCategory] = useState('All')
   const [filterStatus, setFilterStatus] = useState('All')
+
+  React.useEffect(() => {
+    if (!pendingLearningRequest) return
+    const targetTopic = topics.find(topic => topic.id === pendingLearningRequest.topicId)
+    if (!targetTopic) return
+    setSelectedTopic(targetTopic)
+    setView(pendingLearningRequest.view || 'tutor')
+    clearPendingLearningRequest()
+  }, [pendingLearningRequest, topics, clearPendingLearningRequest])
 
   function setTopics(updater) {
     const next = typeof updater === 'function' ? updater(topics) : updater
