@@ -185,7 +185,7 @@ export default function Dashboard() {
     { label: 'Start Mock Interview', icon: Mic, section: SECTIONS.INTERVIEW, color: 'teal' },
     { label: 'Analyze a JD', icon: Search, section: SECTIONS.TOOLS, color: 'indigo' },
     { label: 'Study a Topic', icon: BookOpen, section: SECTIONS.LEARNING, color: 'teal' },
-    { label: 'Add Application', icon: Plus, section: SECTIONS.TRACKER, color: 'indigo' },
+    { label: 'Add Application', icon: Plus, section: SECTIONS.APPLICATIONS, color: 'indigo' },
   ]
 
   return (
@@ -223,7 +223,7 @@ export default function Dashboard() {
               Choose the tracker job that should drive your JD-based tools. The saved JD follows that active application.
             </p>
           </div>
-          <button onClick={() => setActiveSection(SECTIONS.TRACKER)} className="btn-ghost text-xs self-start">
+          <button onClick={() => setActiveSection(SECTIONS.APPLICATIONS)} className="btn-ghost text-xs self-start">
             <FolderOpen size={14}/> Open Tracker
           </button>
         </div>

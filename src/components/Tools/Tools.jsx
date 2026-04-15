@@ -323,7 +323,7 @@ export default function Tools({ mode = 'prep-tools' }) {
                   {showContextJd ? 'Hide JD' : 'Preview JD'}
                 </button>
               )}
-              <button onClick={() => setActiveSection(SECTIONS.TRACKER)} className="btn-ghost text-xs">
+              <button onClick={() => setActiveSection(SECTIONS.APPLICATIONS)} className="btn-ghost text-xs">
                 Open Tracker
               </button>
             </div>

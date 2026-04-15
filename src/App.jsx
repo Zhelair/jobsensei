@@ -12,6 +12,7 @@ import BottomNav from './components/Layout/BottomNav'
 import OnboardingWizard from './components/Onboarding/OnboardingWizard'
 import ExtensionCaptureBridge from './components/shared/ExtensionCaptureBridge'
 import Dashboard from './components/Dashboard/Dashboard'
+import TodayPage from './components/Today/TodayPage'
 import LearningSection from './components/LearningSection/LearningSection'
 import Tools from './components/Tools/Tools'
 import JobTracker from './components/JobTracker/JobTracker'
@@ -21,6 +22,8 @@ function AppContent() {
   const { activeSection, showOnboarding, navKey } = useApp()
 
   const sections = {
+    [SECTIONS.TODAY]: TodayPage,
+    [SECTIONS.APPLICATIONS]: JobTracker,
     [SECTIONS.DASHBOARD]: Dashboard,
     [SECTIONS.INTERVIEW]: () => <Tools mode="interview-prep" />,
     [SECTIONS.LEARNING]: LearningSection,

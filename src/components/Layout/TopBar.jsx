@@ -18,6 +18,8 @@ const THEME_LABELS = {
 }
 
 const SECTION_TITLES = {
+  today: 'Today',
+  applications: 'Applications',
   dashboard: 'Dashboard',
   interview: 'Interview Prep',
   gap: 'Gap Analysis',
@@ -25,12 +27,22 @@ const SECTION_TITLES = {
   star: 'STAR Builder',
   negotiation: 'Negotiation Simulator',
   tools: 'Prep Tools',
-  tracker: 'Job Tracker',
+  tracker: 'Applications',
   notes: 'Notes & Workbook',
   settings: 'Settings',
 }
 
 const SECTION_HELP = {
+  today: {
+    title: 'Today',
+    desc: 'Your new home base. See the active application, next best actions, reviews due, and recent progress without digging through tools.',
+    tips: ['Open the active workspace from the main hero card', 'Use Today to jump straight into capture, research, or interview prep', 'Reviews due and follow-ups due both surface here first'],
+  },
+  applications: {
+    title: 'Applications',
+    desc: 'Manage every role in one place, then open an application workspace to prep around that specific company and JD.',
+    tips: ['Set one application active so the AI tools share the same context', 'Open a card to enter the application workspace', 'Kanban, stats, workspace, and offers still live here'],
+  },
   dashboard: {
     title: 'Dashboard',
     desc: 'Your home base. See your stats, daily tips, and quick links to every tool.',
@@ -67,9 +79,9 @@ const SECTION_HELP = {
     tips: ['Run Gap Analysis, Resume Checker, and Cover Letter from here', 'Recent results stay saved to the current project history'],
   },
   tracker: {
-    title: 'Job Tracker',
-    desc: 'Track every application — status, company notes, next steps — in one place.',
-    tips: ['Add a new application with the + button', 'Drag or update status as it progresses', 'Add company-specific notes to stay organized'],
+    title: 'Applications',
+    desc: 'Track every application, open a workspace for each role, and keep one active context flowing through the prep tools.',
+    tips: ['Add a new application with the + button', 'Open a card to work on that application in context', 'Set one application active so your prep tools stay aligned'],
   },
   notes: {
     title: 'Notes & Workbook',

@@ -1,24 +1,32 @@
 import React from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import {
-  LayoutDashboard, Mic, BookOpen,
-  Wrench, Briefcase, Settings, ChevronLeft, ChevronRight
+  LayoutDashboard, BookOpen,
+  Briefcase, Settings, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import ProjectSwitcher from '../Projects/ProjectSwitcher'
 
 const NAV_ITEMS = [
-  { id: SECTIONS.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
-  { id: SECTIONS.INTERVIEW, icon: Mic, label: 'Interview Prep' },
+  { id: SECTIONS.TODAY, icon: LayoutDashboard, label: 'Today' },
+  { id: SECTIONS.APPLICATIONS, icon: Briefcase, label: 'Applications' },
   { id: SECTIONS.LEARNING, icon: BookOpen, label: 'Learning' },
-  { id: SECTIONS.TOOLS, icon: Wrench, label: 'Prep Tools' },
-  { id: SECTIONS.TRACKER, icon: Briefcase, label: 'Job Tracker' },
 ]
 
 export default function Sidebar() {
   const { activeSection, setActiveSection, sidebarOpen, setSidebarOpen, navKey, setNavKey } = useApp()
 
+  function isNavActive(id) {
+    if (id === SECTIONS.APPLICATIONS) {
+      return activeSection === SECTIONS.APPLICATIONS || activeSection === SECTIONS.TRACKER
+    }
+    if (id === SECTIONS.TODAY) {
+      return activeSection === SECTIONS.TODAY || activeSection === SECTIONS.DASHBOARD
+    }
+    return activeSection === id
+  }
+
   function handleNavClick(id) {
-    if (activeSection === id) setNavKey(k => k + 1)
+    if (isNavActive(id)) setNavKey(k => k + 1)
     setActiveSection(id)
   }
 
@@ -44,7 +52,7 @@ export default function Sidebar() {
             key={id}
             onClick={() => handleNavClick(id)}
             title={!sidebarOpen ? label : undefined}
-            className={`nav-item w-full ${activeSection === id ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-0' : ''}`}
+            className={`nav-item w-full ${isNavActive(id) ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-0' : ''}`}
           >
             <Icon size={18} className="flex-shrink-0" />
             {sidebarOpen && <span>{label}</span>}
