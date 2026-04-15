@@ -9,7 +9,7 @@ import { Star, Plus, Wand2, Copy, Trash2, ArrowLeft, Tag, Edit3, Check, Eye } fr
 export default function STARBuilder({ onBack, backLabel = 'Back' }) {
   const { drillMode } = useApp()
   const { callAI, isConnected } = useAI()
-  const { getProjectData, updateProjectData } = useProject()
+  const { getProjectData, updateProjectData, activeApplication } = useProject()
 
   const stories = getProjectData('starStories')
   function setStories(updater) {
@@ -39,7 +39,16 @@ export default function STARBuilder({ onBack, backLabel = 'Back' }) {
 
   function saveStory() {
     if (!result) return
-    setStories(prev => [...prev, { id: generateId(), date: new Date().toISOString(), situation: situation.slice(0, 100), ...result }])
+    setStories(prev => [...prev, {
+      id: generateId(),
+      date: new Date().toISOString(),
+      situation: situation.slice(0, 100),
+      applicationId: activeApplication?.id || null,
+      applicationLabel: activeApplication
+        ? `${activeApplication.company}${activeApplication.role ? ` - ${activeApplication.role}` : ''}`
+        : null,
+      ...result,
+    }])
     setResult(null); setSituation(''); setView('bank')
   }
 

@@ -86,6 +86,10 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
       messages: msgs,
       jdSnippet: jdRef.current.slice(0, 100),
       questionCount: questionsAskedRef.current,
+      applicationId: activeApplication?.id || existing?.applicationId || null,
+      applicationLabel: activeApplication
+        ? `${activeApplication.company}${activeApplication.role ? ` - ${activeApplication.role}` : ''}`
+        : existing?.applicationLabel || null,
     }
     const updated = existing
       ? currentSessions.map(s => s.id === id ? sessionData : s)

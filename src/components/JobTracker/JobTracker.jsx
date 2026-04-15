@@ -868,16 +868,80 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const [researchMsg, setResearchMsg] = useState('')
   const [cheatSheet, setCheatSheet] = useState('')
   const [cheatLoading, setCheatLoading] = useState(false)
+  const [showAdvancedTools, setShowAdvancedTools] = useState(false)
   const interviewSessions = getProjectData('interviewSessions') || []
+  const toolsHistory = getProjectData('toolsHistory') || []
+  const gapResults = getProjectData('gapResults') || []
+  const starStories = getProjectData('starStories') || []
 
   useEffect(() => {
     setWorkspaceTab(initialTab || 'overview')
+    setShowAdvancedTools(false)
   }, [app.id, initialTab])
 
   const hasJd = jdText.trim().length > 0
   const hasResearch = hasResearchData(form)
   const hasPrep = hasPrepNotes(form)
   const noteCount = Object.values(form).filter(value => (value || '').trim()).length
+  const applicationLabel = `${app.company}${app.role ? ` - ${app.role}` : ''}`
+
+  function matchesApplicationEntry(entry) {
+    if (!entry) return false
+    if (entry.applicationId && entry.applicationId === app.id) return true
+    if (entry.applicationLabel && entry.applicationLabel === applicationLabel) return true
+
+    const entryJd = (entry.jdSnippet || entry.inputs?.jd || '').trim()
+    const currentJd = (app.jdText || '').trim()
+    if (entryJd && currentJd) {
+      return currentJd.startsWith(entryJd) || entryJd.startsWith(currentJd.slice(0, Math.min(currentJd.length, entryJd.length)))
+    }
+
+    return false
+  }
+
+  function latestEntry(entries) {
+    if (!entries.length) return null
+    return [...entries].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))[0]
+  }
+
+  function statusInfo(state) {
+    if (state === 'complete') {
+      return {
+        label: 'Complete',
+        badge: 'border-green-500/30 bg-green-500/10 text-green-300',
+        card: 'border-green-500/20 bg-green-500/5',
+      }
+    }
+    if (state === 'in-progress') {
+      return {
+        label: 'In Progress',
+        badge: 'border-teal-500/30 bg-teal-500/10 text-teal-300',
+        card: 'border-teal-500/20 bg-teal-500/5',
+      }
+    }
+    if (state === 'blocked') {
+      return {
+        label: 'Blocked',
+        badge: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300',
+        card: 'border-yellow-500/20 bg-yellow-500/5',
+      }
+    }
+    return {
+      label: 'Ready',
+      badge: 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300',
+      card: 'border-indigo-500/20 bg-indigo-500/5',
+    }
+  }
+
+  const appGapResults = gapResults.filter(matchesApplicationEntry)
+  const appStarStories = starStories.filter(matchesApplicationEntry)
+  const appInterviewSessions = interviewSessions.filter(matchesApplicationEntry)
+  const appPredictorRuns = toolsHistory.filter(entry => entry.tool === 'predictor' && matchesApplicationEntry(entry))
+  const appFollowupRuns = toolsHistory.filter(entry => entry.tool === 'followup' && matchesApplicationEntry(entry))
+  const appTailorRuns = toolsHistory.filter(entry => ['coverletter', 'resumechecker'].includes(entry.tool) && matchesApplicationEntry(entry))
+  const appTransferableRuns = toolsHistory.filter(entry => entry.tool === 'transferable' && matchesApplicationEntry(entry))
+  const appToneRuns = toolsHistory.filter(entry => entry.tool === 'tone' && matchesApplicationEntry(entry))
+  const appPitchRuns = toolsHistory.filter(entry => entry.tool === 'pitch' && matchesApplicationEntry(entry))
 
   const researchFields = [
     ['wowFacts', 'Wow facts & recent news', 'Recent news, product launches, market shifts, or memorable company details.'],
@@ -1173,77 +1237,158 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   }
 
   function renderOverviewTab() {
+    const researchFieldCount = researchFields.filter(([key]) => (form[key] || '').trim()).length
+    const latestGapResult = latestEntry(appGapResults)
+    const latestStarStory = latestEntry(appStarStories)
+    const latestInterviewSession = latestEntry(appInterviewSessions)
+    const latestPredictorRun = latestEntry(appPredictorRuns)
+    const latestFollowupRun = latestEntry(appFollowupRuns)
+    const latestTailorRun = latestEntry([...appTailorRuns, ...appTransferableRuns])
+    const latestWorkspaceActivity = latestEntry([
+      ...appGapResults,
+      ...appStarStories,
+      ...appInterviewSessions,
+      ...appPredictorRuns,
+      ...appFollowupRuns,
+      ...appTailorRuns,
+      ...appTransferableRuns,
+      ...appToneRuns,
+      ...appPitchRuns,
+    ])
+
+    const captureState = hasJd ? 'complete' : 'ready'
+    const researchState = hasResearch ? 'complete' : 'ready'
+    const tailorComplete = appGapResults.length > 0 || appStarStories.length > 0 || appTailorRuns.length > 0
+    const tailorState = tailorComplete
+      ? 'complete'
+      : hasPrep || appTransferableRuns.length > 0 || noteCount > 0
+        ? 'in-progress'
+        : hasJd || hasResearch
+          ? 'ready'
+          : 'blocked'
+    const predictState = appPredictorRuns.length > 0 ? 'complete' : hasJd ? 'ready' : 'blocked'
+    const mockState = appInterviewSessions.length > 0 ? 'complete' : hasJd ? 'ready' : 'blocked'
+    const followupState = appFollowupRuns.length > 0 ? 'complete' : 'ready'
+
     const stepCards = [
       {
         id: 'capture',
         step: '1',
         title: 'Capture Job',
-        status: hasJd ? 'Ready' : 'Needs JD',
-        tone: hasJd ? 'teal' : 'yellow',
+        state: captureState,
         desc: hasJd
-          ? 'The job description is saved and ready to power the application-aware tools.'
+          ? 'The job description is saved and powering the application-aware workflow.'
           : 'Paste the job description once so research, prediction, and mock interviews stay aligned.',
-        primaryLabel: hasJd ? 'Review Capture' : 'Add JD',
-        primaryAction: () => setWorkspaceTab('jd'),
+        summary: hasJd
+          ? `JD saved${app.jdUrl ? ' with source link attached.' : ' and ready across the workspace.'}`
+          : 'Add the JD to unlock role-specific prep.',
+        actions: [
+          { label: hasJd ? 'Review Capture' : 'Add JD', onClick: () => setWorkspaceTab('jd'), variant: 'primary' },
+          { label: 'Workspace Notes', onClick: () => setWorkspaceTab('notes'), variant: 'ghost' },
+          ...(app.jdUrl ? [{ label: 'Open JD Link', href: app.jdUrl, variant: 'ghost' }] : []),
+        ],
       },
       {
         id: 'research',
         step: '2',
         title: 'Research Company',
-        status: hasResearch ? 'Ready' : 'Not Started',
-        tone: hasResearch ? 'indigo' : 'yellow',
+        state: researchState,
         desc: hasResearch
           ? 'Company context is saved. You can review it or refresh the notes before the next round.'
           : 'Fill company context, culture signals, and open questions before you start practicing.',
-        primaryLabel: hasResearch ? 'Review Research' : 'Open Research',
-        primaryAction: () => setWorkspaceTab('research'),
+        summary: hasResearch
+          ? `${researchFieldCount} research field${researchFieldCount === 1 ? '' : 's'} filled for this application.`
+          : 'Save company context so your prep stays specific.',
+        actions: [
+          { label: hasResearch ? 'Review Research' : 'Open Research', onClick: () => setWorkspaceTab('research'), variant: 'primary' },
+          { label: researching ? 'Researching...' : 'Auto-fill Notes', onClick: () => runResearch(), variant: 'secondary', disabled: !isConnected || researching },
+        ],
       },
       {
         id: 'tailor',
         step: '3',
         title: 'Tailor Story',
-        status: hasPrep ? 'In Progress' : 'Ready',
-        tone: hasPrep ? 'teal' : 'indigo',
-        desc: hasPrep
-          ? `${noteCount} saved workspace note${noteCount === 1 ? '' : 's'} are ready to support your story.`
-          : 'Use your application context to find gaps, shape STAR stories, and tailor how you position yourself.',
-        primaryLabel: 'Open Gap Analysis',
-        primaryAction: () => launchWorkspaceTool(SECTIONS.TOOLS, 'gap'),
+        state: tailorState,
+        desc: 'Use your application context to find gaps, shape STAR stories, and tailor how you position yourself.',
+        summary: tailorComplete
+          ? `${appGapResults.length + appStarStories.length + appTailorRuns.length} saved tailoring artifact${appGapResults.length + appStarStories.length + appTailorRuns.length === 1 ? '' : 's'}${latestStarStory?.date || latestGapResult?.date || latestTailorRun?.date ? `, most recently ${timeAgo(latestEntry([latestStarStory, latestGapResult, latestTailorRun].filter(Boolean)).date)}` : ''}.`
+          : hasPrep
+            ? `${noteCount} workspace note${noteCount === 1 ? '' : 's'} saved to support your stories.`
+            : 'Start with gap analysis or a STAR story to tailor your pitch.',
+        actions: [
+          { label: 'Gap Analysis', onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'gap'), variant: 'primary' },
+          { label: 'STAR Builder', onClick: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'star'), variant: 'secondary' },
+          { label: 'Resume Checker', onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'resumechecker'), variant: 'ghost' },
+          { label: 'Cover Letter', onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'coverletter'), variant: 'ghost' },
+        ],
       },
       {
         id: 'predict',
         step: '4',
         title: 'Predict Questions',
-        status: hasJd ? 'Ready' : 'Needs JD',
-        tone: hasJd ? 'indigo' : 'yellow',
+        state: predictState,
         desc: hasJd
           ? 'Generate likely interview questions from the saved JD before your next practice run.'
           : 'Save the JD first so JobSensei can predict role-specific questions instead of generic ones.',
-        primaryLabel: hasJd ? 'Open Predictor' : 'Capture First',
-        primaryAction: () => hasJd ? launchWorkspaceTool(SECTIONS.INTERVIEW, 'predictor') : setWorkspaceTab('jd'),
+        summary: latestPredictorRun?.date
+          ? `Latest question set generated ${timeAgo(latestPredictorRun.date)}.`
+          : hasJd
+            ? 'No question set generated for this application yet.'
+            : 'Capture the JD first to generate targeted questions.',
+        actions: [
+          {
+            label: hasJd ? 'Question Predictor' : 'Capture First',
+            onClick: () => hasJd ? launchWorkspaceTool(SECTIONS.INTERVIEW, 'predictor') : setWorkspaceTab('jd'),
+            variant: 'primary',
+          },
+        ],
       },
       {
         id: 'mock',
         step: '5',
         title: 'Mock Interview',
-        status: hasJd ? 'Ready' : 'Optional',
-        tone: 'teal',
-        desc: interviewSessions.length > 0
-          ? `You have ${interviewSessions.length} saved mock interview session${interviewSessions.length === 1 ? '' : 's'} in this project.`
-          : 'Run a mock interview with the active application context and save a scored session.',
-        primaryLabel: 'Start Mock Interview',
-        primaryAction: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'interview'),
+        state: mockState,
+        desc: 'Run a mock interview with the active application context and save a scored session.',
+        summary: latestInterviewSession?.date
+          ? `Latest mock ${timeAgo(latestInterviewSession.date)}${latestInterviewSession.score != null ? ` at ${Number.isInteger(latestInterviewSession.score) ? latestInterviewSession.score : latestInterviewSession.score.toFixed(1)}/10` : ''}.`
+          : hasJd
+            ? 'No saved mock interview for this application yet.'
+            : 'Add the JD first so the mock interview stays role-specific.',
+        actions: [
+          {
+            label: hasJd ? 'Start Mock Interview' : 'Capture First',
+            onClick: () => hasJd ? launchWorkspaceTool(SECTIONS.INTERVIEW, 'interview') : setWorkspaceTab('jd'),
+            variant: 'primary',
+          },
+        ],
       },
       {
         id: 'followup',
         step: '6',
         title: 'Follow-up',
-        status: hasPrep ? 'Ready' : 'Ready',
-        tone: 'indigo',
+        state: followupState,
         desc: 'Draft the post-interview follow-up while the application context and your notes are still fresh.',
-        primaryLabel: 'Draft Follow-up',
-        primaryAction: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'followup'),
+        summary: latestFollowupRun?.date
+          ? `Latest follow-up drafted ${timeAgo(latestFollowupRun.date)}.`
+          : 'No follow-up draft saved for this application yet.',
+        actions: [
+          { label: 'Draft Follow-up', onClick: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'followup'), variant: 'primary' },
+          { label: 'Workspace Notes', onClick: () => setWorkspaceTab('notes'), variant: 'ghost' },
+        ],
       },
+    ]
+
+    const completedSteps = stepCards.filter(card => card.state === 'complete').length
+    const nextStep = stepCards.find(card => card.state !== 'complete') || null
+    const nextStepAction = nextStep?.actions?.find(action => !action.disabled && action.onClick) || nextStep?.actions?.[0] || null
+    const advancedTools = [
+      { label: 'Transferable Skills Coach', section: SECTIONS.TOOLS, toolId: 'transferable', count: appTransferableRuns.length },
+      { label: 'Tone Analyzer', section: SECTIONS.INTERVIEW, toolId: 'tone', count: appToneRuns.length },
+      { label: 'Elevator Pitch', section: SECTIONS.INTERVIEW, toolId: 'pitch', count: appPitchRuns.length },
+      { label: 'LinkedIn Auditor', section: SECTIONS.TOOLS, toolId: 'linkedin' },
+      { label: 'Visual Review', section: SECTIONS.TOOLS, toolId: 'visualreview' },
+      { label: 'Negotiation Sim', section: SECTIONS.TOOLS, toolId: 'negotiation' },
+      { label: 'Salary Coach', section: SECTIONS.TOOLS, toolId: 'salarycoach' },
     ]
 
     return (
@@ -1256,15 +1401,18 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
               <p className="text-slate-300 text-sm leading-relaxed">
                 This workspace keeps capture, research, story tailoring, question prediction, mock interviews, and follow-up centered on one application.
               </p>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300">
-                  {app.stage}
-                </span>
-                <span className={`px-2.5 py-1 rounded-full text-[11px] border ${hasJd ? 'border-teal-500/30 bg-teal-500/10 text-teal-300' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'}`}>
-                  {hasJd ? 'JD ready' : 'Needs JD'}
-                </span>
-                {hasResearch && (
-                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300">
+                    {app.stage}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
+                    {completedSteps}/6 steps complete
+                  </span>
+                  <span className={`px-2.5 py-1 rounded-full text-[11px] border ${hasJd ? 'border-teal-500/30 bg-teal-500/10 text-teal-300' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'}`}>
+                    {hasJd ? 'JD ready' : 'Needs JD'}
+                  </span>
+                  {hasResearch && (
+                    <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
                     Research
                   </span>
                 )}
@@ -1277,6 +1425,11 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
             </div>
 
             <div className="flex gap-2 flex-wrap">
+              {nextStepAction && (
+                <button onClick={nextStepAction.onClick} className="btn-primary text-xs">
+                  {completedSteps === stepCards.length ? 'Review Workspace' : `Continue ${nextStep.title}`}
+                </button>
+              )}
               <button onClick={() => setWorkspaceTab('notes')} className="btn-ghost text-xs">
                 Workspace Notes
               </button>
@@ -1290,23 +1443,40 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
               )}
             </div>
           </div>
+
+          <div className="grid sm:grid-cols-3 gap-3 mt-4">
+            <div className="rounded-2xl border border-navy-600 bg-navy-950/60 px-4 py-3">
+              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Next Up</div>
+              <div className="text-white text-sm font-display font-semibold">{nextStep ? nextStep.title : 'Workflow complete'}</div>
+              <div className="text-slate-400 text-xs mt-1">
+                {nextStep ? nextStep.summary : 'All core steps have saved output for this application.'}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-navy-600 bg-navy-950/60 px-4 py-3">
+              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Latest Activity</div>
+              <div className="text-white text-sm font-display font-semibold">
+                {latestWorkspaceActivity?.date ? timeAgo(latestWorkspaceActivity.date) : 'No saved activity yet'}
+              </div>
+              <div className="text-slate-400 text-xs mt-1">
+                {latestWorkspaceActivity?.date ? `Saved on ${formatDate(latestWorkspaceActivity.date)}` : 'Run a tool to start building this workspace.'}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-navy-600 bg-navy-950/60 px-4 py-3">
+              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Workspace Notes</div>
+              <div className="text-white text-sm font-display font-semibold">{noteCount} saved field{noteCount === 1 ? '' : 's'}</div>
+              <div className="text-slate-400 text-xs mt-1">
+                {hasPrep ? 'Prep notes are already supporting your interview story.' : 'Use notes to capture people, signals, and reminders.'}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-4">
           {stepCards.map(card => {
-            const toneClasses = card.tone === 'yellow'
-              ? 'border-yellow-500/20 bg-yellow-500/5'
-              : card.tone === 'indigo'
-                ? 'border-indigo-500/20 bg-indigo-500/5'
-                : 'border-teal-500/20 bg-teal-500/5'
-            const badgeClasses = card.tone === 'yellow'
-              ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'
-              : card.tone === 'indigo'
-                ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300'
-                : 'border-teal-500/30 bg-teal-500/10 text-teal-300'
+            const status = statusInfo(card.state)
 
             return (
-              <div key={card.id} className={`card ${toneClasses}`}>
+              <div key={card.id} className={`card ${status.card}`}>
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div className="min-w-0">
                     <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-2">
@@ -1314,14 +1484,46 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
                     </div>
                     <h4 className="text-white text-base font-display font-semibold mb-1">{card.title}</h4>
                     <p className="text-slate-400 text-sm leading-relaxed">{card.desc}</p>
+                    <p className="text-slate-500 text-xs mt-2">{card.summary}</p>
                   </div>
-                  <span className={`px-2.5 py-1 rounded-full text-[11px] border whitespace-nowrap ${badgeClasses}`}>
-                    {card.status}
+                  <span className={`px-2.5 py-1 rounded-full text-[11px] border whitespace-nowrap ${status.badge}`}>
+                    {status.label}
                   </span>
                 </div>
-                <button onClick={card.primaryAction} className="btn-ghost text-xs">
-                  {card.primaryLabel}
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  {card.actions.map(action => {
+                    const buttonClass = action.variant === 'primary'
+                      ? 'btn-primary text-xs'
+                      : action.variant === 'secondary'
+                        ? 'btn-secondary text-xs'
+                        : 'btn-ghost text-xs'
+
+                    if (action.href) {
+                      return (
+                        <a
+                          key={action.label}
+                          href={action.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={buttonClass}
+                        >
+                          {action.label}
+                        </a>
+                      )
+                    }
+
+                    return (
+                      <button
+                        key={action.label}
+                        onClick={action.onClick}
+                        disabled={action.disabled}
+                        className={buttonClass}
+                      >
+                        {action.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             )
           })}
@@ -1330,28 +1532,34 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
         <div className="card">
           <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
             <div>
-              <div className="text-white text-sm font-display font-semibold">More tools for this application</div>
-              <div className="text-slate-400 text-xs">The older tool pages still exist and open with this application context.</div>
+              <div className="text-white text-sm font-display font-semibold">Advanced tools</div>
+              <div className="text-slate-400 text-xs">These stay available for this application, but they sit outside the main guided workflow.</div>
             </div>
+            <button onClick={() => setShowAdvancedTools(prev => !prev)} className="btn-ghost text-xs">
+              {showAdvancedTools ? 'Hide advanced tools' : 'Show advanced tools'}
+            </button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: 'STAR Builder', section: SECTIONS.INTERVIEW, toolId: 'star' },
-              { label: 'Resume Checker', section: SECTIONS.TOOLS, toolId: 'resumechecker' },
-              { label: 'Cover Letter', section: SECTIONS.TOOLS, toolId: 'coverletter' },
-              { label: 'LinkedIn Auditor', section: SECTIONS.TOOLS, toolId: 'linkedin' },
-              { label: 'Negotiation Sim', section: SECTIONS.TOOLS, toolId: 'negotiation' },
-              { label: 'Salary Coach', section: SECTIONS.TOOLS, toolId: 'salarycoach' },
-            ].map(item => (
-              <button
-                key={item.label}
-                onClick={() => launchWorkspaceTool(item.section, item.toolId)}
-                className="btn-ghost text-xs"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+          {showAdvancedTools && (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {advancedTools.map(item => (
+                <button
+                  key={item.label}
+                  onClick={() => launchWorkspaceTool(item.section, item.toolId)}
+                  className="card-hover text-left"
+                >
+                  <div className="flex items-center justify-between gap-3 mb-1">
+                    <div className="text-white text-sm font-body font-medium">{item.label}</div>
+                    {typeof item.count === 'number' && item.count > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
+                        {item.count}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-slate-400 text-xs">Open with this application context.</div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     )
