@@ -33,7 +33,23 @@ function applicationLabel(app) {
   return `${app.company}${app.role ? ` - ${app.role}` : ''}`
 }
 
-function ActionCard({ title, desc, cta, onClick, icon: Icon, tone = 'teal' }) {
+function matchesApplicationEntry(app, entry) {
+  if (!app || !entry) return false
+  const appLabel = applicationLabel(app)
+
+  if (entry.applicationId && entry.applicationId === app.id) return true
+  if (entry.applicationLabel && entry.applicationLabel === appLabel) return true
+
+  const entryJd = (entry.jdSnippet || entry.inputs?.jd || '').trim()
+  const currentJd = (app.jdText || '').trim()
+  if (entryJd && currentJd) {
+    return currentJd.startsWith(entryJd) || entryJd.startsWith(currentJd.slice(0, Math.min(currentJd.length, entryJd.length)))
+  }
+
+  return false
+}
+
+function ActionCard({ title, desc, cta, onClick, icon: Icon, tone = 'teal', badge = null }) {
   const toneClasses = tone === 'yellow'
     ? 'border-yellow-500/20 bg-yellow-500/5'
     : tone === 'indigo'
@@ -52,6 +68,11 @@ function ActionCard({ title, desc, cta, onClick, icon: Icon, tone = 'teal' }) {
           <Icon size={18} />
         </div>
         <div className="min-w-0 flex-1">
+          {badge && (
+            <div className="text-slate-400 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">
+              {badge}
+            </div>
+          )}
           <h3 className="text-white text-sm font-display font-semibold mb-1">{title}</h3>
           <p className="text-slate-400 text-sm leading-relaxed mb-4">{desc}</p>
           <button onClick={onClick} className="btn-ghost text-xs">
@@ -59,6 +80,24 @@ function ActionCard({ title, desc, cta, onClick, icon: Icon, tone = 'teal' }) {
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+function MetricCard({ label, value, hint, tone = 'slate' }) {
+  const valueClass = tone === 'yellow'
+    ? 'text-yellow-300'
+    : tone === 'indigo'
+      ? 'text-indigo-300'
+      : tone === 'teal'
+        ? 'text-teal-300'
+        : 'text-white'
+
+  return (
+    <div className="rounded-2xl border border-navy-600 bg-navy-950/60 px-4 py-3">
+      <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{label}</div>
+      <div className={`text-lg font-display font-semibold ${valueClass}`}>{value}</div>
+      <div className="text-slate-400 text-xs mt-1">{hint}</div>
     </div>
   )
 }
@@ -72,20 +111,119 @@ export default function TodayPage() {
   const interviewSessions = getProjectData('interviewSessions') || []
   const toolsHistory = getProjectData('toolsHistory') || []
   const topics = getProjectData('topics') || []
+  const gapResults = getProjectData('gapResults') || []
+  const starStories = getProjectData('starStories') || []
 
-  const activeNotes = activeApplication ? companyNotes[activeApplication.id] || {} : {}
-  const hasJd = !!activeApplication?.jdText?.trim()
-  const hasResearch = hasResearchData(activeNotes)
-  const hasPrep = hasPrepNotes(activeNotes)
+  const suggestedFocus = !activeApplication && applications.length > 0
+    ? [...applications].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+    : null
+  const focusApplication = activeApplication || suggestedFocus || null
+  const focusNotes = focusApplication ? companyNotes[focusApplication.id] || {} : {}
+  const focusHasJd = !!focusApplication?.jdText?.trim()
+  const focusHasResearch = hasResearchData(focusNotes)
+  const focusHasPrep = hasPrepNotes(focusNotes)
+  const focusGapResults = focusApplication ? gapResults.filter(entry => matchesApplicationEntry(focusApplication, entry)) : []
+  const focusStarStories = focusApplication ? starStories.filter(entry => matchesApplicationEntry(focusApplication, entry)) : []
+  const focusInterviewSessions = focusApplication ? interviewSessions.filter(entry => matchesApplicationEntry(focusApplication, entry)) : []
+  const focusPredictorRuns = focusApplication ? toolsHistory.filter(entry => entry.tool === 'predictor' && matchesApplicationEntry(focusApplication, entry)) : []
+  const focusFollowupRuns = focusApplication ? toolsHistory.filter(entry => entry.tool === 'followup' && matchesApplicationEntry(focusApplication, entry)) : []
+  const focusTailorRuns = focusApplication
+    ? toolsHistory.filter(entry => ['coverletter', 'resumechecker', 'transferable'].includes(entry.tool) && matchesApplicationEntry(focusApplication, entry))
+    : []
   const dueTopics = topics.filter(topic => isDueToday(topic.nextReview) && topic.status === 'In Progress')
   const overdueApps = getOverdueApps(applications)
+  const focusOverdue = focusApplication ? overdueApps.find(app => app.id === focusApplication.id) : null
+
+  const focusSteps = focusApplication ? [
+    {
+      id: 'capture',
+      title: 'Capture Job',
+      state: focusHasJd ? 'complete' : 'ready',
+      desc: focusHasJd
+        ? 'The JD is saved and powering the rest of the application workflow.'
+        : 'Paste the JD once so research, prediction, and interviews stay aligned.',
+      cta: focusHasJd ? 'Review Capture' : 'Add JD',
+      onClick: () => openTrackerApplication(focusApplication.id, 'jd'),
+      icon: ClipboardCheck,
+      tone: focusHasJd ? 'teal' : 'yellow',
+    },
+    {
+      id: 'research',
+      title: 'Research Company',
+      state: focusHasResearch ? 'complete' : 'ready',
+      desc: focusHasResearch
+        ? 'Company context is saved and ready to reuse across the workspace.'
+        : 'Add wow facts, culture signals, and open questions before practicing.',
+      cta: focusHasResearch ? 'Review Research' : 'Open Research',
+      onClick: () => openTrackerApplication(focusApplication.id, 'research'),
+      icon: Search,
+      tone: focusHasResearch ? 'indigo' : 'indigo',
+    },
+    {
+      id: 'tailor',
+      title: 'Tailor Story',
+      state: focusGapResults.length > 0 || focusStarStories.length > 0 || focusTailorRuns.length > 0
+        ? 'complete'
+        : focusHasPrep
+          ? 'in-progress'
+          : focusHasJd || focusHasResearch
+            ? 'ready'
+            : 'blocked',
+      desc: focusGapResults.length > 0 || focusStarStories.length > 0 || focusTailorRuns.length > 0
+        ? 'You already have saved tailoring work for this role.'
+        : 'Use gap analysis and STAR stories to make your answers sound role-specific.',
+      cta: 'Open Gap Analysis',
+      onClick: () => launchTool(SECTIONS.TOOLS, 'gap'),
+      icon: Sparkles,
+      tone: 'teal',
+    },
+    {
+      id: 'predict',
+      title: 'Predict Questions',
+      state: focusPredictorRuns.length > 0 ? 'complete' : focusHasJd ? 'ready' : 'blocked',
+      desc: focusPredictorRuns.length > 0
+        ? 'A question set is already saved for this role.'
+        : 'Generate likely interview questions from the saved JD.',
+      cta: focusHasJd ? 'Open Predictor' : 'Add JD First',
+      onClick: () => focusHasJd ? launchTool(SECTIONS.INTERVIEW, 'predictor') : openTrackerApplication(focusApplication.id, 'jd'),
+      icon: Target,
+      tone: 'indigo',
+    },
+    {
+      id: 'mock',
+      title: 'Mock Interview',
+      state: focusInterviewSessions.length > 0 ? 'complete' : focusHasJd ? 'ready' : 'blocked',
+      desc: focusInterviewSessions.length > 0
+        ? 'You already have a saved mock interview for this role.'
+        : 'Run a role-specific practice interview and save the session.',
+      cta: focusHasJd ? 'Start Mock Interview' : 'Add JD First',
+      onClick: () => focusHasJd ? launchTool(SECTIONS.INTERVIEW, 'interview') : openTrackerApplication(focusApplication.id, 'jd'),
+      icon: Mic,
+      tone: 'teal',
+    },
+    {
+      id: 'followup',
+      title: 'Follow-up',
+      state: focusFollowupRuns.length > 0 ? 'complete' : 'ready',
+      desc: focusFollowupRuns.length > 0
+        ? 'A follow-up draft is already saved for this application.'
+        : 'Draft the follow-up while the interview context is still fresh.',
+      cta: 'Draft Follow-up',
+      onClick: () => launchTool(SECTIONS.INTERVIEW, 'followup'),
+      icon: Mail,
+      tone: 'yellow',
+    },
+  ] : []
+
+  const completedFocusSteps = focusSteps.filter(step => step.state === 'complete').length
+  const nextFocusStep = focusSteps.find(step => step.state !== 'complete') || null
 
   const recentItems = [
     ...interviewSessions.map(session => ({
       id: session.id,
       date: session.date,
       title: session.mode || 'Interview session',
-      subtitle: session.score != null ? `${session.score}/10 score` : 'Mock interview saved',
+      subtitle: `${session.applicationLabel || 'Saved in this project'}${session.score != null ? ` - ${session.score}/10` : ''}`,
     })),
     ...toolsHistory.map(item => ({
       id: item.id,
@@ -97,117 +235,119 @@ export default function TodayPage() {
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 5)
 
-  const heroTitle = activeApplication
-    ? applicationLabel(activeApplication)
-    : applications.length > 0
-      ? 'Choose an application to continue'
-      : 'Start your first application'
+  const heroTitle = focusApplication
+    ? applicationLabel(focusApplication)
+    : 'Start your first application'
 
-  let heroCopy = 'Keep your search moving with one clear next step.'
-  if (!activeApplication && applications.length === 0) {
-    heroCopy = 'Add a role, save the JD once, and JobSensei will turn it into a guided prep workspace.'
-  } else if (!activeApplication) {
-    heroCopy = 'Open Applications and set one role active so Today can guide the rest of your workflow.'
-  } else if (!hasJd) {
-    heroCopy = 'Capture the JD first. That unlocks better research, better question prediction, and better mock interviews.'
-  } else if (!hasResearch) {
-    heroCopy = 'Research is the next leverage point. Save company context once, then reuse it across the whole prep flow.'
-  } else if (!hasPrep) {
-    heroCopy = 'Your context is ready. Tailor your story next so your answers sound role-specific instead of generic.'
+  let heroCopy = 'Use Today to keep the right application moving without bouncing between tools.'
+  if (!focusApplication) {
+    heroCopy = 'Add a company and role first. JobSensei will turn it into one guided workspace with research, story prep, practice, and follow-up.'
+  } else if (!activeApplication && suggestedFocus) {
+    heroCopy = `No application is active right now, so Today is recommending ${applicationLabel(suggestedFocus)} as your next focus.`
+  } else if (nextFocusStep) {
+    heroCopy = `Next up: ${nextFocusStep.title}. ${nextFocusStep.desc}`
   } else {
-    heroCopy = 'Your workspace is in good shape. Practice, predict likely questions, and ship the strongest follow-up.'
+    heroCopy = 'Your core workflow is complete for this application. Keep practicing, following up, or refining advanced tools.'
   }
 
-  const primaryAction = !activeApplication
+  const primaryAction = focusApplication
     ? {
-        label: applications.length > 0 ? 'Open Applications' : 'Add Application',
-        onClick: () => setActiveSection(SECTIONS.APPLICATIONS),
+        label: nextFocusStep ? `Continue ${nextFocusStep.title}` : 'Open Workspace',
+        onClick: nextFocusStep ? nextFocusStep.onClick : () => openTrackerApplication(focusApplication.id, 'overview'),
       }
     : {
-        label: 'Open Workspace',
-        onClick: () => openTrackerApplication(activeApplication.id, 'overview'),
+        label: 'Open Applications',
+        onClick: () => setActiveSection(SECTIONS.APPLICATIONS),
       }
 
   const actionCards = []
 
-  if (!activeApplication) {
+  if (!focusApplication) {
     actionCards.push({
-      title: applications.length > 0 ? 'Choose Your Focus' : 'Add Your First Application',
-      desc: applications.length > 0
-        ? 'Pick one role as the active application so Today can guide the next steps.'
-        : 'Start in Applications, add a company and role, then save the JD once.',
+      title: 'Add Your First Application',
+      desc: 'Start in Applications, add a company and role, then create your first workspace.',
       cta: 'Open Applications',
       onClick: () => setActiveSection(SECTIONS.APPLICATIONS),
       icon: Briefcase,
       tone: 'teal',
-    })
-  } else if (!hasJd) {
-    actionCards.push({
-      title: 'Capture Job Details',
-      desc: 'Paste the job description once so the rest of the workflow can use the same context.',
-      cta: 'Open Capture',
-      onClick: () => openTrackerApplication(activeApplication.id, 'jd'),
-      icon: ClipboardCheck,
-      tone: 'yellow',
-    })
-  } else if (!hasResearch) {
-    actionCards.push({
-      title: 'Research Company',
-      desc: 'Fill company context, wow facts, culture signals, and open questions before interview prep.',
-      cta: 'Open Research',
-      onClick: () => openTrackerApplication(activeApplication.id, 'research'),
-      icon: Search,
-      tone: 'indigo',
+      badge: 'Get started',
     })
   } else {
     actionCards.push({
-      title: 'Tailor Your Story',
-      desc: 'Use the active application to run gap analysis and shape stronger, role-specific stories.',
-      cta: 'Open Gap Analysis',
-      onClick: () => launchTool(SECTIONS.TOOLS, 'gap'),
-      icon: Sparkles,
-      tone: 'teal',
+      title: nextFocusStep ? `Next Step: ${nextFocusStep.title}` : 'Application Workflow Complete',
+      desc: nextFocusStep
+        ? nextFocusStep.desc
+        : 'The core workflow is in place. Open the workspace to review, practice, or use advanced tools.',
+      cta: nextFocusStep ? nextFocusStep.cta : 'Open Workspace',
+      onClick: nextFocusStep ? nextFocusStep.onClick : () => openTrackerApplication(focusApplication.id, 'overview'),
+      icon: nextFocusStep?.icon || Sparkles,
+      tone: nextFocusStep?.tone || 'teal',
+      badge: `${completedFocusSteps}/6 steps complete`,
     })
+
+    if (focusOverdue) {
+      actionCards.push({
+        title: 'Follow-Up Due',
+        desc: `${applicationLabel(focusOverdue)} has been waiting ${timeAgo(focusOverdue.stageUpdatedAt || focusOverdue.date)}. Draft the next message while the thread is still alive.`,
+        cta: 'Draft Follow-Up',
+        onClick: () => launchTool(SECTIONS.INTERVIEW, 'followup'),
+        icon: Mail,
+        tone: 'yellow',
+        badge: focusOverdue.stage,
+      })
+    } else if (focusHasJd && focusInterviewSessions.length === 0) {
+      actionCards.push({
+        title: 'Run A Mock Interview',
+        desc: 'Practice with the active application context and save your first scored session.',
+        cta: 'Start Mock Interview',
+        onClick: () => launchTool(SECTIONS.INTERVIEW, 'interview'),
+        icon: Mic,
+        tone: 'teal',
+        badge: 'Practice',
+      })
+    } else if (focusHasJd && focusPredictorRuns.length === 0) {
+      actionCards.push({
+        title: 'Predict Likely Questions',
+        desc: 'Generate likely interview questions from this role before your next practice run.',
+        cta: 'Open Predictor',
+        onClick: () => launchTool(SECTIONS.INTERVIEW, 'predictor'),
+        icon: Target,
+        tone: 'indigo',
+        badge: 'Interview prep',
+      })
+    }
   }
 
-  if (activeApplication) {
-    actionCards.push({
-      title: 'Run A Mock Interview',
-      desc: 'Practice with the active application context and save a scored session to your history.',
-      cta: 'Start Mock Interview',
-      onClick: () => launchTool(SECTIONS.INTERVIEW, 'interview'),
-      icon: Mic,
-      tone: 'teal',
-    })
-  }
-
-  if (overdueApps.length > 0) {
-    const nextFollowUp = overdueApps[0]
-    actionCards.push({
-      title: 'Follow-Up Due',
-      desc: `${applicationLabel(nextFollowUp)} has been waiting ${timeAgo(nextFollowUp.stageUpdatedAt || nextFollowUp.date)}. Open the workspace and send the next message.`,
-      cta: 'Open Due Application',
-      onClick: () => openTrackerApplication(nextFollowUp.id, 'overview'),
-      icon: Mail,
-      tone: 'yellow',
-    })
-  } else if (dueTopics.length > 0) {
+  if (dueTopics.length > 0) {
     actionCards.push({
       title: 'Reviews Due',
-      desc: `${dueTopics.length} learning review${dueTopics.length === 1 ? '' : 's'} are due today. Keep your prep sharp while roles are in motion.`,
+      desc: `${dueTopics.length} learning review${dueTopics.length === 1 ? '' : 's'} are due today. Keep your prep sharp while applications are moving.`,
       cta: 'Open Review',
       onClick: () => openLearningTopic(dueTopics[0].id, 'quiz'),
       icon: BookOpen,
       tone: 'indigo',
+      badge: 'Learning',
     })
-  } else if (activeApplication && hasJd) {
+  } else if (overdueApps.length > 0 && !focusOverdue) {
+    const nextFollowUp = overdueApps[0]
     actionCards.push({
-      title: 'Predict Likely Questions',
-      desc: 'Generate likely interview questions from the active role before your next practice run.',
-      cta: 'Open Predictor',
-      onClick: () => launchTool(SECTIONS.INTERVIEW, 'predictor'),
-      icon: Target,
-      tone: 'indigo',
+      title: 'Another Follow-Up Is Waiting',
+      desc: `${applicationLabel(nextFollowUp)} needs attention ${timeAgo(nextFollowUp.stageUpdatedAt || nextFollowUp.date)} after the last stage change.`,
+      cta: 'Open Application',
+      onClick: () => openTrackerApplication(nextFollowUp.id, 'overview'),
+      icon: Mail,
+      tone: 'yellow',
+      badge: 'Needs follow-up',
+    })
+  } else if (applications.length > 1) {
+    actionCards.push({
+      title: 'Review Your Pipeline',
+      desc: `${applications.length} applications are in play. Use Applications to switch focus, update stages, or catch stalled roles.`,
+      cta: 'Open Applications',
+      onClick: () => setActiveSection(SECTIONS.APPLICATIONS),
+      icon: Briefcase,
+      tone: 'teal',
+      badge: 'Pipeline',
     })
   }
 
@@ -216,7 +356,7 @@ export default function TodayPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className="section-title">{profile?.name ? `Today, ${profile.name}` : 'Today'}</h2>
-          <p className="section-sub">One place to see what matters next in your search.</p>
+          <p className="section-sub">One place to see the next real move in your job search.</p>
         </div>
         {activeProject && (
           <div className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/20 rounded-xl px-3 py-2">
@@ -232,20 +372,28 @@ export default function TodayPage() {
             <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">Active Focus</div>
             <h3 className="font-display font-semibold text-white text-xl mb-2">{heroTitle}</h3>
             <p className="text-slate-300 text-sm leading-relaxed">{heroCopy}</p>
-            {activeApplication && (
+            {focusApplication && (
               <div className="flex flex-wrap gap-1.5 mt-3">
                 <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300">
-                  {activeApplication.stage}
+                  {focusApplication.stage}
                 </span>
-                <span className={`px-2.5 py-1 rounded-full text-[11px] border ${hasJd ? 'border-teal-500/30 bg-teal-500/10 text-teal-300' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'}`}>
-                  {hasJd ? 'JD ready' : 'Needs JD'}
+                <span className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
+                  {completedFocusSteps}/6 steps complete
                 </span>
-                {hasResearch && (
+                {!activeApplication && suggestedFocus && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
+                    Suggested focus
+                  </span>
+                )}
+                <span className={`px-2.5 py-1 rounded-full text-[11px] border ${focusHasJd ? 'border-teal-500/30 bg-teal-500/10 text-teal-300' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'}`}>
+                  {focusHasJd ? 'JD ready' : 'Needs JD'}
+                </span>
+                {focusHasResearch && (
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
                     Research
                   </span>
                 )}
-                {hasPrep && (
+                {focusHasPrep && (
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
                     Notes
                   </span>
@@ -263,12 +411,47 @@ export default function TodayPage() {
             </button>
           </div>
         </div>
+
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-4">
+          <MetricCard
+            label="Workspace Progress"
+            value={focusApplication ? `${completedFocusSteps}/6` : '0/6'}
+            hint={focusApplication ? (nextFocusStep ? `Next: ${nextFocusStep.title}` : 'Core flow complete') : 'Pick an application to begin'}
+            tone="teal"
+          />
+          <MetricCard
+            label="Applications"
+            value={applications.length}
+            hint={applications.length === 1 ? 'One role in play' : 'Roles currently in play'}
+            tone="indigo"
+          />
+          <MetricCard
+            label="Follow-Ups"
+            value={overdueApps.length}
+            hint={overdueApps.length > 0 ? 'Applications waiting on a follow-up' : 'No follow-up pressure today'}
+            tone={overdueApps.length > 0 ? 'yellow' : 'slate'}
+          />
+          <MetricCard
+            label="Reviews Due"
+            value={dueTopics.length}
+            hint={dueTopics.length > 0 ? 'Learning reviews due today' : 'No reviews due right now'}
+            tone={dueTopics.length > 0 ? 'indigo' : 'slate'}
+          />
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4">
-        {actionCards.map(card => (
-          <ActionCard key={card.title} {...card} />
-        ))}
+      <div>
+        <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+          <div>
+            <h3 className="font-display font-semibold text-white text-base">Recommended Next Actions</h3>
+            <p className="text-slate-400 text-sm">Shortcuts based on your active workflow, due reviews, and follow-up pressure.</p>
+          </div>
+        </div>
+        <div className="grid lg:grid-cols-3 gap-4">
+          {actionCards.slice(0, 3).map(card => (
+            <ActionCard key={`${card.title}-${card.badge || 'default'}`} {...card} />
+          ))}
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-[1.1fr,0.9fr] gap-4">
@@ -297,7 +480,9 @@ export default function TodayPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-4 py-5">
-              <p className="text-slate-400 text-sm">No learning reviews are due right now. Good time to keep momentum on your active application.</p>
+              <p className="text-slate-400 text-sm">
+                No learning reviews are due right now. {nextFocusStep ? `A good next move is ${nextFocusStep.title.toLowerCase()}.` : 'Use the extra time to keep your active applications moving.'}
+              </p>
             </div>
           )}
         </div>
@@ -305,8 +490,8 @@ export default function TodayPage() {
         <div className="card">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-display font-semibold text-white text-base">Recent Activity</h3>
-            {activeApplication && (
-              <button onClick={() => openTrackerApplication(activeApplication.id, 'overview')} className="btn-ghost text-xs">
+            {focusApplication && (
+              <button onClick={() => openTrackerApplication(focusApplication.id, 'overview')} className="btn-ghost text-xs">
                 Open Workspace
               </button>
             )}
@@ -328,7 +513,7 @@ export default function TodayPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-4 py-5">
-              <p className="text-slate-400 text-sm">No recent saved activity yet. Start with one application and the workspace will begin building your history.</p>
+              <p className="text-slate-400 text-sm">No saved activity yet. Create one application and JobSensei will start building a visible prep trail here.</p>
             </div>
           )}
         </div>
