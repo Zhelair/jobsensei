@@ -2,16 +2,14 @@ import React, { useState, useRef } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
 import {
-  LayoutDashboard, Mic, BookOpen, Wrench, Briefcase,
+  LayoutDashboard, BookOpen, Briefcase,
   Settings, FolderOpen, Plus, Check, X, Edit3, Download, Trash2, Upload, FolderArchive
 } from 'lucide-react'
 
 const MOBILE_NAV = [
-  { id: SECTIONS.DASHBOARD, icon: LayoutDashboard, label: 'Home' },
-  { id: SECTIONS.INTERVIEW, icon: Mic, label: 'Interview' },
+  { id: SECTIONS.TODAY, icon: LayoutDashboard, label: 'Today' },
+  { id: SECTIONS.APPLICATIONS, icon: Briefcase, label: 'Apps' },
   { id: SECTIONS.LEARNING, icon: BookOpen, label: 'Learn' },
-  { id: SECTIONS.TOOLS, icon: Wrench, label: 'Prep Tools' },
-  { id: SECTIONS.TRACKER, icon: Briefcase, label: 'Tracker' },
 ]
 
 export default function BottomNav() {
@@ -31,8 +29,18 @@ export default function BottomNav() {
   const [importing, setImporting] = useState(false)
   const fileRef = useRef(null)
 
+  function isNavActive(id) {
+    if (id === SECTIONS.APPLICATIONS) {
+      return activeSection === SECTIONS.APPLICATIONS || activeSection === SECTIONS.TRACKER
+    }
+    if (id === SECTIONS.TODAY) {
+      return activeSection === SECTIONS.TODAY || activeSection === SECTIONS.DASHBOARD
+    }
+    return activeSection === id
+  }
+
   function handleNavClick(id) {
-    if (activeSection === id) setNavKey(k => k + 1)
+    if (isNavActive(id)) setNavKey(k => k + 1)
     setActiveSection(id)
     setShowProjects(false)
   }
@@ -194,7 +202,7 @@ export default function BottomNav() {
             key={id}
             onClick={() => handleNavClick(id)}
             className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs transition-colors ${
-              activeSection === id && !showProjects ? 'text-teal-400' : 'text-slate-500'
+              isNavActive(id) && !showProjects ? 'text-teal-400' : 'text-slate-500'
             }`}
           >
             <Icon size={19} />

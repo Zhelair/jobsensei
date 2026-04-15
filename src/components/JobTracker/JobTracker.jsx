@@ -40,11 +40,9 @@ const STAGE_COLORS = {
 }
 const TABS = ['Kanban', 'Stats', 'Workspace', 'Offers']
 const WORKSPACE_TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'jd', label: 'JD' },
+  { id: 'overview', label: 'Workspace' },
+  { id: 'jd', label: 'Capture' },
   { id: 'research', label: 'Research' },
-  { id: 'prep', label: 'Prep' },
-  { id: 'tools', label: 'Prep Tools' },
   { id: 'notes', label: 'Notes' },
 ]
 
@@ -115,6 +113,7 @@ export default function JobTracker() {
   const [bulkIntakeMsg, setBulkIntakeMsg] = useState('')
   const [researchLoading, setResearchLoading] = useState(false)
   const [selectedApp, setSelectedApp] = useState(null)
+  const [selectedWorkspaceTab, setSelectedWorkspaceTab] = useState('overview')
   const [editingApp, setEditingApp] = useState(null)
   const [importMsg, setImportMsg] = useState('')
   const [synced, setSynced] = useState(false)
@@ -124,6 +123,7 @@ export default function JobTracker() {
     if (!pendingTrackerRequest?.applicationId) return
     const targetApp = applications.find(app => app.id === pendingTrackerRequest.applicationId)
     if (!targetApp) return
+    setSelectedWorkspaceTab(pendingTrackerRequest.workspaceTab || 'overview')
     setSelectedApp(targetApp)
     activateApplication(targetApp)
     clearPendingTrackerRequest()
@@ -140,7 +140,8 @@ export default function JobTracker() {
     setTimeout(() => setSynced(false), 2000)
   }
 
-  function openApplication(app) {
+  function openApplication(app, workspaceTab = 'overview') {
+    setSelectedWorkspaceTab(workspaceTab)
     setSelectedApp(app)
     activateApplication(app)
   }
@@ -378,9 +379,13 @@ export default function JobTracker() {
   if (selectedApp) return (
     <ApplicationWorkspaceView
       app={selectedApp}
+      initialTab={selectedWorkspaceTab}
       notes={notes[selectedApp.id] || {}}
       onSaveNotes={n => setNotes(prev => ({ ...prev, [selectedApp.id]: n }))}
-      onBack={() => setSelectedApp(null)}
+      onBack={() => {
+        setSelectedWorkspaceTab('overview')
+        setSelectedApp(null)
+      }}
       onUpdateApp={updates => updateApp(selectedApp.id, updates)}
     />
   )
@@ -398,8 +403,8 @@ export default function JobTracker() {
 
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="section-title">Job Tracker</h2>
-          <p className="section-sub">{applications.length} application{applications.length !== 1 ? 's' : ''}</p>
+          <h2 className="section-title">Applications</h2>
+          <p className="section-sub">{applications.length} application{applications.length !== 1 ? 's' : ''} in your workspace</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <div className="relative">
@@ -840,10 +845,11 @@ function TrackerStats({ applications }) {
 }
 
 // ── Company Notes View ──────────────────────────────────────────────────────
-function ApplicationWorkspaceView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
+function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveNotes, onBack, onUpdateApp }) {
   const { callAI, isConnected } = useAI()
+  const { getProjectData } = useProject()
   const { launchTool } = useApp()
-  const [workspaceTab, setWorkspaceTab] = useState('overview')
+  const [workspaceTab, setWorkspaceTab] = useState(initialTab)
   const [form, setForm] = useState({
     people: '',
     theyMentioned: '',
@@ -862,6 +868,11 @@ function ApplicationWorkspaceView({ app, notes, onSaveNotes, onBack, onUpdateApp
   const [researchMsg, setResearchMsg] = useState('')
   const [cheatSheet, setCheatSheet] = useState('')
   const [cheatLoading, setCheatLoading] = useState(false)
+  const interviewSessions = getProjectData('interviewSessions') || []
+
+  useEffect(() => {
+    setWorkspaceTab(initialTab || 'overview')
+  }, [app.id, initialTab])
 
   const hasJd = jdText.trim().length > 0
   const hasResearch = hasResearchData(form)
@@ -1106,8 +1117,8 @@ function ApplicationWorkspaceView({ app, notes, onSaveNotes, onBack, onUpdateApp
       <div className="card border-teal-500/20 bg-teal-500/5">
         <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
           <div>
-            <div className="text-white text-sm font-display font-semibold">Active job context</div>
-            <div className="text-slate-400 text-xs">This saved JD now powers the main application-aware tools.</div>
+            <div className="text-white text-sm font-display font-semibold">Capture job details</div>
+            <div className="text-slate-400 text-xs">Save the JD once here so the rest of the workspace stays aligned to the same role.</div>
           </div>
           <div className="flex flex-wrap gap-2">
             <span className={`text-xs px-2.5 py-1 rounded-full border ${hasJd ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
@@ -1162,58 +1173,185 @@ function ApplicationWorkspaceView({ app, notes, onSaveNotes, onBack, onUpdateApp
   }
 
   function renderOverviewTab() {
+    const stepCards = [
+      {
+        id: 'capture',
+        step: '1',
+        title: 'Capture Job',
+        status: hasJd ? 'Ready' : 'Needs JD',
+        tone: hasJd ? 'teal' : 'yellow',
+        desc: hasJd
+          ? 'The job description is saved and ready to power the application-aware tools.'
+          : 'Paste the job description once so research, prediction, and mock interviews stay aligned.',
+        primaryLabel: hasJd ? 'Review Capture' : 'Add JD',
+        primaryAction: () => setWorkspaceTab('jd'),
+      },
+      {
+        id: 'research',
+        step: '2',
+        title: 'Research Company',
+        status: hasResearch ? 'Ready' : 'Not Started',
+        tone: hasResearch ? 'indigo' : 'yellow',
+        desc: hasResearch
+          ? 'Company context is saved. You can review it or refresh the notes before the next round.'
+          : 'Fill company context, culture signals, and open questions before you start practicing.',
+        primaryLabel: hasResearch ? 'Review Research' : 'Open Research',
+        primaryAction: () => setWorkspaceTab('research'),
+      },
+      {
+        id: 'tailor',
+        step: '3',
+        title: 'Tailor Story',
+        status: hasPrep ? 'In Progress' : 'Ready',
+        tone: hasPrep ? 'teal' : 'indigo',
+        desc: hasPrep
+          ? `${noteCount} saved workspace note${noteCount === 1 ? '' : 's'} are ready to support your story.`
+          : 'Use your application context to find gaps, shape STAR stories, and tailor how you position yourself.',
+        primaryLabel: 'Open Gap Analysis',
+        primaryAction: () => launchWorkspaceTool(SECTIONS.TOOLS, 'gap'),
+      },
+      {
+        id: 'predict',
+        step: '4',
+        title: 'Predict Questions',
+        status: hasJd ? 'Ready' : 'Needs JD',
+        tone: hasJd ? 'indigo' : 'yellow',
+        desc: hasJd
+          ? 'Generate likely interview questions from the saved JD before your next practice run.'
+          : 'Save the JD first so JobSensei can predict role-specific questions instead of generic ones.',
+        primaryLabel: hasJd ? 'Open Predictor' : 'Capture First',
+        primaryAction: () => hasJd ? launchWorkspaceTool(SECTIONS.INTERVIEW, 'predictor') : setWorkspaceTab('jd'),
+      },
+      {
+        id: 'mock',
+        step: '5',
+        title: 'Mock Interview',
+        status: hasJd ? 'Ready' : 'Optional',
+        tone: 'teal',
+        desc: interviewSessions.length > 0
+          ? `You have ${interviewSessions.length} saved mock interview session${interviewSessions.length === 1 ? '' : 's'} in this project.`
+          : 'Run a mock interview with the active application context and save a scored session.',
+        primaryLabel: 'Start Mock Interview',
+        primaryAction: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'interview'),
+      },
+      {
+        id: 'followup',
+        step: '6',
+        title: 'Follow-up',
+        status: hasPrep ? 'Ready' : 'Ready',
+        tone: 'indigo',
+        desc: 'Draft the post-interview follow-up while the application context and your notes are still fresh.',
+        primaryLabel: 'Draft Follow-up',
+        primaryAction: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'followup'),
+      },
+    ]
+
     return (
       <div className="space-y-4">
-        <div className="grid sm:grid-cols-3 gap-3">
-          <button onClick={() => setWorkspaceTab('jd')} className="card text-left hover:border-teal-500/30 transition-colors">
-            <div className="flex items-center gap-2 mb-2">
-              <FileText size={15} className="text-teal-400" />
-              <span className="text-white text-sm font-display font-semibold">Job Description</span>
+        <div className="card border-teal-500/20 bg-teal-500/5">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="min-w-0 max-w-3xl">
+              <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">Application Workspace</div>
+              <h3 className="text-white text-lg font-display font-semibold mb-1">{app.company}{app.role ? ` - ${app.role}` : ''}</h3>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                This workspace keeps capture, research, story tailoring, question prediction, mock interviews, and follow-up centered on one application.
+              </p>
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300">
+                  {app.stage}
+                </span>
+                <span className={`px-2.5 py-1 rounded-full text-[11px] border ${hasJd ? 'border-teal-500/30 bg-teal-500/10 text-teal-300' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'}`}>
+                  {hasJd ? 'JD ready' : 'Needs JD'}
+                </span>
+                {hasResearch && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
+                    Research
+                  </span>
+                )}
+                {hasPrep && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
+                    Notes
+                  </span>
+                )}
+              </div>
             </div>
-            <div className={`text-xs ${hasJd ? 'text-teal-300' : 'text-yellow-300'}`}>
-              {hasJd ? 'Saved and ready across the app.' : 'Add the JD to unlock better prep.'}
+
+            <div className="flex gap-2 flex-wrap">
+              <button onClick={() => setWorkspaceTab('notes')} className="btn-ghost text-xs">
+                Workspace Notes
+              </button>
+              <button onClick={() => setWorkspaceTab('jd')} className="btn-ghost text-xs">
+                Capture
+              </button>
+              {app.jdUrl && (
+                <a href={app.jdUrl} target="_blank" rel="noopener noreferrer" className="btn-ghost text-xs">
+                  View JD
+                </a>
+              )}
             </div>
-          </button>
-          <button onClick={() => setWorkspaceTab('research')} className="card text-left hover:border-indigo-500/30 transition-colors">
-            <div className="flex items-center gap-2 mb-2">
-              <Search size={15} className="text-indigo-400" />
-              <span className="text-white text-sm font-display font-semibold">Research</span>
-            </div>
-            <div className={`text-xs ${hasResearch ? 'text-indigo-300' : 'text-slate-400'}`}>
-              {hasResearch ? 'Company notes are filled and ready.' : 'Run research to prefill company context.'}
-            </div>
-          </button>
-          <button onClick={() => setWorkspaceTab('prep')} className="card text-left hover:border-yellow-500/30 transition-colors">
-            <div className="flex items-center gap-2 mb-2">
-              <Mic size={15} className="text-yellow-400" />
-              <span className="text-white text-sm font-display font-semibold">Prep</span>
-            </div>
-            <div className={`text-xs ${hasPrep ? 'text-yellow-300' : 'text-slate-400'}`}>
-              {hasPrep ? `${noteCount} workspace note${noteCount === 1 ? '' : 's'} saved.` : 'Add prep notes before the interview.'}
-            </div>
-          </button>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-4">
+          {stepCards.map(card => {
+            const toneClasses = card.tone === 'yellow'
+              ? 'border-yellow-500/20 bg-yellow-500/5'
+              : card.tone === 'indigo'
+                ? 'border-indigo-500/20 bg-indigo-500/5'
+                : 'border-teal-500/20 bg-teal-500/5'
+            const badgeClasses = card.tone === 'yellow'
+              ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'
+              : card.tone === 'indigo'
+                ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300'
+                : 'border-teal-500/30 bg-teal-500/10 text-teal-300'
+
+            return (
+              <div key={card.id} className={`card ${toneClasses}`}>
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="min-w-0">
+                    <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-2">
+                      Step {card.step}
+                    </div>
+                    <h4 className="text-white text-base font-display font-semibold mb-1">{card.title}</h4>
+                    <p className="text-slate-400 text-sm leading-relaxed">{card.desc}</p>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[11px] border whitespace-nowrap ${badgeClasses}`}>
+                    {card.status}
+                  </span>
+                </div>
+                <button onClick={card.primaryAction} className="btn-ghost text-xs">
+                  {card.primaryLabel}
+                </button>
+              </div>
+            )
+          })}
         </div>
 
         <div className="card">
           <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
             <div>
-              <div className="text-white text-sm font-display font-semibold">Interview Prep</div>
-              <div className="text-slate-400 text-xs">Launch the interview tools with this application context.</div>
+              <div className="text-white text-sm font-display font-semibold">More tools for this application</div>
+              <div className="text-slate-400 text-xs">The older tool pages still exist and open with this application context.</div>
             </div>
-            <button onClick={() => setWorkspaceTab('prep')} className="btn-ghost text-xs">Open Prep Tab</button>
           </div>
-          {renderActionGrid(prepActions, SECTIONS.INTERVIEW)}
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-            <div>
-              <div className="text-white text-sm font-display font-semibold">Prep Tools</div>
-              <div className="text-slate-400 text-xs">Documents and support tools tied to this application.</div>
-            </div>
-            <button onClick={() => setWorkspaceTab('tools')} className="btn-ghost text-xs">Open Prep Tools</button>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: 'STAR Builder', section: SECTIONS.INTERVIEW, toolId: 'star' },
+              { label: 'Resume Checker', section: SECTIONS.TOOLS, toolId: 'resumechecker' },
+              { label: 'Cover Letter', section: SECTIONS.TOOLS, toolId: 'coverletter' },
+              { label: 'LinkedIn Auditor', section: SECTIONS.TOOLS, toolId: 'linkedin' },
+              { label: 'Negotiation Sim', section: SECTIONS.TOOLS, toolId: 'negotiation' },
+              { label: 'Salary Coach', section: SECTIONS.TOOLS, toolId: 'salarycoach' },
+            ].map(item => (
+              <button
+                key={item.label}
+                onClick={() => launchWorkspaceTool(item.section, item.toolId)}
+                className="btn-ghost text-xs"
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
-          {renderActionGrid(toolActions.slice(0, 4), SECTIONS.TOOLS)}
         </div>
       </div>
     )
@@ -1339,11 +1477,14 @@ function ApplicationWorkspaceView({ app, notes, onSaveNotes, onBack, onUpdateApp
     <div className="p-4 md:p-6 max-w-5xl mx-auto animate-in">
       <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
         <div>
-          <button onClick={onBack} className="btn-ghost mb-3"><ArrowLeft size={16} /> Back to Tracker</button>
+          <button onClick={onBack} className="btn-ghost mb-3"><ArrowLeft size={16} /> Back to Applications</button>
           <h2 className="section-title">{app.company}</h2>
-          <p className="section-sub">{app.role}</p>
+          <p className="section-sub">{app.role || 'Application workspace'}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
+          <span className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
+            Active workspace
+          </span>
           <span className={`px-2.5 py-1 rounded-full text-[11px] border ${hasJd ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
             {hasJd ? 'JD attached' : 'No JD'}
           </span>

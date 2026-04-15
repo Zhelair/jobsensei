@@ -3,6 +3,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 const AppContext = createContext(null)
 
 export const SECTIONS = {
+  TODAY: 'today',
+  APPLICATIONS: 'applications',
   DASHBOARD: 'dashboard',
   INTERVIEW: 'interview',
   LEARNING: 'learning',
@@ -12,7 +14,7 @@ export const SECTIONS = {
 }
 
 export function AppProvider({ children }) {
-  const [activeSection, setActiveSection] = useState(SECTIONS.DASHBOARD)
+  const [activeSection, setActiveSection] = useState(SECTIONS.TODAY)
   const [drillMode, setDrillMode] = useState(false) // false = Sensei, true = Drill Sergeant
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [profile, setProfile] = useState(null)
@@ -90,10 +92,10 @@ export function AppProvider({ children }) {
     setPendingLearningRequest(null)
   }
 
-  function openTrackerApplication(applicationId) {
-    setPendingTrackerRequest({ applicationId, requestedAt: Date.now() })
+  function openTrackerApplication(applicationId, workspaceTab = 'overview') {
+    setPendingTrackerRequest({ applicationId, workspaceTab, requestedAt: Date.now() })
     setNavKey(prev => prev + 1)
-    setActiveSection(SECTIONS.TRACKER)
+    setActiveSection(SECTIONS.APPLICATIONS)
   }
 
   function clearPendingTrackerRequest() {
