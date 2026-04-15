@@ -1,13 +1,19 @@
-import React, { useState, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useAI } from '../../context/AIContext'
 import { useApp } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
-import { Zap, Check, Trash2, Eye, EyeOff, FileText, Upload, Download, X, Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink } from 'lucide-react'
+import {
+  Zap, Check, Trash2, Eye, EyeOff, FileText, Upload, Download, X,
+  Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink,
+} from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
 
 export default function Settings() {
-  const { provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS, bmacToken, bmacEmail, verifyBmac, clearBmacToken, restoreToProxy } = useAI()
-  const { profile, saveProfile, setShowOnboarding } = useApp()
+  const {
+    provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS,
+    bmacToken, bmacEmail, verifyBmac, clearBmacToken, restoreToProxy, isConnected,
+  } = useAI()
+  const { profile, setShowOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData, exportProject, exportAll, importProjects } = useProject()
 
   const [form, setForm] = useState({ provider, model, apiKey, customBaseUrl: customBaseUrl || '' })
@@ -15,14 +21,12 @@ export default function Settings() {
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState(null)
   const [saved, setSaved] = useState(false)
-  const [showOwnKey, setShowOwnKey] = useState(false)
+  const [showOwnKey, setShowOwnKey] = useState(!bmacToken)
 
-  // BMAC state
   const [bmacInput, setBmacInput] = useState('')
   const [bmacLoading, setBmacLoading] = useState(false)
   const [bmacError, setBmacError] = useState('')
 
-  // Resume state
   const resume = getProjectData('resume')
   const [resumeText, setResumeText] = useState(resume || '')
   const [resumeSaved, setResumeSaved] = useState(false)
@@ -30,6 +34,14 @@ export default function Settings() {
   const fileRef = useRef(null)
   const importRef = useRef(null)
   const [importMsg, setImportMsg] = useState('')
+
+  useEffect(() => {
+    setForm({ provider, model, apiKey, customBaseUrl: customBaseUrl || '' })
+  }, [provider, model, apiKey, customBaseUrl])
+
+  useEffect(() => {
+    if (!bmacToken) setShowOwnKey(true)
+  }, [bmacToken])
 
   function update(k, v) {
     if (k === 'provider') {
@@ -40,7 +52,8 @@ export default function Settings() {
   }
 
   async function testConnection() {
-    setTesting(true); setTestResult(null)
+    setTesting(true)
+    setTestResult(null)
     const cfg = PROVIDER_CONFIGS[form.provider]
     const baseUrl = form.provider === PROVIDERS.CUSTOM ? form.customBaseUrl : cfg.baseUrl
     try {
@@ -51,23 +64,29 @@ export default function Settings() {
           method: 'POST',
           headers: isAnthropic
             ? { 'Content-Type': 'application/json', 'x-api-key': form.apiKey, 'anthropic-version': '2023-06-01' }
-            : { 'Content-Type': 'application/json', 'Authorization': `Bearer ${form.apiKey}` },
+            : { 'Content-Type': 'application/json', Authorization: `Bearer ${form.apiKey}` },
           body: JSON.stringify(isAnthropic
             ? { model: form.model, max_tokens: 10, messages: [{ role: 'user', content: 'Hi' }] }
-            : { model: form.model, max_tokens: 10, messages: [{ role: 'user', content: 'Hi' }] }
-          ),
-        }
+            : { model: form.model, max_tokens: 10, messages: [{ role: 'user', content: 'Hi' }] }),
+        },
       )
       setTestResult(res.ok ? 'success' : 'error')
-    } catch { setTestResult('error') }
+    } catch {
+      setTestResult('error')
+    }
     setTesting(false)
   }
 
-  function save() { saveConfig(form); setSaved(true); setTimeout(() => setSaved(false), 2000) }
+  function save() {
+    saveConfig(form)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   async function handleBmacVerify() {
     if (!bmacInput.trim()) return
-    setBmacLoading(true); setBmacError('')
+    setBmacLoading(true)
+    setBmacError('')
     try {
       await verifyBmac(bmacInput.trim())
       setBmacInput('')
@@ -79,20 +98,24 @@ export default function Settings() {
 
   function saveResume() {
     updateProjectData('resume', resumeText)
-    setResumeSaved(true); setTimeout(() => setResumeSaved(false), 2000)
+    setResumeSaved(true)
+    setTimeout(() => setResumeSaved(false), 2000)
   }
 
-  function clearResume() { setResumeText(''); updateProjectData('resume', '') }
+  function clearResume() {
+    setResumeText('')
+    updateProjectData('resume', '')
+  }
 
   async function handleResumeFile(e) {
-    const file = e.target.files[0]; if (!file) return
+    const file = e.target.files[0]
+    if (!file) return
     setExtracting(true)
     try {
       if (file.name.endsWith('.txt') || file.type === 'text/plain') {
         const text = await file.text()
         setResumeText(text)
       } else if (file.name.endsWith('.pdf') || file.type === 'application/pdf') {
-        // Use pdfjs-dist for real client-side PDF text extraction
         const pdfjsLib = await import('pdfjs-dist')
         pdfjsLib.GlobalWorkerOptions.workerSrc =
           `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
@@ -108,7 +131,6 @@ export default function Settings() {
         const cleaned = fullText.trim().replace(/\s{3,}/g, '\n')
         setResumeText(cleaned || '[PDF had no readable text. Please paste your resume below.]')
       } else {
-        // Try to read as text anyway (for .doc plain text, .rtf, etc)
         const text = await file.text()
         setResumeText(text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s{3,}/g, '\n'))
       }
@@ -121,52 +143,105 @@ export default function Settings() {
   }
 
   async function handleImportProject(e) {
-    const file = e.target.files[0]; if (!file) return
+    const file = e.target.files[0]
+    if (!file) return
     try {
       const count = await importProjects(file)
-      setImportMsg(`✅ Imported ${count} project${count > 1 ? 's' : ''}`)
-    } catch { setImportMsg('❌ Invalid file format') }
+      setImportMsg(`Imported ${count} project${count > 1 ? 's' : ''}.`)
+    } catch {
+      setImportMsg('Invalid file format.')
+    }
     setTimeout(() => setImportMsg(''), 3000)
     e.target.value = ''
   }
 
   function clearAllData() {
-    if (confirm('This will clear ALL JobSensei data. Are you sure?')) {
-      ['js_profile','js_stats','js_ai_config','js_onboarding_done','js_projects','js_active_project',
-       'js_interview_sessions','js_topics','js_applications','js_star_stories','js_company_notes'].forEach(k => localStorage.removeItem(k))
+    if (confirm('This will clear all JobSensei data. Are you sure?')) {
+      ['js_profile', 'js_stats', 'js_ai_config', 'js_onboarding_done', 'js_projects', 'js_active_project',
+        'js_interview_sessions', 'js_topics', 'js_applications', 'js_star_stories', 'js_company_notes'].forEach(k => localStorage.removeItem(k))
       window.location.reload()
     }
   }
 
+  const usingOwnKey = !!apiKey
+  const usingJobsenseiAI = !!bmacToken && !apiKey
+  const currentProviderLabel = PROVIDER_CONFIGS[form.provider]?.label || 'Custom'
+  const planBadgeClass = usingOwnKey
+    ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300'
+    : usingJobsenseiAI
+      ? 'border-teal-500/30 bg-teal-500/10 text-teal-300'
+      : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'
+
+  const planTitle = usingOwnKey
+    ? 'Using your own API key'
+    : usingJobsenseiAI
+      ? 'JobSensei AI active'
+      : 'No AI access connected'
+
+  const planCopy = usingOwnKey
+    ? `Your workspace is running on ${currentProviderLabel} with ${form.model}.`
+    : usingJobsenseiAI
+      ? 'JobSensei is powering AI for this workspace. You can still switch to your own key at any time.'
+      : 'Connect JobSensei AI or bring your own API key to unlock research, interviews, and writing tools.'
+
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto animate-in space-y-4">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in space-y-4">
       <h2 className="section-title mb-1">Settings</h2>
-      <p className="section-sub">Configure AI, resume, and project settings.</p>
+      <p className="section-sub">Manage plan, AI access, resume, and project data.</p>
 
-      {/* 2-col grid: balanced columns */}
+      <div className="card border-teal-500/20 bg-teal-500/5">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="min-w-0 max-w-3xl">
+            <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">Plan And AI Access</div>
+            <h3 className="font-display font-semibold text-white text-lg mb-1">{planTitle}</h3>
+            <p className="text-slate-300 text-sm leading-relaxed">{planCopy}</p>
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              <span className={`px-2.5 py-1 rounded-full text-[11px] border ${planBadgeClass}`}>
+                {usingOwnKey ? 'BYOK mode' : usingJobsenseiAI ? 'JobSensei AI' : 'Free mode'}
+              </span>
+              <span className={`px-2.5 py-1 rounded-full text-[11px] border ${isConnected ? 'border-teal-500/30 bg-teal-500/10 text-teal-300' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'}`}>
+                {isConnected ? 'AI connected' : 'AI not connected'}
+              </span>
+              {activeProject?.name && (
+                <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300">
+                  Project: {activeProject.name}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-3 min-w-[220px]">
+            <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Current Mode</div>
+            <div className="text-white text-sm font-display font-semibold">
+              {usingOwnKey ? currentProviderLabel : usingJobsenseiAI ? 'JobSensei hosted AI' : 'No AI provider'}
+            </div>
+            <div className="text-slate-400 text-xs mt-1">
+              {usingOwnKey ? form.model : usingJobsenseiAI ? (bmacEmail || 'Access active') : 'Connect a plan or API key below.'}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-4 items-start">
-
-        {/* Left: AI Access + Profile */}
         <div className="space-y-4">
-
-          {/* BMAC Supporter Access — primary */}
           <div className={`card ${bmacToken ? 'border-green-500/30 bg-green-500/5' : 'border-teal-500/20'}`}>
             <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-              <Coffee size={16} className="text-yellow-400"/> Supporter Access
+              <Coffee size={16} className="text-yellow-400" /> JobSensei AI
             </h3>
-            <p className="text-slate-400 text-xs mb-4">Buy Me a Coffee supporters get AI powered by JobSensei — no API key needed.</p>
+            <p className="text-slate-400 text-xs mb-4">
+              Use JobSensei-hosted AI through your plan, or activate access with your code. Billing is handled through Buy Me a Coffee.
+            </p>
 
             {bmacToken ? (
               <div className="space-y-3">
                 <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex items-center gap-2">
                   <Check size={16} className="text-green-400 flex-shrink-0" />
                   <div>
-                    <div className="text-green-400 text-sm font-display font-semibold">Access active</div>
+                    <div className="text-green-400 text-sm font-display font-semibold">Plan active</div>
                     <div className="text-slate-400 text-xs">{bmacEmail}</div>
                   </div>
                 </div>
                 <button onClick={clearBmacToken} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
-                  <LogOut size={13}/> Sign out of supporter mode
+                  <LogOut size={13} /> Sign out of JobSensei AI
                 </button>
               </div>
             ) : (
@@ -177,17 +252,17 @@ export default function Settings() {
                   rel="noopener noreferrer"
                   className="btn-primary w-full justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0 text-sm"
                 >
-                  <Coffee size={14} /> Buy Me a Coffee <ExternalLink size={12} className="opacity-60" />
+                  <Coffee size={14} /> Upgrade via Buy Me a Coffee <ExternalLink size={12} className="opacity-60" />
                 </a>
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-px bg-white/10" />
-                  <span className="text-slate-600 text-xs">have a code?</span>
+                  <span className="text-slate-600 text-xs">already have access?</span>
                   <div className="flex-1 h-px bg-white/10" />
                 </div>
                 <input
                   className="input-field text-sm"
                   type="text"
-                  placeholder="Enter your access code..."
+                  placeholder="Enter your access code or email..."
                   value={bmacInput}
                   onChange={e => { setBmacInput(e.target.value); setBmacError('') }}
                   onKeyDown={e => e.key === 'Enter' && handleBmacVerify()}
@@ -197,53 +272,77 @@ export default function Settings() {
                   disabled={!bmacInput.trim() || bmacLoading}
                   className="btn-primary w-full justify-center"
                 >
-                  <Coffee size={14}/> {bmacLoading ? 'Verifying...' : 'Activate Access'}
+                  <Coffee size={14} /> {bmacLoading ? 'Activating...' : 'Activate JobSensei AI'}
                 </button>
                 {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
               </div>
             )}
           </div>
 
-          {/* Own API Key — only visible to supporters */}
-          {bmacToken && (
           <div className="card">
             <button
               onClick={() => setShowOwnKey(o => !o)}
-              className="w-full flex items-center justify-between"
+              className="w-full flex items-center justify-between gap-3"
             >
               <span className="font-display font-semibold text-white text-sm flex items-center gap-2">
-                <Zap size={15} className="text-teal-400"/> Use my own API key
+                <Zap size={15} className="text-teal-400" /> Bring your own API key
               </span>
-              {showOwnKey ? <ChevronUp size={15} className="text-slate-400"/> : <ChevronDown size={15} className="text-slate-400"/>}
+              {showOwnKey ? <ChevronUp size={15} className="text-slate-400" /> : <ChevronDown size={15} className="text-slate-400" />}
             </button>
+
+            <p className="text-slate-400 text-xs mt-2">
+              Optional. Use your own OpenAI, DeepSeek, Anthropic, or compatible endpoint instead of JobSensei-hosted AI.
+            </p>
 
             {showOwnKey && (
               <div className="mt-4 space-y-3">
                 <DeepSeekGuide />
+                <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-3 py-3">
+                  <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Current BYOK status</div>
+                  <div className="text-white text-sm">
+                    {usingOwnKey ? `${currentProviderLabel} - ${form.model}` : 'No personal API key saved yet'}
+                  </div>
+                </div>
                 <div>
                   <label className="text-sm text-slate-400 mb-1.5 block">Provider</label>
                   <select className="input-field" value={form.provider} onChange={e => update('provider', e.target.value)}>
-                    {Object.entries(PROVIDER_CONFIGS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                    {Object.entries(PROVIDER_CONFIGS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="text-sm text-slate-400 mb-1.5 block">API Key</label>
                   <div className="relative">
-                    <input className="input-field pr-10 font-mono text-xs" type={showKey ? 'text' : 'password'} placeholder="Enter your API key..." value={form.apiKey} onChange={e => update('apiKey', e.target.value)} />
+                    <input
+                      className="input-field pr-10 font-mono text-xs"
+                      type={showKey ? 'text' : 'password'}
+                      placeholder="Enter your API key..."
+                      value={form.apiKey}
+                      onChange={e => update('apiKey', e.target.value)}
+                    />
                     <button onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
-                      {showKey ? <EyeOff size={15}/> : <Eye size={15}/>}
+                      {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
                   </div>
-                  <p className="text-slate-600 text-xs mt-1">Stored locally. Never sent to our servers.</p>
+                  <p className="text-slate-600 text-xs mt-1">Stored locally on this device. Never sent to JobSensei.</p>
                 </div>
                 <div>
                   <label className="text-sm text-slate-400 mb-1.5 block">Model</label>
-                  <input className="input-field font-mono text-xs" placeholder="e.g. deepseek-chat" value={form.model} onChange={e => update('model', e.target.value)} />
+                  <input
+                    className="input-field font-mono text-xs"
+                    placeholder="e.g. deepseek-chat"
+                    value={form.model}
+                    onChange={e => update('model', e.target.value)}
+                  />
                 </div>
                 {form.provider === PROVIDERS.CUSTOM && (
                   <div>
                     <label className="text-sm text-slate-400 mb-1.5 block">Custom Base URL</label>
-                    <input className="input-field font-mono text-xs" placeholder="https://..." value={form.customBaseUrl} onChange={e => update('customBaseUrl', e.target.value)} />
+                    <input
+                      className="input-field font-mono text-xs"
+                      placeholder="https://..."
+                      value={form.customBaseUrl}
+                      onChange={e => update('customBaseUrl', e.target.value)}
+                    />
                   </div>
                 )}
                 <div className="bg-navy-900 rounded-xl p-3 text-xs text-slate-500 space-y-1">
@@ -253,108 +352,110 @@ export default function Settings() {
                 </div>
                 <div className="flex gap-2">
                   <button onClick={testConnection} disabled={!form.apiKey || testing} className="btn-secondary flex-1 justify-center">
-                    <Zap size={14}/> {testing ? 'Testing...' : 'Test'}
+                    <Zap size={14} /> {testing ? 'Testing...' : 'Test'}
                   </button>
                   <button onClick={save} className={`btn-primary flex-1 justify-center ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-                    {saved ? <><Check size={14}/> Saved!</> : 'Save Config'}
+                    {saved ? <><Check size={14} /> Saved!</> : 'Save Config'}
                   </button>
                 </div>
-                {testResult === 'success' && <p className="text-green-400 text-sm text-center">✅ Connected!</p>}
-                {testResult === 'error' && <p className="text-red-400 text-sm text-center">❌ Failed. Check key and model name.</p>}
+                {testResult === 'success' && <p className="text-green-400 text-sm text-center">Connection successful.</p>}
+                {testResult === 'error' && <p className="text-red-400 text-sm text-center">Connection failed. Check the key and model name.</p>}
 
-                {apiKey && (
+                {bmacToken && apiKey && (
                   <div className="pt-2 border-t border-navy-700">
                     <button
-                      onClick={() => { restoreToProxy(); setForm(f => ({ ...f, apiKey: '', provider: PROVIDERS.DEEPSEEK, model: 'deepseek-chat' })) }}
+                      onClick={() => {
+                        restoreToProxy()
+                        setForm(f => ({ ...f, apiKey: '', provider: PROVIDERS.DEEPSEEK, model: 'deepseek-chat', customBaseUrl: '' }))
+                      }}
                       className="btn-ghost text-xs text-yellow-400 hover:text-yellow-300 w-full justify-center"
                     >
-                      <Coffee size={13}/> Restore to JobSensei API
+                      <Coffee size={13} /> Switch back to JobSensei AI
                     </button>
-                    <p className="text-slate-600 text-xs text-center mt-1">Clears your key and uses supporter access again.</p>
+                    <p className="text-slate-600 text-xs text-center mt-1">Keeps your plan active and clears the personal API key from this device.</p>
                   </div>
                 )}
               </div>
             )}
           </div>
-          )}
 
-          {/* Profile */}
           <div className="card">
             <h3 className="font-display font-semibold text-white mb-3">Your Profile</h3>
             {profile ? (
               <div className="space-y-1 text-sm mb-3">
-                <div><span className="text-slate-400">Name:</span> <span className="text-white">{profile.name || '—'}</span></div>
-                <div><span className="text-slate-400">Role:</span> <span className="text-white">{profile.currentRole || '—'}</span></div>
-                <div><span className="text-slate-400">Target:</span> <span className="text-white">{profile.targetRole || '—'}</span></div>
+                <div><span className="text-slate-400">Name:</span> <span className="text-white">{profile.name || '-'}</span></div>
+                <div><span className="text-slate-400">Role:</span> <span className="text-white">{profile.currentRole || '-'}</span></div>
+                <div><span className="text-slate-400">Target:</span> <span className="text-white">{profile.targetRole || '-'}</span></div>
               </div>
-            ) : <p className="text-slate-500 text-sm mb-3">No profile set.</p>}
-            <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-sm">{profile ? 'Edit Profile' : 'Set Up Profile'}</button>
+            ) : (
+              <p className="text-slate-500 text-sm mb-3">No profile set yet.</p>
+            )}
+            <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-sm">
+              {profile ? 'Edit Profile' : 'Set Up Profile'}
+            </button>
           </div>
         </div>
 
-        {/* Right: Resume + Project */}
         <div className="space-y-4">
-          {/* Resume Upload */}
           <div className="card">
-            <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2"><FileText size={16} className="text-teal-400"/> Resume / CV</h3>
-            <p className="text-slate-400 text-xs mb-3">Saved per project. Auto-fills background fields across all tools.</p>
+            <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+              <FileText size={16} className="text-teal-400" /> Resume / CV
+            </h3>
+            <p className="text-slate-400 text-xs mb-3">Saved per project. Used to prefill your background across the main tools.</p>
             <div className="flex gap-2 mb-3">
               <button onClick={() => fileRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
-                <Upload size={13}/> {extracting ? 'Reading...' : 'Upload (.txt, .pdf)'}
+                <Upload size={13} /> {extracting ? 'Reading...' : 'Upload (.txt, .pdf)'}
               </button>
               <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.rtf" className="hidden" onChange={handleResumeFile} />
-              {resumeText && <button onClick={clearResume} className="btn-ghost text-xs text-red-400 hover:text-red-300 px-2"><X size={14}/></button>}
+              {resumeText && (
+                <button onClick={clearResume} className="btn-ghost text-xs text-red-400 hover:text-red-300 px-2">
+                  <X size={14} />
+                </button>
+              )}
             </div>
             <textarea
               className="textarea-field h-36 text-xs mb-3"
-              placeholder="Or paste your resume/CV text here directly..."
+              placeholder="Or paste your resume or CV text here directly..."
               value={resumeText}
               onChange={e => setResumeText(e.target.value)}
             />
             <button onClick={saveResume} className={`btn-primary text-sm ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-              {resumeSaved ? <><Check size={14}/> Saved!</> : 'Save Resume to Project'}
+              {resumeSaved ? <><Check size={14} /> Saved!</> : 'Save Resume To Project'}
             </button>
-            <p className="text-slate-600 text-xs mt-2">💡 For visual design analysis go to Tools → Visual Design Review.</p>
+            <p className="text-slate-600 text-xs mt-2">For visual design analysis, use the Visual Review tool inside the application workflow.</p>
           </div>
 
-          {/* Project management */}
           <div className="card">
             <h3 className="font-display font-semibold text-white mb-3 flex items-center gap-2">
-              <FileText size={16} className="text-teal-400"/> Project: {activeProject?.name}
+              <FileText size={16} className="text-teal-400" /> Project Data
             </h3>
+            <div className="text-slate-400 text-xs mb-3">
+              Active project: <span className="text-white">{activeProject?.name || 'No project selected'}</span>
+            </div>
             <div className="flex flex-wrap gap-2">
               <button onClick={() => activeProject && exportProject(activeProject.id)} className="btn-secondary text-xs">
-                <Download size={13}/> Export This
+                <Download size={13} /> Export This
               </button>
               <button onClick={exportAll} className="btn-secondary text-xs">
-                <Download size={13}/> Export All
+                <Download size={13} /> Export All
               </button>
               <button onClick={() => importRef.current?.click()} className="btn-secondary text-xs">
-                <Upload size={13}/> Import
+                <Upload size={13} /> Import
               </button>
               <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImportProject} />
             </div>
-            {importMsg && <p className="text-xs mt-2">{importMsg}</p>}
-            <p className="text-slate-600 text-xs mt-2">Use the project switcher in the sidebar to create, rename, or switch projects.</p>
+            {importMsg && <p className="text-xs mt-2 text-slate-300">{importMsg}</p>}
+            <p className="text-slate-600 text-xs mt-2">Use the project switcher in the sidebar to create, rename, or switch between workspaces.</p>
           </div>
         </div>
       </div>
 
-      {/* Full-width: danger + footer */}
       <div className="card border-red-500/20">
         <h3 className="font-display font-semibold text-white mb-2">Data Management</h3>
-        <p className="text-slate-400 text-sm mb-3">All data is local. Export backups from the project switcher anytime.</p>
+        <p className="text-slate-400 text-sm mb-3">All data stays local to this device unless you export it.</p>
         <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10">
-          <Trash2 size={14}/> Clear All Data
+          <Trash2 size={14} /> Clear All Data
         </button>
-      </div>
-
-      <div className="card text-center">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-indigo-500 flex items-center justify-center mx-auto mb-2">
-          <span className="text-xl leading-none">🥷</span>
-        </div>
-        <div className="font-display font-bold text-white mb-1">JobSensei v1.1</div>
-        <p className="text-slate-500 text-xs">Projects · Voice · Export/Import · Resume Upload</p>
       </div>
     </div>
   )

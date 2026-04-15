@@ -281,23 +281,46 @@ export default function JobTracker() {
 
   function addApplication() {
     if (!newApp.company.trim()) return
+    const { _liveData, ...researchNotes } = pendingResearch || {}
     const { notes: prepNote, ...appFields } = newApp
     const app = { ...appFields, id: generateId(), date: new Date().toISOString(), stageUpdatedAt: new Date().toISOString() }
     const mergedNotes = {
       ...(prepNote.trim() ? { prepNotes: prepNote } : {}),
-      ...(pendingResearch || {}),
+      ...researchNotes,
     }
     const nextApplications = [...applications, app]
-    const nextCompanyNotes = Object.keys(mergedNotes).length > 0
-      ? { ...notes, [app.id]: mergedNotes }
-      : notes
 
     updateProjectDataMultiple({
       applications: nextApplications,
-      companyNotes: nextCompanyNotes,
+      companyNotes: Object.keys(mergedNotes).length > 0 ? { ...notes, [app.id]: mergedNotes } : notes,
+      ...(activeApplicationId
+        ? {}
+        : {
+            activeApplicationId: app.id,
+            currentJD: app.jdText || '',
+          }),
+    })
+    resetAddForm()
+  }
+
+  function createAndOpenApplication() {
+    if (!newApp.company.trim()) return
+    const { _liveData, ...researchNotes } = pendingResearch || {}
+    const { notes: prepNote, ...appFields } = newApp
+    const app = { ...appFields, id: generateId(), date: new Date().toISOString(), stageUpdatedAt: new Date().toISOString() }
+    const mergedNotes = {
+      ...(prepNote.trim() ? { prepNotes: prepNote } : {}),
+      ...researchNotes,
+    }
+
+    updateProjectDataMultiple({
+      applications: [...applications, app],
+      companyNotes: Object.keys(mergedNotes).length > 0 ? { ...notes, [app.id]: mergedNotes } : notes,
       activeApplicationId: app.id,
       currentJD: app.jdText || '',
     })
+    setSelectedWorkspaceTab('overview')
+    setSelectedApp(app)
     resetAddForm()
   }
 
@@ -375,6 +398,24 @@ export default function JobTracker() {
   }
 
   const overdueApps = getOverdueApps(applications)
+  const addCompany = newApp.company.trim()
+  const addRole = newApp.role.trim()
+  const addJd = newApp.jdText.trim()
+  const addPrepNote = newApp.notes.trim()
+  const addReadiness = [
+    { label: 'Company', complete: !!addCompany, hint: addCompany || 'Required' },
+    { label: 'Role', complete: !!addRole, hint: addRole || 'Recommended' },
+    { label: 'JD', complete: !!addJd, hint: addJd ? 'Saved' : 'Add now or later' },
+    {
+      label: 'Research',
+      complete: !!pendingResearch,
+      hint: pendingResearch ? `Ready ${pendingResearch._liveData ? '(live)' : '(AI)'}` : isConnected ? 'Optional AI assist' : 'Connect AI in Settings',
+    },
+  ]
+  const addReadyCount = addReadiness.filter(item => item.complete).length
+  const addPrimaryLabel = addJd
+    ? 'Create & open workspace'
+    : 'Create & add JD later'
 
   if (selectedApp) return (
     <ApplicationWorkspaceView
@@ -435,32 +476,72 @@ export default function JobTracker() {
       {importMsg && <div className="mb-3 text-xs text-center py-2 rounded-xl bg-navy-700">{importMsg}</div>}
 
       {showAdd && (
-        <div className="card mb-4">
-          <h3 className="font-display font-semibold text-white text-sm mb-3">Add Application</h3>
+        <div className="card mb-4 border-teal-500/20 bg-teal-500/5">
+          <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+            <div className="min-w-0 max-w-3xl">
+              <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">Create Application Workspace</div>
+              <h3 className="font-display font-semibold text-white text-lg mb-1">Start one role, then let JobSensei guide the rest</h3>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Add the company and role first. The JD, AI research, and prep note can be added now or later without breaking the workflow.
+              </p>
+            </div>
+            <div className="px-3 py-2 rounded-xl border border-navy-600 bg-navy-950/70">
+              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Readiness</div>
+              <div className="text-white text-sm font-display font-semibold">{addReadyCount}/4 signals ready</div>
+              <div className="text-slate-400 text-xs mt-1">
+                {addJd ? 'You can open the full workspace immediately.' : 'You can still create now and add the JD inside the workspace.'}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+            {addReadiness.map(item => (
+              <div key={item.label} className={`rounded-2xl border px-3 py-3 ${item.complete ? 'border-teal-500/30 bg-teal-500/10' : 'border-navy-600 bg-navy-950/60'}`}>
+                <div className={`text-[11px] font-display font-semibold uppercase tracking-wide mb-1 ${item.complete ? 'text-teal-300' : 'text-slate-500'}`}>
+                  {item.label}
+                </div>
+                <div className="text-white text-sm">{item.hint}</div>
+              </div>
+            ))}
+          </div>
+
           {bulkIntakeMsg && (
             <div className="mb-3 text-xs py-2 px-3 rounded-xl bg-navy-700 text-slate-300">
               {bulkIntakeMsg}
             </div>
           )}
-          <div className="grid sm:grid-cols-2 gap-3 mb-3">
-            <input className="input-field" placeholder="Company *" value={newApp.company}
+          <div className="grid sm:grid-cols-2 gap-3 mb-2">
+            <div>
+              <label className="text-sm text-slate-400 mb-1.5 block">Company *</label>
+              <input className="input-field" placeholder="e.g. TBI Bank" value={newApp.company}
               onChange={e => { setNewApp(p => ({ ...p, company: e.target.value })); setPendingResearch(null) }}
-              onKeyDown={e => e.key === 'Enter' && addApplication()} />
-            <input className="input-field" placeholder="Role title" value={newApp.role}
-              onChange={e => setNewApp(p => ({ ...p, role: e.target.value }))} />
+              onKeyDown={e => e.key === 'Enter' && createAndOpenApplication()} />
+            </div>
+            <div>
+              <label className="text-sm text-slate-400 mb-1.5 block">Role title</label>
+              <input className="input-field" placeholder="e.g. Fraud Detection Analyst" value={newApp.role}
+                onChange={e => { setNewApp(p => ({ ...p, role: e.target.value })); setPendingResearch(null) }} />
+            </div>
           </div>
           <div className="grid sm:grid-cols-2 gap-3 mb-3">
-            <select className="input-field" value={newApp.stage}
-              onChange={e => setNewApp(p => ({ ...p, stage: e.target.value }))}>
-              {STAGES.map(s => <option key={s}>{s}</option>)}
-            </select>
-            <input className="input-field" placeholder="JD URL (optional)" value={newApp.jdUrl}
-              onChange={e => setNewApp(p => ({ ...p, jdUrl: e.target.value }))} />
+            <div>
+              <label className="text-sm text-slate-400 mb-1.5 block">Stage</label>
+              <select className="input-field" value={newApp.stage}
+                onChange={e => setNewApp(p => ({ ...p, stage: e.target.value }))}>
+                {STAGES.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-slate-400 mb-1.5 block">JD URL</label>
+              <input className="input-field" placeholder="Optional source link" value={newApp.jdUrl}
+                onChange={e => setNewApp(p => ({ ...p, jdUrl: e.target.value }))} />
+            </div>
           </div>
           <div className="mb-3">
             <label className="text-sm text-slate-400 mb-1.5 block">Job Description</label>
             <AutoTextarea className="textarea-field" placeholder="Paste the job description once to make this application available across the main tools..."
               value={newApp.jdText} onChange={e => setNewApp(p => ({ ...p, jdText: e.target.value }))} />
+            <p className="text-slate-500 text-xs mt-2">Recommended. If you skip this now, you can paste it later from the Capture step inside the workspace.</p>
           </div>
 
           {newApp.company.trim() && (
@@ -473,11 +554,11 @@ export default function JobTracker() {
                   {pendingResearch
                     ? <>
                         <div className="text-teal-400 text-xs font-semibold">Research ready {pendingResearch._liveData ? '(live data)' : '(AI)'}</div>
-                        <div className="text-slate-500 text-xs">Wow facts, culture & prep notes auto-filled below</div>
+                        <div className="text-slate-500 text-xs">Wow facts, culture, and prep notes will be saved into the workspace notes.</div>
                       </>
                     : <>
                         <div className="text-white text-xs font-semibold">Research <span className="text-indigo-300">{newApp.company}</span> with AI</div>
-                        <div className="text-slate-500 text-xs">Get wow facts, news, culture & prep notes</div>
+                        <div className="text-slate-500 text-xs">Pull wow facts, news, culture, and prep notes before you create the workspace.</div>
                       </>
                   }
                 </div>
@@ -493,11 +574,22 @@ export default function JobTracker() {
             </div>
           )}
 
-          <AutoTextarea className="textarea-field mb-1" placeholder="Initial prep note (optional)…"
-            value={newApp.notes} onChange={e => setNewApp(p => ({ ...p, notes: e.target.value }))} />
-          <p className="text-slate-600 text-xs mb-3">↳ Saved to <strong className="text-slate-500">Company Notes → My prep notes</strong></p>
-          <div className="flex gap-2">
-            <button onClick={addApplication} disabled={!newApp.company.trim()} className="btn-primary">Add</button>
+          <div className="mb-3">
+            <label className="text-sm text-slate-400 mb-1.5 block">Initial prep note</label>
+            <AutoTextarea className="textarea-field mb-1" placeholder="Optional reminders, talking points, or recruiter context..."
+              value={newApp.notes} onChange={e => setNewApp(p => ({ ...p, notes: e.target.value }))} />
+            <p className="text-slate-500 text-xs mt-2">
+              Saved to <strong className="text-slate-400">Workspace Notes / My prep notes</strong>{addPrepNote ? ' when you create the application.' : '.'}
+            </p>
+          </div>
+
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={createAndOpenApplication} disabled={!newApp.company.trim()} className="btn-primary">
+              {addPrimaryLabel}
+            </button>
+            <button onClick={addApplication} disabled={!newApp.company.trim()} className="btn-secondary">
+              Save to board only
+            </button>
             <button onClick={resetAddForm} className="btn-ghost">Cancel</button>
           </div>
 
