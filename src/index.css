@@ -922,6 +922,13 @@
   box-shadow: 0 8px 28px rgba(0,0,0,0.12), 0 0 16px rgba(226,114,91,0.25);
 }
 
+/* Final daylight panel cleanup for Applications / Workspace surfaces */
+[data-theme="daylight"] .bg-navy-950\/60 { background-color: rgba(248, 244, 238, 0.9); }
+[data-theme="daylight"] .bg-navy-950\/70 { background-color: rgba(248, 244, 238, 0.95); }
+[data-theme="daylight"] .bg-navy-900\/40 { background-color: rgba(253, 251, 248, 0.74); }
+[data-theme="daylight"] .bg-navy-900\/70 { background-color: rgba(253, 251, 248, 0.94); }
+[data-theme="daylight"] .bg-navy-800\/60 { background-color: rgba(244, 238, 231, 0.88); }
+
 /* Logo mantra theme overrides */
 [data-theme="daylight"] .logo-mantra { color: rgba(226, 114, 91, 0.85); }
 [data-theme="myspace"] .logo-mantra  { color: rgba(255, 0, 110, 0.65); }

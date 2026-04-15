@@ -4,7 +4,6 @@ import { useAI } from '../../context/AIContext'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { prompts } from '../../utils/prompts'
 import { generateId, formatDate, timeAgo, tryParseJSON } from '../../utils/helpers'
-import { parseBulkApplicationUrls, makeTrackerApplication } from '../../utils/jobIntake'
 import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale, Copy, Printer, Save, Sparkles, FileText, Mic, Target, Star, Gauge, Mail, Megaphone, ClipboardCheck, Globe, Camera, Zap, TrendingUp } from 'lucide-react'
 
 const STAGES = ['Researching', 'Applied', 'Screening', 'Interviewing', 'Awaiting', 'Offer', 'Rejected']
@@ -91,10 +90,9 @@ function exportToJSON(applications, notes) {
 export default function JobTracker() {
   const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId, setActiveApplication } = useProject()
   const { pendingTrackerRequest, clearPendingTrackerRequest } = useApp()
-  const applications = getProjectData('applications')
-  const notes = getProjectData('companyNotes')
+  const applications = getProjectData('applications') || []
+  const notes = getProjectData('companyNotes') || {}
   const offerData = getProjectData('offerComparisons') || {}
-  const currentJD = getProjectData('currentJD')
 
   function updateOfferData(appId, data) {
     updateProjectData('offerComparisons', { ...offerData, [appId]: data })
@@ -106,30 +104,35 @@ export default function JobTracker() {
   const [showAdd, setShowAdd] = useState(false)
   const [newApp, setNewApp] = useState(EMPTY_APPLICATION)
   const [pendingResearch, setPendingResearch] = useState(null)
-  const [showBulkIntake, setShowBulkIntake] = useState(false)
-  const [bulkUrlText, setBulkUrlText] = useState('')
-  const [bulkEntries, setBulkEntries] = useState([])
-  const [bulkParseMeta, setBulkParseMeta] = useState({ invalid: [], ignoredCount: 0 })
-  const [bulkIntakeMsg, setBulkIntakeMsg] = useState('')
   const [researchLoading, setResearchLoading] = useState(false)
-  const [selectedApp, setSelectedApp] = useState(null)
+  const [selectedAppId, setSelectedAppId] = useState(null)
   const [selectedWorkspaceTab, setSelectedWorkspaceTab] = useState('overview')
   const [editingApp, setEditingApp] = useState(null)
   const [importMsg, setImportMsg] = useState('')
   const [synced, setSynced] = useState(false)
   const importRef = useRef(null)
+  const selectedApp = selectedAppId ? applications.find(app => app.id === selectedAppId) || null : null
 
   useEffect(() => {
     if (!pendingTrackerRequest?.applicationId) return
     const targetApp = applications.find(app => app.id === pendingTrackerRequest.applicationId)
     if (!targetApp) return
     setSelectedWorkspaceTab(pendingTrackerRequest.workspaceTab || 'overview')
-    setSelectedApp(targetApp)
+    setSelectedAppId(targetApp.id)
     activateApplication(targetApp)
     clearPendingTrackerRequest()
   }, [pendingTrackerRequest, applications, clearPendingTrackerRequest])
 
+  useEffect(() => {
+    if (!selectedAppId) return
+    if (!applications.some(app => app.id === selectedAppId)) {
+      setSelectedAppId(null)
+      setSelectedWorkspaceTab('overview')
+    }
+  }, [applications, selectedAppId])
+
   function activateApplication(app) {
+    if (!app) return
     setActiveApplication(app.id)
     updateProjectData('currentJD', app.jdText || '')
   }
@@ -142,100 +145,14 @@ export default function JobTracker() {
 
   function openApplication(app, workspaceTab = 'overview') {
     setSelectedWorkspaceTab(workspaceTab)
-    setSelectedApp(app)
+    setSelectedAppId(app.id)
     activateApplication(app)
-  }
-
-  function resetBulkIntake() {
-    setBulkUrlText('')
-    setBulkEntries([])
-    setBulkParseMeta({ invalid: [], ignoredCount: 0 })
-    setBulkIntakeMsg('')
-    setShowBulkIntake(false)
-  }
-
-  function clearBulkPreview() {
-    setBulkUrlText('')
-    setBulkEntries([])
-    setBulkParseMeta({ invalid: [], ignoredCount: 0 })
-    setBulkIntakeMsg('')
   }
 
   function resetAddForm() {
     setNewApp(EMPTY_APPLICATION)
     setPendingResearch(null)
-    resetBulkIntake()
     setShowAdd(false)
-  }
-
-  function previewBulkUrls() {
-    const { entries, invalid, ignoredCount } = parseBulkApplicationUrls(bulkUrlText, 5)
-    setBulkEntries(entries)
-    setBulkParseMeta({ invalid, ignoredCount })
-
-    if (entries.length === 0) {
-      setBulkIntakeMsg('No valid application URLs found yet.')
-      return
-    }
-
-    const warnings = []
-    if (invalid.length > 0) warnings.push(`${invalid.length} invalid`)
-    if (ignoredCount > 0) warnings.push(`${ignoredCount} extra ignored`)
-    setBulkIntakeMsg(warnings.length > 0 ? `Preview ready · ${warnings.join(' · ')}` : `Preview ready · ${entries.length} job links parsed`)
-  }
-
-  function updateBulkEntry(id, field, value) {
-    setBulkEntries(prev => prev.map(entry => entry.id === id ? { ...entry, [field]: value } : entry))
-  }
-
-  function removeBulkEntry(id) {
-    setBulkEntries(prev => prev.filter(entry => entry.id !== id))
-  }
-
-  function createBulkApplications() {
-    const cleanedEntries = bulkEntries
-      .map(entry => ({
-        ...entry,
-        company: (entry.company || '').trim(),
-        role: (entry.role || '').trim(),
-        url: (entry.url || '').trim(),
-      }))
-      .filter(entry => entry.url)
-
-    if (cleanedEntries.length === 0) {
-      setBulkIntakeMsg('Add at least one valid URL before creating applications.')
-      return
-    }
-
-    const missingCompany = cleanedEntries.find(entry => !entry.company)
-    if (missingCompany) {
-      setBulkIntakeMsg('Please review the company name for each captured URL before saving.')
-      return
-    }
-
-    const createdApps = cleanedEntries.map(entry => makeTrackerApplication({
-      company: entry.company,
-      role: entry.role,
-      stage: entry.stage,
-      jdUrl: entry.url,
-      jdText: '',
-    }))
-
-    const nextApplications = [...applications, ...createdApps]
-    const shouldActivateFirst = !activeApplicationId && createdApps.length > 0
-
-    updateProjectDataMultiple({
-      applications: nextApplications,
-      ...(shouldActivateFirst
-        ? {
-            activeApplicationId: createdApps[0].id,
-            currentJD: '',
-          }
-        : {}),
-    })
-
-    resetBulkIntake()
-    setBulkIntakeMsg(`Created ${createdApps.length} application${createdApps.length !== 1 ? 's' : ''}.`)
   }
 
   async function researchForAdd() {
@@ -270,10 +187,6 @@ export default function JobTracker() {
     setResearchLoading(false)
   }
 
-  function setApplications(updater) {
-    const next = typeof updater === 'function' ? updater(applications) : updater
-    updateProjectData('applications', next)
-  }
   function setNotes(updater) {
     const next = typeof updater === 'function' ? updater(notes) : updater
     updateProjectData('companyNotes', next)
@@ -320,7 +233,7 @@ export default function JobTracker() {
       currentJD: app.jdText || '',
     })
     setSelectedWorkspaceTab('overview')
-    setSelectedApp(app)
+    setSelectedAppId(app.id)
     resetAddForm()
   }
 
@@ -331,7 +244,6 @@ export default function JobTracker() {
     if (activeApplicationId === id && Object.prototype.hasOwnProperty.call(updates, 'jdText')) {
       updateProjectData('currentJD', updates.jdText || '')
     }
-    if (selectedApp?.id === id) setSelectedApp(a => ({ ...a, ...updates, ...stageUpdate }))
   }
 
   function snoozeApp(id, days) {
@@ -349,7 +261,6 @@ export default function JobTracker() {
     if (activeApplicationId === updated.id) {
       updateProjectData('currentJD', updated.jdText || '')
     }
-    if (selectedApp?.id === updated.id) setSelectedApp(updated)
     setEditingApp(null)
   }
 
@@ -362,8 +273,9 @@ export default function JobTracker() {
       activeApplicationId: nextActiveId,
       currentJD: nextActiveApp?.jdText || '',
     })
-    if (selectedApp?.id === id) {
-      setSelectedApp(null)
+    if (selectedAppId === id) {
+      setSelectedAppId(null)
+      setSelectedWorkspaceTab('overview')
     }
   }
 
@@ -419,13 +331,14 @@ export default function JobTracker() {
 
   if (selectedApp) return (
     <ApplicationWorkspaceView
+      key={selectedApp.id}
       app={selectedApp}
       initialTab={selectedWorkspaceTab}
       notes={notes[selectedApp.id] || {}}
       onSaveNotes={n => setNotes(prev => ({ ...prev, [selectedApp.id]: n }))}
       onBack={() => {
         setSelectedWorkspaceTab('overview')
-        setSelectedApp(null)
+        setSelectedAppId(null)
       }}
       onUpdateApp={updates => updateApp(selectedApp.id, updates)}
     />
@@ -505,11 +418,6 @@ export default function JobTracker() {
             ))}
           </div>
 
-          {bulkIntakeMsg && (
-            <div className="mb-3 text-xs py-2 px-3 rounded-xl bg-navy-700 text-slate-300">
-              {bulkIntakeMsg}
-            </div>
-          )}
           <div className="grid sm:grid-cols-2 gap-3 mb-2">
             <div>
               <label className="text-sm text-slate-400 mb-1.5 block">Company *</label>
@@ -591,70 +499,6 @@ export default function JobTracker() {
               Save to board only
             </button>
             <button onClick={resetAddForm} className="btn-ghost">Cancel</button>
-          </div>
-
-          <div className="divider my-4" />
-
-          <div className="rounded-2xl border border-navy-600 bg-navy-900/40 p-4">
-            <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
-              <div>
-                <div className="text-white text-sm font-display font-semibold">Bulk URL Intake</div>
-                <div className="text-slate-400 text-xs">Paste 3-5 job links, review the guesses, then create tracker entries.</div>
-              </div>
-              <button onClick={() => setShowBulkIntake(prev => !prev)} className="btn-secondary text-xs">
-                {showBulkIntake ? 'Hide' : 'Open'}
-              </button>
-            </div>
-
-            {showBulkIntake && (
-              <div className="space-y-3 pt-2">
-                <textarea
-                  className="textarea-field h-28"
-                  placeholder={'Paste one URL per line...\nhttps://company.greenhouse.io/jobs/12345\nhttps://jobs.lever.co/company/role'}
-                  value={bulkUrlText}
-                  onChange={e => setBulkUrlText(e.target.value)}
-                />
-                <div className="flex gap-2 flex-wrap">
-                  <button onClick={previewBulkUrls} disabled={!bulkUrlText.trim()} className="btn-secondary text-xs">
-                    Preview URLs
-                  </button>
-                  <button onClick={clearBulkPreview} className="btn-ghost text-xs">
-                    Clear
-                  </button>
-                </div>
-
-                {bulkParseMeta.invalid.length > 0 && (
-                  <div className="text-xs text-yellow-300 bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-3 py-2">
-                    Could not read: {bulkParseMeta.invalid.join(', ')}
-                  </div>
-                )}
-
-                {bulkEntries.length > 0 && (
-                  <div className="space-y-3">
-                    {bulkEntries.map(entry => (
-                      <div key={entry.id} className="rounded-xl border border-navy-600 bg-navy-800/60 p-3">
-                        <div className="grid sm:grid-cols-2 gap-2 mb-2">
-                          <input className="input-field" placeholder="Company" value={entry.company} onChange={e => updateBulkEntry(entry.id, 'company', e.target.value)} />
-                          <input className="input-field" placeholder="Role title" value={entry.role} onChange={e => updateBulkEntry(entry.id, 'role', e.target.value)} />
-                        </div>
-                        <div className="grid sm:grid-cols-3 gap-2 items-start">
-                          <input className="input-field" placeholder="Application URL" value={entry.url} onChange={e => updateBulkEntry(entry.id, 'url', e.target.value)} />
-                          <select className="input-field" value={entry.stage} onChange={e => updateBulkEntry(entry.id, 'stage', e.target.value)}>
-                            {STAGES.map(stage => <option key={stage}>{stage}</option>)}
-                          </select>
-                          <button onClick={() => removeBulkEntry(entry.id)} className="btn-ghost text-xs justify-center">
-                            <X size={14}/> Remove
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    <button onClick={createBulkApplications} className="btn-primary">
-                      Create Applications
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
       )}
