@@ -121,6 +121,10 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
       gapResult: tab === 0 ? gapResult : null,
       scoreResult: tab === 1 ? scoreResult : null,
       redFlags: tab === 2 ? redFlags : null,
+      applicationId: activeApplication?.id || null,
+      applicationLabel: activeApplication
+        ? `${activeApplication.company}${activeApplication.role ? ` - ${activeApplication.role}` : ''}`
+        : null,
     }
     updateProjectData('gapResults', [...savedResults, entry])
   }
