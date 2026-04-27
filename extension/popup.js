@@ -1,8 +1,6 @@
 const DEFAULT_APP_URL = 'https://jobsensei.app'
-const QUEUE_KEY = 'queuedCaptures'
 
 const elements = {
-  appUrl: document.getElementById('appUrl'),
   company: document.getElementById('company'),
   role: document.getElementById('role'),
   url: document.getElementById('url'),
@@ -10,34 +8,17 @@ const elements = {
   status: document.getElementById('status'),
   sourceMeta: document.getElementById('sourceMeta'),
   lengthMeta: document.getElementById('lengthMeta'),
-  queueMeta: document.getElementById('queueMeta'),
   refreshBtn: document.getElementById('refreshBtn'),
-  queueBtn: document.getElementById('queueBtn'),
   sendBtn: document.getElementById('sendBtn'),
-  sendQueueBtn: document.getElementById('sendQueueBtn'),
-  clearQueueBtn: document.getElementById('clearQueueBtn'),
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const { appUrl = DEFAULT_APP_URL } = await chrome.storage.local.get({ appUrl: DEFAULT_APP_URL })
-  elements.appUrl.value = appUrl
-  elements.appUrl.addEventListener('change', persistAppUrl)
-  elements.appUrl.addEventListener('blur', persistAppUrl)
   elements.jdText.addEventListener('input', updateMeta)
   elements.refreshBtn.addEventListener('click', captureCurrentPage)
-  elements.queueBtn.addEventListener('click', queueCurrentCapture)
   elements.sendBtn.addEventListener('click', handoffCapture)
-  elements.sendQueueBtn.addEventListener('click', handoffQueuedCaptures)
-  elements.clearQueueBtn.addEventListener('click', clearQueue)
 
-  await updateQueueMeta()
   await captureCurrentPage()
 })
-
-async function persistAppUrl() {
-  const value = elements.appUrl.value.trim() || DEFAULT_APP_URL
-  await chrome.storage.local.set({ appUrl: value })
-}
 
 async function captureCurrentPage() {
   setStatus('Reading the current page...')
@@ -78,42 +59,6 @@ async function handoffCapture() {
   await sendToJobSensei(payload)
 }
 
-async function queueCurrentCapture() {
-  const payload = getFormPayload()
-
-  if (!hasPayloadDetails(payload)) {
-    setStatus('Add at least one job detail before saving to queue.', 'error')
-    return
-  }
-
-  const queue = await getQueue()
-  const key = payload.url || `${payload.company}:${payload.role}:${payload.jdText.slice(0, 80)}`
-  const next = queue.filter(item => {
-    const itemKey = item.url || `${item.company}:${item.role}:${(item.jdText || '').slice(0, 80)}`
-    return itemKey !== key
-  })
-  next.push(payload)
-  await chrome.storage.local.set({ [QUEUE_KEY]: next })
-  await updateQueueMeta()
-  setStatus('Saved to queue.', 'success')
-}
-
-async function handoffQueuedCaptures() {
-  const queue = await getQueue()
-  if (queue.length === 0) {
-    setStatus('Queue is empty.', 'error')
-    return
-  }
-
-  await sendToJobSensei({ captures: queue })
-}
-
-async function clearQueue() {
-  await chrome.storage.local.set({ [QUEUE_KEY]: [] })
-  await updateQueueMeta()
-  setStatus('Queue cleared.', 'success')
-}
-
 function getFormPayload() {
   return {
     company: elements.company.value.trim(),
@@ -130,13 +75,9 @@ function hasPayloadDetails(payload) {
 }
 
 async function sendToJobSensei(payload) {
-  const isBulk = Array.isArray(payload.captures)
-  const appUrl = elements.appUrl.value.trim() || DEFAULT_APP_URL
-  await chrome.storage.local.set({ appUrl })
+  setStatus('Opening JobSensei...')
 
-  setStatus(isBulk ? 'Opening JobSensei with queued captures...' : 'Opening JobSensei...')
-
-  chrome.runtime.sendMessage({ type: 'handoff-capture', payload, appUrl }, response => {
+  chrome.runtime.sendMessage({ type: 'handoff-capture', payload, appUrl: DEFAULT_APP_URL }, response => {
     if (chrome.runtime.lastError) {
       setStatus(chrome.runtime.lastError.message, 'error')
       return
@@ -147,25 +88,9 @@ async function sendToJobSensei(payload) {
       return
     }
 
-    if (isBulk) {
-      chrome.storage.local.set({ [QUEUE_KEY]: [] }, updateQueueMeta)
-    }
-
     setStatus('Sent to JobSensei.', 'success')
     window.close()
   })
-}
-
-async function getQueue() {
-  const result = await chrome.storage.local.get({ [QUEUE_KEY]: [] })
-  return Array.isArray(result[QUEUE_KEY]) ? result[QUEUE_KEY] : []
-}
-
-async function updateQueueMeta() {
-  const queue = await getQueue()
-  elements.queueMeta.textContent = `Queue: ${queue.length}`
-  elements.sendQueueBtn.disabled = queue.length === 0
-  elements.clearQueueBtn.disabled = queue.length === 0
 }
 
 function updateMeta() {
@@ -269,8 +194,8 @@ function extractJobFromPage() {
       const nodes = Array.from(document.querySelectorAll(selector))
       for (const node of nodes) {
         if (!isVisible(node)) continue
-        const text = cleanText(node.innerText || node.textContent || '')
-        if (text.length > longest.length) longest = text
+        const text = (node.innerText || node.textContent || '').trim()
+        if (cleanText(text).length > cleanText(longest).length) longest = text
       }
     }
     return longest
@@ -309,7 +234,10 @@ function extractJobFromPage() {
   const metaCompany = cleanText(document.querySelector('meta[property="og:site_name"]')?.content || '')
   const hostname = window.location.hostname.replace(/^www\./i, '')
   const hostFallback = titleize(hostname.split('.')[0].replace(/[-_]+/g, ' '))
-  let company = textFromSelectors(companySelectors) || titleParts.find(part => part !== role && !isGenericTitle(part)) || metaCompany || hostFallback
+  const jobsBgCompany = /jobs\.bg/i.test(hostname)
+    ? cleanText(pageTitle.match(/\s(?:от|from)\s([^|–—]+)/i)?.[1] || '')
+    : ''
+  let company = textFromSelectors(companySelectors) || jobsBgCompany || titleParts.find(part => part !== role && !isGenericTitle(part)) || metaCompany || hostFallback
   if (/linkedin/i.test(window.location.hostname) && company.includes('\n')) {
     company = cleanLines(company)[0] || company
   }
@@ -330,8 +258,8 @@ function extractJobFromPage() {
   ]
 
   let jdText = longestTextFromSelectors(jdSelectors)
-  if (jdText.length < 400) {
-    jdText = cleanText(document.body?.innerText || '').slice(0, 12000)
+  if (cleanText(jdText).length < 400) {
+    jdText = (document.body?.innerText || '').slice(0, 12000)
   }
   jdText = cleanLines(jdText)
     .filter(line => !/bookmark|message|menu|share|more_vert|разглеждания|кандидатствай|получавайте|съобщения|бележник|всички обяви/i.test(line))

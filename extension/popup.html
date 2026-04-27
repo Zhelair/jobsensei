@@ -93,23 +93,6 @@
         border: 1px solid rgba(122, 100, 88, 0.16);
       }
 
-      .teal {
-        background: var(--accent);
-        color: #082825;
-      }
-
-      details {
-        border-top: 1px solid rgba(122, 100, 88, 0.14);
-        padding-top: 8px;
-      }
-
-      summary {
-        cursor: pointer;
-        color: var(--muted);
-        font-size: 12px;
-        font-weight: 650;
-      }
-
       .status {
         min-height: 18px;
         font-size: 12px;
@@ -177,23 +160,8 @@
 
         <div class="actions">
           <button id="refreshBtn" class="secondary" type="button">Refresh Capture</button>
-          <button id="queueBtn" class="secondary" type="button">Save to Queue</button>
           <button id="sendBtn" class="primary" type="button">Send to JobSensei</button>
         </div>
-
-        <div class="actions">
-          <button id="sendQueueBtn" class="teal" type="button">Send Queue</button>
-          <button id="clearQueueBtn" class="secondary" type="button">Clear Queue</button>
-          <span id="queueMeta" class="status">Queue: 0</span>
-        </div>
-
-        <details>
-          <summary>Connection</summary>
-          <div class="row" style="margin-top: 10px;">
-            <label class="label" for="appUrl">JobSensei App URL</label>
-            <input id="appUrl" type="url" placeholder="https://jobsensei.app" />
-          </div>
-        </details>
 
         <div id="status" class="status"></div>
       </div>
