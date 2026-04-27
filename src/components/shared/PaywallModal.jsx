@@ -42,9 +42,9 @@ export default function PaywallModal() {
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-500/30 to-yellow-600/10 border border-yellow-500/20 flex items-center justify-center mb-3">
             <Coffee size={28} className="text-yellow-400" />
           </div>
-          <h2 className="font-display font-bold text-white text-xl mb-1">Unlock AI Features</h2>
+          <h2 className="font-display font-bold text-white text-xl mb-1">Unlock JobSensei</h2>
           <p className="text-slate-400 text-sm leading-relaxed">
-            Support JobSensei and get instant access to all AI-powered features — no API key needed.
+            Support JobSensei to use hosted AI or connect your own API key.
           </p>
         </div>
 
@@ -103,7 +103,7 @@ export default function PaywallModal() {
             className="text-teal-400 hover:underline"
             // Settings is always accessible — user can navigate there after closing
           >
-            Add it in Settings
+            Unlock first, then add it in Settings
           </button>
         </p>
       </div>

@@ -52,6 +52,10 @@ export default function Settings() {
   }
 
   async function testConnection() {
+    if (!bmacToken) {
+      setTestResult('locked')
+      return
+    }
     setTesting(true)
     setTestResult(null)
     const cfg = PROVIDER_CONFIGS[form.provider]
@@ -78,6 +82,10 @@ export default function Settings() {
   }
 
   function save() {
+    if (!bmacToken) {
+      setTestResult('locked')
+      return
+    }
     saveConfig(form)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -163,7 +171,8 @@ export default function Settings() {
     }
   }
 
-  const usingOwnKey = !!apiKey
+  const hasPlanAccess = !!bmacToken
+  const usingOwnKey = hasPlanAccess && !!apiKey
   const usingJobsenseiAI = !!bmacToken && !apiKey
   const currentProviderLabel = PROVIDER_CONFIGS[form.provider]?.label || 'Custom'
   const planBadgeClass = usingOwnKey
@@ -182,7 +191,7 @@ export default function Settings() {
     ? `Your workspace is running on ${currentProviderLabel} with ${form.model}.`
     : usingJobsenseiAI
       ? 'JobSensei is powering AI for this workspace. You can still switch to your own key at any time.'
-      : 'Connect JobSensei AI or bring your own API key to unlock research, interviews, and writing tools.'
+      : 'Unlock JobSensei first, then use hosted AI or connect your own API key.'
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in space-y-4">
@@ -291,11 +300,28 @@ export default function Settings() {
             </button>
 
             <p className="text-slate-400 text-xs mt-2">
-              Optional. Use your own OpenAI, DeepSeek, Anthropic, or compatible endpoint instead of JobSensei-hosted AI.
+              Optional after unlock. Use your own OpenAI, DeepSeek, Anthropic, or compatible endpoint instead of JobSensei-hosted AI.
             </p>
 
             {showOwnKey && (
               <div className="mt-4 space-y-3">
+                {!hasPlanAccess ? (
+                  <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-4">
+                    <div className="text-yellow-300 text-sm font-display font-semibold mb-1">Unlock JobSensei to use BYOK</div>
+                    <p className="text-slate-300 text-xs leading-relaxed mb-3">
+                      Personal API keys are still a premium app mode. Activate your access code above first, then this setup opens.
+                    </p>
+                    <button
+                      onClick={() => {
+                        document.querySelector('input[placeholder="Enter your access code or email..."]')?.focus()
+                      }}
+                      className="btn-secondary text-xs"
+                    >
+                      <Coffee size={13} /> Enter access code
+                    </button>
+                  </div>
+                ) : (
+                  <>
                 <DeepSeekGuide />
                 <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-3 py-3">
                   <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Current BYOK status</div>
@@ -360,6 +386,7 @@ export default function Settings() {
                 </div>
                 {testResult === 'success' && <p className="text-green-400 text-sm text-center">Connection successful.</p>}
                 {testResult === 'error' && <p className="text-red-400 text-sm text-center">Connection failed. Check the key and model name.</p>}
+                {testResult === 'locked' && <p className="text-yellow-400 text-sm text-center">Unlock JobSensei before using BYOK.</p>}
 
                 {bmacToken && apiKey && (
                   <div className="pt-2 border-t border-navy-700">
@@ -374,6 +401,8 @@ export default function Settings() {
                     </button>
                     <p className="text-slate-600 text-xs text-center mt-1">Keeps your plan active and clears the personal API key from this device.</p>
                   </div>
+                )}
+                  </>
                 )}
               </div>
             )}
