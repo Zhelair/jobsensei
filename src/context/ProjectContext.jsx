@@ -231,6 +231,79 @@ export function ProjectProvider({ children }) {
     return targetApp
   }
 
+  function ingestCapturedApplications(captures = []) {
+    if (!activeProject || !Array.isArray(captures) || captures.length === 0) return []
+
+    let nextApplications = [...(activeProject.data.applications || [])]
+    const targets = []
+    let latestJd = activeProject.data.currentJD || ''
+
+    captures.forEach(capture => {
+      const normalizedUrl = normalizeApplicationUrl(capture?.url || capture?.jdUrl || '') || ''
+      const jdText = (capture?.jdText || capture?.jd || '').trim()
+      const company = (capture?.company || '').trim() || (capture?.pageTitle || 'Captured Application').trim()
+      const role = (capture?.role || '').trim()
+      const captureSource = (capture?.source || 'chrome-extension').trim()
+      const capturedAt = capture?.capturedAt || new Date().toISOString()
+
+      if (!normalizedUrl && !jdText && !company && !role) return
+
+      const existingApp = nextApplications.find(app => {
+        if (!normalizedUrl || !app.jdUrl) return false
+        return normalizeApplicationUrl(app.jdUrl) === normalizedUrl
+      })
+
+      let targetApp
+      if (existingApp) {
+        targetApp = {
+          ...existingApp,
+          company: company || existingApp.company,
+          role: role || existingApp.role,
+          jdUrl: normalizedUrl || existingApp.jdUrl,
+          jdText: jdText || existingApp.jdText || '',
+          captureSource,
+          capturedAt,
+        }
+        nextApplications = nextApplications.map(app => app.id === existingApp.id ? targetApp : app)
+      } else {
+        targetApp = {
+          ...makeTrackerApplication({
+            company,
+            role,
+            stage: 'Researching',
+            jdUrl: normalizedUrl,
+            jdText,
+          }),
+          captureSource,
+          capturedAt,
+        }
+        nextApplications.push(targetApp)
+      }
+
+      latestJd = targetApp.jdText || latestJd
+      targets.push(targetApp)
+    })
+
+    if (targets.length === 0) return []
+
+    const activeApplicationId = targets[targets.length - 1].id
+    const updated = projects.map(project => {
+      if (project.id !== activeProjectId) return project
+      return {
+        ...project,
+        updatedAt: new Date().toISOString(),
+        data: {
+          ...project.data,
+          applications: nextApplications,
+          activeApplicationId,
+          currentJD: latestJd,
+        },
+      }
+    })
+    persist(updated)
+    return targets
+  }
+
   // Export single project as JSON
   function exportProject(id) {
     const project = projects.find(p => p.id === id)
@@ -300,6 +373,7 @@ export function ProjectProvider({ children }) {
       getProjectData,
       setActiveApplication,
       ingestCapturedApplication,
+      ingestCapturedApplications,
       exportProject,
       exportAll,
       importProjects,

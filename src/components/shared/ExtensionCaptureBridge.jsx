@@ -5,24 +5,35 @@ import { clearExtensionCapture, readExtensionCapture } from '../../utils/extensi
 
 export default function ExtensionCaptureBridge() {
   const { openTrackerApplication } = useApp()
-  const { ingestCapturedApplication } = useProject()
+  const { activeProject, ingestCapturedApplication, ingestCapturedApplications } = useProject()
   const lastHandledRef = React.useRef(null)
 
   const consumePendingCapture = React.useCallback(() => {
+    if (!activeProject) return
+
     const capture = readExtensionCapture()
     if (!capture) return
 
-    const dedupeKey = `${capture.capturedAt || ''}:${capture.url || ''}:${capture.company || ''}:${capture.role || ''}`
+    const captures = Array.isArray(capture.captures) ? capture.captures : [capture]
+    const dedupeKey = captures
+      .map(item => `${item.capturedAt || ''}:${item.url || ''}:${item.company || ''}:${item.role || ''}`)
+      .join('|')
     if (lastHandledRef.current === dedupeKey) return
 
-    const targetApp = ingestCapturedApplication(capture)
+    const targetApps = captures.length > 1
+      ? ingestCapturedApplications(captures)
+      : [ingestCapturedApplication(captures[0])].filter(Boolean)
+
+    if (targetApps.length === 0) return
+
     clearExtensionCapture()
     lastHandledRef.current = dedupeKey
 
+    const targetApp = targetApps[targetApps.length - 1]
     if (targetApp?.id) {
       openTrackerApplication(targetApp.id)
     }
-  }, [ingestCapturedApplication, openTrackerApplication])
+  }, [activeProject, ingestCapturedApplication, ingestCapturedApplications, openTrackerApplication])
 
   React.useEffect(() => {
     const handleVisibility = () => {
