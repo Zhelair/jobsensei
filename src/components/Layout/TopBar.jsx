@@ -25,7 +25,6 @@ const SECTION_TITLES = {
   gap: 'Gap Analysis',
   learning: 'Learning',
   star: 'STAR Builder',
-  negotiation: 'Negotiation Simulator',
   tools: 'Prep Tools',
   tracker: 'Applications',
   notes: 'Notes & Workbook',
@@ -68,14 +67,9 @@ const SECTION_HELP = {
     desc: 'Turn rough situation notes into polished STAR (Situation-Task-Action-Result) interview answers.',
     tips: ['Click New Story and describe what happened (rough notes are fine)', 'AI structures it into a full STAR answer', 'Save to your Story Bank, then view or copy anytime'],
   },
-  negotiation: {
-    title: 'Negotiation Simulator',
-    desc: 'Roleplay salary negotiations against an AI hiring manager. Practice countering, anchoring, and closing.',
-    tips: ['Enter your target salary and the initial offer', 'Negotiate in real-time chat', 'Get a debrief with tactics you used or missed'],
-  },
   tools: {
     title: 'Prep Tools',
-    desc: 'Document, fit-check, negotiation, and profile tools for your active application.',
+    desc: 'Document, fit-check, profile, and story tools for your active application.',
     tips: ['Run Gap Analysis, Resume Checker, and Cover Letter from here', 'Recent results stay saved to the current project history'],
   },
   tracker: {

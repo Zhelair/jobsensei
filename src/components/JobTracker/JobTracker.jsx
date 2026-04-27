@@ -4,7 +4,7 @@ import { useAI } from '../../context/AIContext'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { prompts } from '../../utils/prompts'
 import { generateId, formatDate, timeAgo, tryParseJSON } from '../../utils/helpers'
-import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale, Copy, Printer, Save, Sparkles, FileText, Mic, Target, Star, Gauge, Mail, Megaphone, ClipboardCheck, Globe, Camera, Zap, TrendingUp } from 'lucide-react'
+import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale, Copy, Printer, Save, Sparkles, FileText, Mic, Target, Star, Gauge, Mail, Megaphone, ClipboardCheck, Globe, Camera, Zap } from 'lucide-react'
 
 const STAGES = ['Researching', 'Applied', 'Screening', 'Interviewing', 'Awaiting', 'Offer', 'Rejected']
 const FOLLOWUP_DAYS = { Applied: 7, Screening: 5, Interviewing: 3, Awaiting: 5 }
@@ -905,9 +905,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     { id: 'resumechecker', label: 'Resume Checker', desc: 'Review ATS fit against this JD.', icon: ClipboardCheck },
     { id: 'linkedin', label: 'LinkedIn Auditor', desc: 'Polish your profile before recruiters check it.', icon: Globe },
     { id: 'visualreview', label: 'Visual Review', desc: 'Analyze the design quality of your resume.', icon: Camera },
-    { id: 'negotiation', label: 'Negotiation Sim', desc: 'Practice offer and salary conversations.', icon: Scale },
     { id: 'transferable', label: 'Transferable Skills Coach', desc: 'Reframe your experience for this opportunity.', icon: Zap },
-    { id: 'salarycoach', label: 'Salary Coach', desc: 'Pressure-test compensation expectations.', icon: TrendingUp },
   ]
 
   function saveWorkspace(showFeedback = true) {
@@ -1323,8 +1321,6 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
       { label: 'Elevator Pitch', section: SECTIONS.INTERVIEW, toolId: 'pitch', count: appPitchRuns.length },
       { label: 'LinkedIn Auditor', section: SECTIONS.TOOLS, toolId: 'linkedin' },
       { label: 'Visual Review', section: SECTIONS.TOOLS, toolId: 'visualreview' },
-      { label: 'Negotiation Sim', section: SECTIONS.TOOLS, toolId: 'negotiation' },
-      { label: 'Salary Coach', section: SECTIONS.TOOLS, toolId: 'salarycoach' },
     ]
 
     return (

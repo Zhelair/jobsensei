@@ -7,7 +7,6 @@ const ProjectContext = createContext(null)
 const EMPTY_PROJECT_DATA = {
   gapResults: [],           // saved gap analyses
   interviewSessions: [],    // interview history
-  negotiationSessions: [],  // negotiation history
   toolsHistory: [],         // tools usage history
   quizHistory: [],          // full quiz result snapshots
   starStories: [],          // STAR bank
@@ -20,7 +19,6 @@ const EMPTY_PROJECT_DATA = {
   currentJD: '',            // persistent JD field across gap/interview
   activeApplicationId: null,// tracker application currently driving tool context
   interviewMode: 'hr',      // last interview mode used
-  negotiationOffer: '',     // last negotiation offer text
 }
 
 function normalizeProject(project) {

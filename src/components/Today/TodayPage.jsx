@@ -2,13 +2,10 @@ import React from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
 import { isDueToday } from '../../utils/spacedRepetition'
-import { timeAgo } from '../../utils/helpers'
 import {
   ArrowRight, BookOpen, Briefcase, ClipboardCheck,
   FolderOpen, Mail, Mic, Search, Sparkles, Target,
 } from 'lucide-react'
-
-const FOLLOWUP_DAYS = { Applied: 7, Screening: 5, Interviewing: 3, Awaiting: 5 }
 
 function hasResearchData(noteData = {}) {
   return ['wowFacts', 'techStack', 'culture', 'openQ'].some(key => (noteData[key] || '').trim())
@@ -16,17 +13,6 @@ function hasResearchData(noteData = {}) {
 
 function hasPrepNotes(noteData = {}) {
   return ['prepNotes', 'people', 'theyMentioned'].some(key => (noteData[key] || '').trim())
-}
-
-function getOverdueApps(apps) {
-  const now = new Date()
-  return apps.filter(app => {
-    const days = FOLLOWUP_DAYS[app.stage]
-    if (!days) return false
-    if (app.followupSnoozedUntil && new Date(app.followupSnoozedUntil) > now) return false
-    const since = new Date(app.stageUpdatedAt || app.date)
-    return (now - since) / (1000 * 60 * 60 * 24) >= days
-  })
 }
 
 function applicationLabel(app) {
@@ -104,7 +90,7 @@ function MetricCard({ label, value, hint, tone = 'slate' }) {
 
 export default function TodayPage() {
   const { profile, launchTool, openLearningTopic, openTrackerApplication, setActiveSection } = useApp()
-  const { activeProject, activeApplication, getProjectData } = useProject()
+  const { activeProject, activeApplication, getProjectData, setActiveApplication, updateProjectData } = useProject()
 
   const applications = getProjectData('applications') || []
   const companyNotes = getProjectData('companyNotes') || {}
@@ -131,8 +117,12 @@ export default function TodayPage() {
     ? toolsHistory.filter(entry => ['coverletter', 'resumechecker', 'transferable'].includes(entry.tool) && matchesApplicationEntry(focusApplication, entry))
     : []
   const dueTopics = topics.filter(topic => isDueToday(topic.nextReview) && topic.status === 'In Progress')
-  const overdueApps = getOverdueApps(applications)
-  const focusOverdue = focusApplication ? overdueApps.find(app => app.id === focusApplication.id) : null
+
+  function changeFocusApplication(nextId) {
+    const nextApp = applications.find(app => app.id === nextId)
+    setActiveApplication(nextId || null)
+    updateProjectData('currentJD', nextApp?.jdText || '')
+  }
 
   const focusSteps = focusApplication ? [
     {
@@ -218,23 +208,6 @@ export default function TodayPage() {
   const completedFocusSteps = focusSteps.filter(step => step.state === 'complete').length
   const nextFocusStep = focusSteps.find(step => step.state !== 'complete') || null
 
-  const recentItems = [
-    ...interviewSessions.map(session => ({
-      id: session.id,
-      date: session.date,
-      title: session.mode || 'Interview session',
-      subtitle: `${session.applicationLabel || 'Saved in this project'}${session.score != null ? ` - ${session.score}/10` : ''}`,
-    })),
-    ...toolsHistory.map(item => ({
-      id: item.id,
-      date: item.date,
-      title: item.toolLabel || 'Prep tool',
-      subtitle: item.applicationLabel || 'Saved to this project',
-    })),
-  ]
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 5)
-
   const heroTitle = focusApplication
     ? applicationLabel(focusApplication)
     : 'Start your first application'
@@ -285,17 +258,7 @@ export default function TodayPage() {
       badge: `${completedFocusSteps}/6 steps complete`,
     })
 
-    if (focusOverdue) {
-      actionCards.push({
-        title: 'Follow-Up Due',
-        desc: `${applicationLabel(focusOverdue)} has been waiting ${timeAgo(focusOverdue.stageUpdatedAt || focusOverdue.date)}. Draft the next message while the thread is still alive.`,
-        cta: 'Draft Follow-Up',
-        onClick: () => launchTool(SECTIONS.INTERVIEW, 'followup'),
-        icon: Mail,
-        tone: 'yellow',
-        badge: focusOverdue.stage,
-      })
-    } else if (focusHasJd && focusInterviewSessions.length === 0) {
+    if (focusHasJd && focusInterviewSessions.length === 0) {
       actionCards.push({
         title: 'Run A Mock Interview',
         desc: 'Practice with the active application context and save your first scored session.',
@@ -327,17 +290,6 @@ export default function TodayPage() {
       icon: BookOpen,
       tone: 'indigo',
       badge: 'Learning',
-    })
-  } else if (overdueApps.length > 0 && !focusOverdue) {
-    const nextFollowUp = overdueApps[0]
-    actionCards.push({
-      title: 'Another Follow-Up Is Waiting',
-      desc: `${applicationLabel(nextFollowUp)} needs attention ${timeAgo(nextFollowUp.stageUpdatedAt || nextFollowUp.date)} after the last stage change.`,
-      cta: 'Open Application',
-      onClick: () => openTrackerApplication(nextFollowUp.id, 'overview'),
-      icon: Mail,
-      tone: 'yellow',
-      badge: 'Needs follow-up',
     })
   } else if (applications.length > 1) {
     actionCards.push({
@@ -403,6 +355,20 @@ export default function TodayPage() {
           </div>
 
           <div className="flex gap-2 flex-wrap">
+            {applications.length > 0 && (
+              <select
+                className="input-field h-10 min-w-[220px] text-xs"
+                value={focusApplication?.id || ''}
+                onChange={e => changeFocusApplication(e.target.value)}
+                aria-label="Change active application"
+              >
+                {applications.map(app => (
+                  <option key={app.id} value={app.id}>
+                    {applicationLabel(app)}
+                  </option>
+                ))}
+              </select>
+            )}
             <button onClick={primaryAction.onClick} className="btn-primary text-sm">
               {primaryAction.label}
             </button>
@@ -426,10 +392,10 @@ export default function TodayPage() {
             tone="indigo"
           />
           <MetricCard
-            label="Follow-Ups"
-            value={overdueApps.length}
-            hint={overdueApps.length > 0 ? 'Applications waiting on a follow-up' : 'No follow-up pressure today'}
-            tone={overdueApps.length > 0 ? 'yellow' : 'slate'}
+            label="Mock Interviews"
+            value={focusApplication ? focusInterviewSessions.length : interviewSessions.length}
+            hint={focusApplication ? 'Saved for this application' : 'Saved in this project'}
+            tone="slate"
           />
           <MetricCard
             label="Reviews Due"
@@ -444,7 +410,7 @@ export default function TodayPage() {
         <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
           <div>
             <h3 className="font-display font-semibold text-white text-base">Recommended Next Actions</h3>
-            <p className="text-slate-400 text-sm">Shortcuts based on your active workflow, due reviews, and follow-up pressure.</p>
+            <p className="text-slate-400 text-sm">Shortcuts based on your active application, workflow progress, and learning reviews.</p>
           </div>
         </div>
         <div className="grid lg:grid-cols-3 gap-4">
@@ -454,70 +420,6 @@ export default function TodayPage() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[1.1fr,0.9fr] gap-4">
-        <div className="card">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-display font-semibold text-white text-base">Reviews Due</h3>
-            {dueTopics.length > 0 && (
-              <button onClick={() => openLearningTopic(dueTopics[0].id, 'quiz')} className="btn-ghost text-xs">
-                Open Learn
-              </button>
-            )}
-          </div>
-
-          {dueTopics.length > 0 ? (
-            <div className="space-y-2">
-              {dueTopics.slice(0, 4).map(topic => (
-                <button
-                  key={topic.id}
-                  onClick={() => openLearningTopic(topic.id, 'quiz')}
-                  className="w-full rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-3 py-3 text-left hover:bg-yellow-500/10 transition-colors"
-                >
-                  <div className="text-yellow-300 text-xs font-display font-semibold mb-1">Due today</div>
-                  <div className="text-white text-sm">{topic.title}</div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-4 py-5">
-              <p className="text-slate-400 text-sm">
-                No learning reviews are due right now. {nextFocusStep ? `A good next move is ${nextFocusStep.title.toLowerCase()}.` : 'Use the extra time to keep your active applications moving.'}
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-display font-semibold text-white text-base">Recent Activity</h3>
-            {focusApplication && (
-              <button onClick={() => openTrackerApplication(focusApplication.id, 'overview')} className="btn-ghost text-xs">
-                Open Workspace
-              </button>
-            )}
-          </div>
-
-          {recentItems.length > 0 ? (
-            <div className="space-y-2">
-              {recentItems.map(item => (
-                <div key={item.id} className="rounded-xl border border-navy-600 bg-navy-900/60 px-3 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-white text-sm font-body font-medium truncate">{item.title}</div>
-                      <div className="text-slate-400 text-xs truncate mt-1">{item.subtitle}</div>
-                    </div>
-                    <span className="text-slate-500 text-xs flex-shrink-0">{timeAgo(item.date)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-4 py-5">
-              <p className="text-slate-400 text-sm">No saved activity yet. Create one application and JobSensei will start building a visible prep trail here.</p>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
