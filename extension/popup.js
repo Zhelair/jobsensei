@@ -1,4 +1,5 @@
 const DEFAULT_APP_URL = 'https://jobsensei.app'
+const QUEUE_KEY = 'queuedCaptures'
 
 const elements = {
   appUrl: document.getElementById('appUrl'),
@@ -9,8 +10,12 @@ const elements = {
   status: document.getElementById('status'),
   sourceMeta: document.getElementById('sourceMeta'),
   lengthMeta: document.getElementById('lengthMeta'),
+  queueMeta: document.getElementById('queueMeta'),
   refreshBtn: document.getElementById('refreshBtn'),
+  queueBtn: document.getElementById('queueBtn'),
   sendBtn: document.getElementById('sendBtn'),
+  sendQueueBtn: document.getElementById('sendQueueBtn'),
+  clearQueueBtn: document.getElementById('clearQueueBtn'),
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -20,8 +25,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   elements.appUrl.addEventListener('blur', persistAppUrl)
   elements.jdText.addEventListener('input', updateMeta)
   elements.refreshBtn.addEventListener('click', captureCurrentPage)
+  elements.queueBtn.addEventListener('click', queueCurrentCapture)
   elements.sendBtn.addEventListener('click', handoffCapture)
+  elements.sendQueueBtn.addEventListener('click', handoffQueuedCaptures)
+  elements.clearQueueBtn.addEventListener('click', clearQueue)
 
+  await updateQueueMeta()
   await captureCurrentPage()
 })
 
@@ -59,7 +68,54 @@ async function captureCurrentPage() {
 }
 
 async function handoffCapture() {
-  const payload = {
+  const payload = getFormPayload()
+
+  if (!hasPayloadDetails(payload)) {
+    setStatus('Add at least one job detail before sending it to JobSensei.', 'error')
+    return
+  }
+
+  await sendToJobSensei(payload)
+}
+
+async function queueCurrentCapture() {
+  const payload = getFormPayload()
+
+  if (!hasPayloadDetails(payload)) {
+    setStatus('Add at least one job detail before saving to queue.', 'error')
+    return
+  }
+
+  const queue = await getQueue()
+  const key = payload.url || `${payload.company}:${payload.role}:${payload.jdText.slice(0, 80)}`
+  const next = queue.filter(item => {
+    const itemKey = item.url || `${item.company}:${item.role}:${(item.jdText || '').slice(0, 80)}`
+    return itemKey !== key
+  })
+  next.push(payload)
+  await chrome.storage.local.set({ [QUEUE_KEY]: next })
+  await updateQueueMeta()
+  setStatus('Saved to queue.', 'success')
+}
+
+async function handoffQueuedCaptures() {
+  const queue = await getQueue()
+  if (queue.length === 0) {
+    setStatus('Queue is empty.', 'error')
+    return
+  }
+
+  await sendToJobSensei({ captures: queue })
+}
+
+async function clearQueue() {
+  await chrome.storage.local.set({ [QUEUE_KEY]: [] })
+  await updateQueueMeta()
+  setStatus('Queue cleared.', 'success')
+}
+
+function getFormPayload() {
+  return {
     company: elements.company.value.trim(),
     role: elements.role.value.trim(),
     url: elements.url.value.trim(),
@@ -67,16 +123,18 @@ async function handoffCapture() {
     source: 'chrome-extension',
     capturedAt: new Date().toISOString(),
   }
+}
 
-  if (!payload.url && !payload.jdText && !payload.company && !payload.role) {
-    setStatus('Add at least one job detail before sending it to JobSensei.', 'error')
-    return
-  }
+function hasPayloadDetails(payload) {
+  return !!(payload.url || payload.jdText || payload.company || payload.role)
+}
 
+async function sendToJobSensei(payload) {
+  const isBulk = Array.isArray(payload.captures)
   const appUrl = elements.appUrl.value.trim() || DEFAULT_APP_URL
   await chrome.storage.local.set({ appUrl })
 
-  setStatus('Opening JobSensei...')
+  setStatus(isBulk ? 'Opening JobSensei with queued captures...' : 'Opening JobSensei...')
 
   chrome.runtime.sendMessage({ type: 'handoff-capture', payload, appUrl }, response => {
     if (chrome.runtime.lastError) {
@@ -89,9 +147,25 @@ async function handoffCapture() {
       return
     }
 
+    if (isBulk) {
+      chrome.storage.local.set({ [QUEUE_KEY]: [] }, updateQueueMeta)
+    }
+
     setStatus('Sent to JobSensei.', 'success')
     window.close()
   })
+}
+
+async function getQueue() {
+  const result = await chrome.storage.local.get({ [QUEUE_KEY]: [] })
+  return Array.isArray(result[QUEUE_KEY]) ? result[QUEUE_KEY] : []
+}
+
+async function updateQueueMeta() {
+  const queue = await getQueue()
+  elements.queueMeta.textContent = `Queue: ${queue.length}`
+  elements.sendQueueBtn.disabled = queue.length === 0
+  elements.clearQueueBtn.disabled = queue.length === 0
 }
 
 function updateMeta() {
@@ -108,6 +182,23 @@ function extractJobFromPage() {
     return (value || '').replace(/\s+/g, ' ').trim()
   }
 
+  function cleanLines(value) {
+    return (value || '')
+      .split(/\r?\n/)
+      .map(cleanText)
+      .filter(Boolean)
+  }
+
+  function isVisible(node) {
+    const rect = node.getBoundingClientRect?.()
+    const style = window.getComputedStyle?.(node)
+    return !!rect && rect.width > 0 && rect.height > 0 && style?.visibility !== 'hidden' && style?.display !== 'none'
+  }
+
+  function isGenericTitle(value) {
+    return /^(careers?|jobs?|job openings?|open positions?|application|overview)$/i.test(cleanText(value))
+  }
+
   function titleize(value) {
     return cleanText(value)
       .split(/\s+/)
@@ -120,8 +211,9 @@ function extractJobFromPage() {
     for (const selector of selectors) {
       const nodes = Array.from(document.querySelectorAll(selector))
       for (const node of nodes) {
+        if (!isVisible(node)) continue
         const text = cleanText(node.innerText || node.textContent || '')
-        if (text.length >= 3) return text
+        if (text.length >= 3 && !isGenericTitle(text)) return text
       }
     }
     return ''
@@ -132,6 +224,7 @@ function extractJobFromPage() {
     for (const selector of selectors) {
       const nodes = Array.from(document.querySelectorAll(selector))
       for (const node of nodes) {
+        if (!isVisible(node)) continue
         const text = cleanText(node.innerText || node.textContent || '')
         if (text.length > longest.length) longest = text
       }
@@ -141,11 +234,28 @@ function extractJobFromPage() {
 
   const pageTitle = cleanText(document.title)
   const titleParts = pageTitle.split(/\s+[|\-–—]\s+/).map(cleanText).filter(Boolean)
-  const h1Text = textFromSelectors(['h1', '[data-testid*="title" i]', '[class*="job-title" i]', '[class*="headline" i]'])
-  const role = h1Text || titleParts[0] || ''
+  const visibleLines = cleanLines(document.body?.innerText || '')
+  const h1Text = textFromSelectors([
+    '[class*="jobs-unified-top-card__job-title" i]',
+    '[data-testid*="job-title" i]',
+    '[data-automation-id*="job-title" i]',
+    '[class*="job-title" i]',
+    '[class*="jobTitle" i]',
+    'h1',
+    '[data-testid*="title" i]',
+    '[class*="headline" i]',
+  ])
+  const lineRole = visibleLines.find(line => {
+    if (line.length < 6 || line.length > 120 || isGenericTitle(line)) return false
+    if (/^(overview|application|about this job|job description|job requirements)$/i.test(line)) return false
+    return /analyst|engineer|developer|manager|specialist|designer|consultant|director|lead|associate|coordinator|officer|architect|scientist|administrator|accountant|recruiter|intern/i.test(line)
+  })
+  const role = h1Text || lineRole || titleParts.find(part => !isGenericTitle(part)) || ''
 
   const companySelectors = [
+    '[class*="jobs-unified-top-card__company-name" i]',
     '[data-testid*="company" i]',
+    '[data-automation-id*="company" i]',
     '[class*="company" i]',
     '[class*="employer" i]',
     '[data-company]'
@@ -154,9 +264,16 @@ function extractJobFromPage() {
   const metaCompany = cleanText(document.querySelector('meta[property="og:site_name"]')?.content || '')
   const hostname = window.location.hostname.replace(/^www\./i, '')
   const hostFallback = titleize(hostname.split('.')[0].replace(/[-_]+/g, ' '))
-  const company = textFromSelectors(companySelectors) || titleParts[1] || metaCompany || hostFallback
+  let company = textFromSelectors(companySelectors) || titleParts.find(part => part !== role && !isGenericTitle(part)) || metaCompany || hostFallback
+  if (/linkedin/i.test(window.location.hostname) && company.includes('\n')) {
+    company = cleanLines(company)[0] || company
+  }
 
   const jdSelectors = [
+    '[class*="jobs-description__content" i]',
+    '[class*="jobs-box__html-content" i]',
+    '[data-testid*="job-description" i]',
+    '[data-automation-id*="job-description" i]',
     'main',
     'article',
     '[role="main"]',

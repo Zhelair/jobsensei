@@ -22,12 +22,33 @@ export function normalizeExtensionCapture(payload = {}) {
   }
 }
 
+export function normalizeExtensionCaptures(payload = {}) {
+  const rawCaptures = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload.captures)
+      ? payload.captures
+      : [payload]
+
+  const seen = new Set()
+  return rawCaptures
+    .map(normalizeExtensionCapture)
+    .filter(Boolean)
+    .filter(capture => {
+      const key = `${capture.url || ''}:${capture.company || ''}:${capture.role || ''}:${capture.jdText.slice(0, 80)}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+}
+
 export function readExtensionCapture() {
   try {
     const raw = localStorage.getItem(EXTENSION_CAPTURE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    return normalizeExtensionCapture(parsed)
+    const captures = normalizeExtensionCaptures(parsed)
+    if (captures.length === 0) return null
+    return captures.length === 1 ? captures[0] : { captures }
   } catch {
     return null
   }
