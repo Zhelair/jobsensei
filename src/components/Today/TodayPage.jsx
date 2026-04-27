@@ -2,7 +2,6 @@ import React from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
 import { isDueToday } from '../../utils/spacedRepetition'
-import { timeAgo } from '../../utils/helpers'
 import {
   ArrowRight, BookOpen, Briefcase, ClipboardCheck,
   FolderOpen, Mail, Mic, Search, Sparkles, Target,
@@ -24,8 +23,8 @@ function matchesApplicationEntry(app, entry) {
   if (!app || !entry) return false
   const appLabel = applicationLabel(app)
 
-  if (entry.applicationId && entry.applicationId === app.id) return true
-  if (entry.applicationLabel && entry.applicationLabel === appLabel) return true
+  if (entry.applicationId) return entry.applicationId === app.id
+  if (entry.applicationLabel) return entry.applicationLabel === appLabel
 
   const entryJd = (entry.jdSnippet || entry.inputs?.jd || '').trim()
   const currentJd = (app.jdText || '').trim()
@@ -104,7 +103,14 @@ export default function TodayPage() {
   const suggestedFocus = !activeApplication && applications.length > 0
     ? [...applications].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
     : null
-  const focusApplication = activeApplication || suggestedFocus || null
+  const contextFocusId = activeApplication?.id || suggestedFocus?.id || ''
+  const [selectedFocusId, setSelectedFocusId] = React.useState(contextFocusId)
+
+  React.useEffect(() => {
+    setSelectedFocusId(contextFocusId)
+  }, [contextFocusId])
+
+  const focusApplication = applications.find(app => app.id === (selectedFocusId || contextFocusId)) || activeApplication || suggestedFocus || null
   const focusNotes = focusApplication ? companyNotes[focusApplication.id] || {} : {}
   const focusHasJd = !!focusApplication?.jdText?.trim()
   const focusHasResearch = hasResearchData(focusNotes)
@@ -121,6 +127,7 @@ export default function TodayPage() {
 
   function changeFocusApplication(nextId) {
     const nextApp = applications.find(app => app.id === nextId)
+    setSelectedFocusId(nextId)
     updateProjectDataMultiple({
       activeApplicationId: nextId || null,
       currentJD: nextApp?.jdText || '',
@@ -279,36 +286,6 @@ export default function TodayPage() {
     })
   }
 
-  const lastUsedTools = [
-    ...toolsHistory.map(item => ({
-      id: `tool-${item.id}`,
-      title: item.toolLabel || 'Prep Tool',
-      subtitle: item.applicationLabel || 'Saved to this project',
-      date: item.date,
-    })),
-    ...interviewSessions.map(session => ({
-      id: `interview-${session.id}`,
-      title: 'Interview Simulator',
-      subtitle: session.applicationLabel || session.mode || 'Saved mock interview',
-      date: session.date,
-    })),
-    ...gapResults.map(result => ({
-      id: `gap-${result.id}`,
-      title: 'Gap Analysis',
-      subtitle: result.applicationLabel || result.tab || 'Saved result',
-      date: result.date,
-    })),
-    ...starStories.map(story => ({
-      id: `star-${story.id}`,
-      title: 'STAR Builder',
-      subtitle: story.applicationLabel || story.situation || 'Saved story',
-      date: story.date,
-    })),
-  ]
-    .filter(item => item.date)
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 3)
-
   return (
     <div className="p-4 md:p-6 space-y-5 animate-in">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -378,9 +355,15 @@ export default function TodayPage() {
             <button onClick={primaryAction.onClick} className="btn-primary text-sm">
               {primaryAction.label}
             </button>
-            <button onClick={() => setActiveSection(SECTIONS.APPLICATIONS)} className="btn-ghost text-sm">
-              Applications
-            </button>
+            {focusApplication ? (
+              <button onClick={() => openTrackerApplication(focusApplication.id, 'overview')} className="btn-primary text-sm">
+                Workspace
+              </button>
+            ) : (
+              <button onClick={() => setActiveSection(SECTIONS.APPLICATIONS)} className="btn-primary text-sm">
+                Applications
+              </button>
+            )}
           </div>
         </div>
 
@@ -425,28 +408,6 @@ export default function TodayPage() {
           ))}
         </div>
       </div>
-
-      {lastUsedTools.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-            <div>
-              <h3 className="font-display font-semibold text-white text-base">Last Used</h3>
-              <p className="text-slate-400 text-sm">Your three most recent tools, kept compact.</p>
-            </div>
-          </div>
-          <div className="grid md:grid-cols-3 gap-3">
-            {lastUsedTools.map(item => (
-              <div key={item.id} className="card-hover">
-                <div className="flex items-start justify-between gap-3 mb-1">
-                  <h4 className="text-white text-sm font-display font-semibold">{item.title}</h4>
-                  <span className="text-slate-500 text-xs flex-shrink-0">{timeAgo(item.date)}</span>
-                </div>
-                <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">{item.subtitle}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
     </div>
   )
