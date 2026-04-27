@@ -91,6 +91,20 @@ export default function VoiceChatBar({
   }
 
   // -- Text send --
+  function resizeInput() {
+    const el = textareaRef.current
+    if (!el) return
+    const maxHeight = 160
+    el.style.height = 'auto'
+    const nextHeight = Math.min(el.scrollHeight, maxHeight)
+    el.style.height = `${Math.max(nextHeight, 40)}px`
+    el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden'
+  }
+
+  useEffect(() => {
+    resizeInput()
+  }, [input])
+
   function handleSend() {
     const text = input.trim()
     if (!text || isLoading) return
@@ -219,7 +233,7 @@ export default function VoiceChatBar({
         {/* Text input */}
         <textarea
           ref={textareaRef}
-          className="textarea-field flex-1 py-2.5 resize-none min-h-[40px] max-h-32"
+          className="textarea-field flex-1 py-2.5 resize-none min-h-[40px]"
           placeholder={isListening ? '🎙 Recording above — speak freely…' : placeholder}
           value={input}
           onChange={e => setInput(e.target.value)}

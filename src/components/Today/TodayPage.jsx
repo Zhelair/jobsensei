@@ -89,7 +89,7 @@ function MetricCard({ label, value, hint, tone = 'slate' }) {
 }
 
 export default function TodayPage() {
-  const { profile, launchTool, openTrackerApplication, setActiveSection } = useApp()
+  const { profile, launchTool, openTrackerApplication, setActiveSection, drillMode } = useApp()
   const { activeProject, activeApplication, getProjectData, updateProjectDataMultiple } = useProject()
 
   const applications = getProjectData('applications') || []
@@ -290,7 +290,9 @@ export default function TodayPage() {
     <div className="p-4 md:p-6 space-y-5 animate-in">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="section-title">{profile?.name ? `Today, ${profile.name}` : 'Today'}</h2>
+          <h2 className={`section-title dashboard-greeting ${drillMode ? 'drill' : 'sensei'}`}>
+            Hello, {profile?.name || 'there'} <span className="dashboard-greeting-hand" aria-hidden="true">🤝</span>
+          </h2>
           <p className="section-sub">One place to see the next real move in your job search.</p>
         </div>
         {activeProject && (

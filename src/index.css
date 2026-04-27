@@ -109,6 +109,23 @@
     @apply text-slate-400 text-sm font-body mt-1;
   }
 
+  .dashboard-greeting {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .dashboard-greeting-hand {
+    display: inline-flex;
+    transform-origin: 55% 65%;
+    filter: drop-shadow(0 0 8px rgba(20, 184, 166, 0.55));
+    animation: greetingHandshakeGlow 2.6s ease-in-out infinite;
+  }
+
+  .dashboard-greeting.drill .dashboard-greeting-hand {
+    filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.7));
+  }
+
   .divider {
     @apply border-t border-navy-700 my-4;
   }
@@ -560,6 +577,12 @@
 
 [data-theme="daylight"] .section-title { color: #333333; }
 [data-theme="daylight"] .section-sub { color: #717171; }
+[data-theme="daylight"] .dashboard-greeting-hand {
+  filter: drop-shadow(0 0 9px rgba(226, 114, 91, 0.5));
+}
+[data-theme="daylight"] .dashboard-greeting.drill .dashboard-greeting-hand {
+  filter: drop-shadow(0 0 10px rgba(204, 49, 61, 0.6));
+}
 [data-theme="daylight"] .divider { border-color: #E8E0D8; }
 
 [data-theme="daylight"] .chat-user {
@@ -756,6 +779,12 @@
   text-shadow: 0 0 20px rgba(191, 90, 242, 0.45);
 }
 [data-theme="myspace"] .section-sub { color: #A78BFA; }
+[data-theme="myspace"] .dashboard-greeting-hand {
+  filter: drop-shadow(0 0 10px rgba(255, 0, 110, 0.85)) drop-shadow(0 0 18px rgba(191, 90, 242, 0.55));
+}
+[data-theme="myspace"] .dashboard-greeting.drill .dashboard-greeting-hand {
+  filter: drop-shadow(0 0 10px rgba(0, 238, 255, 0.75)) drop-shadow(0 0 18px rgba(255, 0, 110, 0.55));
+}
 [data-theme="myspace"] .divider { border-color: rgba(191, 90, 242, 0.2); }
 [data-theme="myspace"] .chat-user {
   background: rgba(255, 0, 110, 0.12);
@@ -920,6 +949,12 @@
   background: linear-gradient(135deg, rgba(226,114,91,0.96), rgba(204,49,61,0.93));
   color: #FFFFFF;
   box-shadow: 0 8px 28px rgba(0,0,0,0.12), 0 0 16px rgba(226,114,91,0.25);
+}
+
+@keyframes greetingHandshakeGlow {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  35% { transform: rotate(-8deg) scale(1.08); }
+  65% { transform: rotate(6deg) scale(1.05); }
 }
 
 /* Final daylight panel cleanup for Applications / Workspace surfaces */

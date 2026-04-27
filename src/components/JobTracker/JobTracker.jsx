@@ -42,7 +42,6 @@ const WORKSPACE_TABS = [
   { id: 'overview', label: 'Workspace' },
   { id: 'jd', label: 'Capture' },
   { id: 'research', label: 'Research' },
-  { id: 'notes', label: 'Notes' },
 ]
 
 const OFFER_FIELDS = [
@@ -472,7 +471,7 @@ export default function JobTracker() {
                   {pendingResearch
                     ? <>
                         <div className="text-teal-400 text-xs font-semibold">Research ready {pendingResearch._liveData ? '(live data)' : '(AI)'}</div>
-                        <div className="text-slate-500 text-xs">Wow facts, culture, and prep notes will be saved into the workspace notes.</div>
+                        <div className="text-slate-500 text-xs">Wow facts, culture, and prep notes will be saved into Research.</div>
                       </>
                     : <>
                         <div className="text-white text-xs font-semibold">Research <span className="text-indigo-300">{newApp.company}</span> with AI</div>
@@ -497,7 +496,7 @@ export default function JobTracker() {
             <AutoTextarea className="textarea-field mb-1" placeholder="Optional reminders, talking points, or recruiter context..."
               value={newApp.notes} onChange={e => setNewApp(p => ({ ...p, notes: e.target.value }))} />
             <p className="text-slate-500 text-xs mt-2">
-              Saved to <strong className="text-slate-400">Workspace Notes / My prep notes</strong>{addPrepNote ? ' when you create the application.' : '.'}
+              Saved to <strong className="text-slate-400">Research / My prep notes</strong>{addPrepNote ? ' when you create the application.' : '.'}
             </p>
           </div>
 
@@ -795,7 +794,8 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const { callAI, isConnected } = useAI()
   const { getProjectData } = useProject()
   const { launchTool } = useApp()
-  const [workspaceTab, setWorkspaceTab] = useState(initialTab)
+  const initialWorkspaceTab = initialTab === 'notes' ? 'research' : initialTab
+  const [workspaceTab, setWorkspaceTab] = useState(initialWorkspaceTab)
   const [form, setForm] = useState({
     people: '',
     theyMentioned: '',
@@ -821,7 +821,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const starStories = getProjectData('starStories') || []
 
   useEffect(() => {
-    setWorkspaceTab(initialTab || 'overview')
+    setWorkspaceTab(initialTab === 'notes' ? 'research' : initialTab || 'overview')
     setShowAdvancedTools(false)
   }, [app.id, initialTab])
 
@@ -900,7 +900,6 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     ['theyMentioned', 'Things they mentioned', 'Pain points, priorities, hiring goals, or details you should respond to.'],
     ['prepNotes', 'My prep notes', 'Stories to tell, reminders for yourself, and key points to emphasize.'],
   ]
-  const allNoteFields = [...prepFields, ...researchFields]
   const prepActions = [
     { id: 'interview', label: 'Interview Simulator', desc: 'Run a mock interview with this application context.', icon: Mic },
     { id: 'predictor', label: 'Question Predictor', desc: 'Generate likely interview questions from this JD.', icon: Target },
@@ -1228,7 +1227,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           : 'Add the JD to unlock role-specific prep.',
         actions: [
           { label: hasJd ? 'Review Capture' : 'Add JD', onClick: () => setWorkspaceTab('jd'), variant: 'primary' },
-          { label: 'Workspace Notes', onClick: () => setWorkspaceTab('notes'), variant: 'ghost' },
+          { label: 'Research Notes', onClick: () => setWorkspaceTab('research'), variant: 'ghost' },
           ...(app.jdUrl ? [{ label: 'Open JD Link', href: app.jdUrl, variant: 'ghost' }] : []),
         ],
       },
@@ -1317,7 +1316,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           : 'No follow-up draft saved for this application yet.',
         actions: [
           { label: 'Draft Follow-up', onClick: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'followup'), variant: 'primary' },
-          { label: 'Workspace Notes', onClick: () => setWorkspaceTab('notes'), variant: 'ghost' },
+          { label: 'Research Notes', onClick: () => setWorkspaceTab('research'), variant: 'ghost' },
         ],
       },
     ]
@@ -1372,8 +1371,8 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
                   {completedSteps === stepCards.length ? 'Review Workspace' : `Continue ${nextStep.title}`}
                 </button>
               )}
-              <button onClick={() => setWorkspaceTab('notes')} className="btn-ghost text-xs">
-                Workspace Notes
+              <button onClick={() => setWorkspaceTab('research')} className="btn-ghost text-xs">
+                Research Notes
               </button>
               <button onClick={() => setWorkspaceTab('jd')} className="btn-ghost text-xs">
                 Capture
@@ -1404,7 +1403,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
               </div>
             </div>
             <div className="rounded-2xl border border-navy-600 bg-navy-950/60 px-4 py-3">
-              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Workspace Notes</div>
+              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Research Notes</div>
               <div className="text-white text-sm font-display font-semibold">{noteCount} saved field{noteCount === 1 ? '' : 's'}</div>
               <div className="text-slate-400 text-xs mt-1">
                 {hasPrep ? 'Prep notes are already supporting your interview story.' : 'Use notes to capture people, signals, and reminders.'}
@@ -1514,7 +1513,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <div className="text-white text-sm font-display font-semibold">Research this company</div>
-              <div className="text-slate-400 text-xs">AI fills wow facts, tools & systems, culture, open questions, and prep notes.</div>
+              <div className="text-slate-400 text-xs">Company research and prep notes stay together here.</div>
             </div>
             <button onClick={runResearch} disabled={!isConnected || researching} className="btn-primary text-xs flex-shrink-0">
               <Search size={13} /> {researching ? 'Researching...' : 'Auto-fill Notes'}
@@ -1528,6 +1527,9 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
         </div>
 
         <div className="space-y-3">
+          <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide">Prep notes</div>
+          {prepFields.map(([key, label, placeholder]) => renderField(key, label, placeholder))}
+          <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide pt-2">Company research</div>
           {researchFields.map(([key, label, placeholder]) => renderField(key, label, placeholder))}
         </div>
       </div>
@@ -1605,21 +1607,13 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     )
   }
 
-  function renderNotesTab() {
-    return (
-      <div className="space-y-3">
-        {allNoteFields.map(([key, label, placeholder]) => renderField(key, label, placeholder))}
-      </div>
-    )
-  }
-
   function renderCurrentTab() {
     if (workspaceTab === 'overview') return renderOverviewTab()
     if (workspaceTab === 'jd') return renderJdPanel()
     if (workspaceTab === 'research') return renderResearchTab()
     if (workspaceTab === 'prep') return renderPrepTab()
     if (workspaceTab === 'tools') return renderToolsTab()
-    if (workspaceTab === 'notes') return renderNotesTab()
+    if (workspaceTab === 'notes') return renderResearchTab()
     return null
   }
 
