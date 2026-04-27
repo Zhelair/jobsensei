@@ -833,8 +833,8 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
 
   function matchesApplicationEntry(entry) {
     if (!entry) return false
-    if (entry.applicationId && entry.applicationId === app.id) return true
-    if (entry.applicationLabel && entry.applicationLabel === applicationLabel) return true
+    if (entry.applicationId) return entry.applicationId === app.id
+    if (entry.applicationLabel) return entry.applicationLabel === applicationLabel
 
     const entryJd = (entry.jdSnippet || entry.inputs?.jd || '').trim()
     const currentJd = (app.jdText || '').trim()
