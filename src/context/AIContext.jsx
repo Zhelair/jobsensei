@@ -51,21 +51,22 @@ export function AIProvider({ children }) {
 
   useEffect(() => {
     const saved = localStorage.getItem('js_ai_config')
+    const savedBmac = localStorage.getItem('js_bmac')
+    let loadedBmacToken = null
     if (saved) {
       const cfg = JSON.parse(saved)
       setProvider(cfg.provider || PROVIDERS.DEEPSEEK)
       setApiKey(cfg.apiKey || '')
       setModel(cfg.model || 'deepseek-chat')
       setCustomBaseUrl(cfg.customBaseUrl || '')
-      if (cfg.apiKey) setIsConnected(true)
     }
-    const savedBmac = localStorage.getItem('js_bmac')
     if (savedBmac) {
       const b = JSON.parse(savedBmac)
+      loadedBmacToken = b.token || null
       setBmacToken(b.token || null)
       setBmacEmail(b.email || null)
-      setIsConnected(true)
     }
+    setIsConnected(!!loadedBmacToken)
   }, [])
 
   function saveConfig(cfg) {
@@ -75,7 +76,7 @@ export function AIProvider({ children }) {
     setModel(cfg.model)
     setCustomBaseUrl(cfg.customBaseUrl || '')
     localStorage.setItem('js_ai_config', JSON.stringify(next))
-    setIsConnected(!!cfg.apiKey || !!bmacToken)
+    setIsConnected(!!bmacToken)
   }
 
   function saveBmacToken(token, email) {
@@ -89,7 +90,7 @@ export function AIProvider({ children }) {
     setBmacToken(null)
     setBmacEmail(null)
     localStorage.removeItem('js_bmac')
-    setIsConnected(!!apiKey)
+    setIsConnected(false)
   }
 
   function restoreToProxy() {
@@ -115,18 +116,18 @@ export function AIProvider({ children }) {
 
   async function callAI({ systemPrompt, messages, temperature = 0.7, onChunk, signal }) {
     // BMAC proxy mode — only when user hasn't set their own API key
-    if (bmacToken && !apiKey) {
+    if (!bmacToken) {
+      setShowPaywall(true)
+      throw new Error('JobSensei access required.')
+    }
+
+    if (!apiKey) {
       setIsThinking(true)
       try {
         return await callProxy({ bmacToken, systemPrompt, messages, temperature, onChunk, signal })
       } finally {
         setIsThinking(false)
       }
-    }
-
-    if (!apiKey) {
-      setShowPaywall(true)
-      throw new Error('AI access required.')
     }
 
     const cfg = PROVIDER_CONFIGS[provider]

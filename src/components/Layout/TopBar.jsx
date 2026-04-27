@@ -34,13 +34,13 @@ const SECTION_TITLES = {
 const SECTION_HELP = {
   today: {
     title: 'Today',
-    desc: 'Your new home base. See the active application, next best actions, reviews due, and recent progress without digging through tools.',
-    tips: ['Open the active workspace from the main hero card', 'Use Today to jump straight into capture, research, or interview prep', 'Reviews due and follow-ups due both surface here first'],
+    desc: 'Your daily command center. Pick one active application and JobSensei shows the next useful move instead of making you hunt through tools.',
+    tips: ['New user flow: add or capture a job first', 'Open the active workspace for research, JD, prep notes, and follow-up', 'Reviews due and follow-ups due surface here first'],
   },
   applications: {
     title: 'Applications',
-    desc: 'Manage every role in one place, then open an application workspace to prep around that specific company and JD.',
-    tips: ['Set one application active so the AI tools share the same context', 'Open a card to enter the application workspace', 'Kanban, stats, workspace, and offers still live here'],
+    desc: 'Your CRM for job hunting. Each role has its own workspace so research, JD text, notes, tools, and follow-up stay together.',
+    tips: ['Use the extension to capture jobs faster', 'Open a card to work on one role in context', 'Keep stages updated so follow-up reminders stay useful'],
   },
   dashboard: {
     title: 'Dashboard',
@@ -69,8 +69,8 @@ const SECTION_HELP = {
   },
   tools: {
     title: 'Prep Tools',
-    desc: 'Document, fit-check, profile, and story tools for your active application.',
-    tips: ['Run Gap Analysis, Resume Checker, and Cover Letter from here', 'Recent results stay saved to the current project history'],
+    desc: 'Focused AI tools for the active application: fit checks, resume review, cover letter, LinkedIn, and visual resume feedback.',
+    tips: ['Set an active application first for better context', 'Use Visual Review with a vision-capable model', 'Recent results stay saved to project history'],
   },
   tracker: {
     title: 'Applications',
@@ -84,8 +84,8 @@ const SECTION_HELP = {
   },
   settings: {
     title: 'Settings',
-    desc: 'Configure your AI provider (DeepSeek, OpenAI, Claude…), set your profile, and import/export data.',
-    tips: ['Paste your API key here to connect AI', 'Your profile info personalises all AI responses', 'Export to back up your data'],
+    desc: 'Unlock JobSensei, choose hosted AI or BYOK, save your resume, and back up project data.',
+    tips: ['BYOK still requires an active JobSensei unlock', 'Save your resume once per project to prefill tools', 'Export backups before switching machines'],
   },
 }
 
