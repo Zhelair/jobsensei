@@ -89,6 +89,13 @@ const SECTION_HELP = {
   },
 }
 
+const FIRST_TIME_GUIDE_STEPS = [
+  'Capture or add one real job first.',
+  'Review the company, role, and JD text.',
+  'Open the application workspace and run the next suggested prep step.',
+  'Save research notes, likely questions, and follow-up reminders in that workspace.',
+]
+
 export default function TopBar() {
   const { activeSection, setActiveSection, drillMode, setDrillMode, isMuted, setIsMuted } = useApp()
   const { isConnected, isThinking } = useAI()
@@ -98,6 +105,7 @@ export default function TopBar() {
   const [showMore, setShowMore] = useState(false)
   const [feedback, setFeedback] = useState(null)
   const [aiSpeaking, setAiSpeaking] = useState(false)
+  const [guideSeen, setGuideSeen] = useState(() => localStorage.getItem('js_guide_seen') === 'true')
   const feedbackTimer = useRef(null)
   const ThemeIcon = THEME_ICONS[theme]
 
@@ -119,6 +127,13 @@ export default function TopBar() {
   const nextThemeLabel = THEME_LABELS[THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length]]
 
   const help = SECTION_HELP[activeSection]
+  const openGuide = () => {
+    setShowHelp(v => !v)
+    if (!guideSeen) {
+      localStorage.setItem('js_guide_seen', 'true')
+      setGuideSeen(true)
+    }
+  }
 
   return (
     <header className="bg-navy-900 border-b border-navy-700 px-4 md:px-6 py-3 flex items-center justify-between flex-shrink-0 relative">
@@ -146,7 +161,7 @@ export default function TopBar() {
           onClick={() => showFeedback(
             isThinking ? '🧠 AI is thinking…'
             : isConnected ? '🟢 AI connected & ready'
-            : '🔴 No API key — go to Settings'
+            : '🔴 JobSensei locked — go to Settings'
           )}
         >
           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isThinking ? 'bg-indigo-400 animate-pulse' : isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
@@ -164,7 +179,7 @@ export default function TopBar() {
         ) : (
           <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono ${isConnected ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
             <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
-            {isConnected ? 'AI Connected' : 'No API Key'}
+            {isConnected ? 'AI Connected' : 'Locked'}
           </div>
         )}
 
@@ -236,11 +251,17 @@ export default function TopBar() {
         {/* Help button — desktop only (mobile users access via ⋯ menu) */}
         {help && (
           <button
-            onClick={() => setShowHelp(v => !v)}
-            className="hidden sm:flex btn-ghost relative"
+            onClick={openGuide}
+            className={`hidden sm:flex btn-ghost relative ${!guideSeen ? 'ring-1 ring-teal-500/40 text-teal-300' : ''}`}
             title={`Help: ${SECTION_TITLES[activeSection]}`}
           >
             <HelpCircle size={16} className={showHelp ? 'text-teal-400' : ''} />
+            <span className="text-xs">Guide</span>
+            {!guideSeen && (
+              <span className="absolute -top-2 -right-2 rounded-full bg-yellow-400 px-1.5 py-0.5 text-[10px] font-bold text-navy-950">
+                Start
+              </span>
+            )}
           </button>
         )}
 
@@ -284,11 +305,11 @@ export default function TopBar() {
                 </button>
                 {help && (
                   <button
-                    onClick={() => { setShowHelp(v => !v); setShowMore(false) }}
+                    onClick={() => { openGuide(); setShowMore(false) }}
                     className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs w-full text-left transition-colors ${showHelp ? 'text-teal-400 bg-teal-500/10' : 'text-slate-400 hover:text-white hover:bg-navy-700'}`}
                   >
                     <HelpCircle size={14} />
-                    Help
+                    Guide
                   </button>
                 )}
               </div>
@@ -321,6 +342,20 @@ export default function TopBar() {
             </button>
           </div>
           <p className="text-slate-300 text-xs mb-3 leading-relaxed">{help.desc}</p>
+          <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-3 mb-3">
+            <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-wide mb-2">
+              First time path
+            </div>
+            <div className="space-y-1.5">
+              {FIRST_TIME_GUIDE_STEPS.map((step, i) => (
+                <div key={step} className="flex gap-2 text-xs text-slate-300">
+                  <span className="text-teal-300 font-mono">{i + 1}</span>
+                  <span>{step}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-slate-500 text-xs mt-2">This Guide button changes by page, so users can come back here whenever they feel lost.</p>
+          </div>
           <div className="space-y-1">
             {help.tips.map((tip, i) => (
               <p key={i} className="text-slate-400 text-xs">• {tip}</p>

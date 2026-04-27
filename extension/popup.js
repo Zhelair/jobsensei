@@ -61,7 +61,7 @@ async function captureCurrentPage() {
     elements.sourceMeta.textContent = `Source: ${payload.pageTitle || 'current page'}`
     updateMeta()
 
-    setStatus('Capture refreshed.', 'success')
+    setStatus('Capture refreshed. Review details before sending.', 'success')
   } catch (error) {
     setStatus(error.message || 'Could not capture the current page.', 'error')
   }
@@ -196,7 +196,51 @@ function extractJobFromPage() {
   }
 
   function isGenericTitle(value) {
-    return /^(careers?|jobs?|job openings?|open positions?|application|overview)$/i.test(cleanText(value))
+    return /^(careers?|jobs?|job openings?|open positions?|application|overview|for you|all jobs)$/i.test(cleanText(value))
+  }
+
+  function isBadRoleCandidate(value) {
+    return /bookmark|message|menu|share|more_vert|subscribe|newsletter|apply|report|получавайте|всички обяви|за нас|кандидатствай|разглеждания|съобщения|бележник/i.test(cleanText(value))
+  }
+
+  function collectTextsFromSelectors(selectors) {
+    const texts = []
+    for (const selector of selectors) {
+      const nodes = Array.from(document.querySelectorAll(selector))
+      for (const node of nodes) {
+        if (!isVisible(node)) continue
+        const text = cleanText(node.innerText || node.textContent || '')
+        if (text.length >= 3) texts.push(text)
+      }
+    }
+    return texts
+  }
+
+  function scoreRoleCandidate(value) {
+    const text = cleanText(value)
+    if (!text || text.length < 4 || text.length > 120 || isGenericTitle(text) || isBadRoleCandidate(text)) return -100
+    let score = 0
+    if (/analyst|expert|engineer|developer|manager|specialist|designer|consultant|director|lead|associate|coordinator|officer|architect|scientist|administrator|accountant|recruiter|intern|payments?|kyc|aml|risk|fraud|compliance/i.test(text)) score += 8
+    if (/&|\/|\b[A-Z]{2,}\b/.test(text)) score += 2
+    if (/remote|hybrid|sofia|bulgaria|fully/i.test(text)) score += 1
+    if (text.split(/\s+/).length >= 2 && text.split(/\s+/).length <= 10) score += 2
+    return score
+  }
+
+  function bestRoleCandidate(candidates) {
+    return candidates
+      .map(text => ({ text, score: scoreRoleCandidate(text) }))
+      .filter(item => item.score > -100)
+      .sort((a, b) => b.score - a.score)[0]?.text || ''
+  }
+
+  function roleFromPageTitle(title) {
+    const parts = title
+      .split(/\s+[|\-–—]\s+/)
+      .map(cleanText)
+      .filter(Boolean)
+    const jobsBgPart = title.match(/jobs\.bg\s*-\s*([^,|–—]+)/i)?.[1]
+    return bestRoleCandidate([jobsBgPart, ...parts])
   }
 
   function titleize(value) {
@@ -235,22 +279,23 @@ function extractJobFromPage() {
   const pageTitle = cleanText(document.title)
   const titleParts = pageTitle.split(/\s+[|\-–—]\s+/).map(cleanText).filter(Boolean)
   const visibleLines = cleanLines(document.body?.innerText || '')
-  const h1Text = textFromSelectors([
+  const roleSelectors = [
     '[class*="jobs-unified-top-card__job-title" i]',
     '[data-testid*="job-title" i]',
     '[data-automation-id*="job-title" i]',
     '[class*="job-title" i]',
     '[class*="jobTitle" i]',
     'h1',
+    'h2',
     '[data-testid*="title" i]',
     '[class*="headline" i]',
+  ]
+  const role = bestRoleCandidate([
+    ...collectTextsFromSelectors(roleSelectors),
+    roleFromPageTitle(pageTitle),
+    ...titleParts,
+    ...visibleLines.slice(0, 40),
   ])
-  const lineRole = visibleLines.find(line => {
-    if (line.length < 6 || line.length > 120 || isGenericTitle(line)) return false
-    if (/^(overview|application|about this job|job description|job requirements)$/i.test(line)) return false
-    return /analyst|engineer|developer|manager|specialist|designer|consultant|director|lead|associate|coordinator|officer|architect|scientist|administrator|accountant|recruiter|intern/i.test(line)
-  })
-  const role = h1Text || lineRole || titleParts.find(part => !isGenericTitle(part)) || ''
 
   const companySelectors = [
     '[class*="jobs-unified-top-card__company-name" i]',
@@ -288,6 +333,10 @@ function extractJobFromPage() {
   if (jdText.length < 400) {
     jdText = cleanText(document.body?.innerText || '').slice(0, 12000)
   }
+  jdText = cleanLines(jdText)
+    .filter(line => !/bookmark|message|menu|share|more_vert|разглеждания|кандидатствай|получавайте|съобщения|бележник|всички обяви/i.test(line))
+    .join(' ')
+    .slice(0, 12000)
 
   return {
     company,
