@@ -27,8 +27,6 @@ export default function Dashboard() {
     activeApplication,
     activeApplicationId,
     getProjectData,
-    setActiveApplication,
-    updateProjectData,
     updateProjectDataMultiple,
   } = useProject()
 
@@ -166,12 +164,10 @@ export default function Dashboard() {
     setJdDraft(nextApp?.jdText || '')
     setShowJdEditor(!nextApp?.jdText?.trim())
     setIsJdExpanded(false)
-    if (nextId) {
-      setActiveApplication(nextId)
-      if (nextApp?.jdText?.trim()) {
-        updateProjectData('currentJD', nextApp.jdText)
-      }
-    }
+    updateProjectDataMultiple({
+      activeApplicationId: nextId || null,
+      currentJD: nextApp?.jdText || '',
+    })
   }
 
   const statCards = [

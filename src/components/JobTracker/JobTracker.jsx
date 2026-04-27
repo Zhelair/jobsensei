@@ -88,7 +88,7 @@ function exportToJSON(applications, notes) {
 }
 
 export default function JobTracker() {
-  const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId, setActiveApplication } = useProject()
+  const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId } = useProject()
   const { pendingTrackerRequest, clearPendingTrackerRequest } = useApp()
   const applications = getProjectData('applications') || []
   const notes = getProjectData('companyNotes') || {}
@@ -133,8 +133,10 @@ export default function JobTracker() {
 
   function activateApplication(app) {
     if (!app) return
-    setActiveApplication(app.id)
-    updateProjectData('currentJD', app.jdText || '')
+    updateProjectDataMultiple({
+      activeApplicationId: app.id,
+      currentJD: app.jdText || '',
+    })
   }
 
   function syncToProject() {
@@ -240,9 +242,13 @@ export default function JobTracker() {
   function updateApp(id, updates) {
     const stageUpdate = updates.stage ? { stageUpdatedAt: new Date().toISOString(), followupSnoozedUntil: null } : {}
     const nextApplications = applications.map(a => a.id === id ? { ...a, ...updates, ...stageUpdate } : a)
-    updateProjectData('applications', nextApplications)
     if (activeApplicationId === id && Object.prototype.hasOwnProperty.call(updates, 'jdText')) {
-      updateProjectData('currentJD', updates.jdText || '')
+      updateProjectDataMultiple({
+        applications: nextApplications,
+        currentJD: updates.jdText || '',
+      })
+    } else {
+      updateProjectData('applications', nextApplications)
     }
   }
 
@@ -257,9 +263,13 @@ export default function JobTracker() {
 
   function saveEdit(updated) {
     const nextApplications = applications.map(a => a.id === updated.id ? updated : a)
-    updateProjectData('applications', nextApplications)
     if (activeApplicationId === updated.id) {
-      updateProjectData('currentJD', updated.jdText || '')
+      updateProjectDataMultiple({
+        applications: nextApplications,
+        currentJD: updated.jdText || '',
+      })
+    } else {
+      updateProjectData('applications', nextApplications)
     }
     setEditingApp(null)
   }

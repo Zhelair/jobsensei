@@ -2,6 +2,7 @@ import React from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
 import { isDueToday } from '../../utils/spacedRepetition'
+import { timeAgo } from '../../utils/helpers'
 import {
   ArrowRight, BookOpen, Briefcase, ClipboardCheck,
   FolderOpen, Mail, Mic, Search, Sparkles, Target,
@@ -89,8 +90,8 @@ function MetricCard({ label, value, hint, tone = 'slate' }) {
 }
 
 export default function TodayPage() {
-  const { profile, launchTool, openLearningTopic, openTrackerApplication, setActiveSection } = useApp()
-  const { activeProject, activeApplication, getProjectData, setActiveApplication, updateProjectData } = useProject()
+  const { profile, launchTool, openTrackerApplication, setActiveSection } = useApp()
+  const { activeProject, activeApplication, getProjectData, updateProjectDataMultiple } = useProject()
 
   const applications = getProjectData('applications') || []
   const companyNotes = getProjectData('companyNotes') || {}
@@ -120,8 +121,10 @@ export default function TodayPage() {
 
   function changeFocusApplication(nextId) {
     const nextApp = applications.find(app => app.id === nextId)
-    setActiveApplication(nextId || null)
-    updateProjectData('currentJD', nextApp?.jdText || '')
+    updateProjectDataMultiple({
+      activeApplicationId: nextId || null,
+      currentJD: nextApp?.jdText || '',
+    })
   }
 
   const focusSteps = focusApplication ? [
@@ -233,60 +236,33 @@ export default function TodayPage() {
         onClick: () => setActiveSection(SECTIONS.APPLICATIONS),
       }
 
-  const actionCards = []
-
-  if (!focusApplication) {
-    actionCards.push({
-      title: 'Add Your First Application',
-      desc: 'Start in Applications, add a company and role, then create your first workspace.',
-      cta: 'Open Applications',
-      onClick: () => setActiveSection(SECTIONS.APPLICATIONS),
-      icon: Briefcase,
+  const actionCards = [
+    {
+      title: 'Interview Prep',
+      desc: 'Practice interviews, predict likely questions, shape STAR stories, polish your tone, draft follow-ups, and prepare your elevator pitch.',
+      cta: 'Open Interview Prep',
+      onClick: () => setActiveSection(SECTIONS.INTERVIEW),
+      icon: Mic,
       tone: 'teal',
-      badge: 'Get started',
-    })
-  } else {
-    actionCards.push({
-      title: nextFocusStep ? `Next Step: ${nextFocusStep.title}` : 'Application Workflow Complete',
-      desc: nextFocusStep
-        ? nextFocusStep.desc
-        : 'The core workflow is in place. Open the workspace to review, practice, or use advanced tools.',
-      cta: nextFocusStep ? nextFocusStep.cta : 'Open Workspace',
-      onClick: nextFocusStep ? nextFocusStep.onClick : () => openTrackerApplication(focusApplication.id, 'overview'),
-      icon: nextFocusStep?.icon || Sparkles,
-      tone: nextFocusStep?.tone || 'teal',
-      badge: `${completedFocusSteps}/6 steps complete`,
-    })
-
-    if (focusHasJd && focusInterviewSessions.length === 0) {
-      actionCards.push({
-        title: 'Run A Mock Interview',
-        desc: 'Practice with the active application context and save your first scored session.',
-        cta: 'Start Mock Interview',
-        onClick: () => launchTool(SECTIONS.INTERVIEW, 'interview'),
-        icon: Mic,
-        tone: 'teal',
-        badge: 'Practice',
-      })
-    } else if (focusHasJd && focusPredictorRuns.length === 0) {
-      actionCards.push({
-        title: 'Predict Likely Questions',
-        desc: 'Generate likely interview questions from this role before your next practice run.',
-        cta: 'Open Predictor',
-        onClick: () => launchTool(SECTIONS.INTERVIEW, 'predictor'),
-        icon: Target,
-        tone: 'indigo',
-        badge: 'Interview prep',
-      })
-    }
-  }
+      badge: 'Prepare',
+    },
+    {
+      title: 'Prep Tools',
+      desc: 'Run gap analysis, check your resume, improve cover letters, audit LinkedIn, review visual design, and reframe transferable skills.',
+      cta: 'Open Prep Tools',
+      onClick: () => setActiveSection(SECTIONS.TOOLS),
+      icon: Sparkles,
+      tone: 'yellow',
+      badge: 'Documents',
+    },
+  ]
 
   if (dueTopics.length > 0) {
     actionCards.push({
       title: 'Reviews Due',
       desc: `${dueTopics.length} learning review${dueTopics.length === 1 ? '' : 's'} are due today. Keep your prep sharp while applications are moving.`,
-      cta: 'Open Review',
-      onClick: () => openLearningTopic(dueTopics[0].id, 'quiz'),
+      cta: 'Open Learning',
+      onClick: () => setActiveSection(SECTIONS.LEARNING),
       icon: BookOpen,
       tone: 'indigo',
       badge: 'Learning',
@@ -302,6 +278,36 @@ export default function TodayPage() {
       badge: 'Pipeline',
     })
   }
+
+  const lastUsedTools = [
+    ...toolsHistory.map(item => ({
+      id: `tool-${item.id}`,
+      title: item.toolLabel || 'Prep Tool',
+      subtitle: item.applicationLabel || 'Saved to this project',
+      date: item.date,
+    })),
+    ...interviewSessions.map(session => ({
+      id: `interview-${session.id}`,
+      title: 'Interview Simulator',
+      subtitle: session.applicationLabel || session.mode || 'Saved mock interview',
+      date: session.date,
+    })),
+    ...gapResults.map(result => ({
+      id: `gap-${result.id}`,
+      title: 'Gap Analysis',
+      subtitle: result.applicationLabel || result.tab || 'Saved result',
+      date: result.date,
+    })),
+    ...starStories.map(story => ({
+      id: `star-${story.id}`,
+      title: 'STAR Builder',
+      subtitle: story.applicationLabel || story.situation || 'Saved story',
+      date: story.date,
+    })),
+  ]
+    .filter(item => item.date)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 3)
 
   return (
     <div className="p-4 md:p-6 space-y-5 animate-in">
@@ -409,16 +415,38 @@ export default function TodayPage() {
       <div>
         <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
           <div>
-            <h3 className="font-display font-semibold text-white text-base">Recommended Next Actions</h3>
-            <p className="text-slate-400 text-sm">Shortcuts based on your active application, workflow progress, and learning reviews.</p>
+            <h3 className="font-display font-semibold text-white text-base">Prep Hubs</h3>
+            <p className="text-slate-400 text-sm">Two clear places to continue: interview practice or document/profile prep.</p>
           </div>
         </div>
         <div className="grid lg:grid-cols-3 gap-4">
-          {actionCards.slice(0, 3).map(card => (
+          {actionCards.map(card => (
             <ActionCard key={`${card.title}-${card.badge || 'default'}`} {...card} />
           ))}
         </div>
       </div>
+
+      {lastUsedTools.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <h3 className="font-display font-semibold text-white text-base">Last Used</h3>
+              <p className="text-slate-400 text-sm">Your three most recent tools, kept compact.</p>
+            </div>
+          </div>
+          <div className="grid md:grid-cols-3 gap-3">
+            {lastUsedTools.map(item => (
+              <div key={item.id} className="card-hover">
+                <div className="flex items-start justify-between gap-3 mb-1">
+                  <h4 className="text-white text-sm font-display font-semibold">{item.title}</h4>
+                  <span className="text-slate-500 text-xs flex-shrink-0">{timeAgo(item.date)}</span>
+                </div>
+                <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">{item.subtitle}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   )

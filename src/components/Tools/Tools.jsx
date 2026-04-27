@@ -80,9 +80,9 @@ export default function Tools({ mode = 'prep-tools' }) {
   const {
     getProjectData,
     updateProjectData,
+    updateProjectDataMultiple,
     activeApplication,
     activeApplicationId,
-    setActiveApplication,
   } = useProject()
   const resume = getProjectData('resume')
   const applications = getProjectData('applications') || []
@@ -113,11 +113,11 @@ export default function Tools({ mode = 'prep-tools' }) {
 
   function switchActiveApplication(nextId) {
     const nextApp = applications.find(app => app.id === nextId)
-    setActiveApplication(nextId)
+    updateProjectDataMultiple({
+      activeApplicationId: nextId || null,
+      currentJD: nextApp?.jdText || '',
+    })
     setShowContextJd(false)
-    if (nextApp?.jdText?.trim()) {
-      updateProjectData('currentJD', nextApp.jdText)
-    }
   }
 
   function saveHistory(tool, toolLabel, inputs, result) {
