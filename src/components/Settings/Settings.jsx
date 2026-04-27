@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
 import {
   Zap, Check, Trash2, Eye, EyeOff, FileText, Upload, Download, X,
-  Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink,
+  Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink, Puzzle,
 } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
 
@@ -452,6 +452,36 @@ export default function Settings() {
               {resumeSaved ? <><Check size={14} /> Saved!</> : 'Save Resume To Project'}
             </button>
             <p className="text-slate-600 text-xs mt-2">For visual design analysis, use the Visual Review tool inside the application workflow.</p>
+          </div>
+
+          <div className="card border-teal-500/20">
+            <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+              <Puzzle size={16} className="text-teal-400" /> Chrome Extension
+            </h3>
+            <p className="text-slate-400 text-xs mb-3">
+              Capture job pages from Chrome, review the fields, then send one role into your JobSensei tracker.
+            </p>
+            <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3 space-y-1.5">
+              {[
+                'Download and unzip the extension package.',
+                'Open chrome://extensions and turn on Developer mode.',
+                'Choose Load unpacked and select the unzipped extension folder.',
+              ].map((step, i) => (
+                <div key={step} className="flex gap-2 text-xs text-slate-300">
+                  <span className="text-teal-400 font-mono">{i + 1}</span>
+                  <span>{step}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a href="/jobsensei-capture-extension.zip" download className="btn-secondary text-xs">
+                <Download size={13} /> Download ZIP
+              </a>
+              <button disabled className="btn-ghost text-xs opacity-60 cursor-not-allowed">
+                <ExternalLink size={13} /> Chrome Store soon
+              </button>
+            </div>
+            <p className="text-slate-600 text-xs mt-2">Pre-store install is for testing. The Chrome Store link will replace this once approved.</p>
           </div>
 
           <div className="card">
