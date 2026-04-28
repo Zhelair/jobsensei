@@ -37,7 +37,7 @@ const STAGE_COLORS = {
   Offer: 'text-green-400 bg-green-400/10 border-green-400/20',
   Rejected: 'text-red-400 bg-red-400/10 border-red-400/20',
 }
-const TABS = ['Kanban', 'Stats', 'Workspace', 'Offers']
+const TABS = ['Kanban', 'Workspace', 'Offers', 'Stats']
 const WORKSPACE_TABS = [
   { id: 'overview', label: 'Workspace' },
   { id: 'jd', label: 'Capture' },
@@ -404,7 +404,7 @@ export default function JobTracker() {
           <div className="relative">
             <button onClick={() => document.getElementById('tracker-export-menu').classList.toggle('hidden')}
               className="btn-ghost text-xs">
-              <Download size={14}/> Export
+              <Download size={14}/> Export Jobs
             </button>
             <div id="tracker-export-menu" className="hidden absolute right-0 top-full mt-1 bg-navy-800 border border-navy-600 rounded-xl shadow-xl z-20 min-w-36 overflow-hidden">
               <button onClick={() => { exportToJSON(applications, notes); document.getElementById('tracker-export-menu').classList.add('hidden') }}
@@ -417,7 +417,7 @@ export default function JobTracker() {
               </button>
             </div>
           </div>
-          <button onClick={() => importRef.current?.click()} className="btn-ghost text-xs"><Upload size={14}/> Import</button>
+          <button onClick={() => importRef.current?.click()} className="btn-ghost text-xs"><Upload size={14}/> Import Jobs</button>
           <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImport}/>
           <button onClick={syncToProject} className={`btn-ghost text-xs transition-colors ${synced ? 'text-green-400' : ''}`}>
             <Save size={14}/> {synced ? 'Synced ✓' : 'Sync'}
@@ -662,9 +662,7 @@ export default function JobTracker() {
         </div>
       )}
 
-      {tab === 1 && <TrackerStats applications={applications} />}
-
-      {tab === 2 && (
+      {tab === 1 && (
         <div className="space-y-2">
           {applications.length === 0 ? (
             <div className="card text-center py-10 text-slate-500">Add applications first.</div>
@@ -711,7 +709,7 @@ export default function JobTracker() {
         </div>
       )}
 
-      {tab === 3 && (
+      {tab === 2 && (
         <OfferComparison
           applications={applications}
           offerData={offerData}
@@ -719,6 +717,8 @@ export default function JobTracker() {
           onSelectApp={app => openApplication(app)}
         />
       )}
+
+      {tab === 3 && <TrackerStats applications={applications} />}
     </div>
   )
 }
