@@ -845,8 +845,8 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const [researchMsg, setResearchMsg] = useState('')
   const [cheatSheet, setCheatSheet] = useState('')
   const [cheatLoading, setCheatLoading] = useState(false)
-  const [workspaceCard, setWorkspaceCard] = useState('')
-  const [workspaceCardLoading, setWorkspaceCardLoading] = useState(false)
+  const [workspaceSummary, setWorkspaceSummary] = useState('')
+  const [workspaceSummaryLoading, setWorkspaceSummaryLoading] = useState(false)
   const [showAdvancedTools, setShowAdvancedTools] = useState(false)
   const interviewSessions = getProjectData('interviewSessions') || []
   const toolsHistory = getProjectData('toolsHistory') || []
@@ -1048,21 +1048,31 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     setCheatLoading(false)
   }
 
-  async function generateWorkspaceCard() {
+  async function generateWorkspaceSummary() {
     const notesText = getWorkspaceNotesText()
 
-    setWorkspaceCardLoading(true)
-    setWorkspaceCard('')
+    setWorkspaceSummaryLoading(true)
+    setWorkspaceSummary('')
     saveWorkspace(false)
     try {
       await callAI({
-        systemPrompt: prompts.workspaceCallCard(app.company, app.role, notesText),
-        messages: [{ role: 'user', content: 'Generate workspace call card.' }],
+        systemPrompt: prompts.workspaceResearchSummary(app.company, app.role, notesText),
+        messages: [{ role: 'user', content: 'Summarize workspace research notes.' }],
         temperature: 0.45,
-        onChunk: (_, acc) => setWorkspaceCard(acc),
+        onChunk: (_, acc) => setWorkspaceSummary(acc),
       })
     } catch {}
-    setWorkspaceCardLoading(false)
+    setWorkspaceSummaryLoading(false)
+  }
+
+  function downloadTextFile(content, filename) {
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
   function downloadCheatAsPng(title, content, filenameSuffix = 'cheatsheet') {
@@ -1141,20 +1151,33 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     })
   }
 
-  function printCheatAsPdf() {
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+  }
+
+  function printTextAsPdf(title, content) {
     const win = window.open('', '_blank')
-    win.document.write(`<!DOCTYPE html><html><head><title>Interview Cheat Sheet - ${app.company}</title><style>
+    win.document.write(`<!DOCTYPE html><html><head><title>${escapeHtml(title)}</title><style>
       body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#111;line-height:1.6}
       h1{font-size:1.4rem;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:16px}
       h2{font-size:1.1rem;margin-top:20px;margin-bottom:6px}
       ul{padding-left:20px;margin:6px 0}li{margin-bottom:4px}
       @media print{body{margin:10px}@page{margin:1cm}}
     </style></head><body>
-      <h1>Interview Cheat Sheet: ${app.company}${app.role ? ` - ${app.role}` : ''}</h1>
-      <pre style="white-space:pre-wrap;font-family:inherit;font-size:0.9rem">${cheatSheet}</pre>
+      <h1>${escapeHtml(title)}</h1>
+      <pre style="white-space:pre-wrap;font-family:inherit;font-size:0.9rem">${escapeHtml(content)}</pre>
     </body></html>`)
     win.document.close()
     setTimeout(() => win.print(), 300)
+  }
+
+  function printCheatAsPdf() {
+    printTextAsPdf(`Interview Cheat Sheet: ${app.company}${app.role ? ` - ${app.role}` : ''}`, cheatSheet)
   }
 
   function renderField(key, label, placeholder) {
@@ -1600,45 +1623,52 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           )}
         </div>
 
-        <div className="card border-indigo-500/20 bg-indigo-500/5">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <div className="text-white text-sm font-display font-semibold flex items-center gap-2">
-                <Sparkles size={14} className="text-indigo-400" /> Workspace Call Card
-              </div>
-              <div className="text-slate-400 text-xs">Summarizes your Research notes into a one-screen call image.</div>
-            </div>
+        <div className="card border-teal-500/20 bg-teal-500/5">
+          <h4 className="font-display font-semibold text-white text-sm mb-3 flex items-center gap-2">
+            <Sparkles size={14} className="text-teal-400" /> AI Actions
+            <span className="text-slate-500 text-xs font-normal">
+              — Research This Company
+            </span>
+          </h4>
+
+          <div className="flex gap-2 mb-4">
             <button
-              onClick={generateWorkspaceCard}
-              disabled={!isConnected || workspaceCardLoading || noteCount === 0}
-              className="btn-primary text-xs flex-shrink-0"
+              onClick={generateWorkspaceSummary}
+              disabled={!isConnected || workspaceSummaryLoading || noteCount === 0}
+              className="btn-secondary flex-1 justify-center text-xs"
             >
-              {workspaceCardLoading ? 'Generating...' : workspaceCard ? 'Regenerate Card' : 'Generate Card'}
+              <FileText size={13} /> {workspaceSummaryLoading ? 'Summarizing...' : 'Summarize Notes'}
             </button>
           </div>
 
           {noteCount === 0 && (
-            <p className="text-slate-500 text-xs mt-2">Add research or prep notes first, then generate the card.</p>
+            <p className="text-slate-500 text-xs">Add research or prep notes first, then summarize them here.</p>
           )}
 
-          {workspaceCard && (
-            <div className="mt-4 animate-in">
+          {workspaceSummary && (
+            <div className="animate-in">
               <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                <span className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wider">Call Card</span>
+                <span className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wider">Summary</span>
                 <div className="flex gap-2">
-                  <button onClick={() => navigator.clipboard?.writeText(workspaceCard)} className="btn-ghost text-xs">
-                    <Copy size={12} /> Copy Text
+                  <button onClick={() => navigator.clipboard?.writeText(workspaceSummary)} className="btn-ghost text-xs">
+                    <Copy size={12} /> Copy
                   </button>
                   <button
-                    onClick={() => downloadCheatAsPng(`${app.company} - Call Card`, workspaceCard, 'call_card')}
-                    className="btn-secondary text-xs"
+                    onClick={() => downloadTextFile(workspaceSummary, `${app.company.replace(/\s+/g, '_')}_research_summary.txt`)}
+                    className="btn-ghost text-xs"
                   >
-                    <Download size={12} /> PNG
+                    <Download size={12} /> .txt
+                  </button>
+                  <button
+                    onClick={() => printTextAsPdf(`${app.company} - Research Summary`, workspaceSummary)}
+                    className="btn-ghost text-xs"
+                  >
+                    <Printer size={12} /> PDF
                   </button>
                 </div>
               </div>
               <div className="bg-navy-900 rounded-xl p-4">
-                {renderGeneratedCard(workspaceCard)}
+                {renderGeneratedCard(workspaceSummary)}
               </div>
             </div>
           )}

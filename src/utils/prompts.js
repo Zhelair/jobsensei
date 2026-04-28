@@ -455,7 +455,7 @@ Create a scannable cheat sheet using only the provided notes. Use only these sec
 
 Keep each bullet under 15 words. Return plain text with markdown formatting (##, -, **bold**).`,
 
-  workspaceCallCard: (company, role, notes) => `You are JobSensei creating a one-screen call prep card from a user's saved workspace research.
+  workspaceResearchSummary: (company, role, notes) => `You are JobSensei summarizing a user's saved application workspace research notes.
 
 Company: ${company}
 Role: ${role || 'not specified'}
@@ -463,12 +463,12 @@ Role: ${role || 'not specified'}
 WORKSPACE RESEARCH NOTES (your ONLY source - do NOT add, invent, or assume anything not written below):
 ${notes || '(no notes provided)'}
 
-Create a concise call card the user can open as an image right before a recruiter or hiring-manager call.
+Create a concise summary the user can scan before a recruiter or hiring-manager call.
 
 STRICT RULES:
 - Use only the workspace notes above
 - If a section has no supporting notes, skip it
-- Keep bullets short enough to scan on a phone
+- Keep bullets short and practical
 - Prioritize what helps during a live call: facts to mention, context to remember, questions to ask, and follow-up hooks
 - Do not include generic interview advice
 
@@ -481,7 +481,7 @@ Use these section headers where relevant:
 ## Questions to Ask
 ## Follow-up Hooks
 
-Keep the entire card under 260 words. Return plain text with markdown formatting.`,
+Keep the entire summary under 300 words. Return plain text with markdown formatting.`,
 
   offerAdvisor: (offersText, profileSummary) => `You are a direct career advisor helping someone choose between job offers.
 
