@@ -70,6 +70,41 @@
     @apply text-slate-400 hover:text-white hover:bg-navy-700 font-body font-medium px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm;
   }
 
+  .save-note-cta {
+    @apply mx-auto flex w-fit items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-display font-semibold transition-all duration-200;
+    color: #2DD4BF;
+    background: rgba(20, 184, 166, 0.12);
+    border: 1px solid rgba(20, 184, 166, 0.34);
+    box-shadow: 0 0 18px rgba(20, 184, 166, 0.14);
+  }
+
+  .save-note-cta:hover {
+    color: #0F172A;
+    background: #2DD4BF;
+    border-color: #2DD4BF;
+    box-shadow: 0 0 24px rgba(20, 184, 166, 0.26);
+  }
+
+  .save-note-cta.is-saved {
+    color: #86EFAC;
+    background: rgba(34, 197, 94, 0.14);
+    border-color: rgba(34, 197, 94, 0.36);
+    box-shadow: 0 0 18px rgba(34, 197, 94, 0.16);
+  }
+
+  .guide-tip-highlight {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 2px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    color: #2DD4BF;
+    background: rgba(20, 184, 166, 0.12);
+    border: 1px solid rgba(20, 184, 166, 0.28);
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+  }
+
   .visuals-active {
     color: #FBBF24;
   }
@@ -815,6 +850,46 @@
 [data-theme="myspace"] ::-webkit-scrollbar-thumb:hover { background: #FF006E; }
 [data-theme="myspace"] ::selection { background: rgba(255, 0, 110, 0.35); color: #F0E6FF; }
 [data-theme="myspace"] .typing-dot { background: #FF006E; }
+
+[data-theme="daylight"] .save-note-cta {
+  color: #E2725B;
+  background: rgba(226, 114, 91, 0.09);
+  border-color: rgba(226, 114, 91, 0.38);
+  box-shadow: 0 2px 12px rgba(226, 114, 91, 0.16);
+}
+
+[data-theme="daylight"] .save-note-cta:hover {
+  color: #FFFFFF;
+  background: #E2725B;
+  border-color: #E2725B;
+  box-shadow: 0 3px 16px rgba(226, 114, 91, 0.34);
+}
+
+[data-theme="daylight"] .guide-tip-highlight {
+  color: #C85640;
+  background: rgba(226, 114, 91, 0.10);
+  border-color: rgba(226, 114, 91, 0.32);
+}
+
+[data-theme="myspace"] .save-note-cta {
+  color: #F0E6FF;
+  background: linear-gradient(135deg, rgba(255, 0, 110, 0.18), rgba(191, 90, 242, 0.18));
+  border-color: rgba(255, 0, 110, 0.42);
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.24);
+}
+
+[data-theme="myspace"] .save-note-cta:hover {
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #FF006E, #BF5AF2);
+  border-color: rgba(255, 0, 110, 0.78);
+  box-shadow: 0 0 28px rgba(255, 0, 110, 0.44);
+}
+
+[data-theme="myspace"] .guide-tip-highlight {
+  color: #FFFFFF;
+  background: linear-gradient(135deg, rgba(255, 0, 110, 0.22), rgba(191, 90, 242, 0.22));
+  border-color: rgba(255, 0, 110, 0.42);
+}
 
 /* Typing indicator */
 .typing-dot {

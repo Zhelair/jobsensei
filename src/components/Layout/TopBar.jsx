@@ -17,6 +17,8 @@ const THEME_LABELS = {
   [THEMES.MYSPACE]: 'Neon',
 }
 
+const SAVE_LAST_RESPONSE_LABEL = 'Save last response to Notes'
+
 const SECTION_TITLES = {
   today: 'Today',
   applications: 'Applications',
@@ -60,7 +62,7 @@ const SECTION_HELP = {
   learning: {
     title: 'Learning',
     desc: 'Study topics with an AI tutor, then test yourself with quizzes. Spaced repetition keeps reviews smart.',
-    tips: ['Click Study to chat with the AI about a topic', 'Click Quiz for a 5-question test on that topic', 'Due reviews appear at the top — don\'t skip them!'],
+    tips: ['Click Study to chat with the AI about a topic', `${SAVE_LAST_RESPONSE_LABEL} stores useful tutor replies in Learning Notes`, 'Click Quiz for a 5-question test on that topic', 'Due reviews appear at the top — don\'t skip them!'],
   },
   star: {
     title: 'STAR Builder',
@@ -127,6 +129,17 @@ export default function TopBar() {
   const nextThemeLabel = THEME_LABELS[THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length]]
 
   const help = SECTION_HELP[activeSection]
+  const renderGuideTip = (tip) => {
+    const parts = tip.split(SAVE_LAST_RESPONSE_LABEL)
+    if (parts.length === 1) return tip
+    return parts.map((part, i) => (
+      <React.Fragment key={`${part}-${i}`}>
+        {part}
+        {i < parts.length - 1 && <span className="guide-tip-highlight">{SAVE_LAST_RESPONSE_LABEL}</span>}
+      </React.Fragment>
+    ))
+  }
+
   const openGuide = () => {
     setShowHelp(v => !v)
     if (!guideSeen) {
@@ -342,23 +355,25 @@ export default function TopBar() {
             </button>
           </div>
           <p className="text-slate-300 text-xs mb-3 leading-relaxed">{help.desc}</p>
-          <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-3 mb-3">
-            <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-wide mb-2">
-              First time path
+          {activeSection === 'today' && (
+            <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-3 mb-3">
+              <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-wide mb-2">
+                First time path
+              </div>
+              <div className="space-y-1.5">
+                {FIRST_TIME_GUIDE_STEPS.map((step, i) => (
+                  <div key={step} className="flex gap-2 text-xs text-slate-300">
+                    <span className="text-teal-300 font-mono">{i + 1}</span>
+                    <span>{step}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-slate-500 text-xs mt-2">This Guide button changes by page, so users can come back here whenever they feel lost.</p>
             </div>
-            <div className="space-y-1.5">
-              {FIRST_TIME_GUIDE_STEPS.map((step, i) => (
-                <div key={step} className="flex gap-2 text-xs text-slate-300">
-                  <span className="text-teal-300 font-mono">{i + 1}</span>
-                  <span>{step}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-slate-500 text-xs mt-2">This Guide button changes by page, so users can come back here whenever they feel lost.</p>
-          </div>
+          )}
           <div className="space-y-1">
             {help.tips.map((tip, i) => (
-              <p key={i} className="text-slate-400 text-xs">• {tip}</p>
+              <p key={i} className="text-slate-400 text-xs">• {renderGuideTip(tip)}</p>
             ))}
           </div>
           <div className="mt-3 pt-3 border-t border-navy-700 flex items-center gap-1.5 text-xs text-slate-500">
