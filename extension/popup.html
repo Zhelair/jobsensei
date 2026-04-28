@@ -1,109 +1,376 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-visuals="off">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JobSensei Capture</title>
     <style>
       :root {
+        color-scheme: dark;
+        --navy-950: #070B14;
+        --navy-900: #0F172A;
+        --navy-800: #1E293B;
+        --navy-700: #253347;
+        --navy-600: #334155;
+        --text: #F1F5F9;
+        --text-strong: #FFFFFF;
+        --muted: #94A3B8;
+        --muted-soft: #64748B;
+        --teal-400: #2DD4BF;
+        --teal-500: #14B8A6;
+        --teal-600: #0D9488;
+        --indigo-400: #818CF8;
+        --indigo-500: #6366F1;
+        --panel: #1E293B;
+        --panel-soft: #0F172A;
+        --border: #334155;
+        --danger: #F87171;
+        --success: #4ADE80;
+        --visual-accent: #FBBF24;
+      }
+
+      :root[data-theme="daylight"] {
         color-scheme: light;
-        --bg: #f0ebe3;
-        --panel: #fbf8f3;
-        --panel-2: #f5f0e8;
-        --border: rgba(10, 186, 181, 0.28);
-        --text: #1c1410;
-        --muted: #7a6458;
-        --accent: #0abab5;
-        --accent-2: #e96d58;
-        --danger: #b42318;
+        --navy-950: #F5F1EB;
+        --navy-900: #FDFBF8;
+        --navy-800: #F8F4EE;
+        --navy-700: #EEE9E0;
+        --navy-600: #C8D4E0;
+        --text: #333333;
+        --text-strong: #1C1410;
+        --muted: #717171;
+        --muted-soft: #8A8A8A;
+        --teal-400: #0A7A6B;
+        --teal-500: #0D9488;
+        --teal-600: #0A7A6B;
+        --indigo-400: #4338CA;
+        --indigo-500: #4F46E5;
+        --panel: #F8F4EE;
+        --panel-soft: #EBE6DD;
+        --border: #D5DEED;
+        --danger: #991B1B;
+        --success: #15803D;
+        --visual-accent: #92400E;
+      }
+
+      :root[data-theme="myspace"] {
+        color-scheme: dark;
+        --navy-950: #07000E;
+        --navy-900: #110020;
+        --navy-800: #1A0030;
+        --navy-700: #250040;
+        --navy-600: rgba(255, 0, 110, 0.25);
+        --text: #F0E6FF;
+        --text-strong: #FFFFFF;
+        --muted: #A78BFA;
+        --muted-soft: rgba(167, 139, 250, 0.55);
+        --teal-400: #FF006E;
+        --teal-500: #FF006E;
+        --teal-600: #FF2280;
+        --indigo-400: #BF5AF2;
+        --indigo-500: #BF5AF2;
+        --panel: rgba(26, 0, 48, 0.82);
+        --panel-soft: rgba(17, 0, 32, 0.92);
+        --border: rgba(191, 90, 242, 0.3);
+        --danger: #FB7185;
+        --success: #2DD4BF;
+        --visual-accent: #FFD166;
       }
 
       * { box-sizing: border-box; }
+
       body {
         margin: 0;
         width: 390px;
-        background: radial-gradient(circle at 15% 0%, rgba(10, 186, 181, 0.14), transparent 32%),
-          linear-gradient(180deg, #f8f4ee, var(--bg));
+        min-height: 560px;
+        overflow-x: hidden;
+        background-color: var(--navy-900);
         color: var(--text);
-        font: 13px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
       }
 
-      .wrap { padding: 16px; }
+      .bg-mesh {
+        min-height: 560px;
+        padding: 12px;
+        background-image:
+          radial-gradient(at 20% 20%, rgba(20,184,166,0.08) 0px, transparent 50%),
+          radial-gradient(at 80% 80%, rgba(99,102,241,0.08) 0px, transparent 50%),
+          radial-gradient(at 50% 50%, rgba(15,23,42,0) 0px, rgba(15,23,42,0.8) 100%);
+      }
+
+      :root[data-theme="daylight"] .bg-mesh {
+        background-image:
+          radial-gradient(at 15% 15%, rgba(13,148,136,0.09) 0px, transparent 45%),
+          radial-gradient(at 85% 20%, rgba(91,33,182,0.06) 0px, transparent 40%),
+          radial-gradient(at 70% 80%, rgba(13,148,136,0.07) 0px, transparent 40%),
+          linear-gradient(160deg, #F8F5F0 0%, #F3EFE7 55%, #EEE9E0 100%);
+      }
+
+      :root[data-theme="myspace"] .bg-mesh {
+        background-image:
+          radial-gradient(at 10% 15%, rgba(255,0,110,0.18) 0px, transparent 40%),
+          radial-gradient(at 90% 85%, rgba(191,90,242,0.18) 0px, transparent 40%),
+          radial-gradient(at 80% 15%, rgba(255,0,110,0.08) 0px, transparent 35%),
+          linear-gradient(180deg, #0D0014, #1A0030);
+      }
+
+      .card {
+        position: relative;
+        overflow: hidden;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 14px;
+      }
+
+      :root[data-theme="daylight"] .card {
+        box-shadow: 0 1px 4px rgba(80,60,40,0.08), 0 1px 2px rgba(80,60,40,0.04);
+      }
+
+      :root[data-theme="myspace"] .card {
+        box-shadow: 0 0 20px rgba(255,0,110,0.08), 0 0 40px rgba(191,90,242,0.06);
+      }
+
+      .stack { display: grid; gap: 10px; }
+      .row { display: grid; gap: 7px; }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
       .brand {
         display: flex;
         align-items: center;
+        min-width: 0;
         gap: 10px;
       }
 
       .logo {
-        width: 36px;
-        height: 36px;
+        width: 38px;
+        height: 38px;
         border-radius: 12px;
         display: grid;
         place-items: center;
-        background: linear-gradient(135deg, var(--accent), #6366f1);
-        color: white;
-        font-weight: 800;
-        box-shadow: 0 10px 24px rgba(10, 186, 181, 0.28);
+        flex: 0 0 auto;
+        background: linear-gradient(135deg, var(--teal-400), var(--indigo-500));
+        font-size: 22px;
+        box-shadow: 0 0 20px rgba(20,184,166,0.25), 0 0 40px rgba(20,184,166,0.1);
       }
 
-      .card {
-        background: rgba(251, 248, 243, 0.95);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 14px;
-        box-shadow: 0 12px 34px rgba(74, 58, 44, 0.16);
+      .brand h1 {
+        margin: 0;
+        color: var(--text-strong);
+        font-family: "Syne", system-ui, sans-serif;
+        font-size: 21px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .logo-mantra {
+        margin: 3px 0 0;
+        color: rgba(45, 212, 191, 0.6);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.025em;
+      }
+
+      :root[data-theme="daylight"] .logo-mantra { color: rgba(226, 114, 91, 0.85); }
+      :root[data-theme="myspace"] .logo-mantra { color: rgba(255, 0, 110, 0.65); }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      button, a.button-link {
+        appearance: none;
+        border: 0;
+        cursor: pointer;
+        text-decoration: none;
+        font: inherit;
+      }
+
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        color: var(--muted);
+        background: transparent;
+        transition: all 0.2s ease;
+      }
+
+      .icon-btn:hover {
+        color: var(--text-strong);
+        background: var(--navy-700);
+      }
+
+      .icon-btn.active {
+        color: var(--visual-accent);
+        border: 1px solid currentColor;
+      }
+
+      .icon-btn svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
       }
 
       .tabs {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        display: flex;
         gap: 6px;
         padding: 4px;
         border-radius: 13px;
-        background: rgba(255, 255, 255, 0.48);
-        border: 1px solid rgba(122, 100, 88, 0.12);
+        background: var(--navy-900);
       }
 
       .tab {
+        flex: 1;
         padding: 9px 10px;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--muted);
+        font-family: "DM Sans", system-ui, sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+
+      .tab:hover {
+        color: var(--text-strong);
+        background: var(--navy-700);
+      }
+
+      .tab.active {
+        background: rgba(20, 184, 166, 0.10);
+        color: var(--teal-400);
+        border: 1px solid rgba(20, 184, 166, 0.20);
+      }
+
+      :root[data-theme="myspace"] .tab.active {
+        background: rgba(255, 0, 110, 0.12);
+        color: #FF006E;
+        border-color: rgba(255, 0, 110, 0.40);
+      }
+
+      .panel.hidden { display: none; }
+
+      .label {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .input-field {
+        width: 100%;
+        border: 1px solid var(--navy-600);
+        border-radius: 12px;
+        background: var(--panel-soft);
+        color: var(--text-strong);
+        padding: 10px 12px;
+        outline: none;
+        transition: all 0.2s ease;
+        font: 13px/1.45 "DM Sans", system-ui, sans-serif;
+      }
+
+      textarea.input-field {
+        min-height: 130px;
+        resize: vertical;
+      }
+
+      .input-field::placeholder { color: var(--muted-soft); }
+      .input-field:focus {
+        border-color: var(--teal-500);
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+      }
+
+      :root[data-theme="myspace"] .input-field:focus {
+        border-color: #FF006E;
+        box-shadow: 0 0 0 3px rgba(255, 0, 110, 0.2), 0 0 18px rgba(255, 0, 110, 0.1);
+      }
+
+      .btn-primary,
+      .btn-secondary,
+      .btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-family: "Syne", system-ui, sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        transition: all 0.2s ease;
+      }
+
+      .btn-primary {
+        background: var(--teal-500);
+        color: #0F172A;
+      }
+
+      .btn-primary:hover {
+        background: var(--teal-400);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: var(--navy-700);
+        color: var(--text);
+        border: 1px solid var(--navy-600);
+      }
+
+      .btn-secondary:hover {
+        color: var(--text-strong);
+        background: var(--navy-600);
+        transform: translateY(-1px);
+      }
+
+      .btn-ghost {
         background: transparent;
         color: var(--muted);
       }
 
-      .tab.active {
-        background: var(--panel);
-        color: var(--text);
-        box-shadow: 0 5px 16px rgba(74, 58, 44, 0.12);
+      .btn-ghost:hover {
+        color: var(--text-strong);
+        background: var(--navy-700);
       }
 
-      h1 {
-        margin: 0 0 4px;
-        font-size: 18px;
+      :root[data-theme="daylight"] .btn-primary {
+        background: #0ABAB5;
+        color: #FFFFFF;
+        box-shadow: 0 2px 10px rgba(10,186,181,0.30);
       }
 
-      p {
-        margin: 0;
-        color: var(--muted);
+      :root[data-theme="daylight"] .btn-primary:hover {
+        background: #09A8A3;
+        box-shadow: 0 4px 16px rgba(10,186,181,0.42);
       }
 
-      .stack { display: grid; gap: 10px; }
-      .row { display: grid; gap: 8px; }
-      .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-
-      input, textarea {
-        width: 100%;
-        border: 1px solid rgba(122, 100, 88, 0.2);
-        border-radius: 11px;
-        background: var(--panel-2);
-        color: var(--text);
-        padding: 10px 12px;
-        font: inherit;
+      :root[data-theme="daylight"][data-visuals="on"] .btn-primary {
+        background: linear-gradient(135deg, #E2725B, #CC313D, #FFDD44, #CC313D, #E2725B);
+        background-size: 300% auto;
       }
 
-      textarea {
-        min-height: 132px;
-        resize: vertical;
+      :root[data-theme="myspace"] .btn-primary {
+        background: linear-gradient(135deg, #FF006E, #BF5AF2);
+        color: #FFFFFF;
+        box-shadow: 0 0 18px rgba(255, 0, 110, 0.45);
+      }
+
+      :root[data-theme="myspace"] .btn-primary:hover {
+        background: linear-gradient(135deg, #FF2280, #CC70F5);
+        box-shadow: 0 0 28px rgba(255, 0, 110, 0.65);
       }
 
       .actions {
@@ -112,60 +379,54 @@
         flex-wrap: wrap;
       }
 
-      button {
-        appearance: none;
-        border: none;
-        border-radius: 11px;
-        cursor: pointer;
-        padding: 10px 12px;
-        font: inherit;
-        font-weight: 600;
+      .actions .btn-secondary,
+      .actions .btn-primary {
+        flex: 1;
       }
-
-      .primary {
-        background: var(--accent-2);
-        color: white;
-      }
-
-      .secondary {
-        background: rgba(255, 255, 255, 0.55);
-        color: var(--text);
-        border: 1px solid rgba(122, 100, 88, 0.16);
-      }
-
-      .status {
-        min-height: 18px;
-        font-size: 12px;
-        color: var(--muted);
-      }
-
-      .status.error { color: var(--danger); }
-      .status.success { color: #087f5b; }
-
-      .panel.hidden { display: none; }
 
       .notice {
-        border: 1px solid rgba(233, 109, 88, 0.24);
-        background: rgba(233, 109, 88, 0.08);
-        color: #7a3a2f;
+        border: 1px solid rgba(20,184,166,0.20);
+        background: rgba(20,184,166,0.10);
+        color: var(--teal-400);
         border-radius: 12px;
-        padding: 9px 10px;
+        padding: 10px 12px;
         font-size: 12px;
         line-height: 1.35;
+      }
+
+      :root[data-theme="myspace"] .notice {
+        border-color: rgba(255, 0, 110, 0.35);
+        background: rgba(255, 0, 110, 0.12);
+        color: #FF79B0;
       }
 
       .meta {
         display: flex;
         justify-content: space-between;
         gap: 10px;
-        color: var(--muted);
+        color: var(--muted-soft);
         font-size: 11px;
       }
 
-      .intro {
-        display: grid;
-        gap: 10px;
+      .status {
+        min-height: 18px;
+        color: var(--muted);
+        font-size: 12px;
       }
+
+      .status.error { color: var(--danger); }
+      .status.success { color: var(--success); }
+
+      .intro { display: grid; gap: 10px; }
+
+      .intro h2 {
+        margin: 0 0 3px;
+        color: var(--text-strong);
+        font-family: "Syne", system-ui, sans-serif;
+        font-size: 17px;
+      }
+
+      .intro p { margin: 0; color: var(--muted); }
 
       .pill-list {
         display: grid;
@@ -174,43 +435,132 @@
 
       .pill {
         display: flex;
-        gap: 8px;
+        gap: 9px;
         align-items: flex-start;
         padding: 9px 10px;
         border-radius: 12px;
-        background: rgba(10, 186, 181, 0.08);
-        border: 1px solid rgba(10, 186, 181, 0.16);
+        background: rgba(20,184,166,0.10);
+        border: 1px solid rgba(20,184,166,0.20);
+      }
+
+      .pill span {
+        color: var(--teal-400);
+        font-family: "JetBrains Mono", ui-monospace, monospace;
       }
 
       .pill strong {
-        color: var(--text);
+        color: var(--text-strong);
+        font-family: "Syne", system-ui, sans-serif;
+        font-size: 13px;
       }
 
       details {
-        border-top: 1px solid rgba(122, 100, 88, 0.14);
+        border-top: 1px solid var(--border);
         padding-top: 10px;
       }
 
       summary {
         cursor: pointer;
+        color: var(--text-strong);
+        font-family: "Syne", system-ui, sans-serif;
         font-weight: 700;
-        color: var(--text);
       }
 
       details p {
         margin-top: 6px;
+        color: var(--muted);
         font-size: 12px;
+      }
+
+      @keyframes glowPulse {
+        0%, 100% { box-shadow: 0 0 10px rgba(20,184,166,0.35), 0 0 4px rgba(20,184,166,0.15); }
+        50% { box-shadow: 0 0 28px rgba(20,184,166,0.8), 0 0 55px rgba(99,102,241,0.35); }
+      }
+
+      @keyframes meshShift {
+        0%, 100% { filter: hue-rotate(0deg) brightness(1); }
+        33% { filter: hue-rotate(22deg) brightness(1.06); }
+        66% { filter: hue-rotate(-14deg) brightness(1.03); }
+      }
+
+      @keyframes particleDrift {
+        0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+        15% { opacity: 0.75; }
+        85% { opacity: 0.45; }
+        100% { transform: translateY(-90px) translateX(var(--px-drift, 20px)) scale(0.5); opacity: 0; }
+      }
+
+      :root[data-visuals="on"] .btn-primary {
+        animation: glowPulse 2.5s ease-in-out infinite;
+      }
+
+      :root[data-visuals="on"] .bg-mesh {
+        animation: meshShift 14s ease-in-out infinite;
+      }
+
+      .visuals-particles {
+        display: none;
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 0;
+      }
+
+      :root[data-visuals="on"] .visuals-particles {
+        display: block;
+      }
+
+      .visuals-particle {
+        position: absolute;
+        width: var(--size);
+        height: var(--size);
+        left: var(--left);
+        top: var(--top);
+        border-radius: 999px;
+        background: var(--color);
+        animation: particleDrift var(--dur) linear var(--delay) infinite;
+      }
+
+      .card {
+        z-index: 1;
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
+    <div class="bg-mesh">
+      <div class="visuals-particles" aria-hidden="true">
+        <span class="visuals-particle" style="--left:8%;--top:18%;--size:3px;--color:#14B8A6;--dur:6s;--delay:-1s;--px-drift:20px"></span>
+        <span class="visuals-particle" style="--left:36%;--top:10%;--size:2px;--color:#6366F1;--dur:7.8s;--delay:-3s;--px-drift:-22px"></span>
+        <span class="visuals-particle" style="--left:74%;--top:22%;--size:4px;--color:#FF006E;--dur:9.2s;--delay:-5s;--px-drift:28px"></span>
+        <span class="visuals-particle" style="--left:92%;--top:42%;--size:3px;--color:#F59E0B;--dur:8.5s;--delay:-2s;--px-drift:-18px"></span>
+        <span class="visuals-particle" style="--left:18%;--top:74%;--size:4px;--color:#BF5AF2;--dur:10s;--delay:-6s;--px-drift:26px"></span>
+        <span class="visuals-particle" style="--left:68%;--top:82%;--size:3px;--color:#00EEFF;--dur:7.4s;--delay:-4s;--px-drift:-20px"></span>
+      </div>
+
       <div class="card stack">
-        <div class="brand">
-          <div class="logo">JS</div>
-          <div>
-            <h1>JobSensei Capture</h1>
-            <p>Turn job posts into ready-to-use JobSensei workspaces.</p>
+        <div class="topbar">
+          <div class="brand">
+            <div class="logo" aria-hidden="true">&#129399;</div>
+            <div>
+              <h1>JobSensei</h1>
+              <p class="logo-mantra">Be confident. Get hired.</p>
+            </div>
+          </div>
+          <div class="top-actions" aria-label="Extension controls">
+            <button id="visualsBtn" class="icon-btn" type="button" title="Visuals">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.21 1.21 0 0 0 1.72 0L21.64 5.36a1.21 1.21 0 0 0 0-1.72Z"></path>
+                <path d="m14 7 3 3"></path>
+                <path d="M5 6v4"></path>
+                <path d="M19 14v4"></path>
+                <path d="M10 2v2"></path>
+                <path d="M7 8H3"></path>
+                <path d="M21 16h-4"></path>
+                <path d="M11 3H9"></path>
+              </svg>
+            </button>
+            <button id="themeBtn" class="icon-btn" type="button" title="Theme"></button>
           </div>
         </div>
 
@@ -221,27 +571,27 @@
 
         <section id="capturePanel" class="panel stack">
           <div class="notice">
-            Auto-capture is a helper, not magic. Please review the company, role, and JD before sending.
+            Auto-capture is a helper, not magic. Review the company, role, and JD before sending.
           </div>
 
           <div class="row">
             <label class="label" for="company">Company</label>
-            <input id="company" type="text" placeholder="Company name" />
+            <input id="company" class="input-field" type="text" placeholder="Company name" />
           </div>
 
           <div class="row">
             <label class="label" for="role">Role</label>
-            <input id="role" type="text" placeholder="Role title" />
+            <input id="role" class="input-field" type="text" placeholder="Role title" />
           </div>
 
           <div class="row">
             <label class="label" for="url">Job URL</label>
-            <input id="url" type="url" placeholder="https://..." />
+            <input id="url" class="input-field" type="url" placeholder="https://..." />
           </div>
 
           <div class="row">
             <label class="label" for="jdText">Job Description - review before sending</label>
-            <textarea id="jdText" placeholder="The extension will try to pull the visible job description here."></textarea>
+            <textarea id="jdText" class="input-field" placeholder="The extension will try to pull the visible job description here."></textarea>
           </div>
 
           <div class="meta">
@@ -250,8 +600,8 @@
           </div>
 
           <div class="actions">
-            <button id="refreshBtn" class="secondary" type="button">Refresh Capture</button>
-            <button id="sendBtn" class="primary" type="button">Send to JobSensei</button>
+            <button id="refreshBtn" class="btn-secondary" type="button">Refresh Capture</button>
+            <button id="sendBtn" class="btn-primary" type="button">Send to JobSensei</button>
           </div>
 
           <div id="status" class="status"></div>
@@ -259,14 +609,14 @@
 
         <section id="aboutPanel" class="panel intro hidden">
           <div>
-            <h1>What this extension does</h1>
-            <p>It saves the job page you are viewing into JobSensei so you can research, prepare, and follow up from one workspace.</p>
+            <h2>What this extension does</h2>
+            <p>It turns a job page into a JobSensei application workspace for research, notes, and prep.</p>
           </div>
 
           <div class="pill-list">
-            <div class="pill"><span>1</span><p><strong>Reads the current job page.</strong><br />It tries to capture the company, role, URL, and visible job description.</p></div>
-            <div class="pill"><span>2</span><p><strong>Lets you review before sending.</strong><br />You can fix messy page data before it enters JobSensei.</p></div>
-            <div class="pill"><span>3</span><p><strong>Creates an application workspace.</strong><br />JobSensei opens the role with capture, research, notes, and prep tools ready.</p></div>
+            <div class="pill"><span>1</span><p><strong>Captures the current job page.</strong><br />Company, role, URL, and visible JD text are pulled into one review screen.</p></div>
+            <div class="pill"><span>2</span><p><strong>Captures selected JD text too.</strong><br />Highlight the JD, right-click, and choose the JobSensei capture action.</p></div>
+            <div class="pill"><span>3</span><p><strong>Opens the right workspace.</strong><br />JobSensei updates an existing matching application or creates a new one.</p></div>
           </div>
 
           <details>
@@ -279,12 +629,12 @@
           </details>
           <details>
             <summary>What if capture is wrong?</summary>
-            <p>Edit the fields first, or press Refresh Capture after scrolling/opening the job details.</p>
+            <p>Edit the fields first, use selected-text capture for the JD, or press Refresh Capture after opening the job details.</p>
           </details>
 
           <div class="actions">
-            <button id="openAppBtn" class="primary" type="button">Open JobSensei</button>
-            <button id="backToCaptureBtn" class="secondary" type="button">Capture this page</button>
+            <button id="openAppBtn" class="btn-primary" type="button">Open JobSensei</button>
+            <button id="backToCaptureBtn" class="btn-secondary" type="button">Capture this page</button>
           </div>
         </section>
       </div>

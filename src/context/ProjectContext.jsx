@@ -50,6 +50,28 @@ function parseSavedJson(value, fallback = null) {
   }
 }
 
+function normalizeMatchText(value) {
+  return (value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+}
+
+function findExistingCapturedApplication(applications, { normalizedUrl, company, role }) {
+  const companyKey = normalizeMatchText(company)
+  const roleKey = normalizeMatchText(role)
+
+  return applications.find(app => {
+    if (normalizedUrl && app.jdUrl && normalizeApplicationUrl(app.jdUrl) === normalizedUrl) {
+      return true
+    }
+
+    const appCompanyKey = normalizeMatchText(app.company)
+    const appRoleKey = normalizeMatchText(app.role)
+    return !!companyKey && !!roleKey && appCompanyKey === companyKey && appRoleKey === roleKey
+  })
+}
+
 export function ProjectProvider({ children }) {
   const [projects, setProjects] = useState([])
   const [activeProjectId, setActiveProjectId] = useState(null)
@@ -186,10 +208,7 @@ export function ProjectProvider({ children }) {
     const captureSource = (capture?.source || 'chrome-extension').trim()
     const capturedAt = capture?.capturedAt || new Date().toISOString()
 
-    const existingApp = applications.find(app => {
-      if (!normalizedUrl || !app.jdUrl) return false
-      return normalizeApplicationUrl(app.jdUrl) === normalizedUrl
-    })
+    const existingApp = findExistingCapturedApplication(applications, { normalizedUrl, company, role })
 
     let targetApp
     let nextApplications
@@ -258,10 +277,7 @@ export function ProjectProvider({ children }) {
 
       if (!normalizedUrl && !jdText && !company && !role) return
 
-      const existingApp = nextApplications.find(app => {
-        if (!normalizedUrl || !app.jdUrl) return false
-        return normalizeApplicationUrl(app.jdUrl) === normalizedUrl
-      })
+      const existingApp = findExistingCapturedApplication(nextApplications, { normalizedUrl, company, role })
 
       let targetApp
       if (existingApp) {

@@ -16,6 +16,8 @@ This folder is an unpacked Chrome extension for local testing.
 - Opens JobSensei on the same browser/device
 - Creates or updates the tracker application through the app-side extension bridge
 - Includes a `What it does` tab with a short FAQ for new users
+- Adds a right-click `Copy JD to JobSensei` action for selected job-description text
+- Stores extension theme and visuals preferences locally in Chrome
 
 ## App URL
 
