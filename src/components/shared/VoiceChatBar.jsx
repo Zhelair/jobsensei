@@ -238,7 +238,10 @@ export default function VoiceChatBar({
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault()
+              handleSend()
+            }
           }}
           rows={1}
           readOnly={isListening}
@@ -249,7 +252,7 @@ export default function VoiceChatBar({
           onClick={handleSend}
           disabled={!input.trim() || isLoading}
           className="flex-shrink-0 w-10 h-10 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-40 flex items-center justify-center transition-all"
-          title="Send"
+          title="Send (Ctrl+Enter)"
         >
           <Send size={16} className="text-navy-900"/>
         </button>

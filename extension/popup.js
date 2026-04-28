@@ -245,6 +245,24 @@ function readJobPage(selectedText = '') {
       .filter(Boolean)
   }
 
+  function uniqueLines(lines) {
+    const seen = new Set()
+    return lines.filter(line => {
+      const key = line.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
+
+  function htmlToText(value) {
+    const div = document.createElement('div')
+    div.innerHTML = value || ''
+    div.querySelectorAll('br').forEach(br => br.replaceWith('\n'))
+    div.querySelectorAll('p,li,h2,h3,h4').forEach(node => node.appendChild(document.createTextNode('\n')))
+    return div.innerText || div.textContent || ''
+  }
+
   function isVisible(node) {
     const rect = node.getBoundingClientRect?.()
     const style = window.getComputedStyle?.(node)
@@ -252,11 +270,11 @@ function readJobPage(selectedText = '') {
   }
 
   function isGenericTitle(value) {
-    return /^(careers?|jobs?|job openings?|open positions?|application|overview|for you|all jobs)$/i.test(cleanText(value))
+    return /^(careers?|jobs?|job openings?|open positions?|application|overview|for you|all jobs|job search|linkedin|jobs\.bg)$/i.test(cleanText(value))
   }
 
   function isBadRoleCandidate(value) {
-    return /bookmark|message|menu|share|more_vert|subscribe|newsletter|apply|report/i.test(cleanText(value))
+    return /bookmark|message|menu|share|more_vert|subscribe|newsletter|apply|report|sign in|recommended|similar jobs|job alert/i.test(cleanText(value))
   }
 
   function collectTextsFromSelectors(selectors) {
@@ -276,10 +294,12 @@ function readJobPage(selectedText = '') {
     const text = cleanText(value)
     if (!text || text.length < 4 || text.length > 120 || isGenericTitle(text) || isBadRoleCandidate(text)) return -100
     let score = 0
-    if (/analyst|expert|engineer|developer|manager|specialist|designer|consultant|director|lead|associate|coordinator|officer|architect|scientist|administrator|accountant|recruiter|intern|payments?|kyc|aml|risk|fraud|compliance/i.test(text)) score += 8
+    if (/analyst|expert|engineer|developer|manager|specialist|designer|consultant|director|lead|associate|coordinator|officer|architect|scientist|administrator|accountant|recruiter|intern|payments?|kyc|aml|risk|fraud|compliance|product|operations|sales|marketing|finance|support/i.test(text)) score += 8
+    if (/[\u0400-\u04FF]/.test(text) && text.split(/\s+/).length >= 2) score += 5
     if (/&|\/|\b[A-Z]{2,}\b/.test(text)) score += 2
     if (/remote|hybrid|sofia|bulgaria|fully/i.test(text)) score += 1
     if (text.split(/\s+/).length >= 2 && text.split(/\s+/).length <= 10) score += 2
+    if (/[.!?]\s/.test(text)) score -= 5
     return score
   }
 
@@ -291,12 +311,17 @@ function readJobPage(selectedText = '') {
   }
 
   function roleFromPageTitle(title) {
-    const parts = title
-      .split(/\s+[|\-–—]\s+/)
+    const parts = splitTitle(title)
+    const jobsBgPart = title.match(/jobs\.bg\s*-\s*([^,|\u2013\u2014]+)/i)?.[1]
+    return bestRoleCandidate([jobsBgPart, ...parts])
+  }
+
+  function splitTitle(title) {
+    return cleanText(title)
+      .split(/\s+(?:[|\-]|\u2013|\u2014|\u00b7)\s+/)
       .map(cleanText)
       .filter(Boolean)
-    const jobsBgPart = title.match(/jobs\.bg\s*-\s*([^,|–—]+)/i)?.[1]
-    return bestRoleCandidate([jobsBgPart, ...parts])
+      .filter(part => !isGenericTitle(part))
   }
 
   function titleize(value) {
@@ -319,87 +344,225 @@ function readJobPage(selectedText = '') {
     return ''
   }
 
-  function longestTextFromSelectors(selectors) {
-    let longest = ''
+  function metaContent(selectors) {
     for (const selector of selectors) {
-      const nodes = Array.from(document.querySelectorAll(selector))
-      for (const node of nodes) {
-        if (!isVisible(node)) continue
-        const text = (node.innerText || node.textContent || '').trim()
-        if (cleanText(text).length > cleanText(longest).length) longest = text
+      const value = cleanText(document.querySelector(selector)?.content || '')
+      if (value) return value
+    }
+    return ''
+  }
+
+  function readJsonLdJobPosting() {
+    const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
+    const postings = []
+
+    function visit(value) {
+      if (!value) return
+      if (Array.isArray(value)) {
+        value.forEach(visit)
+        return
+      }
+      if (typeof value !== 'object') return
+      if (Array.isArray(value['@graph'])) value['@graph'].forEach(visit)
+
+      const type = value['@type']
+      const types = Array.isArray(type) ? type : [type]
+      if (types.some(item => String(item).toLowerCase() === 'jobposting')) {
+        postings.push(value)
       }
     }
-    return longest
+
+    for (const script of scripts) {
+      try {
+        visit(JSON.parse(script.textContent || '{}'))
+      } catch {}
+    }
+
+    const posting = postings[0] || null
+    if (!posting) return null
+    const organization = posting.hiringOrganization || posting.organization || {}
+
+    return {
+      company: cleanText(typeof organization === 'string' ? organization : organization.name),
+      role: cleanText(posting.title),
+      jdText: cleanText(htmlToText(posting.description || '')),
+    }
+  }
+
+  function collectNodesFromSelectors(selectors) {
+    const nodes = []
+    const seen = new Set()
+    for (const selector of selectors) {
+      for (const node of Array.from(document.querySelectorAll(selector))) {
+        if (seen.has(node)) continue
+        seen.add(node)
+        nodes.push(node)
+      }
+    }
+    return nodes
+  }
+
+  function scoreJdCandidate(text, node, selectorIndex = 0) {
+    const compact = cleanText(text)
+    if (compact.length < 220) return -100
+
+    const lowered = compact.toLowerCase()
+    const keywordMatches = (lowered.match(/responsibilities|requirements|qualifications|skills|experience|about the role|about you|what you will|what you'll|we offer|benefits|duties|knowledge|candidate|role|position|team|tasks|\u0438\u0437\u0438\u0441\u043a\u0432\u0430\u043d\u0438\u044f|\u043e\u0442\u0433\u043e\u0432\u043e\u0440\u043d\u043e\u0441\u0442\u0438|\u043a\u0432\u0430\u043b\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u0438|\u0443\u043c\u0435\u043d\u0438\u044f|\u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u043c\u0435/gi) || []).length
+    const noisyMatches = (lowered.match(/apply now|easy apply|sign in|create alert|recommended jobs|similar jobs|people also viewed|cookie|privacy policy|terms of use|save job|share this job|report this job/g) || []).length
+    const lengthScore = Math.min(compact.length / 120, 55)
+    const mainBoost = node?.closest?.('main, article, [role="main"]') ? 8 : 0
+    const selectorBoost = Math.max(0, 20 - selectorIndex)
+
+    return lengthScore + (keywordMatches * 8) + mainBoost + selectorBoost - (noisyMatches * 12) - (compact.length > 25000 ? 18 : 0)
+  }
+
+  function bestJdFromSelectors(selectors) {
+    let best = { text: '', score: -100 }
+    selectors.forEach((selector, index) => {
+      for (const node of Array.from(document.querySelectorAll(selector))) {
+        if (!isVisible(node)) continue
+        const text = node.innerText || node.textContent || ''
+        const score = scoreJdCandidate(text, node, index)
+        if (score > best.score) best = { text, score }
+      }
+    })
+    return best.text
+  }
+
+  function normalizeJdText(rawText) {
+    const noiseLine = /^(apply|apply now|easy apply|save|saved|share|copy link|report|sign in|join now|follow|message|more|show more|show less|see more|job alert|recommended jobs|similar jobs|people also viewed|about linkedin|cookie|privacy policy|terms of use|back to jobs)$/i
+    const lines = uniqueLines(cleanLines(rawText))
+      .filter(line => line.length > 1)
+      .filter(line => !noiseLine.test(line))
+      .filter(line => !/^(bookmark|message|menu|share|more_vert)$/i.test(line))
+      .filter(line => !/^\d+\s+(applicants?|views?)$/i.test(line))
+
+    return lines.join('\n').slice(0, 12000)
+  }
+
+  function companyFromVisibleLines(lines, role) {
+    const roleKey = cleanText(role).toLowerCase()
+    const start = roleKey ? lines.findIndex(line => cleanText(line).toLowerCase() === roleKey) : -1
+    const candidates = (start >= 0 ? lines.slice(start + 1, start + 8) : lines.slice(0, 30))
+      .filter(line => line.length >= 2 && line.length <= 90)
+      .filter(line => !isGenericTitle(line) && !isBadRoleCandidate(line))
+      .filter(line => cleanText(line).toLowerCase() !== roleKey)
+      .filter(line => !/^(remote|hybrid|on-site|full-time|part-time|contract|temporary|internship|\d+\s+applicants?)$/i.test(line))
+
+    return candidates[0] || ''
   }
 
   const pageTitle = cleanText(document.title)
-  const titleParts = pageTitle.split(/\s+[|\-–—]\s+/).map(cleanText).filter(Boolean)
+  const titleParts = splitTitle(pageTitle)
   const visibleLines = cleanLines(document.body?.innerText || '')
+  const hostname = window.location.hostname.replace(/^www\./i, '')
+  const hostFallback = titleize(hostname.split('.')[0].replace(/[-_]+/g, ' '))
+  const jsonLd = readJsonLdJobPosting()
+
+  const metaTitle = metaContent([
+    'meta[property="og:title"]',
+    'meta[name="twitter:title"]',
+    'meta[name="title"]',
+  ])
+
   const roleSelectors = [
     '[class*="jobs-unified-top-card__job-title" i]',
+    '[class*="job-details-jobs-unified-top-card__job-title" i]',
+    '[class*="topcard__title" i]',
     '[data-testid*="job-title" i]',
     '[data-automation-id*="job-title" i]',
+    '[data-qa*="job-title" i]',
+    '[itemprop="title"]',
     '[class*="job-title" i]',
     '[class*="jobTitle" i]',
+    '[class*="position-title" i]',
+    '[class*="vacancy-title" i]',
     'h1',
     'h2',
     '[data-testid*="title" i]',
     '[class*="headline" i]',
   ]
-  const role = bestRoleCandidate([
+
+  const role = jsonLd?.role || bestRoleCandidate([
     ...collectTextsFromSelectors(roleSelectors),
     roleFromPageTitle(pageTitle),
+    metaTitle,
     ...titleParts,
-    ...visibleLines.slice(0, 40),
+    ...visibleLines.slice(0, 45),
   ])
 
   const companySelectors = [
     '[class*="jobs-unified-top-card__company-name" i]',
+    '[class*="job-details-jobs-unified-top-card__company-name" i]',
+    '[class*="topcard__org-name" i]',
+    '[class*="topcard__flavor" i]',
     '[data-testid*="company" i]',
     '[data-automation-id*="company" i]',
+    '[data-qa*="company" i]',
+    '[itemprop="hiringOrganization"]',
+    '[itemprop="name"]',
     '[class*="company" i]',
     '[class*="employer" i]',
-    '[data-company]'
+    '[class*="organization" i]',
+    '[data-company]',
   ]
 
-  const metaCompany = cleanText(document.querySelector('meta[property="og:site_name"]')?.content || '')
-  const hostname = window.location.hostname.replace(/^www\./i, '')
-  const hostFallback = titleize(hostname.split('.')[0].replace(/[-_]+/g, ' '))
+  const metaSiteName = metaContent([
+    'meta[property="og:site_name"]',
+    'meta[name="application-name"]',
+  ])
   const jobsBgCompany = /jobs\.bg/i.test(hostname)
-    ? cleanText(pageTitle.match(/\s(?:от|from)\s([^|–—]+)/i)?.[1] || '')
+    ? cleanText(pageTitle.match(/\s(?:from|at)\s([^|\u2013\u2014]+)/i)?.[1] || '')
     : ''
-  let company = textFromSelectors(companySelectors) || jobsBgCompany || titleParts.find(part => part !== role && !isGenericTitle(part)) || metaCompany || hostFallback
-  if (/linkedin/i.test(window.location.hostname) && company.includes('\n')) {
+  let company = jsonLd?.company
+    || textFromSelectors(companySelectors)
+    || jobsBgCompany
+    || companyFromVisibleLines(visibleLines, role)
+    || titleParts.find(part => part !== role && !/jobs\.bg|linkedin|careers?|job search/i.test(part))
+    || (!/linkedin|jobs\.bg/i.test(hostname) ? metaSiteName : '')
+    || hostFallback
+
+  if (/linkedin/i.test(hostname) && company.includes('\n')) {
     company = cleanLines(company)[0] || company
   }
 
   const jdSelectors = [
+    '#job-details',
     '[class*="jobs-description__content" i]',
     '[class*="jobs-box__html-content" i]',
+    '[class*="jobs-description-content" i]',
+    '[class*="show-more-less-html" i]',
     '[data-testid*="job-description" i]',
     '[data-automation-id*="job-description" i]',
-    'main',
-    'article',
-    '[role="main"]',
+    '[data-qa*="job-description" i]',
+    '[itemprop="description"]',
     '.job-description',
     '#job-description',
-    '[data-testid*="description" i]',
     '[class*="job-description" i]',
-    '[class*="description" i]'
+    '[class*="jobDescription" i]',
+    '[class*="vacancy-description" i]',
+    '[class*="posting-description" i]',
+    '[class*="description" i]',
+    '[data-testid*="description" i]',
+    'article',
+    'main',
+    '[role="main"]',
   ]
 
-  let jdText = selectedText || longestTextFromSelectors(jdSelectors)
+  let jdText = selectedText
+  if (!jdText && cleanText(jsonLd?.jdText).length >= 350) jdText = jsonLd.jdText
+  if (!jdText) jdText = bestJdFromSelectors(jdSelectors)
   if (cleanText(jdText).length < 400 && !selectedText) {
-    jdText = (document.body?.innerText || '').slice(0, 12000)
+    const mainText = collectNodesFromSelectors(['main', 'article', '[role="main"]'])
+      .map(node => node.innerText || node.textContent || '')
+      .sort((a, b) => cleanText(b).length - cleanText(a).length)[0]
+    jdText = mainText || document.body?.innerText || ''
   }
-  jdText = cleanLines(jdText)
-    .filter(line => !/bookmark|message|menu|share|more_vert/i.test(line))
-    .join(' ')
-    .slice(0, 12000)
+  jdText = normalizeJdText(jdText)
 
   return {
-    company,
-    role,
+    company: cleanText(company),
+    role: cleanText(role),
     jdText,
     url: window.location.href,
     pageTitle,
