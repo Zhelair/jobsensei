@@ -3,7 +3,8 @@ import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 import { useVisuals } from '../../context/VisualsContext'
-import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2 } from 'lucide-react'
+import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal } from 'lucide-react'
+import BrandMark from '../shared/BrandMark'
 
 const THEME_ICONS = {
   [THEMES.DARK]: Moon,
@@ -152,9 +153,7 @@ export default function TopBar() {
     <header className="bg-navy-900 border-b border-navy-700 px-4 md:px-6 py-3 flex items-center justify-between flex-shrink-0 relative">
       {/* Mobile logo */}
       <div className="flex items-center gap-2 md:hidden">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-400 to-indigo-500 flex items-center justify-center shadow-md">
-          <span className="text-base leading-none">🥷</span>
-        </div>
+        <BrandMark className="w-8 h-8" />
         <div className="flex flex-col gap-0.5">
           <span className="font-display font-bold text-white text-base leading-tight tracking-tight">JobSensei</span>
           <span className="logo-mantra text-xs leading-tight">Be confident. Get hired.</span>
@@ -285,7 +284,7 @@ export default function TopBar() {
             className={`btn-ghost text-base leading-none ${showMore ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
             title="More options"
           >
-            🥷
+            <MoreHorizontal size={18} />
           </button>
           {showMore && (
             <>
@@ -368,7 +367,6 @@ export default function TopBar() {
                   </div>
                 ))}
               </div>
-              <p className="text-slate-500 text-xs mt-2">This Guide button changes by page, so users can come back here whenever they feel lost.</p>
             </div>
           )}
           <div className="space-y-1">

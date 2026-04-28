@@ -112,7 +112,7 @@ function createContextMenus() {
     void chrome.runtime.lastError
     chrome.contextMenus.create({
       id: SELECTION_MENU_ID,
-      title: '🥷 Copy selected JD to JobSensei',
+      title: 'Copy selected JD to JobSensei',
       contexts: ['selection'],
     })
   })
