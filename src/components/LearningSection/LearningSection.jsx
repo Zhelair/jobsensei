@@ -428,7 +428,7 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
         {lastAiMsg && (
           <button
             onClick={handleSaveNote}
-            className={`btn-ghost text-xs w-full justify-center ${noteSaved ? 'text-green-400' : 'text-slate-400 hover:text-teal-400'}`}
+            className={`save-note-cta ${noteSaved ? 'is-saved' : ''}`}
           >
             {noteSaved ? <><Check size={12}/> Saved to Notes!</> : <><Save size={12}/> Save last response to Notes</>}
           </button>
@@ -745,6 +745,7 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
         })}
       </div>
 
+      <div className="flex flex-col">
       {/* Notes list */}
       {filteredNotes.length === 0 ? (
         <div className="card text-center py-10 text-slate-500">
@@ -772,7 +773,7 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
 
       {/* AI Actions */}
       {filteredNotes.length > 0 && (
-        <div className="card border-teal-500/20 bg-teal-500/5">
+        <div className="card order-first mb-6 border-teal-500/20 bg-teal-500/5">
           <h4 className="font-display font-semibold text-white text-sm mb-3 flex items-center gap-2">
             <Sparkles size={14} className="text-teal-400"/> AI Actions
             <span className="text-slate-500 text-xs font-normal">
@@ -844,6 +845,7 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
           )}
         </div>
       )}
+      </div>
     </div>
   )
 }
