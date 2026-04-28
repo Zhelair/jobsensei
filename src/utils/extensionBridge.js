@@ -19,6 +19,7 @@ export function normalizeExtensionCapture(payload = {}) {
     pageTitle,
     source: (payload.source || 'chrome-extension').trim(),
     capturedAt: payload.capturedAt || new Date().toISOString(),
+    jdOnly: !!payload.jdOnly,
   }
 }
 

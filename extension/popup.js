@@ -39,6 +39,7 @@ const elements = {
 }
 
 let prefs = { ...DEFAULT_PREFS }
+let currentCaptureMeta = {}
 
 document.addEventListener('DOMContentLoaded', async () => {
   elements.captureTab.addEventListener('click', () => showPanel('capture'))
@@ -58,9 +59,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const pendingSelection = await consumePendingSelectionCapture()
   if (pendingSelection) {
-    fillForm(pendingSelection)
-    showPanel('capture')
-    setStatus('Selected JD loaded. Review it, then send to JobSensei.', 'success')
+    await captureCurrentPage({
+      jdOverride: pendingSelection.jdText,
+      fallbackPayload: pendingSelection,
+      statusMessage: 'Selected JD loaded. Review it, then send to JobSensei.',
+    })
     return
   }
 
@@ -111,8 +114,9 @@ async function consumePendingSelectionCapture() {
   return payload
 }
 
-async function captureCurrentPage() {
+async function captureCurrentPage(options = {}) {
   setStatus('Reading the current page...')
+  const { jdOverride = '', fallbackPayload = null, statusMessage = 'Capture refreshed. Review details before sending.' } = options
 
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -126,9 +130,21 @@ async function captureCurrentPage() {
     const payload = result?.result
     if (!payload) throw new Error('Could not read the current page.')
 
-    fillForm({ ...payload, url: payload.url || tab.url })
-    setStatus('Capture refreshed. Review details before sending.', 'success')
+    fillForm({
+      ...payload,
+      url: payload.url || tab.url,
+      jdText: jdOverride || payload.jdText,
+      source: jdOverride ? 'chrome-extension-selection' : payload.source,
+      jdOnly: !!jdOverride,
+      capturedAt: fallbackPayload?.capturedAt,
+    })
+    setStatus(statusMessage, 'success')
   } catch (error) {
+    if (fallbackPayload) {
+      fillForm(fallbackPayload)
+      setStatus(statusMessage, 'success')
+      return
+    }
     setStatus(error.message || 'Could not capture the current page.', 'error')
   }
 }
@@ -138,6 +154,11 @@ function fillForm(payload) {
   elements.role.value = payload.role || ''
   elements.url.value = payload.url || ''
   elements.jdText.value = payload.jdText || ''
+  currentCaptureMeta = {
+    source: payload.source || 'chrome-extension',
+    capturedAt: payload.capturedAt,
+    jdOnly: !!payload.jdOnly,
+  }
   const sourceLabel = payload.source === 'chrome-extension-selection'
     ? 'selected JD text'
     : (payload.pageTitle || 'current page')
@@ -162,8 +183,9 @@ function getFormPayload() {
     role: elements.role.value.trim(),
     url: elements.url.value.trim(),
     jdText: elements.jdText.value.trim(),
-    source: 'chrome-extension',
-    capturedAt: new Date().toISOString(),
+    source: currentCaptureMeta.source || 'chrome-extension',
+    capturedAt: currentCaptureMeta.capturedAt || new Date().toISOString(),
+    jdOnly: !!currentCaptureMeta.jdOnly,
   }
 }
 
