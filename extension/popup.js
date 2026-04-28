@@ -1,15 +1,30 @@
 const DEFAULT_APP_URL = 'https://jobsensei.app/#applications'
 const PENDING_SELECTION_KEY = 'jobsensei_pending_selection_capture_v1'
 const PREFS_KEY = 'jobsensei_extension_prefs_v1'
-const DEFAULT_PREFS = { theme: 'daylight', visuals: true }
+const DEFAULT_PREFS = { theme: 'dark', visuals: false }
+const THEME_ORDER = ['dark', 'daylight', 'myspace']
+const THEME_META = {
+  dark: {
+    label: 'Dark',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>',
+  },
+  daylight: {
+    label: 'Daylight',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>',
+  },
+  myspace: {
+    label: 'Neon',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.93 2.74c.24-.99 1.9-.99 2.14 0l.52 2.14a3.4 3.4 0 0 0 2.53 2.53l2.14.52c.99.24.99 1.9 0 2.14l-2.14.52a3.4 3.4 0 0 0-2.53 2.53l-.52 2.14c-.24.99-1.9.99-2.14 0l-.52-2.14a3.4 3.4 0 0 0-2.53-2.53l-2.14-.52c-.99-.24-.99-1.9 0-2.14l2.14-.52a3.4 3.4 0 0 0 2.53-2.53l.52-2.14Z"></path><path d="M20 15v4"></path><path d="M22 17h-4"></path></svg>',
+  },
+}
 
 const elements = {
   captureTab: document.getElementById('captureTab'),
   aboutTab: document.getElementById('aboutTab'),
   capturePanel: document.getElementById('capturePanel'),
   aboutPanel: document.getElementById('aboutPanel'),
-  themeButtons: Array.from(document.querySelectorAll('[data-theme-choice]')),
-  visualsToggle: document.getElementById('visualsToggle'),
+  themeBtn: document.getElementById('themeBtn'),
+  visualsBtn: document.getElementById('visualsBtn'),
   company: document.getElementById('company'),
   role: document.getElementById('role'),
   url: document.getElementById('url'),
@@ -33,10 +48,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   elements.jdText.addEventListener('input', updateMeta)
   elements.refreshBtn.addEventListener('click', captureCurrentPage)
   elements.sendBtn.addEventListener('click', handoffCapture)
-  elements.themeButtons.forEach(button => {
-    button.addEventListener('click', () => updatePrefs({ theme: button.dataset.themeChoice }))
+  elements.themeBtn.addEventListener('click', () => {
+    const idx = THEME_ORDER.indexOf(prefs.theme)
+    updatePrefs({ theme: THEME_ORDER[(idx + 1) % THEME_ORDER.length] })
   })
-  elements.visualsToggle.addEventListener('change', () => updatePrefs({ visuals: elements.visualsToggle.checked }))
+  elements.visualsBtn.addEventListener('click', () => updatePrefs({ visuals: !prefs.visuals }))
 
   await loadPrefs()
 
@@ -62,6 +78,9 @@ function showPanel(panel) {
 async function loadPrefs() {
   const saved = await storageGet(PREFS_KEY)
   prefs = { ...DEFAULT_PREFS, ...(saved?.[PREFS_KEY] || {}) }
+  if (prefs.theme === 'night') prefs.theme = 'dark'
+  if (prefs.theme === 'neon') prefs.theme = 'myspace'
+  if (!THEME_ORDER.includes(prefs.theme)) prefs.theme = DEFAULT_PREFS.theme
   applyPrefs()
 }
 
@@ -74,10 +93,10 @@ async function updatePrefs(next) {
 function applyPrefs() {
   document.documentElement.dataset.theme = prefs.theme || DEFAULT_PREFS.theme
   document.documentElement.dataset.visuals = prefs.visuals ? 'on' : 'off'
-  elements.visualsToggle.checked = !!prefs.visuals
-  elements.themeButtons.forEach(button => {
-    button.classList.toggle('active', button.dataset.themeChoice === prefs.theme)
-  })
+  elements.visualsBtn.classList.toggle('active', !!prefs.visuals)
+  elements.visualsBtn.title = prefs.visuals ? 'Visuals ON - click to disable' : 'Visuals OFF - click to enable'
+  elements.themeBtn.innerHTML = THEME_META[prefs.theme]?.icon || THEME_META.dark.icon
+  elements.themeBtn.title = `Theme: ${THEME_META[prefs.theme]?.label || 'Dark'} - click to cycle`
 }
 
 function openJobSensei() {
