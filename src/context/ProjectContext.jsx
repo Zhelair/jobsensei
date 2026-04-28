@@ -207,6 +207,7 @@ export function ProjectProvider({ children }) {
     const role = (capture?.role || '').trim()
     const captureSource = (capture?.source || 'chrome-extension').trim()
     const capturedAt = capture?.capturedAt || new Date().toISOString()
+    const preserveExistingFields = !!(capture?.jdOnly || capture?.preserveExistingFields)
 
     const existingApp = findExistingCapturedApplication(applications, { normalizedUrl, company, role })
 
@@ -216,9 +217,9 @@ export function ProjectProvider({ children }) {
     if (existingApp) {
       targetApp = {
         ...existingApp,
-        company: company || existingApp.company,
-        role: role || existingApp.role,
-        jdUrl: normalizedUrl || existingApp.jdUrl,
+        company: preserveExistingFields ? existingApp.company : (company || existingApp.company),
+        role: preserveExistingFields ? existingApp.role : (role || existingApp.role),
+        jdUrl: preserveExistingFields ? (existingApp.jdUrl || normalizedUrl) : (normalizedUrl || existingApp.jdUrl),
         jdText: jdText || existingApp.jdText || '',
         captureSource,
         capturedAt,
@@ -274,6 +275,7 @@ export function ProjectProvider({ children }) {
       const role = (capture?.role || '').trim()
       const captureSource = (capture?.source || 'chrome-extension').trim()
       const capturedAt = capture?.capturedAt || new Date().toISOString()
+      const preserveExistingFields = !!(capture?.jdOnly || capture?.preserveExistingFields)
 
       if (!normalizedUrl && !jdText && !company && !role) return
 
@@ -283,9 +285,9 @@ export function ProjectProvider({ children }) {
       if (existingApp) {
         targetApp = {
           ...existingApp,
-          company: company || existingApp.company,
-          role: role || existingApp.role,
-          jdUrl: normalizedUrl || existingApp.jdUrl,
+          company: preserveExistingFields ? existingApp.company : (company || existingApp.company),
+          role: preserveExistingFields ? existingApp.role : (role || existingApp.role),
+          jdUrl: preserveExistingFields ? (existingApp.jdUrl || normalizedUrl) : (normalizedUrl || existingApp.jdUrl),
           jdText: jdText || existingApp.jdText || '',
           captureSource,
           capturedAt,

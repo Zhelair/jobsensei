@@ -112,7 +112,7 @@ function createContextMenus() {
     void chrome.runtime.lastError
     chrome.contextMenus.create({
       id: SELECTION_MENU_ID,
-      title: 'Copy JD to JobSensei',
+      title: '🥷 Copy selected JD to JobSensei',
       contexts: ['selection'],
     })
   })
@@ -123,19 +123,14 @@ async function handleSelectionCapture(info, tab) {
   const selectedText = (info.selectionText || '').trim()
   if (!selectedText) throw new Error('Select job description text first.')
 
-  const [result] = await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: extractSelectionCaptureFromPage,
-    args: [selectedText],
-  })
-
-  const payload = result?.result || {
+  const payload = {
     company: '',
     role: '',
     url: tab.url || '',
     jdText: selectedText,
     pageTitle: tab.title || '',
     source: 'chrome-extension-selection',
+    jdOnly: true,
   }
 
   await chrome.storage.local.set({

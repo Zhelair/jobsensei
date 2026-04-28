@@ -503,17 +503,16 @@ export default function Settings() {
               <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImportProject} />
             </div>
             {importMsg && <p className="text-xs mt-2 text-slate-300">{importMsg}</p>}
-            <p className="text-slate-600 text-xs mt-2">Use the project switcher in the sidebar to create, rename, or switch between workspaces.</p>
+          </div>
+
+          <div className="card border-red-500/20">
+            <h3 className="font-display font-semibold text-white mb-1">Data Management</h3>
+            <p className="text-slate-400 text-xs mb-3">Local data controls for this device.</p>
+            <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm">
+              <Trash2 size={14} /> Clear All Data
+            </button>
           </div>
         </div>
-      </div>
-
-      <div className="card border-red-500/20">
-        <h3 className="font-display font-semibold text-white mb-2">Data Management</h3>
-        <p className="text-slate-400 text-sm mb-3">All data stays local to this device unless you export it.</p>
-        <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10">
-          <Trash2 size={14} /> Clear All Data
-        </button>
       </div>
     </div>
   )
