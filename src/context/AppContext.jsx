@@ -16,6 +16,15 @@ export const SECTIONS = {
 const APP_HISTORY_KEY = 'jobsensei'
 const SECTION_VALUES = Object.values(SECTIONS)
 
+function parseSavedJson(value, fallback = null) {
+  if (!value) return fallback
+  try {
+    return JSON.parse(value)
+  } catch {
+    return fallback
+  }
+}
+
 function getSectionFromLocation() {
   const stateSection = window.history.state?.[APP_HISTORY_KEY]?.section
   if (SECTION_VALUES.includes(stateSection)) return stateSection
@@ -53,14 +62,16 @@ export function AppProvider({ children }) {
     const savedProfile = localStorage.getItem('js_profile')
     const savedStats = localStorage.getItem('js_stats')
     const onboardingDone = localStorage.getItem('js_onboarding_done')
+    const parsedProfile = parseSavedJson(savedProfile)
+    const parsedStats = parseSavedJson(savedStats)
 
-    if (savedProfile) setProfile(JSON.parse(savedProfile))
-    if (savedStats) setStats(JSON.parse(savedStats))
+    if (parsedProfile) setProfile(parsedProfile)
+    if (parsedStats) setStats(parsedStats)
     if (!onboardingDone) setShowOnboarding(true)
 
     // Update streak
     const today = new Date().toDateString()
-    const last = savedStats ? JSON.parse(savedStats).lastActive : null
+    const last = parsedStats?.lastActive || null
     if (last && last !== today) {
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)

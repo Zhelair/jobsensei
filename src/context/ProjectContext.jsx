@@ -41,6 +41,15 @@ function makeProject(name) {
   }
 }
 
+function parseSavedJson(value, fallback = null) {
+  if (!value) return fallback
+  try {
+    return JSON.parse(value)
+  } catch {
+    return fallback
+  }
+}
+
 export function ProjectProvider({ children }) {
   const [projects, setProjects] = useState([])
   const [activeProjectId, setActiveProjectId] = useState(null)
@@ -49,9 +58,10 @@ export function ProjectProvider({ children }) {
   useEffect(() => {
     const saved = localStorage.getItem('js_projects')
     const activeId = localStorage.getItem('js_active_project')
+    const parsedSaved = parseSavedJson(saved)
 
-    if (saved) {
-      const parsed = JSON.parse(saved).map(normalizeProject)
+    if (Array.isArray(parsedSaved)) {
+      const parsed = parsedSaved.map(normalizeProject)
       setProjects(parsed)
       localStorage.setItem('js_projects', JSON.stringify(parsed))
       // Migrate old data into default project if no projects exist yet
@@ -74,11 +84,11 @@ export function ProjectProvider({ children }) {
     const oldNotes = localStorage.getItem('js_company_notes')
 
     const defaultProject = makeProject('My Job Search')
-    defaultProject.data.interviewSessions = oldSessions ? JSON.parse(oldSessions) : []
-    defaultProject.data.topics = oldTopics ? JSON.parse(oldTopics) : []
-    defaultProject.data.applications = oldApps ? JSON.parse(oldApps) : []
-    defaultProject.data.starStories = oldStars ? JSON.parse(oldStars) : []
-    defaultProject.data.companyNotes = oldNotes ? JSON.parse(oldNotes) : {}
+    defaultProject.data.interviewSessions = parseSavedJson(oldSessions, [])
+    defaultProject.data.topics = parseSavedJson(oldTopics, [])
+    defaultProject.data.applications = parseSavedJson(oldApps, [])
+    defaultProject.data.starStories = parseSavedJson(oldStars, [])
+    defaultProject.data.companyNotes = parseSavedJson(oldNotes, {})
 
     const initial = [defaultProject]
     setProjects(initial)
