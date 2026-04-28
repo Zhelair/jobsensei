@@ -1607,23 +1607,6 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     return (
       <div className="space-y-4">
         <div className="card border-teal-500/20 bg-teal-500/5">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <div className="text-white text-sm font-display font-semibold">Research this company</div>
-              <div className="text-slate-400 text-xs">Company research and prep notes stay together here.</div>
-            </div>
-            <button onClick={runResearch} disabled={!isConnected || researching} className="btn-primary text-xs flex-shrink-0">
-              <Search size={13} /> {researching ? 'Researching...' : 'Auto-fill Notes'}
-            </button>
-          </div>
-          {researchMsg && (
-            <p className={`text-xs mt-2 ${researchMsg.toLowerCase().includes('failed') || researchMsg.toLowerCase().includes('could not') ? 'text-red-400' : 'text-teal-400'}`}>
-              {researchMsg}
-            </p>
-          )}
-        </div>
-
-        <div className="card border-teal-500/20 bg-teal-500/5">
           <h4 className="font-display font-semibold text-white text-sm mb-3 flex items-center gap-2">
             <Sparkles size={14} className="text-teal-400" /> AI Actions
             <span className="text-slate-500 text-xs font-normal">
@@ -1631,7 +1614,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
             </span>
           </h4>
 
-          <div className="flex gap-2 mb-4">
+          <div className="grid sm:grid-cols-2 gap-2 mb-4">
             <button
               onClick={generateWorkspaceSummary}
               disabled={!isConnected || workspaceSummaryLoading || noteCount === 0}
@@ -1639,7 +1622,20 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
             >
               <FileText size={13} /> {workspaceSummaryLoading ? 'Summarizing...' : 'Summarize Notes'}
             </button>
+            <button
+              onClick={runResearch}
+              disabled={!isConnected || researching}
+              className="btn-primary flex-1 justify-center text-xs"
+            >
+              <Search size={13} /> {researching ? 'Researching...' : 'Research This Company'}
+            </button>
           </div>
+
+          {researchMsg && (
+            <p className={`text-xs mb-3 ${researchMsg.toLowerCase().includes('failed') || researchMsg.toLowerCase().includes('could not') ? 'text-red-400' : 'text-teal-400'}`}>
+              {researchMsg}
+            </p>
+          )}
 
           {noteCount === 0 && (
             <p className="text-slate-500 text-xs">Add research or prep notes first, then summarize them here.</p>
@@ -1664,6 +1660,12 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
                     className="btn-ghost text-xs"
                   >
                     <Printer size={12} /> PDF
+                  </button>
+                  <button
+                    onClick={() => downloadCheatAsPng(`${app.company} - Research Summary`, workspaceSummary, 'research_summary')}
+                    className="btn-secondary text-xs"
+                  >
+                    <Download size={12} /> .png
                   </button>
                 </div>
               </div>
