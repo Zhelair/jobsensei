@@ -5,6 +5,7 @@
   "description": "Capture the current job page and send it into JobSensei.",
   "permissions": [
     "activeTab",
+    "contextMenus",
     "scripting",
     "storage",
     "tabs"

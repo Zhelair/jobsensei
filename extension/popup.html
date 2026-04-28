@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="daylight" data-visuals="on">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,59 +10,153 @@
         --bg: #f0ebe3;
         --panel: #fbf8f3;
         --panel-2: #f5f0e8;
+        --surface: rgba(255, 255, 255, 0.56);
         --border: rgba(10, 186, 181, 0.28);
         --text: #1c1410;
         --muted: #7a6458;
         --accent: #0abab5;
         --accent-2: #e96d58;
+        --accent-3: #ffd166;
         --danger: #b42318;
+        --success: #087f5b;
+        --shadow: rgba(74, 58, 44, 0.16);
+      }
+
+      :root[data-theme="night"] {
+        color-scheme: dark;
+        --bg: #0b1426;
+        --panel: #111f33;
+        --panel-2: #0d1729;
+        --surface: rgba(15, 31, 52, 0.72);
+        --border: rgba(10, 186, 181, 0.32);
+        --text: #f5f7fb;
+        --muted: #95a7bc;
+        --accent: #18d2c1;
+        --accent-2: #38bdf8;
+        --accent-3: #f472b6;
+        --danger: #fb7185;
+        --success: #34d399;
+        --shadow: rgba(0, 0, 0, 0.32);
+      }
+
+      :root[data-theme="neon"] {
+        color-scheme: dark;
+        --bg: #111827;
+        --panel: #182235;
+        --panel-2: #101827;
+        --surface: rgba(30, 41, 59, 0.72);
+        --border: rgba(20, 184, 166, 0.36);
+        --text: #f9fafb;
+        --muted: #a5b4c8;
+        --accent: #2dd4bf;
+        --accent-2: #fb7185;
+        --accent-3: #facc15;
+        --danger: #f43f5e;
+        --success: #22c55e;
+        --shadow: rgba(0, 0, 0, 0.34);
       }
 
       * { box-sizing: border-box; }
+
       body {
         margin: 0;
         width: 390px;
-        background: radial-gradient(circle at 15% 0%, rgba(10, 186, 181, 0.14), transparent 32%),
-          linear-gradient(180deg, #f8f4ee, var(--bg));
+        background:
+          radial-gradient(circle at 12% -6%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 34%),
+          radial-gradient(circle at 98% 8%, color-mix(in srgb, var(--accent-3) 16%, transparent), transparent 28%),
+          linear-gradient(180deg, color-mix(in srgb, var(--panel) 78%, white), var(--bg));
         color: var(--text);
         font: 13px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
+      :root[data-visuals="off"] body {
+        background: var(--bg);
+      }
+
       .wrap { padding: 16px; }
+
+      .card {
+        position: relative;
+        overflow: hidden;
+        background: color-mix(in srgb, var(--panel) 94%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: 0 12px 34px var(--shadow);
+      }
+
+      :root[data-visuals="on"] .card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          radial-gradient(circle, var(--accent) 0 1.5px, transparent 1.8px),
+          radial-gradient(circle, var(--accent-3) 0 1.2px, transparent 1.5px);
+        background-position: 44px 68px, 290px 210px;
+        background-size: 190px 170px, 170px 150px;
+        opacity: 0.28;
+      }
+
+      .stack { display: grid; gap: 10px; }
+      .row { display: grid; gap: 8px; }
+
       .brand {
+        position: relative;
+        z-index: 1;
         display: flex;
         align-items: center;
         gap: 10px;
       }
 
       .logo {
-        width: 36px;
-        height: 36px;
-        border-radius: 12px;
+        width: 38px;
+        height: 38px;
+        border-radius: 13px;
         display: grid;
         place-items: center;
         background: linear-gradient(135deg, var(--accent), #6366f1);
-        color: white;
-        font-weight: 800;
-        box-shadow: 0 10px 24px rgba(10, 186, 181, 0.28);
+        box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 34%, transparent);
+        font-size: 22px;
       }
 
-      .card {
-        background: rgba(251, 248, 243, 0.95);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 14px;
-        box-shadow: 0 12px 34px rgba(74, 58, 44, 0.16);
+      h1 {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.15;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .tagline {
+        color: color-mix(in srgb, var(--accent) 72%, var(--text));
+        font-weight: 700;
       }
 
       .tabs {
+        position: relative;
+        z-index: 1;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 6px;
         padding: 4px;
         border-radius: 13px;
-        background: rgba(255, 255, 255, 0.48);
-        border: 1px solid rgba(122, 100, 88, 0.12);
+        background: var(--surface);
+        border: 1px solid color-mix(in srgb, var(--muted) 16%, transparent);
+      }
+
+      button {
+        appearance: none;
+        border: none;
+        border-radius: 11px;
+        cursor: pointer;
+        padding: 10px 12px;
+        font: inherit;
+        font-weight: 700;
       }
 
       .tab {
@@ -74,26 +168,65 @@
       .tab.active {
         background: var(--panel);
         color: var(--text);
-        box-shadow: 0 5px 16px rgba(74, 58, 44, 0.12);
+        box-shadow: 0 5px 16px var(--shadow);
       }
 
-      h1 {
-        margin: 0 0 4px;
-        font-size: 18px;
+      .prefs {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 8px;
+        border-radius: 13px;
+        background: color-mix(in srgb, var(--panel-2) 78%, transparent);
+        border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
       }
 
-      p {
-        margin: 0;
+      .theme-chip {
+        padding: 6px 9px;
+        border: 1px solid color-mix(in srgb, var(--muted) 22%, transparent);
+        background: transparent;
         color: var(--muted);
+        font-size: 12px;
       }
 
-      .stack { display: grid; gap: 10px; }
-      .row { display: grid; gap: 8px; }
-      .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+      .theme-chip.active {
+        color: var(--text);
+        border-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 16%, transparent);
+      }
+
+      .toggle {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .toggle input { width: auto; margin: 0; accent-color: var(--accent); }
+
+      .panel {
+        position: relative;
+        z-index: 1;
+      }
+
+      .panel.hidden { display: none; }
+
+      .label {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
 
       input, textarea {
         width: 100%;
-        border: 1px solid rgba(122, 100, 88, 0.2);
+        border: 1px solid color-mix(in srgb, var(--muted) 24%, transparent);
         border-radius: 11px;
         background: var(--panel-2);
         color: var(--text);
@@ -106,31 +239,30 @@
         resize: vertical;
       }
 
+      input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--muted) 72%, transparent); }
+
       .actions {
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
       }
 
-      button {
-        appearance: none;
-        border: none;
-        border-radius: 11px;
-        cursor: pointer;
-        padding: 10px 12px;
-        font: inherit;
-        font-weight: 600;
+      .primary {
+        background: linear-gradient(135deg, var(--accent-2), var(--accent-3));
+        color: #101827;
+        box-shadow: 0 10px 20px color-mix(in srgb, var(--accent-2) 24%, transparent);
       }
 
-      .primary {
-        background: var(--accent-2);
-        color: white;
+      :root[data-theme="night"] .primary,
+      :root[data-theme="neon"] .primary {
+        background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--accent-3)));
+        color: #07111f;
       }
 
       .secondary {
-        background: rgba(255, 255, 255, 0.55);
+        background: var(--surface);
         color: var(--text);
-        border: 1px solid rgba(122, 100, 88, 0.16);
+        border: 1px solid color-mix(in srgb, var(--muted) 18%, transparent);
       }
 
       .status {
@@ -140,14 +272,12 @@
       }
 
       .status.error { color: var(--danger); }
-      .status.success { color: #087f5b; }
-
-      .panel.hidden { display: none; }
+      .status.success { color: var(--success); }
 
       .notice {
-        border: 1px solid rgba(233, 109, 88, 0.24);
-        background: rgba(233, 109, 88, 0.08);
-        color: #7a3a2f;
+        border: 1px solid color-mix(in srgb, var(--accent-2) 24%, transparent);
+        background: color-mix(in srgb, var(--accent-2) 10%, transparent);
+        color: color-mix(in srgb, var(--accent-2) 54%, var(--text));
         border-radius: 12px;
         padding: 9px 10px;
         font-size: 12px;
@@ -162,15 +292,8 @@
         font-size: 11px;
       }
 
-      .intro {
-        display: grid;
-        gap: 10px;
-      }
-
-      .pill-list {
-        display: grid;
-        gap: 7px;
-      }
+      .intro { display: grid; gap: 10px; }
+      .pill-list { display: grid; gap: 7px; }
 
       .pill {
         display: flex;
@@ -178,16 +301,14 @@
         align-items: flex-start;
         padding: 9px 10px;
         border-radius: 12px;
-        background: rgba(10, 186, 181, 0.08);
-        border: 1px solid rgba(10, 186, 181, 0.16);
+        background: color-mix(in srgb, var(--accent) 9%, transparent);
+        border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
       }
 
-      .pill strong {
-        color: var(--text);
-      }
+      .pill strong { color: var(--text); }
 
       details {
-        border-top: 1px solid rgba(122, 100, 88, 0.14);
+        border-top: 1px solid color-mix(in srgb, var(--muted) 16%, transparent);
         padding-top: 10px;
       }
 
@@ -207,10 +328,10 @@
     <div class="wrap">
       <div class="card stack">
         <div class="brand">
-          <div class="logo">JS</div>
+          <div class="logo" aria-hidden="true">🥷</div>
           <div>
-            <h1>JobSensei Capture</h1>
-            <p>Turn job posts into ready-to-use JobSensei workspaces.</p>
+            <h1>JobSensei</h1>
+            <p class="tagline">Be confident. Get hired.</p>
           </div>
         </div>
 
@@ -219,9 +340,16 @@
           <button id="aboutTab" class="tab" type="button">What it does</button>
         </div>
 
+        <div class="prefs" aria-label="Extension style">
+          <button class="theme-chip" type="button" data-theme-choice="night">Night</button>
+          <button class="theme-chip" type="button" data-theme-choice="daylight">Day</button>
+          <button class="theme-chip" type="button" data-theme-choice="neon">Neon</button>
+          <label class="toggle"><input id="visualsToggle" type="checkbox" /> Visuals</label>
+        </div>
+
         <section id="capturePanel" class="panel stack">
           <div class="notice">
-            Auto-capture is a helper, not magic. Please review the company, role, and JD before sending.
+            Auto-capture is a helper, not magic. Review the company, role, and JD before sending.
           </div>
 
           <div class="row">
@@ -260,13 +388,13 @@
         <section id="aboutPanel" class="panel intro hidden">
           <div>
             <h1>What this extension does</h1>
-            <p>It saves the job page you are viewing into JobSensei so you can research, prepare, and follow up from one workspace.</p>
+            <p>It turns a job page into a JobSensei application workspace for research, notes, and prep.</p>
           </div>
 
           <div class="pill-list">
-            <div class="pill"><span>1</span><p><strong>Reads the current job page.</strong><br />It tries to capture the company, role, URL, and visible job description.</p></div>
-            <div class="pill"><span>2</span><p><strong>Lets you review before sending.</strong><br />You can fix messy page data before it enters JobSensei.</p></div>
-            <div class="pill"><span>3</span><p><strong>Creates an application workspace.</strong><br />JobSensei opens the role with capture, research, notes, and prep tools ready.</p></div>
+            <div class="pill"><span>1</span><p><strong>Captures the current job page.</strong><br />Company, role, URL, and visible JD text are pulled into one review screen.</p></div>
+            <div class="pill"><span>2</span><p><strong>Captures selected JD text too.</strong><br />Highlight the JD, right-click, and choose the JobSensei capture action.</p></div>
+            <div class="pill"><span>3</span><p><strong>Opens the right workspace.</strong><br />JobSensei updates an existing matching application or creates a new one.</p></div>
           </div>
 
           <details>
@@ -279,7 +407,7 @@
           </details>
           <details>
             <summary>What if capture is wrong?</summary>
-            <p>Edit the fields first, or press Refresh Capture after scrolling/opening the job details.</p>
+            <p>Edit the fields first, use selected-text capture for the JD, or press Refresh Capture after opening the job details.</p>
           </details>
 
           <div class="actions">

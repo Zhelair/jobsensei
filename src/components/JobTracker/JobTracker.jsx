@@ -372,7 +372,7 @@ export default function JobTracker() {
 
   if (selectedApp) return (
     <ApplicationWorkspaceView
-      key={selectedApp.id}
+      key={`${selectedApp.id}:${selectedApp.capturedAt || selectedApp.updatedAt || ''}`}
       app={selectedApp}
       initialTab={selectedWorkspaceTab}
       notes={notes[selectedApp.id] || {}}
@@ -852,11 +852,27 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const toolsHistory = getProjectData('toolsHistory') || []
   const gapResults = getProjectData('gapResults') || []
   const starStories = getProjectData('starStories') || []
+  const notesSignature = JSON.stringify(notes || {})
 
   useEffect(() => {
     setWorkspaceTab(initialTab === 'notes' ? 'research' : initialTab || 'overview')
     setShowAdvancedTools(false)
   }, [app.id, initialTab])
+
+  useEffect(() => {
+    setForm({
+      people: '',
+      theyMentioned: '',
+      techStack: '',
+      culture: '',
+      openQ: '',
+      prepNotes: '',
+      wowFacts: '',
+      ...notes,
+    })
+    setJdText(app.jdText || '')
+    setShowJdEditor(!(app.jdText || '').trim())
+  }, [app.id, app.capturedAt, app.jdText, notesSignature])
 
   const hasJd = jdText.trim().length > 0
   const hasResearch = hasResearchData(form)

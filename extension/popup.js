@@ -1,10 +1,15 @@
 const DEFAULT_APP_URL = 'https://jobsensei.app/#applications'
+const PENDING_SELECTION_KEY = 'jobsensei_pending_selection_capture_v1'
+const PREFS_KEY = 'jobsensei_extension_prefs_v1'
+const DEFAULT_PREFS = { theme: 'daylight', visuals: true }
 
 const elements = {
   captureTab: document.getElementById('captureTab'),
   aboutTab: document.getElementById('aboutTab'),
   capturePanel: document.getElementById('capturePanel'),
   aboutPanel: document.getElementById('aboutPanel'),
+  themeButtons: Array.from(document.querySelectorAll('[data-theme-choice]')),
+  visualsToggle: document.getElementById('visualsToggle'),
   company: document.getElementById('company'),
   role: document.getElementById('role'),
   url: document.getElementById('url'),
@@ -18,6 +23,8 @@ const elements = {
   backToCaptureBtn: document.getElementById('backToCaptureBtn'),
 }
 
+let prefs = { ...DEFAULT_PREFS }
+
 document.addEventListener('DOMContentLoaded', async () => {
   elements.captureTab.addEventListener('click', () => showPanel('capture'))
   elements.aboutTab.addEventListener('click', () => showPanel('about'))
@@ -26,6 +33,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   elements.jdText.addEventListener('input', updateMeta)
   elements.refreshBtn.addEventListener('click', captureCurrentPage)
   elements.sendBtn.addEventListener('click', handoffCapture)
+  elements.themeButtons.forEach(button => {
+    button.addEventListener('click', () => updatePrefs({ theme: button.dataset.themeChoice }))
+  })
+  elements.visualsToggle.addEventListener('change', () => updatePrefs({ visuals: elements.visualsToggle.checked }))
+
+  await loadPrefs()
+
+  const pendingSelection = await consumePendingSelectionCapture()
+  if (pendingSelection) {
+    fillForm(pendingSelection)
+    showPanel('capture')
+    setStatus('Selected JD loaded. Review it, then send to JobSensei.', 'success')
+    return
+  }
 
   await captureCurrentPage()
 })
@@ -38,9 +59,37 @@ function showPanel(panel) {
   elements.aboutPanel.classList.toggle('hidden', isCapture)
 }
 
+async function loadPrefs() {
+  const saved = await storageGet(PREFS_KEY)
+  prefs = { ...DEFAULT_PREFS, ...(saved?.[PREFS_KEY] || {}) }
+  applyPrefs()
+}
+
+async function updatePrefs(next) {
+  prefs = { ...prefs, ...next }
+  applyPrefs()
+  await storageSet({ [PREFS_KEY]: prefs })
+}
+
+function applyPrefs() {
+  document.documentElement.dataset.theme = prefs.theme || DEFAULT_PREFS.theme
+  document.documentElement.dataset.visuals = prefs.visuals ? 'on' : 'off'
+  elements.visualsToggle.checked = !!prefs.visuals
+  elements.themeButtons.forEach(button => {
+    button.classList.toggle('active', button.dataset.themeChoice === prefs.theme)
+  })
+}
+
 function openJobSensei() {
   chrome.tabs.create({ url: DEFAULT_APP_URL })
   window.close()
+}
+
+async function consumePendingSelectionCapture() {
+  const saved = await storageGet(PENDING_SELECTION_KEY)
+  const payload = saved?.[PENDING_SELECTION_KEY] || null
+  if (payload) await storageRemove(PENDING_SELECTION_KEY)
+  return payload
 }
 
 async function captureCurrentPage() {
@@ -52,23 +101,29 @@ async function captureCurrentPage() {
 
     const [result] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      func: extractJobFromPage,
+      func: readJobPage,
     })
 
     const payload = result?.result
     if (!payload) throw new Error('Could not read the current page.')
 
-    elements.company.value = payload.company || ''
-    elements.role.value = payload.role || ''
-    elements.url.value = payload.url || tab.url || ''
-    elements.jdText.value = payload.jdText || ''
-    elements.sourceMeta.textContent = `Source: ${payload.pageTitle || 'current page'}`
-    updateMeta()
-
+    fillForm({ ...payload, url: payload.url || tab.url })
     setStatus('Capture refreshed. Review details before sending.', 'success')
   } catch (error) {
     setStatus(error.message || 'Could not capture the current page.', 'error')
   }
+}
+
+function fillForm(payload) {
+  elements.company.value = payload.company || ''
+  elements.role.value = payload.role || ''
+  elements.url.value = payload.url || ''
+  elements.jdText.value = payload.jdText || ''
+  const sourceLabel = payload.source === 'chrome-extension-selection'
+    ? 'selected JD text'
+    : (payload.pageTitle || 'current page')
+  elements.sourceMeta.textContent = `Source: ${sourceLabel}`
+  updateMeta()
 }
 
 async function handoffCapture() {
@@ -125,7 +180,19 @@ function setStatus(message, tone = '') {
   elements.status.className = `status ${tone}`.trim()
 }
 
-function extractJobFromPage() {
+function storageGet(key) {
+  return new Promise(resolve => chrome.storage.local.get(key, resolve))
+}
+
+function storageSet(value) {
+  return new Promise(resolve => chrome.storage.local.set(value, resolve))
+}
+
+function storageRemove(key) {
+  return new Promise(resolve => chrome.storage.local.remove(key, resolve))
+}
+
+function readJobPage(selectedText = '') {
   function cleanText(value) {
     return (value || '').replace(/\s+/g, ' ').trim()
   }
@@ -148,7 +215,7 @@ function extractJobFromPage() {
   }
 
   function isBadRoleCandidate(value) {
-    return /bookmark|message|menu|share|more_vert|subscribe|newsletter|apply|report|получавайте|всички обяви|за нас|кандидатствай|разглеждания|съобщения|бележник/i.test(cleanText(value))
+    return /bookmark|message|menu|share|more_vert|subscribe|newsletter|apply|report/i.test(cleanText(value))
   }
 
   function collectTextsFromSelectors(selectors) {
@@ -177,8 +244,8 @@ function extractJobFromPage() {
 
   function bestRoleCandidate(candidates) {
     return candidates
-      .map(text => ({ text, score: scoreRoleCandidate(text) }))
-      .filter(item => item.score > -100)
+      .map(text => ({ text: cleanText(text), score: scoreRoleCandidate(text) }))
+      .filter(item => item.text && item.score > -100)
       .sort((a, b) => b.score - a.score)[0]?.text || ''
   }
 
@@ -280,12 +347,12 @@ function extractJobFromPage() {
     '[class*="description" i]'
   ]
 
-  let jdText = longestTextFromSelectors(jdSelectors)
-  if (cleanText(jdText).length < 400) {
+  let jdText = selectedText || longestTextFromSelectors(jdSelectors)
+  if (cleanText(jdText).length < 400 && !selectedText) {
     jdText = (document.body?.innerText || '').slice(0, 12000)
   }
   jdText = cleanLines(jdText)
-    .filter(line => !/bookmark|message|menu|share|more_vert|разглеждания|кандидатствай|получавайте|съобщения|бележник|всички обяви/i.test(line))
+    .filter(line => !/bookmark|message|menu|share|more_vert/i.test(line))
     .join(' ')
     .slice(0, 12000)
 
@@ -295,6 +362,6 @@ function extractJobFromPage() {
     jdText,
     url: window.location.href,
     pageTitle,
-    source: 'chrome-extension',
+    source: selectedText ? 'chrome-extension-selection' : 'chrome-extension',
   }
 }
