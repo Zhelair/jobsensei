@@ -21,12 +21,39 @@ const EMPTY_PROJECT_DATA = {
   interviewMode: 'hr',      // last interview mode used
 }
 
+function normalizeApplicationEntry(app = {}) {
+  return {
+    ...app,
+    id: typeof app.id === 'string' && app.id.trim() ? app.id : generateId(),
+    company: typeof app.company === 'string' ? app.company.trim() : '',
+    role: typeof app.role === 'string' ? app.role.trim() : '',
+    stage: typeof app.stage === 'string' && app.stage.trim() ? app.stage.trim() : 'Researching',
+    jdUrl: typeof app.jdUrl === 'string' ? app.jdUrl.trim() : '',
+    jdText: typeof app.jdText === 'string' ? app.jdText.trim() : '',
+    date: typeof app.date === 'string' && app.date ? app.date : new Date().toISOString(),
+    stageUpdatedAt: typeof app.stageUpdatedAt === 'string' && app.stageUpdatedAt ? app.stageUpdatedAt : (typeof app.date === 'string' && app.date ? app.date : new Date().toISOString()),
+    captureSource: typeof app.captureSource === 'string' ? app.captureSource.trim() : '',
+    capturedAt: typeof app.capturedAt === 'string' && app.capturedAt ? app.capturedAt : '',
+    notes: typeof app.notes === 'string' ? app.notes : '',
+  }
+}
+
 function normalizeProject(project) {
+  const data = {
+    ...EMPTY_PROJECT_DATA,
+    ...(project?.data || {}),
+  }
+
   return {
     ...project,
     data: {
-      ...EMPTY_PROJECT_DATA,
-      ...(project?.data || {}),
+      ...data,
+      applications: Array.isArray(data.applications)
+        ? data.applications.map(normalizeApplicationEntry)
+        : [],
+      companyNotes: data.companyNotes && typeof data.companyNotes === 'object' && !Array.isArray(data.companyNotes)
+        ? data.companyNotes
+        : {},
     },
   }
 }
@@ -57,11 +84,11 @@ function normalizeMatchText(value) {
     .replace(/\s+/g, ' ')
 }
 
-function findExistingCapturedApplication(applications, { normalizedUrl, company, role }) {
+function findCapturedApplicationMatches(applications, { normalizedUrl, company, role }) {
   const companyKey = normalizeMatchText(company)
   const roleKey = normalizeMatchText(role)
 
-  return applications.find(app => {
+  return applications.filter(app => {
     if (normalizedUrl && app.jdUrl && normalizeApplicationUrl(app.jdUrl) === normalizedUrl) {
       return true
     }
@@ -70,6 +97,28 @@ function findExistingCapturedApplication(applications, { normalizedUrl, company,
     const appRoleKey = normalizeMatchText(app.role)
     return !!companyKey && !!roleKey && appCompanyKey === companyKey && appRoleKey === roleKey
   })
+}
+
+function selectBestCapturedApplication(matches, { normalizedUrl, company, role }) {
+  if (!Array.isArray(matches) || matches.length === 0) return null
+
+  const companyKey = normalizeMatchText(company)
+  const roleKey = normalizeMatchText(role)
+
+  return [...matches]
+    .sort((a, b) => {
+      const aUrlMatch = normalizedUrl && a.jdUrl && normalizeApplicationUrl(a.jdUrl) === normalizedUrl ? 1 : 0
+      const bUrlMatch = normalizedUrl && b.jdUrl && normalizeApplicationUrl(b.jdUrl) === normalizedUrl ? 1 : 0
+      if (aUrlMatch !== bUrlMatch) return bUrlMatch - aUrlMatch
+
+      const aRoleMatch = companyKey && roleKey && normalizeMatchText(a.company) === companyKey && normalizeMatchText(a.role) === roleKey ? 1 : 0
+      const bRoleMatch = companyKey && roleKey && normalizeMatchText(b.company) === companyKey && normalizeMatchText(b.role) === roleKey ? 1 : 0
+      if (aRoleMatch !== bRoleMatch) return bRoleMatch - aRoleMatch
+
+      const aTime = Date.parse(a.capturedAt || a.stageUpdatedAt || a.date || '') || 0
+      const bTime = Date.parse(b.capturedAt || b.stageUpdatedAt || b.date || '') || 0
+      return bTime - aTime
+    })[0]
 }
 
 export function ProjectProvider({ children }) {
@@ -209,7 +258,8 @@ export function ProjectProvider({ children }) {
     const capturedAt = capture?.capturedAt || new Date().toISOString()
     const preserveExistingFields = !!(capture?.jdOnly || capture?.preserveExistingFields)
 
-    const existingApp = findExistingCapturedApplication(applications, { normalizedUrl, company, role })
+    const existingMatches = findCapturedApplicationMatches(applications, { normalizedUrl, company, role })
+    const existingApp = selectBestCapturedApplication(existingMatches, { normalizedUrl, company, role })
 
     let targetApp
     let nextApplications
@@ -279,7 +329,8 @@ export function ProjectProvider({ children }) {
 
       if (!normalizedUrl && !jdText && !company && !role) return
 
-      const existingApp = findExistingCapturedApplication(nextApplications, { normalizedUrl, company, role })
+      const existingMatches = findCapturedApplicationMatches(nextApplications, { normalizedUrl, company, role })
+      const existingApp = selectBestCapturedApplication(existingMatches, { normalizedUrl, company, role })
 
       let targetApp
       if (existingApp) {
