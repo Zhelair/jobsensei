@@ -28,7 +28,11 @@ async function handleCaptureHandoff(payload, appUrl) {
   let appTab = await findExistingAppTab(targetUrl)
 
   if (appTab) {
-    appTab = await chrome.tabs.update(appTab.id, appTab.url === targetUrl ? { active: true } : { active: true, url: targetUrl })
+    const shouldReload = normalizeAppUrl(appTab.url || '') === targetUrl
+    appTab = await chrome.tabs.update(appTab.id, shouldReload ? { active: true } : { active: true, url: targetUrl })
+    if (shouldReload) {
+      await chrome.tabs.reload(appTab.id)
+    }
   } else {
     appTab = await chrome.tabs.create({ url: targetUrl, active: true })
   }
@@ -38,16 +42,32 @@ async function handleCaptureHandoff(payload, appUrl) {
   }
 
   await waitForTabReady(appTab.id)
+  const delivered = await deliverCaptureToTab(appTab.id, payload)
+  if (!delivered.ok) {
+    const fallbackTab = await chrome.tabs.create({ url: targetUrl, active: true })
+    if (fallbackTab.windowId) {
+      await chrome.windows.update(fallbackTab.windowId, { focused: true })
+    }
+    await waitForTabReady(fallbackTab.id)
+    const retry = await deliverCaptureToTab(fallbackTab.id, payload)
+    if (!retry.ok) {
+      throw new Error(retry.error || delivered.error || 'Could not deliver the capture to JobSensei.')
+    }
+  }
+}
 
+async function deliverCaptureToTab(tabId, payload) {
   const [injection] = await chrome.scripting.executeScript({
-    target: { tabId: appTab.id },
+    target: { tabId },
     func: deliverCaptureToPage,
     args: [BRIDGE_KEY, payload],
   })
 
   if (injection?.result?.error) {
-    throw new Error(injection.result.error)
+    return { ok: false, error: injection.result.error }
   }
+
+  return { ok: true }
 }
 
 function normalizeAppUrl(input) {
