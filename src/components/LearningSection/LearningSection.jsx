@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
@@ -27,16 +27,18 @@ const CATEGORIES = ['FRAML', 'AML', 'Payments', 'Regulatory', 'Career', 'Technic
 // ─── Main Learning Section ─────────────────────────────────────────────────────
 
 export default function LearningSection() {
-  const { drillMode, profile, pendingLearningRequest, clearPendingLearningRequest } = useApp()
+  const { drillMode, profile, pendingLearningRequest, clearPendingLearningRequest, pushAppHistory } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData } = useProject()
 
   const topics = getProjectData('topics')
   const quizHistory = getProjectData('quizHistory') || []
   const topicNotes = getProjectData('topicNotes') || []
+  const historyState = window.history.state?.jobsensei || {}
+  const historyTopic = historyState.topicId ? topics.find(topic => topic.id === historyState.topicId) || null : null
 
-  const [view, setView] = useState('library') // 'library' | 'tutor' | 'quiz' | 'quizHistory' | 'notes'
-  const [selectedTopic, setSelectedTopic] = useState(null)
+  const [view, setView] = useState(historyState.section === SECTIONS.LEARNING ? historyState.learningView || 'library' : 'library') // 'library' | 'tutor' | 'quiz' | 'quizHistory' | 'notes'
+  const [selectedTopic, setSelectedTopic] = useState(historyTopic)
   const [showAdd, setShowAdd] = useState(false)
   const [editingTopic, setEditingTopic] = useState(null)
   const [newTopic, setNewTopic] = useState({ title: '', category: 'Custom', difficulty: 'Intermediate' })
@@ -52,6 +54,25 @@ export default function LearningSection() {
     setView(pendingLearningRequest.view || 'tutor')
     clearPendingLearningRequest()
   }, [pendingLearningRequest, topics, clearPendingLearningRequest])
+
+  React.useEffect(() => {
+    const handlePopState = (event) => {
+      const state = event.state?.jobsensei
+      if (state?.section !== SECTIONS.LEARNING) return
+      const nextTopic = state.topicId ? topics.find(topic => topic.id === state.topicId) || null : null
+      setSelectedTopic(nextTopic)
+      setView(nextTopic ? state.learningView || 'tutor' : state.learningView || 'library')
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [topics])
+
+  function navigateLearningView(nextView, topic = null) {
+    setSelectedTopic(topic)
+    setView(nextView)
+    pushAppHistory(SECTIONS.LEARNING, topic ? { learningView: nextView, topicId: topic.id } : (nextView === 'library' ? {} : { learningView: nextView }))
+  }
 
   function setTopics(updater) {
     const next = typeof updater === 'function' ? updater(topics) : updater
@@ -87,7 +108,7 @@ export default function LearningSection() {
   function deleteTopic(id) {
     if (!confirm('Delete this topic?')) return
     setTopics(prev => prev.filter(t => t.id !== id))
-    if (selectedTopic?.id === id) { setView('library'); setSelectedTopic(null) }
+    if (selectedTopic?.id === id) navigateLearningView('library')
   }
 
   function saveEdit() {
@@ -124,7 +145,7 @@ export default function LearningSection() {
   if (view === 'tutor' && selectedTopic) return (
     <TopicTutor
       topic={selectedTopic}
-      onBack={() => { setView('library'); setSelectedTopic(null) }}
+      onBack={() => navigateLearningView('library')}
       onUpdate={updateTopic}
       drillMode={drillMode}
       profile={profile}
@@ -134,12 +155,12 @@ export default function LearningSection() {
     />
   )
   if (view === 'quiz' && selectedTopic) return (
-    <QuizMode topic={selectedTopic} onBack={() => { setView('library'); setSelectedTopic(null) }} onUpdate={updateTopic} onQuizComplete={saveQuizHistory} callAI={callAI} isConnected={isConnected} />
+    <QuizMode topic={selectedTopic} onBack={() => navigateLearningView('library')} onUpdate={updateTopic} onQuizComplete={saveQuizHistory} callAI={callAI} isConnected={isConnected} />
   )
   if (view === 'quizHistory') return (
     <QuizHistory
       history={quizHistory}
-      onBack={() => setView('library')}
+      onBack={() => navigateLearningView('library')}
       onDeleteQuiz={(id) => updateProjectData('quizHistory', quizHistory.filter(q => q.id !== id))}
     />
   )
@@ -147,7 +168,7 @@ export default function LearningSection() {
     <NotesView
       topics={topics}
       topicNotes={topicNotes}
-      onBack={() => setView('library')}
+      onBack={() => navigateLearningView('library')}
       onSaveNote={saveNote}
       onDeleteNote={(id) => updateProjectData('topicNotes', topicNotes.filter(n => n.id !== id))}
       callAI={callAI}
@@ -164,11 +185,11 @@ export default function LearningSection() {
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
           {quizHistory.length > 0 && (
-            <button onClick={() => setView('quizHistory')} className="btn-secondary text-xs">
+            <button onClick={() => navigateLearningView('quizHistory')} className="btn-secondary text-xs">
               <History size={14}/> Quiz History ({quizHistory.length})
             </button>
           )}
-          <button onClick={() => setView('notes')} className="btn-secondary text-xs">
+          <button onClick={() => navigateLearningView('notes')} className="btn-secondary text-xs">
             <StickyNote size={14}/> Notes {topicNotes.length > 0 ? `(${topicNotes.length})` : ''}
           </button>
           <button onClick={() => setShowAdd(!showAdd)} className="btn-primary text-xs"><Plus size={14}/> Add Topic</button>
@@ -238,10 +259,10 @@ export default function LearningSection() {
               <div key={t.id} className="flex items-center justify-between bg-yellow-500/5 border border-yellow-500/15 rounded-xl px-3 py-2 gap-2">
                 <span className="text-yellow-200 text-sm font-body truncate flex-1">{t.title}</span>
                 <div className="flex gap-1.5 flex-shrink-0">
-                  <button onClick={() => { setSelectedTopic(t); setView('tutor') }} className="btn-secondary text-xs py-1 px-2">
+                  <button onClick={() => navigateLearningView('tutor', t)} className="btn-secondary text-xs py-1 px-2">
                     <BookOpen size={12}/> Study
                   </button>
-                  <button onClick={() => { setSelectedTopic(t); setView('quiz') }} className="btn-primary text-xs py-1 px-2">
+                  <button onClick={() => navigateLearningView('quiz', t)} className="btn-primary text-xs py-1 px-2">
                     <Brain size={12}/> Quiz
                   </button>
                   <button onClick={() => updateTopic(t.id, { nextReview: getNextReviewDate(1) })} className="text-yellow-600 hover:text-yellow-400 transition-colors p-1" title="Snooze to tomorrow">
@@ -346,10 +367,10 @@ export default function LearningSection() {
                 {noteCount > 0 && <span className="badge-slate">{noteCount} note{noteCount !== 1 ? 's' : ''}</span>}
               </div>
               <div className="flex gap-2 mt-auto">
-                <button onClick={() => { setSelectedTopic(topic); setView('tutor') }} className="btn-secondary flex-1 justify-center text-xs py-1.5">
+                <button onClick={() => navigateLearningView('tutor', topic)} className="btn-secondary flex-1 justify-center text-xs py-1.5">
                   <BookOpen size={13}/> Study
                 </button>
-                <button onClick={() => { setSelectedTopic(topic); setView('quiz') }} className="btn-secondary flex-1 justify-center text-xs py-1.5">
+                <button onClick={() => navigateLearningView('quiz', topic)} className="btn-secondary flex-1 justify-center text-xs py-1.5">
                   <Brain size={13}/> Quiz
                 </button>
               </div>

@@ -88,10 +88,15 @@ function exportToJSON(applications, notes) {
 
 export default function JobTracker() {
   const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId } = useProject()
-  const { pendingTrackerRequest, clearPendingTrackerRequest } = useApp()
+  const { pendingTrackerRequest, clearPendingTrackerRequest, pushAppHistory } = useApp()
   const applications = getProjectData('applications') || []
   const notes = getProjectData('companyNotes') || {}
   const offerData = getProjectData('offerComparisons') || {}
+  const historyState = window.history.state?.jobsensei || {}
+  const historyAppId = historyState.section === SECTIONS.APPLICATIONS && historyState.trackerView === 'workspace'
+    ? historyState.applicationId
+    : null
+  const historyApp = historyAppId ? applications.find(app => app.id === historyAppId) || null : null
 
   function updateOfferData(appId, data) {
     updateProjectData('offerComparisons', { ...offerData, [appId]: data })
@@ -104,8 +109,8 @@ export default function JobTracker() {
   const [newApp, setNewApp] = useState(EMPTY_APPLICATION)
   const [pendingResearch, setPendingResearch] = useState(null)
   const [researchLoading, setResearchLoading] = useState(false)
-  const [selectedAppId, setSelectedAppId] = useState(null)
-  const [selectedWorkspaceTab, setSelectedWorkspaceTab] = useState('overview')
+  const [selectedAppId, setSelectedAppId] = useState(historyApp?.id || null)
+  const [selectedWorkspaceTab, setSelectedWorkspaceTab] = useState(historyApp ? historyState.workspaceTab || 'overview' : 'overview')
   const [editingApp, setEditingApp] = useState(null)
   const [importMsg, setImportMsg] = useState('')
   const [synced, setSynced] = useState(false)
@@ -130,6 +135,25 @@ export default function JobTracker() {
     }
   }, [applications, selectedAppId])
 
+  useEffect(() => {
+    const handlePopState = (event) => {
+      const state = event.state?.jobsensei
+      if (state?.section !== SECTIONS.APPLICATIONS) return
+
+      if (state.trackerView === 'workspace' && applications.some(app => app.id === state.applicationId)) {
+        setSelectedAppId(state.applicationId)
+        setSelectedWorkspaceTab(state.workspaceTab || 'overview')
+        return
+      }
+
+      setSelectedAppId(null)
+      setSelectedWorkspaceTab('overview')
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [applications])
+
   function activateApplication(app) {
     if (!app) return
     updateProjectDataMultiple({
@@ -148,6 +172,13 @@ export default function JobTracker() {
     setSelectedWorkspaceTab(workspaceTab)
     setSelectedAppId(app.id)
     activateApplication(app)
+    pushAppHistory(SECTIONS.APPLICATIONS, { trackerView: 'workspace', applicationId: app.id, workspaceTab })
+  }
+
+  function closeWorkspace() {
+    setSelectedWorkspaceTab('overview')
+    setSelectedAppId(null)
+    pushAppHistory(SECTIONS.APPLICATIONS)
   }
 
   function resetAddForm() {
@@ -235,6 +266,7 @@ export default function JobTracker() {
     })
     setSelectedWorkspaceTab('overview')
     setSelectedAppId(app.id)
+    pushAppHistory(SECTIONS.APPLICATIONS, { trackerView: 'workspace', applicationId: app.id, workspaceTab: 'overview' })
     resetAddForm()
   }
 
@@ -346,8 +378,7 @@ export default function JobTracker() {
       notes={notes[selectedApp.id] || {}}
       onSaveNotes={n => setNotes(prev => ({ ...prev, [selectedApp.id]: n }))}
       onBack={() => {
-        setSelectedWorkspaceTab('overview')
-        setSelectedAppId(null)
+        closeWorkspace()
       }}
       onUpdateApp={updates => updateApp(selectedApp.id, updates)}
     />
@@ -793,7 +824,7 @@ function TrackerStats({ applications }) {
 function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveNotes, onBack, onUpdateApp }) {
   const { callAI, isConnected } = useAI()
   const { getProjectData } = useProject()
-  const { launchTool } = useApp()
+  const { launchTool, pushAppHistory } = useApp()
   const initialWorkspaceTab = initialTab === 'notes' ? 'research' : initialTab
   const [workspaceTab, setWorkspaceTab] = useState(initialWorkspaceTab)
   const [form, setForm] = useState({
@@ -814,6 +845,8 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const [researchMsg, setResearchMsg] = useState('')
   const [cheatSheet, setCheatSheet] = useState('')
   const [cheatLoading, setCheatLoading] = useState(false)
+  const [workspaceCard, setWorkspaceCard] = useState('')
+  const [workspaceCardLoading, setWorkspaceCardLoading] = useState(false)
   const [showAdvancedTools, setShowAdvancedTools] = useState(false)
   const interviewSessions = getProjectData('interviewSessions') || []
   const toolsHistory = getProjectData('toolsHistory') || []
@@ -928,9 +961,30 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     }
   }
 
+  function navigateWorkspaceTab(tabId) {
+    setWorkspaceTab(tabId)
+    pushAppHistory(SECTIONS.APPLICATIONS, {
+      trackerView: 'workspace',
+      applicationId: app.id,
+      workspaceTab: tabId,
+    })
+  }
+
   function launchWorkspaceTool(section, toolId) {
     saveWorkspace(false)
     launchTool(section, toolId)
+  }
+
+  function getWorkspaceNotesText() {
+    return [
+      form.people && `People spoken to:\n${form.people}`,
+      form.theyMentioned && `Things they mentioned:\n${form.theyMentioned}`,
+      form.wowFacts && `Wow Facts & Recent News:\n${form.wowFacts}`,
+      form.techStack && `Tools & Systems:\n${form.techStack}`,
+      form.culture && `Culture Signals:\n${form.culture}`,
+      form.openQ && `Open Questions:\n${form.openQ}`,
+      form.prepNotes && `Prep Notes:\n${form.prepNotes}`,
+    ].filter(Boolean).join('\n\n')
   }
 
   async function runResearch() {
@@ -979,15 +1033,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   }
 
   async function generateCheatSheet() {
-    const notesText = [
-      form.wowFacts && `Wow Facts & Recent News:\n${form.wowFacts}`,
-      form.techStack && `Tools & Systems:\n${form.techStack}`,
-      form.culture && `Culture:\n${form.culture}`,
-      form.openQ && `Open Questions:\n${form.openQ}`,
-      form.prepNotes && `Prep Notes:\n${form.prepNotes}`,
-      form.people && `People spoken to:\n${form.people}`,
-      form.theyMentioned && `Things they mentioned:\n${form.theyMentioned}`,
-    ].filter(Boolean).join('\n\n')
+    const notesText = getWorkspaceNotesText()
 
     setCheatLoading(true)
     setCheatSheet('')
@@ -1002,7 +1048,24 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     setCheatLoading(false)
   }
 
-  function downloadCheatAsPng(title, content) {
+  async function generateWorkspaceCard() {
+    const notesText = getWorkspaceNotesText()
+
+    setWorkspaceCardLoading(true)
+    setWorkspaceCard('')
+    saveWorkspace(false)
+    try {
+      await callAI({
+        systemPrompt: prompts.workspaceCallCard(app.company, app.role, notesText),
+        messages: [{ role: 'user', content: 'Generate workspace call card.' }],
+        temperature: 0.45,
+        onChunk: (_, acc) => setWorkspaceCard(acc),
+      })
+    } catch {}
+    setWorkspaceCardLoading(false)
+  }
+
+  function downloadCheatAsPng(title, content, filenameSuffix = 'cheatsheet') {
     const canvas = document.createElement('canvas')
     const width = 900
     const padding = 44
@@ -1062,9 +1125,20 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
       y += lineH + (line.gap || 0)
     })
     const link = document.createElement('a')
-    link.download = `${app.company.replace(/\s+/g, '_')}_cheatsheet.png`
+    link.download = `${app.company.replace(/\s+/g, '_')}_${filenameSuffix}.png`
     link.href = canvas.toDataURL('image/png')
     link.click()
+  }
+
+  function renderGeneratedCard(content) {
+    return content.split('\n').map((line, i) => {
+      if (line.startsWith('## ')) return <h3 key={i} className="font-display font-semibold text-white text-sm mt-3 mb-1">{line.slice(3)}</h3>
+      if (line.startsWith('# ')) return <h2 key={i} className="font-display font-bold text-white mb-2">{line.slice(2)}</h2>
+      if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="text-white font-semibold text-sm mt-2 mb-1">{line.slice(2, -2)}</p>
+      if (line.startsWith('- ') || line.startsWith('* ')) return <p key={i} className="text-slate-300 text-sm ml-3 mb-1">- {line.slice(2)}</p>
+      if (line.trim() === '') return <div key={i} className="h-2" />
+      return <p key={i} className="text-slate-300 text-sm mb-1">{line}</p>
+    })
   }
 
   function printCheatAsPdf() {
@@ -1226,8 +1300,8 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           ? `JD saved${app.jdUrl ? ' with source link attached.' : ' and ready across the workspace.'}`
           : 'Add the JD to unlock role-specific prep.',
         actions: [
-          { label: hasJd ? 'Review Capture' : 'Add JD', onClick: () => setWorkspaceTab('jd'), variant: 'primary' },
-          { label: 'Research Notes', onClick: () => setWorkspaceTab('research'), variant: 'ghost' },
+          { label: hasJd ? 'Review Capture' : 'Add JD', onClick: () => navigateWorkspaceTab('jd'), variant: 'primary' },
+          { label: 'Research Notes', onClick: () => navigateWorkspaceTab('research'), variant: 'ghost' },
           ...(app.jdUrl ? [{ label: 'Open JD Link', href: app.jdUrl, variant: 'ghost' }] : []),
         ],
       },
@@ -1243,7 +1317,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           ? `${researchFieldCount} research field${researchFieldCount === 1 ? '' : 's'} filled for this application.`
           : 'Save company context so your prep stays specific.',
         actions: [
-          { label: hasResearch ? 'Review Research' : 'Open Research', onClick: () => setWorkspaceTab('research'), variant: 'primary' },
+          { label: hasResearch ? 'Review Research' : 'Open Research', onClick: () => navigateWorkspaceTab('research'), variant: 'primary' },
           { label: researching ? 'Researching...' : 'Auto-fill Notes', onClick: () => runResearch(), variant: 'secondary', disabled: !isConnected || researching },
         ],
       },
@@ -1281,7 +1355,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
         actions: [
           {
             label: hasJd ? 'Question Predictor' : 'Capture First',
-            onClick: () => hasJd ? launchWorkspaceTool(SECTIONS.INTERVIEW, 'predictor') : setWorkspaceTab('jd'),
+            onClick: () => hasJd ? launchWorkspaceTool(SECTIONS.INTERVIEW, 'predictor') : navigateWorkspaceTab('jd'),
             variant: 'primary',
           },
         ],
@@ -1300,7 +1374,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
         actions: [
           {
             label: hasJd ? 'Start Mock Interview' : 'Capture First',
-            onClick: () => hasJd ? launchWorkspaceTool(SECTIONS.INTERVIEW, 'interview') : setWorkspaceTab('jd'),
+            onClick: () => hasJd ? launchWorkspaceTool(SECTIONS.INTERVIEW, 'interview') : navigateWorkspaceTab('jd'),
             variant: 'primary',
           },
         ],
@@ -1316,7 +1390,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           : 'No follow-up draft saved for this application yet.',
         actions: [
           { label: 'Draft Follow-up', onClick: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'followup'), variant: 'primary' },
-          { label: 'Research Notes', onClick: () => setWorkspaceTab('research'), variant: 'ghost' },
+          { label: 'Research Notes', onClick: () => navigateWorkspaceTab('research'), variant: 'ghost' },
         ],
       },
     ]
@@ -1371,10 +1445,10 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
                   {completedSteps === stepCards.length ? 'Review Workspace' : `Continue ${nextStep.title}`}
                 </button>
               )}
-              <button onClick={() => setWorkspaceTab('research')} className="btn-ghost text-xs">
+              <button onClick={() => navigateWorkspaceTab('research')} className="btn-ghost text-xs">
                 Research Notes
               </button>
-              <button onClick={() => setWorkspaceTab('jd')} className="btn-ghost text-xs">
+              <button onClick={() => navigateWorkspaceTab('jd')} className="btn-ghost text-xs">
                 Capture
               </button>
               {app.jdUrl && (
@@ -1526,6 +1600,50 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           )}
         </div>
 
+        <div className="card border-indigo-500/20 bg-indigo-500/5">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <div className="text-white text-sm font-display font-semibold flex items-center gap-2">
+                <Sparkles size={14} className="text-indigo-400" /> Workspace Call Card
+              </div>
+              <div className="text-slate-400 text-xs">Summarizes your Research notes into a one-screen call image.</div>
+            </div>
+            <button
+              onClick={generateWorkspaceCard}
+              disabled={!isConnected || workspaceCardLoading || noteCount === 0}
+              className="btn-primary text-xs flex-shrink-0"
+            >
+              {workspaceCardLoading ? 'Generating...' : workspaceCard ? 'Regenerate Card' : 'Generate Card'}
+            </button>
+          </div>
+
+          {noteCount === 0 && (
+            <p className="text-slate-500 text-xs mt-2">Add research or prep notes first, then generate the card.</p>
+          )}
+
+          {workspaceCard && (
+            <div className="mt-4 animate-in">
+              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                <span className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wider">Call Card</span>
+                <div className="flex gap-2">
+                  <button onClick={() => navigator.clipboard?.writeText(workspaceCard)} className="btn-ghost text-xs">
+                    <Copy size={12} /> Copy Text
+                  </button>
+                  <button
+                    onClick={() => downloadCheatAsPng(`${app.company} - Call Card`, workspaceCard, 'call_card')}
+                    className="btn-secondary text-xs"
+                  >
+                    <Download size={12} /> PNG
+                  </button>
+                </div>
+              </div>
+              <div className="bg-navy-900 rounded-xl p-4">
+                {renderGeneratedCard(workspaceCard)}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="space-y-3">
           <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide">Prep notes</div>
           {prepFields.map(([key, label, placeholder]) => renderField(key, label, placeholder))}
@@ -1656,7 +1774,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           {WORKSPACE_TABS.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setWorkspaceTab(tab.id)}
+              onClick={() => navigateWorkspaceTab(tab.id)}
               className={`px-4 py-2 rounded-xl text-sm font-body transition-all whitespace-nowrap ${
                 workspaceTab === tab.id
                   ? 'bg-navy-700 text-white border border-navy-600'
