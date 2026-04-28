@@ -41,7 +41,8 @@ function normalizeAppUrl(input) {
   const trimmed = (input || '').trim() || 'https://jobsensei.app'
   const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
   const url = new URL(withProtocol)
-  return `${url.origin}${url.pathname === '/' ? '' : url.pathname}`
+  const path = url.pathname === '/' ? '' : url.pathname
+  return `${url.origin}${path}${url.hash || '#applications'}`
 }
 
 async function findExistingAppTab(targetUrl) {

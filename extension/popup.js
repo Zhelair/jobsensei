@@ -1,6 +1,10 @@
-const DEFAULT_APP_URL = 'https://jobsensei.app'
+const DEFAULT_APP_URL = 'https://jobsensei.app/#applications'
 
 const elements = {
+  captureTab: document.getElementById('captureTab'),
+  aboutTab: document.getElementById('aboutTab'),
+  capturePanel: document.getElementById('capturePanel'),
+  aboutPanel: document.getElementById('aboutPanel'),
   company: document.getElementById('company'),
   role: document.getElementById('role'),
   url: document.getElementById('url'),
@@ -10,15 +14,34 @@ const elements = {
   lengthMeta: document.getElementById('lengthMeta'),
   refreshBtn: document.getElementById('refreshBtn'),
   sendBtn: document.getElementById('sendBtn'),
+  openAppBtn: document.getElementById('openAppBtn'),
+  backToCaptureBtn: document.getElementById('backToCaptureBtn'),
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  elements.captureTab.addEventListener('click', () => showPanel('capture'))
+  elements.aboutTab.addEventListener('click', () => showPanel('about'))
+  elements.backToCaptureBtn.addEventListener('click', () => showPanel('capture'))
+  elements.openAppBtn.addEventListener('click', openJobSensei)
   elements.jdText.addEventListener('input', updateMeta)
   elements.refreshBtn.addEventListener('click', captureCurrentPage)
   elements.sendBtn.addEventListener('click', handoffCapture)
 
   await captureCurrentPage()
 })
+
+function showPanel(panel) {
+  const isCapture = panel === 'capture'
+  elements.captureTab.classList.toggle('active', isCapture)
+  elements.aboutTab.classList.toggle('active', !isCapture)
+  elements.capturePanel.classList.toggle('hidden', !isCapture)
+  elements.aboutPanel.classList.toggle('hidden', isCapture)
+}
+
+function openJobSensei() {
+  chrome.tabs.create({ url: DEFAULT_APP_URL })
+  window.close()
+}
 
 async function captureCurrentPage() {
   setStatus('Reading the current page...')

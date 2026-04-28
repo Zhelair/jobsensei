@@ -38,6 +38,15 @@ const PROVIDER_CONFIGS = {
 
 export { PROVIDER_CONFIGS }
 
+function parseSavedJson(value, fallback = null) {
+  if (!value) return fallback
+  try {
+    return JSON.parse(value)
+  } catch {
+    return fallback
+  }
+}
+
 export function AIProvider({ children }) {
   const [provider, setProvider] = useState(PROVIDERS.DEEPSEEK)
   const [apiKey, setApiKey] = useState('')
@@ -53,15 +62,16 @@ export function AIProvider({ children }) {
     const saved = localStorage.getItem('js_ai_config')
     const savedBmac = localStorage.getItem('js_bmac')
     let loadedBmacToken = null
-    if (saved) {
-      const cfg = JSON.parse(saved)
+    const cfg = parseSavedJson(saved)
+    const b = parseSavedJson(savedBmac)
+
+    if (cfg) {
       setProvider(cfg.provider || PROVIDERS.DEEPSEEK)
       setApiKey(cfg.apiKey || '')
       setModel(cfg.model || 'deepseek-chat')
       setCustomBaseUrl(cfg.customBaseUrl || '')
     }
-    if (savedBmac) {
-      const b = JSON.parse(savedBmac)
+    if (b) {
       loadedBmacToken = b.token || null
       setBmacToken(b.token || null)
       setBmacEmail(b.email || null)

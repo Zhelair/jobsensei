@@ -29,12 +29,52 @@
       }
 
       .wrap { padding: 16px; }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, var(--accent), #6366f1);
+        color: white;
+        font-weight: 800;
+        box-shadow: 0 10px 24px rgba(10, 186, 181, 0.28);
+      }
+
       .card {
         background: rgba(251, 248, 243, 0.95);
         border: 1px solid var(--border);
         border-radius: 14px;
         padding: 14px;
         box-shadow: 0 12px 34px rgba(74, 58, 44, 0.16);
+      }
+
+      .tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        padding: 4px;
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.48);
+        border: 1px solid rgba(122, 100, 88, 0.12);
+      }
+
+      .tab {
+        padding: 9px 10px;
+        background: transparent;
+        color: var(--muted);
+      }
+
+      .tab.active {
+        background: var(--panel);
+        color: var(--text);
+        box-shadow: 0 5px 16px rgba(74, 58, 44, 0.12);
       }
 
       h1 {
@@ -102,6 +142,8 @@
       .status.error { color: var(--danger); }
       .status.success { color: #087f5b; }
 
+      .panel.hidden { display: none; }
+
       .notice {
         border: 1px solid rgba(233, 109, 88, 0.24);
         background: rgba(233, 109, 88, 0.08);
@@ -119,51 +161,132 @@
         color: var(--muted);
         font-size: 11px;
       }
+
+      .intro {
+        display: grid;
+        gap: 10px;
+      }
+
+      .pill-list {
+        display: grid;
+        gap: 7px;
+      }
+
+      .pill {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        padding: 9px 10px;
+        border-radius: 12px;
+        background: rgba(10, 186, 181, 0.08);
+        border: 1px solid rgba(10, 186, 181, 0.16);
+      }
+
+      .pill strong {
+        color: var(--text);
+      }
+
+      details {
+        border-top: 1px solid rgba(122, 100, 88, 0.14);
+        padding-top: 10px;
+      }
+
+      summary {
+        cursor: pointer;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      details p {
+        margin-top: 6px;
+        font-size: 12px;
+      }
     </style>
   </head>
   <body>
     <div class="wrap">
       <div class="card stack">
-        <div>
-          <h1>JobSensei Capture</h1>
-          <p>Read the current job page, tweak the fields, then send it into Tracker.</p>
+        <div class="brand">
+          <div class="logo">JS</div>
+          <div>
+            <h1>JobSensei Capture</h1>
+            <p>Turn job posts into ready-to-use JobSensei workspaces.</p>
+          </div>
         </div>
 
-        <div class="notice">
-          Auto-capture is a helper, not magic. Please review the company, role, and JD before sending.
+        <div class="tabs" role="tablist" aria-label="Extension screens">
+          <button id="captureTab" class="tab active" type="button">Capture</button>
+          <button id="aboutTab" class="tab" type="button">What it does</button>
         </div>
 
-        <div class="row">
-          <label class="label" for="company">Company</label>
-          <input id="company" type="text" placeholder="Company name" />
-        </div>
+        <section id="capturePanel" class="panel stack">
+          <div class="notice">
+            Auto-capture is a helper, not magic. Please review the company, role, and JD before sending.
+          </div>
 
-        <div class="row">
-          <label class="label" for="role">Role</label>
-          <input id="role" type="text" placeholder="Role title" />
-        </div>
+          <div class="row">
+            <label class="label" for="company">Company</label>
+            <input id="company" type="text" placeholder="Company name" />
+          </div>
 
-        <div class="row">
-          <label class="label" for="url">Job URL</label>
-          <input id="url" type="url" placeholder="https://..." />
-        </div>
+          <div class="row">
+            <label class="label" for="role">Role</label>
+            <input id="role" type="text" placeholder="Role title" />
+          </div>
 
-        <div class="row">
-          <label class="label" for="jdText">Job Description - review before sending</label>
-          <textarea id="jdText" placeholder="The extension will try to pull the visible job description here."></textarea>
-        </div>
+          <div class="row">
+            <label class="label" for="url">Job URL</label>
+            <input id="url" type="url" placeholder="https://..." />
+          </div>
 
-        <div class="meta">
-          <span id="sourceMeta">Source: current page</span>
-          <span id="lengthMeta">JD: 0 chars</span>
-        </div>
+          <div class="row">
+            <label class="label" for="jdText">Job Description - review before sending</label>
+            <textarea id="jdText" placeholder="The extension will try to pull the visible job description here."></textarea>
+          </div>
 
-        <div class="actions">
-          <button id="refreshBtn" class="secondary" type="button">Refresh Capture</button>
-          <button id="sendBtn" class="primary" type="button">Send to JobSensei</button>
-        </div>
+          <div class="meta">
+            <span id="sourceMeta">Source: current page</span>
+            <span id="lengthMeta">JD: 0 chars</span>
+          </div>
 
-        <div id="status" class="status"></div>
+          <div class="actions">
+            <button id="refreshBtn" class="secondary" type="button">Refresh Capture</button>
+            <button id="sendBtn" class="primary" type="button">Send to JobSensei</button>
+          </div>
+
+          <div id="status" class="status"></div>
+        </section>
+
+        <section id="aboutPanel" class="panel intro hidden">
+          <div>
+            <h1>What this extension does</h1>
+            <p>It saves the job page you are viewing into JobSensei so you can research, prepare, and follow up from one workspace.</p>
+          </div>
+
+          <div class="pill-list">
+            <div class="pill"><span>1</span><p><strong>Reads the current job page.</strong><br />It tries to capture the company, role, URL, and visible job description.</p></div>
+            <div class="pill"><span>2</span><p><strong>Lets you review before sending.</strong><br />You can fix messy page data before it enters JobSensei.</p></div>
+            <div class="pill"><span>3</span><p><strong>Creates an application workspace.</strong><br />JobSensei opens the role with capture, research, notes, and prep tools ready.</p></div>
+          </div>
+
+          <details>
+            <summary>Does it apply to jobs for me?</summary>
+            <p>No. It only captures information into JobSensei. You stay in control of applications and submissions.</p>
+          </details>
+          <details>
+            <summary>What data is sent?</summary>
+            <p>Only the fields shown in the Capture tab: company, role, job URL, and job description text.</p>
+          </details>
+          <details>
+            <summary>What if capture is wrong?</summary>
+            <p>Edit the fields first, or press Refresh Capture after scrolling/opening the job details.</p>
+          </details>
+
+          <div class="actions">
+            <button id="openAppBtn" class="primary" type="button">Open JobSensei</button>
+            <button id="backToCaptureBtn" class="secondary" type="button">Capture this page</button>
+          </div>
+        </section>
       </div>
     </div>
 
