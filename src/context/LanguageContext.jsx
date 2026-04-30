@@ -24,7 +24,7 @@ export const LANGUAGE_OPTIONS = [
     speechLang: 'bg-BG',
     recognitionLang: 'bg-BG',
     voiceSearch: ['Bulgarian', 'bg-BG'],
-    voiceNote: 'Bulgarian browser voices are often missing. If your browser has no BG voice, JobSensei will use a fallback voice and it can sound weird.',
+    voiceNote: 'Bulgarian browser voices са често липсващи. Ако браузърът няма BG voice, JobSensei ще използва fallback и може да звучи странно.',
   },
   {
     code: 'ka',
