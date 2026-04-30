@@ -3,6 +3,7 @@ import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 import { useVisuals } from '../../context/VisualsContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal } from 'lucide-react'
 import BrandMark from '../shared/BrandMark'
 
@@ -249,6 +250,7 @@ export default function TopBar() {
   const { isConnected, isThinking } = useAI()
   const { theme, cycleTheme } = useTheme()
   const { enabled: visualsEnabled, setEnabled: setVisualsEnabled, triggerConfetti } = useVisuals()
+  const { t } = useLanguage()
   const [showHelp, setShowHelp] = useState(false)
   const [showMore, setShowMore] = useState(false)
   const [feedback, setFeedback] = useState(null)
@@ -277,6 +279,15 @@ export default function TopBar() {
 
   const help = SECTION_HELP[activeSection]
   const helpDetails = GUIDE_DETAILS[activeSection] || []
+  const translatedSectionTitle = activeSection === SECTIONS.TODAY
+    ? t('nav.today')
+    : activeSection === SECTIONS.APPLICATIONS || activeSection === SECTIONS.TRACKER
+      ? t('nav.applications')
+      : activeSection === SECTIONS.LEARNING
+        ? t('nav.learning')
+        : activeSection === SECTIONS.SETTINGS
+          ? t('nav.settings')
+          : SECTION_TITLES[activeSection] || ''
 
   useEffect(() => {
     if (guideSeen || !help) return
@@ -330,7 +341,7 @@ export default function TopBar() {
 
       {/* Desktop title */}
       <h1 className="hidden md:block font-display font-semibold text-white text-lg">
-        {SECTION_TITLES[activeSection] || ''}
+        {translatedSectionTitle}
       </h1>
 
       {/* Right side */}
@@ -354,12 +365,12 @@ export default function TopBar() {
         {isThinking ? (
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono bg-indigo-500/10 text-indigo-300 animate-pulse">
             <Brain size={13} className="animate-pulse" />
-            Thinking…
+            {t('topbar.thinking')}
           </div>
         ) : (
           <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono ${isConnected ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
             <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
-            {isConnected ? 'AI Connected' : 'Locked'}
+            {isConnected ? t('topbar.aiConnected') : t('topbar.locked')}
           </div>
         )}
 
@@ -425,7 +436,7 @@ export default function TopBar() {
             : 'Sensei mode: warm, constructive coaching. Click to switch to Drill (brutal honesty).'}
         >
           {drillMode ? <Zap size={12} /> : <Shield size={12} />}
-          <span className="hidden sm:inline">{drillMode ? 'Drill 🔱' : 'Sensei'}</span>
+          <span className="hidden sm:inline">{drillMode ? t('topbar.drill') : t('topbar.sensei')}</span>
         </button>
 
         {/* Help button — desktop only (mobile users access via ⋯ menu) */}
@@ -437,10 +448,10 @@ export default function TopBar() {
             title={`Help: ${SECTION_TITLES[activeSection]}`}
           >
             <HelpCircle size={16} className={showHelp ? 'text-teal-400' : ''} />
-            <span className="text-xs">Guide</span>
+            <span className="text-xs">{t('topbar.guide')}</span>
             {!guideSeen && (
               <span className="absolute -top-2 -right-2 rounded-full bg-yellow-400 px-1.5 py-0.5 text-[10px] font-bold text-navy-950">
-                Start
+                {t('topbar.start')}
               </span>
             )}
           </button>
@@ -490,7 +501,7 @@ export default function TopBar() {
                     className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs w-full text-left transition-colors ${showHelp ? 'text-teal-400 bg-teal-500/10' : 'text-slate-400 hover:text-white hover:bg-navy-700'}`}
                   >
                     <HelpCircle size={14} />
-                    Guide
+                    {t('topbar.guide')}
                   </button>
                 )}
               </div>

@@ -4,6 +4,7 @@ import { AIProvider } from './context/AIContext'
 import { ProjectProvider, useProject } from './context/ProjectContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { VisualsProvider } from './context/VisualsContext'
+import { LanguageProvider, useLanguage } from './context/LanguageContext'
 import VisualsOverlay from './components/shared/VisualsOverlay'
 import PaywallModal from './components/shared/PaywallModal'
 import Sidebar from './components/Layout/Sidebar'
@@ -26,6 +27,7 @@ const APPLICATION_REQUIRED_SECTIONS = new Set([
 
 function ApplicationRequiredGate({ sectionLabel }) {
   const { setActiveSection } = useApp()
+  const { t } = useLanguage()
 
   return (
     <div className="min-h-full p-4 md:p-6 flex items-center justify-center animate-in">
@@ -33,23 +35,22 @@ function ApplicationRequiredGate({ sectionLabel }) {
         <div className="mx-auto mb-4 w-12 h-12 rounded-2xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center text-teal-300">
           <span className="font-display font-bold text-lg">JS</span>
         </div>
-        <h2 className="font-display font-bold text-white text-2xl mb-2">Add an application first</h2>
+        <h2 className="font-display font-bold text-white text-2xl mb-2">{t('gate.title')}</h2>
         <p className="text-slate-300 text-sm leading-relaxed mb-5">
-          {sectionLabel} works best when JobSensei knows the company, role, and job description.
-          Create or capture one real application first, then the tools will unlock with the right context.
+          {t('gate.copy', { section: sectionLabel })}
         </p>
         <div className="flex flex-wrap justify-center gap-2">
           <button
             onClick={() => setActiveSection(SECTIONS.APPLICATIONS)}
             className="btn-primary justify-center"
           >
-            Add Application
+            {t('gate.add')}
           </button>
           <button
             onClick={() => setActiveSection(SECTIONS.TODAY)}
             className="btn-ghost justify-center"
           >
-            Back to Today
+            {t('gate.back')}
           </button>
         </div>
       </div>
@@ -106,13 +107,15 @@ export default function App() {
   return (
     <ThemeProvider>
       <VisualsProvider>
-        <AIProvider>
-          <AppProvider>
-            <ProjectProvider>
-              <AppContent />
-            </ProjectProvider>
-          </AppProvider>
-        </AIProvider>
+        <LanguageProvider>
+          <AIProvider>
+            <AppProvider>
+              <ProjectProvider>
+                <AppContent />
+              </ProjectProvider>
+            </AppProvider>
+          </AIProvider>
+        </LanguageProvider>
       </VisualsProvider>
     </ThemeProvider>
   )

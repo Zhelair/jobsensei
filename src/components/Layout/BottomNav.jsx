@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
+import { useLanguage } from '../../context/LanguageContext'
 import {
   LayoutDashboard, BookOpen, Briefcase,
   Settings, FolderOpen, Plus, Check, X, Edit3, Download, Trash2, Upload, FolderArchive
@@ -14,6 +15,7 @@ const MOBILE_NAV = [
 
 export default function BottomNav() {
   const { activeSection, setActiveSection, setNavKey } = useApp()
+  const { t } = useLanguage()
   const {
     projects, activeProject,
     switchProject, createProject, deleteProject, renameProject,
@@ -207,7 +209,7 @@ export default function BottomNav() {
             }`}
           >
             <Icon size={19} />
-            <span className="font-body">{label}</span>
+            <span className="font-body">{id === SECTIONS.TODAY ? t('nav.today') : id === SECTIONS.APPLICATIONS ? t('nav.apps') : id === SECTIONS.LEARNING ? t('nav.learning') : label}</span>
           </button>
         ))}
 
@@ -220,7 +222,7 @@ export default function BottomNav() {
           }`}
         >
           <FolderOpen size={19} />
-          <span className="font-body">Projects</span>
+          <span className="font-body">{t('nav.projects')}</span>
         </button>
 
         {/* Settings */}
@@ -232,7 +234,7 @@ export default function BottomNav() {
           }`}
         >
           <Settings size={19} />
-          <span className="font-body">Settings</span>
+          <span className="font-body">{t('nav.settings')}</span>
         </button>
       </div>
     </nav>

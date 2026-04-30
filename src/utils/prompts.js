@@ -5,8 +5,25 @@ const toneModifier = (drillMode) => drillMode
   ? `\n\nTONE DIRECTIVE — DRILL SERGEANT MODE: You are brutally honest, no sugarcoating. Give blunt scores, call out weak answers directly, challenge vague responses aggressively. Say things like "That answer was weak because..." and "You missed the point entirely." Push back hard. Your job is to make real interviews feel easy by comparison. This is tough love.`
   : `\n\nTONE DIRECTIVE — SENSEI MODE: You are warm, constructive, and encouraging. Explain what to improve AND why. Acknowledge strengths before critiques. Your feedback builds confidence while being honest. You want this person to succeed.`
 
+const LANGUAGE_NAMES = {
+  en: 'English',
+  ru: 'Russian',
+  bg: 'Bulgarian',
+  ka: 'Georgian',
+  'es-ES': 'Spanish',
+  'es-US': 'Spanish',
+  it: 'Italian',
+  pl: 'Polish',
+  de: 'German',
+}
+
+const languageDirective = (language = 'en') => {
+  const target = LANGUAGE_NAMES[language] || LANGUAGE_NAMES[language?.split('-')?.[0]] || 'English'
+  return `\n\nLANGUAGE DIRECTIVE: Reply in ${target}. Keep product names, company names, tool names, and acronyms like STAR, ATS, JD, AI, and CV unchanged when that is more natural.`
+}
+
 export const prompts = {
-  interviewSimulator: (jd, mode, drillMode, background) => {
+  interviewSimulator: (jd, mode, drillMode, background, language = 'en') => {
     const modeInstructions = {
       hr: 'Focus on: motivation, culture fit, career story, soft skills, "why this company", salary expectations. Ask behavioral questions about teamwork and communication.',
       technical: 'Focus on: hard skills from the JD, scenario-based questions, how they would handle specific technical situations. Probe for depth of knowledge.',
@@ -34,7 +51,7 @@ RULES:
 - Keep questions relevant to the actual JD.
 
 Start by introducing yourself and asking the first question. Keep intro brief (2 sentences max).
-${toneModifier(drillMode)}`
+${toneModifier(drillMode)}${languageDirective(language)}`
   },
 
   gapAnalysis: (background, jd, drillMode) => `You are a career coach and talent analyst. Analyze the gap between this candidate and the job. Be concise — total response must be 500-700 words maximum.
@@ -111,7 +128,7 @@ Return a JSON array of red flags:
 If there are no significant red flags, return an array with one entry noting it looks clean.
 Return ONLY valid JSON.`,
 
-  topicTutor: (topic, depth, background, drillMode) => `You are an expert tutor teaching: "${topic}"
+  topicTutor: (topic, depth, background, drillMode, language = 'en') => `You are an expert tutor teaching: "${topic}"
 
 Student background: ${background || 'Professional with general business experience'}
 Depth requested: ${depth}
@@ -120,9 +137,9 @@ Be conversational and engaging. Use concrete examples. Build on what they know.
 If they ask a follow-up, dive deeper. If they seem confused, reframe with an analogy.
 Keep responses focused — don't dump everything at once. Teach progressively.
 End each response with either a question to check understanding OR an invitation to go deeper.
-${toneModifier(drillMode)}`,
+${toneModifier(drillMode)}${languageDirective(language)}`,
 
-  quizGenerator: (topic, difficulty) => `Generate a quiz on "${topic}" at ${difficulty} difficulty level.
+  quizGenerator: (topic, difficulty, language = 'en') => `Generate a quiz on "${topic}" at ${difficulty} difficulty level.
 
 Return ONLY valid JSON in this format:
 {
@@ -145,9 +162,9 @@ Return ONLY valid JSON in this format:
   ]
 }
 
-Generate 6 questions: 4 multiple choice, 2 open-ended. Focus on practical application, not just definitions.`,
+Generate 6 questions: 4 multiple choice, 2 open-ended. Focus on practical application, not just definitions.${languageDirective(language)}`,
 
-  quizEvaluator: (question, sampleAnswer, userAnswer) => `Evaluate this quiz answer.
+  quizEvaluator: (question, sampleAnswer, userAnswer, language = 'en') => `Evaluate this quiz answer.
 
 Question: ${question}
 Sample answer guidance: ${sampleAnswer}
@@ -160,7 +177,7 @@ Return ONLY valid JSON:
   "feedback": "Specific, helpful feedback on their answer",
   "keyPointsMissed": ["point1", "point2"],
   "keyPointsHit": ["point1", "point2"]
-}`,
+}${languageDirective(language)}`,
 
   starBuilder: (situation, drillMode) => `You are a career coach helping structure interview answers using the STAR method.
 
@@ -385,7 +402,7 @@ Audit this LinkedIn profile and return ONLY valid JSON:
 Score guidelines: 80+ strong, 60-79 needs work, below 60 significant gaps.
 Return ONLY valid JSON, no other text.`,
 
-  summarizeNotes: (topicTitle, notes) => `You are a concise study assistant.
+  summarizeNotes: (topicTitle, notes, language = 'en') => `You are a concise study assistant.
 
 Topic: "${topicTitle}"
 
@@ -394,9 +411,9 @@ ${notes}
 
 Write a clean, structured summary of these notes. Use headings and bullet points. Cover the key concepts, important distinctions, and anything worth memorizing. Keep it tight — aim for 200-300 words. Do NOT pad or repeat — every sentence should add value.
 
-Return plain text with markdown formatting (##, -, **bold**).`,
+Return plain text with markdown formatting (##, -, **bold**).${languageDirective(language)}`,
 
-  cheatCard: (topicTitle, notes) => `You are an expert at creating concise study cheat sheets.
+  cheatCard: (topicTitle, notes, language = 'en') => `You are an expert at creating concise study cheat sheets.
 
 Topic: "${topicTitle}"
 
@@ -411,7 +428,7 @@ Create a dense, scannable cheat card for this topic. Format it like a study refe
 - Flag the top 3 most exam/interview-likely points with ⭐
 
 Keep the entire cheat card under 400 words. Make it printable and useful.
-Return plain text with markdown formatting.`,
+Return plain text with markdown formatting.${languageDirective(language)}`,
 
   companyResearch: (company, role, searchContext) => `You are a job interview research assistant. Provide concise company intelligence for interview prep.
 

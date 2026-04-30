@@ -1,6 +1,7 @@
 import React from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { isDueToday } from '../../utils/spacedRepetition'
 import {
   ArrowRight, BookOpen, Briefcase, ClipboardCheck,
@@ -89,21 +90,22 @@ function MetricCard({ label, value, hint, tone = 'slate' }) {
 }
 
 function FirstApplicationPrompt({ onAddApplication }) {
+  const { t } = useLanguage()
+
   return (
     <div className="card border-teal-500/25 bg-teal-500/5" data-guide="today-first-application">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-3xl">
           <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-wide mb-2">
-            First step
+            {t('today.firstStep')}
           </div>
-          <h3 className="font-display font-semibold text-white text-lg mb-2">Add one real application to unlock the workspace</h3>
+          <h3 className="font-display font-semibold text-white text-lg mb-2">{t('today.firstStepTitle')}</h3>
           <p className="text-slate-300 text-sm leading-relaxed">
-            Start with the company, role, and job description. After that, Interview Prep, Prep Tools, research,
-            follow-ups, and offer comparison all connect to that one application instead of feeling random.
+            {t('today.firstStepCopy')}
           </p>
         </div>
         <button onClick={onAddApplication} className="btn-primary self-start lg:self-center">
-          <Plus size={16} /> Add Application
+          <Plus size={16} /> {t('gate.add')}
         </button>
       </div>
     </div>
@@ -113,6 +115,7 @@ function FirstApplicationPrompt({ onAddApplication }) {
 export default function TodayPage() {
   const { profile, launchTool, openTrackerApplication, setActiveSection, drillMode } = useApp()
   const { activeProject, activeApplication, getProjectData, updateProjectDataMultiple } = useProject()
+  const { t } = useLanguage()
 
   const applications = getProjectData('applications') || []
   const companyNotes = getProjectData('companyNotes') || {}
@@ -242,11 +245,11 @@ export default function TodayPage() {
 
   const heroTitle = focusApplication
     ? applicationLabel(focusApplication)
-    : 'Start your first application'
+    : t('today.startFirst')
 
   let heroCopy = 'Use Today to keep the right application moving without bouncing between tools.'
   if (!focusApplication) {
-    heroCopy = 'Add a company and role first. JobSensei will turn it into one guided workspace with research, story prep, practice, and follow-up.'
+    heroCopy = t('today.startCopy')
   } else if (!activeApplication && suggestedFocus) {
     heroCopy = `No application is active right now, so Today is recommending ${applicationLabel(suggestedFocus)} as your next focus.`
   } else if (nextFocusStep) {
@@ -261,7 +264,7 @@ export default function TodayPage() {
         onClick: nextFocusStep ? nextFocusStep.onClick : () => openTrackerApplication(focusApplication.id, 'overview'),
       }
     : {
-        label: 'Open Applications',
+        label: t('today.openApplications'),
         onClick: () => setActiveSection(SECTIONS.APPLICATIONS),
       }
 
@@ -313,9 +316,9 @@ export default function TodayPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className={`section-title dashboard-greeting ${drillMode ? 'drill' : 'sensei'}`}>
-            Hello, {profile?.name || 'there'} <span className="dashboard-greeting-hand" aria-hidden="true">🤝</span>
+            {t('today.hello', { name: profile?.name || 'there' })} <span className="dashboard-greeting-hand" aria-hidden="true">🤝</span>
           </h2>
-          <p className="section-sub">One place to see the next real move in your job search.</p>
+          <p className="section-sub">{t('today.subtitle')}</p>
         </div>
         {activeProject && (
           <div className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/20 rounded-xl px-3 py-2">
@@ -328,7 +331,7 @@ export default function TodayPage() {
       <div className="card border-teal-500/20 bg-teal-500/5" data-guide="today-active-focus">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0 max-w-3xl">
-            <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">Active Focus</div>
+            <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">{t('today.activeFocus')}</div>
             <h3 className="font-display font-semibold text-white text-xl mb-2">{heroTitle}</h3>
             <p className="text-slate-300 text-sm leading-relaxed">{heroCopy}</p>
             {focusApplication && (
@@ -385,7 +388,7 @@ export default function TodayPage() {
               </button>
             ) : (
               <button onClick={() => setActiveSection(SECTIONS.APPLICATIONS)} className="btn-primary text-sm">
-                Applications
+                {t('today.applications')}
               </button>
             )}
           </div>
@@ -393,27 +396,27 @@ export default function TodayPage() {
 
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-4">
           <MetricCard
-            label="Workspace Progress"
+            label={t('today.workspaceProgress')}
             value={focusApplication ? `${completedFocusSteps}/6` : '0/6'}
-            hint={focusApplication ? (nextFocusStep ? `Next: ${nextFocusStep.title}` : 'Core flow complete') : 'Pick an application to begin'}
+            hint={focusApplication ? (nextFocusStep ? `Next: ${nextFocusStep.title}` : 'Core flow complete') : t('today.pickApplication')}
             tone="teal"
           />
           <MetricCard
-            label="Applications"
+            label={t('today.applications')}
             value={applications.length}
-            hint={applications.length === 1 ? 'One role in play' : 'Roles currently in play'}
+            hint={applications.length === 1 ? 'One role in play' : t('today.rolesInPlay')}
             tone="indigo"
           />
           <MetricCard
-            label="Mock Interviews"
+            label={t('today.mockInterviews')}
             value={focusApplication ? focusInterviewSessions.length : interviewSessions.length}
-            hint={focusApplication ? 'Saved for this application' : 'Saved in this project'}
+            hint={focusApplication ? 'Saved for this application' : t('today.savedProject')}
             tone="slate"
           />
           <MetricCard
-            label="Reviews Due"
+            label={t('today.reviewsDue')}
             value={dueTopics.length}
-            hint={dueTopics.length > 0 ? 'Learning reviews due today' : 'No reviews due right now'}
+            hint={dueTopics.length > 0 ? 'Learning reviews due today' : t('today.noReviews')}
             tone={dueTopics.length > 0 ? 'indigo' : 'slate'}
           />
         </div>
@@ -425,8 +428,8 @@ export default function TodayPage() {
         <div>
           <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
             <div>
-              <h3 className="font-display font-semibold text-white text-base">Prep Hubs</h3>
-              <p className="text-slate-400 text-sm">Two clear places to continue: interview practice or document/profile prep.</p>
+              <h3 className="font-display font-semibold text-white text-base">{t('today.prepHubs')}</h3>
+              <p className="text-slate-400 text-sm">{t('today.prepHubsCopy')}</p>
             </div>
           </div>
           <div className="grid lg:grid-cols-3 gap-4">

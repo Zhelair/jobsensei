@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useAI } from '../../context/AIContext'
 import { useApp } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
+import { useLanguage } from '../../context/LanguageContext'
 import {
   Zap, Check, Trash2, Eye, EyeOff, FileText, Upload, Download, X,
   Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink, Puzzle,
+  Globe, Volume2,
 } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
 
@@ -15,6 +17,10 @@ export default function Settings() {
   } = useAI()
   const { profile, setShowOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData, exportProject, exportAll, importProjects } = useProject()
+  const {
+    t, language, setLanguage, languageOption, languages,
+    voices, voiceName, setVoiceName, activeVoice, voiceSupport,
+  } = useLanguage()
 
   const [form, setForm] = useState({ provider, model, apiKey, customBaseUrl: customBaseUrl || '' })
   const [showKey, setShowKey] = useState(false)
@@ -171,6 +177,29 @@ export default function Settings() {
     }
   }
 
+  function previewVoice() {
+    if (!window.speechSynthesis || !activeVoice) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(
+      language === 'bg'
+        ? 'Здравей, аз съм JobSensei. Ако гласът звучи странно, браузърът няма добър български voice.'
+        : language === 'ka'
+          ? 'გამარჯობა, მე ვარ JobSensei. თუ ხმა უცნაურად ჟღერს, ბრაუზერს ქართული ხმა არ აქვს.'
+          : 'Hello, I am JobSensei. This is the selected browser voice.',
+    )
+    utterance.lang = languageOption.speechLang
+    utterance.voice = activeVoice
+    window.speechSynthesis.speak(utterance)
+  }
+
+  const voiceSupportCopy = voiceSupport === 'exact'
+    ? t('settings.voiceExact')
+    : voiceSupport === 'related'
+      ? t('settings.voiceRelated')
+      : voiceSupport === 'fallback'
+        ? t('settings.voiceFallback')
+        : t('settings.voiceNone')
+
   const hasPlanAccess = !!bmacToken
   const usingOwnKey = hasPlanAccess && !!apiKey
   const usingJobsenseiAI = !!bmacToken && !apiKey
@@ -195,13 +224,73 @@ export default function Settings() {
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in space-y-4">
-      <h2 className="section-title mb-1">Settings</h2>
-      <p className="section-sub">Manage plan, AI access, resume, and project data.</p>
+      <h2 className="section-title mb-1">{t('settings.title')}</h2>
+      <p className="section-sub">{t('settings.subtitle')}</p>
+
+      <div className="card border-indigo-500/20 bg-indigo-500/5">
+        <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+          <div className="min-w-0 max-w-3xl">
+            <h3 className="font-display font-semibold text-white text-lg mb-1 flex items-center gap-2">
+              <Globe size={17} className="text-indigo-300" /> {t('settings.languageTitle')}
+            </h3>
+            <p className="text-slate-300 text-sm leading-relaxed">{t('settings.languageCopy')}</p>
+          </div>
+          <span className={`px-2.5 py-1 rounded-full text-[11px] border ${
+            voiceSupport === 'exact'
+              ? 'border-teal-500/30 bg-teal-500/10 text-teal-300'
+              : voiceSupport === 'fallback'
+                ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'
+                : 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300'
+          }`}>
+            {activeVoice ? `${activeVoice.name} (${activeVoice.lang})` : 'No voice'}
+          </span>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-3">
+          <div>
+            <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.interfaceLanguage')}</label>
+            <select className="input-field" value={language} onChange={e => setLanguage(e.target.value)}>
+              {languages.map(option => (
+                <option key={option.code} value={option.code}>
+                  {option.nativeLabel} - {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.voice')}</label>
+            <select className="input-field" value={voiceName} onChange={e => setVoiceName(e.target.value)}>
+              <option value="">{t('settings.voiceAuto')}</option>
+              {voices.map(voice => (
+                <option key={voice.voiceURI || voice.name} value={voice.name}>
+                  {voice.name} ({voice.lang})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="mt-3 rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-3">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <div className="text-white text-sm font-display font-semibold">{voiceSupportCopy}</div>
+              {(languageOption.voiceNote || voiceSupport === 'fallback') && (
+                <p className="text-slate-400 text-xs mt-1 leading-relaxed">
+                  <span className="text-yellow-300">{t('settings.voiceNote')}:</span> {languageOption.voiceNote || t('settings.voiceFallback')}
+                </p>
+              )}
+            </div>
+            <button onClick={previewVoice} disabled={!activeVoice} className="btn-secondary text-xs">
+              <Volume2 size={13} /> {t('settings.voicePreview')}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div className="card border-teal-500/20 bg-teal-500/5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0 max-w-3xl">
-            <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">Plan And AI Access</div>
+            <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">{t('settings.planAccess')}</div>
             <h3 className="font-display font-semibold text-white text-lg mb-1">{planTitle}</h3>
             <p className="text-slate-300 text-sm leading-relaxed">{planCopy}</p>
             <div className="flex flex-wrap gap-1.5 mt-3">
@@ -415,7 +504,7 @@ export default function Settings() {
           </div>
 
           <div className="card">
-            <h3 className="font-display font-semibold text-white mb-3">Your Profile</h3>
+            <h3 className="font-display font-semibold text-white mb-3">{t('settings.profile')}</h3>
             {profile ? (
               <div className="space-y-1 text-sm mb-3">
                 <div><span className="text-slate-400">Name:</span> <span className="text-white">{profile.name || '-'}</span></div>
@@ -463,7 +552,7 @@ export default function Settings() {
         <div className="space-y-4">
           <div className="card">
             <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-              <FileText size={16} className="text-teal-400" /> Resume / CV
+              <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
             </h3>
             <p className="text-slate-400 text-xs mb-3">Saved per project. Used to prefill your background across the main tools.</p>
             <div className="flex gap-2 mb-3">
@@ -491,7 +580,7 @@ export default function Settings() {
 
           <div className="card">
             <h3 className="font-display font-semibold text-white mb-3 flex items-center gap-2">
-              <FileText size={16} className="text-teal-400" /> Project Data
+              <FileText size={16} className="text-teal-400" /> {t('settings.projectData')}
             </h3>
             <div className="text-slate-400 text-xs mb-3">
               Active project: <span className="text-white">{activeProject?.name || 'No project selected'}</span>
