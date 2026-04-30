@@ -108,7 +108,7 @@ export default function DeepSeekGuide() {
             <p className="text-slate-400">
               Done? Select <span className="text-teal-400 font-mono">DeepSeek</span> in the provider dropdown above,
               paste your key in the API Key field, and use model{' '}
-              <span className="text-teal-400 font-mono">deepseek-chat</span>. Hit Test to confirm.
+              <span className="text-teal-400 font-mono">deepseek-v4-flash</span>. Hit Test to confirm.
             </p>
           </div>
         </div>

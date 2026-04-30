@@ -13,7 +13,7 @@ const PROVIDER_CONFIGS = {
   [PROVIDERS.DEEPSEEK]: {
     label: 'DeepSeek',
     baseUrl: 'https://api.deepseek.com/v1',
-    defaultModel: 'deepseek-chat',
+    defaultModel: 'deepseek-v4-flash',
     format: 'openai',
   },
   [PROVIDERS.OPENAI]: {
@@ -38,6 +38,13 @@ const PROVIDER_CONFIGS = {
 
 export { PROVIDER_CONFIGS }
 
+function normalizeModel(provider, model) {
+  if (provider === PROVIDERS.DEEPSEEK && (!model || model === 'deepseek-chat')) {
+    return PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel
+  }
+  return model || PROVIDER_CONFIGS[provider]?.defaultModel || ''
+}
+
 function parseSavedJson(value, fallback = null) {
   if (!value) return fallback
   try {
@@ -50,7 +57,7 @@ function parseSavedJson(value, fallback = null) {
 export function AIProvider({ children }) {
   const [provider, setProvider] = useState(PROVIDERS.DEEPSEEK)
   const [apiKey, setApiKey] = useState('')
-  const [model, setModel] = useState('deepseek-chat')
+  const [model, setModel] = useState(PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel)
   const [customBaseUrl, setCustomBaseUrl] = useState('')
   const [isConnected, setIsConnected] = useState(false)
   const [isThinking, setIsThinking] = useState(false)
@@ -66,9 +73,10 @@ export function AIProvider({ children }) {
     const b = parseSavedJson(savedBmac)
 
     if (cfg) {
-      setProvider(cfg.provider || PROVIDERS.DEEPSEEK)
+      const savedProvider = cfg.provider || PROVIDERS.DEEPSEEK
+      setProvider(savedProvider)
       setApiKey(cfg.apiKey || '')
-      setModel(cfg.model || 'deepseek-chat')
+      setModel(normalizeModel(savedProvider, cfg.model))
       setCustomBaseUrl(cfg.customBaseUrl || '')
     }
     if (b) {
@@ -80,10 +88,15 @@ export function AIProvider({ children }) {
   }, [])
 
   function saveConfig(cfg) {
-    const next = { provider: cfg.provider, apiKey: cfg.apiKey, model: cfg.model, customBaseUrl: cfg.customBaseUrl }
+    const next = {
+      provider: cfg.provider,
+      apiKey: cfg.apiKey,
+      model: normalizeModel(cfg.provider, cfg.model),
+      customBaseUrl: cfg.customBaseUrl,
+    }
     setProvider(cfg.provider)
     setApiKey(cfg.apiKey)
-    setModel(cfg.model)
+    setModel(next.model)
     setCustomBaseUrl(cfg.customBaseUrl || '')
     localStorage.setItem('js_ai_config', JSON.stringify(next))
     setIsConnected(!!bmacToken)
@@ -106,9 +119,14 @@ export function AIProvider({ children }) {
   function restoreToProxy() {
     setApiKey('')
     setProvider(PROVIDERS.DEEPSEEK)
-    setModel('deepseek-chat')
+    setModel(PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel)
     setCustomBaseUrl('')
-    localStorage.setItem('js_ai_config', JSON.stringify({ provider: PROVIDERS.DEEPSEEK, apiKey: '', model: 'deepseek-chat', customBaseUrl: '' }))
+    localStorage.setItem('js_ai_config', JSON.stringify({
+      provider: PROVIDERS.DEEPSEEK,
+      apiKey: '',
+      model: PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel,
+      customBaseUrl: '',
+    }))
     setIsConnected(!!bmacToken)
   }
 

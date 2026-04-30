@@ -13,7 +13,10 @@ export default function OnboardingWizard() {
   const [data, setData] = useState({
     name: '', currentRole: '', experience: '', industry: '',
     targetRole: '', targetIndustries: '', targetCompanies: '',
-    provider: PROVIDERS.DEEPSEEK, apiKey: '', model: 'deepseek-chat', customBaseUrl: '',
+    provider: PROVIDERS.DEEPSEEK,
+    apiKey: '',
+    model: PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel,
+    customBaseUrl: '',
     resume: '',
   })
   const [extractingResume, setExtractingResume] = useState(false)
