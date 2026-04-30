@@ -192,7 +192,7 @@ export default function LearningSection() {
           <button onClick={() => navigateLearningView('notes')} className="btn-secondary text-xs">
             <StickyNote size={14}/> Notes {topicNotes.length > 0 ? `(${topicNotes.length})` : ''}
           </button>
-          <button onClick={() => setShowAdd(!showAdd)} className="btn-primary text-xs"><Plus size={14}/> Add Topic</button>
+          <button data-guide="learning-add-topic" onClick={() => setShowAdd(!showAdd)} className="btn-primary text-xs"><Plus size={14}/> Add Topic</button>
         </div>
       </div>
 
@@ -344,7 +344,7 @@ export default function LearningSection() {
           const due = isDueToday(topic.nextReview) && topic.status === 'In Progress'
           const noteCount = topicNotes.filter(n => n.topicId === topic.id).length
           return (
-            <div key={topic.id} className="card flex flex-col gap-3 group">
+            <div key={topic.id} data-guide="learning-topic-card" className="card flex flex-col gap-3 group">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="text-white text-sm font-body font-medium leading-snug flex-1">{topic.title}</h3>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">

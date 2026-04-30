@@ -136,6 +136,10 @@ export default function JobTracker() {
   }, [applications, selectedAppId])
 
   useEffect(() => {
+    if (applications.length === 0) setShowAdd(true)
+  }, [applications.length])
+
+  useEffect(() => {
     const handlePopState = (event) => {
       const state = event.state?.jobsensei
       if (state?.section !== SECTIONS.APPLICATIONS) return
@@ -422,7 +426,14 @@ export default function JobTracker() {
           <button onClick={syncToProject} className={`btn-ghost text-xs transition-colors ${synced ? 'text-green-400' : ''}`}>
             <Save size={14}/> {synced ? 'Synced ✓' : 'Sync'}
           </button>
-          <button onClick={() => showAdd ? resetAddForm() : setShowAdd(true)} className="btn-primary text-xs"><Plus size={14}/> Add</button>
+          <button
+            data-guide="applications-add"
+            onClick={() => showAdd ? (applications.length === 0 ? setShowAdd(true) : resetAddForm()) : setShowAdd(true)}
+            className="btn-primary text-xs"
+          >
+            {showAdd && applications.length > 0 ? <X size={14}/> : <Plus size={14}/>}
+            {showAdd && applications.length > 0 ? 'Close' : 'Add'}
+          </button>
         </div>
       </div>
 
@@ -545,7 +556,10 @@ export default function JobTracker() {
 
       <div className="flex gap-1 bg-navy-900 p-1 rounded-xl mb-4">
         {TABS.map((t, i) => (
-          <button key={t} onClick={() => setTab(i)}
+          <button
+            key={t}
+            data-guide={t === 'Workspace' ? 'applications-workspace-tab' : t === 'Offers' ? 'applications-offers-tab' : undefined}
+            onClick={() => setTab(i)}
             className={`flex-1 py-2 rounded-lg text-xs font-body font-medium transition-all ${tab === i ? 'bg-navy-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{t}</button>
         ))}
       </div>

@@ -200,6 +200,7 @@ export default function BottomNav() {
         {MOBILE_NAV.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
+            data-guide={`mobile-nav-${id}`}
             onClick={() => handleNavClick(id)}
             className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs transition-colors ${
               isNavActive(id) && !showProjects ? 'text-teal-400' : 'text-slate-500'
@@ -212,6 +213,7 @@ export default function BottomNav() {
 
         {/* Projects */}
         <button
+          data-guide="mobile-projects"
           onClick={() => setShowProjects(v => !v)}
           className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs transition-colors ${
             showProjects ? 'text-teal-400' : 'text-slate-500'
@@ -223,6 +225,7 @@ export default function BottomNav() {
 
         {/* Settings */}
         <button
+          data-guide="mobile-settings"
           onClick={() => handleNavClick(SECTIONS.SETTINGS)}
           className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs transition-colors ${
             activeSection === SECTIONS.SETTINGS && !showProjects ? 'text-teal-400' : 'text-slate-500'

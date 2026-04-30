@@ -4,7 +4,7 @@ import { useProject } from '../../context/ProjectContext'
 import { isDueToday } from '../../utils/spacedRepetition'
 import {
   ArrowRight, BookOpen, Briefcase, ClipboardCheck,
-  FolderOpen, Mail, Mic, Search, Sparkles, Target,
+  FolderOpen, Mail, Mic, Plus, Search, Sparkles, Target,
 } from 'lucide-react'
 
 function hasResearchData(noteData = {}) {
@@ -84,6 +84,28 @@ function MetricCard({ label, value, hint, tone = 'slate' }) {
       <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{label}</div>
       <div className={`text-lg font-display font-semibold ${valueClass}`}>{value}</div>
       <div className="text-slate-400 text-xs mt-1">{hint}</div>
+    </div>
+  )
+}
+
+function FirstApplicationPrompt({ onAddApplication }) {
+  return (
+    <div className="card border-teal-500/25 bg-teal-500/5" data-guide="today-first-application">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="max-w-3xl">
+          <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-wide mb-2">
+            First step
+          </div>
+          <h3 className="font-display font-semibold text-white text-lg mb-2">Add one real application to unlock the workspace</h3>
+          <p className="text-slate-300 text-sm leading-relaxed">
+            Start with the company, role, and job description. After that, Interview Prep, Prep Tools, research,
+            follow-ups, and offer comparison all connect to that one application instead of feeling random.
+          </p>
+        </div>
+        <button onClick={onAddApplication} className="btn-primary self-start lg:self-center">
+          <Plus size={16} /> Add Application
+        </button>
+      </div>
     </div>
   )
 }
@@ -303,7 +325,7 @@ export default function TodayPage() {
         )}
       </div>
 
-      <div className="card border-teal-500/20 bg-teal-500/5">
+      <div className="card border-teal-500/20 bg-teal-500/5" data-guide="today-active-focus">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0 max-w-3xl">
             <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">Active Focus</div>
@@ -397,19 +419,34 @@ export default function TodayPage() {
         </div>
       </div>
 
-      <div>
-        <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-          <div>
-            <h3 className="font-display font-semibold text-white text-base">Prep Hubs</h3>
-            <p className="text-slate-400 text-sm">Two clear places to continue: interview practice or document/profile prep.</p>
+      {applications.length === 0 ? (
+        <FirstApplicationPrompt onAddApplication={() => setActiveSection(SECTIONS.APPLICATIONS)} />
+      ) : (
+        <div>
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <h3 className="font-display font-semibold text-white text-base">Prep Hubs</h3>
+              <p className="text-slate-400 text-sm">Two clear places to continue: interview practice or document/profile prep.</p>
+            </div>
+          </div>
+          <div className="grid lg:grid-cols-3 gap-4">
+            {actionCards.map(card => (
+              <div
+                key={`${card.title}-${card.badge || 'default'}`}
+                data-guide={
+                  card.title === 'Interview Prep'
+                    ? 'today-interview-prep'
+                    : card.title === 'Prep Tools'
+                      ? 'today-prep-tools'
+                      : card.title.includes('Reviews') ? 'today-learning-card' : undefined
+                }
+              >
+                <ActionCard {...card} />
+              </div>
+            ))}
           </div>
         </div>
-        <div className="grid lg:grid-cols-3 gap-4">
-          {actionCards.map(card => (
-            <ActionCard key={`${card.title}-${card.badge || 'default'}`} {...card} />
-          ))}
-        </div>
-      </div>
+      )}
 
     </div>
   )

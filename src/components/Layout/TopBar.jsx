@@ -99,6 +99,151 @@ const FIRST_TIME_GUIDE_STEPS = [
   'Save research notes, likely questions, and follow-up reminders in that workspace.',
 ]
 
+const GUIDE_DETAILS = {
+  today: ['Active Focus is the current role JobSensei is guiding.', 'Workspace Progress shows the 6-step application path: capture, research, tailor, predict, mock, follow-up.', 'Prep Hubs stay hidden until at least one application exists so new users do not start in the wrong place.'],
+  applications: ['Kanban tracks stages like Researching, Applied, Interviewing, Offer, and Rejected.', 'Workspace is where the JD, research, prep notes, and cheat sheet live for one role.', 'Offers compares roles by salary, growth, culture, work-life, benefits, and flexibility.'],
+  dashboard: ['Dashboard is gated until an application exists.', 'Once unlocked, it shows saved interviews, learning progress, active application context, and quick actions.'],
+  interview: ['Interview Simulator runs full mock sessions and saves score/history.', 'Question Predictor uses the active JD to generate likely questions.', 'STAR Builder turns rough stories into structured answers.', 'Tone Analyzer checks clarity, confidence, and delivery.', 'Follow-up Email drafts post-interview messages.', 'Elevator Pitch helps answer why you should be hired.'],
+  learning: ['This is the most important long-term area: build topics for the skills the target role expects.', 'Study opens the tutor for explanations and practice prompts.', 'Quiz turns the topic into spaced repetition so weak areas come back at the right time.', 'Notes keeps saved tutor answers, summaries, and cheat cards.'],
+  tools: ['Gap Analysis scores fit against the JD and calls out missing skills.', 'Resume Checker reads the resume through ATS and recruiter lenses.', 'Cover Letter Optimizer creates role-specific versions.', 'LinkedIn Auditor finds profile gaps and quick wins.', 'Visual Design Review checks layout from a screenshot.', 'Transferable Skills Coach reframes experience for a new role.'],
+  tracker: ['Use Add for a new role or the browser extension to capture a JD.', 'Open Workspace to work inside one application.', 'Use the Offers tab after a role reaches Offer stage.'],
+  settings: ['Connect AI first if tools are locked.', 'Save your resume here so Resume Checker, Cover Letter, and prep tools can reuse it.', 'Export project backups before changing devices or browsers.'],
+}
+
+const GUIDED_TOUR_STEPS = [
+  {
+    section: SECTIONS.TODAY,
+    target: '[data-guide="guide-button"]',
+    title: 'Start with Guide',
+    body: 'Use Guide any time you feel lost. It explains the current page and can restart this walkthrough.',
+  },
+  {
+    section: SECTIONS.TODAY,
+    target: '[data-guide="today-active-focus"], [data-guide="today-first-application"]',
+    title: 'Today shows the next move',
+    body: 'This area is the daily command center. Before an application exists, it points you to the first application step.',
+  },
+  {
+    section: SECTIONS.APPLICATIONS,
+    target: '[data-guide="applications-add"]',
+    title: 'Add the first application',
+    body: 'Press Add to create the workspace. Add company, role, and the JD so every tool can use the same context.',
+  },
+  {
+    section: SECTIONS.APPLICATIONS,
+    target: '[data-guide="applications-workspace-tab"]',
+    title: 'Workspace keeps the role together',
+    body: 'Workspace is where you review the JD, research the company, save notes, and generate prep material for one role.',
+  },
+  {
+    section: SECTIONS.APPLICATIONS,
+    target: '[data-guide="applications-offers-tab"]',
+    title: 'Offers compares final choices',
+    body: 'When an application reaches Offer, this tab helps compare salary, growth, culture, work-life, benefits, and flexibility.',
+  },
+  {
+    section: SECTIONS.LEARNING,
+    target: '[data-guide="learning-add-topic"]',
+    title: 'Learning is the long game',
+    body: 'Add topics for the skills each role expects. Study, quiz, and save notes so preparation compounds over time.',
+  },
+  {
+    section: SECTIONS.LEARNING,
+    target: '[data-guide="learning-topic-card"], [data-guide="learning-add-topic"]',
+    title: 'Study, quiz, repeat',
+    body: 'Study opens the tutor. Quiz schedules reviews with spaced repetition, and Notes keeps the useful answers.',
+  },
+]
+
+function GuidedTour({ onClose }) {
+  const { setActiveSection } = useApp()
+  const [stepIndex, setStepIndex] = useState(0)
+  const [targetRect, setTargetRect] = useState(null)
+  const step = GUIDED_TOUR_STEPS[stepIndex]
+
+  useEffect(() => {
+    setActiveSection(step.section)
+
+    function updateTarget() {
+      const target = document.querySelector(step.target)
+      if (!target) {
+        setTargetRect(null)
+        return
+      }
+      target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' })
+      const rect = target.getBoundingClientRect()
+      setTargetRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+    }
+
+    const first = setTimeout(updateTarget, 120)
+    const second = setTimeout(updateTarget, 420)
+    window.addEventListener('resize', updateTarget)
+    return () => {
+      clearTimeout(first)
+      clearTimeout(second)
+      window.removeEventListener('resize', updateTarget)
+    }
+  }, [step, setActiveSection])
+
+  const isLast = stepIndex === GUIDED_TOUR_STEPS.length - 1
+
+  return (
+    <div className="fixed inset-0 z-[80] pointer-events-none">
+      <div className="absolute inset-0 bg-navy-950/55 backdrop-blur-[1px]" />
+      {targetRect && (
+        <div
+          className="absolute rounded-2xl border-2 border-teal-300 shadow-[0_0_0_9999px_rgba(2,6,23,0.48),0_0_28px_rgba(45,212,191,0.75)] transition-all duration-200"
+          style={{
+            top: Math.max(8, targetRect.top - 8),
+            left: Math.max(8, targetRect.left - 8),
+            width: targetRect.width + 16,
+            height: targetRect.height + 16,
+          }}
+        />
+      )}
+      <div className="absolute left-4 right-4 bottom-20 md:left-auto md:right-6 md:bottom-6 md:w-[380px] pointer-events-auto">
+        <div className="card border-teal-500/35 bg-navy-800 shadow-2xl">
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div>
+              <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">
+                Step {stepIndex + 1} of {GUIDED_TOUR_STEPS.length}
+              </div>
+              <h3 className="font-display font-semibold text-white text-base">{step.title}</h3>
+            </div>
+            <button onClick={onClose} className="text-slate-500 hover:text-slate-300">
+              <X size={16} />
+            </button>
+          </div>
+          <p className="text-slate-300 text-sm leading-relaxed mb-4">{step.body}</p>
+          <div className="flex items-center justify-between gap-2">
+            <button
+              onClick={() => setStepIndex(i => Math.max(0, i - 1))}
+              disabled={stepIndex === 0}
+              className="btn-ghost text-xs disabled:opacity-40 disabled:pointer-events-none"
+            >
+              Back
+            </button>
+            <div className="flex gap-1.5">
+              {GUIDED_TOUR_STEPS.map((item, i) => (
+                <span
+                  key={item.title}
+                  className={`w-1.5 h-1.5 rounded-full ${i === stepIndex ? 'bg-teal-300' : 'bg-slate-600'}`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => isLast ? onClose() : setStepIndex(i => i + 1)}
+              className="btn-primary text-xs"
+            >
+              {isLast ? 'Finish' : 'Next'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function TopBar() {
   const { activeSection, setActiveSection, drillMode, setDrillMode, isMuted, setIsMuted } = useApp()
   const { isConnected, isThinking } = useAI()
@@ -109,6 +254,7 @@ export default function TopBar() {
   const [feedback, setFeedback] = useState(null)
   const [aiSpeaking, setAiSpeaking] = useState(false)
   const [guideSeen, setGuideSeen] = useState(() => localStorage.getItem('js_guide_seen') === 'true')
+  const [showTour, setShowTour] = useState(false)
   const feedbackTimer = useRef(null)
   const ThemeIcon = THEME_ICONS[theme]
 
@@ -130,6 +276,14 @@ export default function TopBar() {
   const nextThemeLabel = THEME_LABELS[THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length]]
 
   const help = SECTION_HELP[activeSection]
+  const helpDetails = GUIDE_DETAILS[activeSection] || []
+
+  useEffect(() => {
+    if (guideSeen || !help) return
+    const id = setTimeout(() => setShowHelp(true), 700)
+    return () => clearTimeout(id)
+  }, [guideSeen, help])
+
   const renderGuideTip = (tip) => {
     const parts = tip.split(SAVE_LAST_RESPONSE_LABEL)
     if (parts.length === 1) return tip
@@ -149,8 +303,22 @@ export default function TopBar() {
     }
   }
 
+  const startGuidedTour = () => {
+    localStorage.setItem('js_guide_seen', 'true')
+    setGuideSeen(true)
+    setShowHelp(false)
+    setShowTour(true)
+  }
+
+  const closeGuidedTour = () => {
+    localStorage.setItem('js_guide_seen', 'true')
+    setGuideSeen(true)
+    setShowTour(false)
+  }
+
   return (
     <header className="bg-navy-900 border-b border-navy-700 px-4 md:px-6 py-3 flex items-center justify-between flex-shrink-0 relative">
+      {showTour && <GuidedTour onClose={closeGuidedTour} />}
       {/* Mobile logo */}
       <div className="flex items-center gap-2 md:hidden">
         <BrandMark className="w-8 h-8" />
@@ -263,6 +431,7 @@ export default function TopBar() {
         {/* Help button — desktop only (mobile users access via ⋯ menu) */}
         {help && (
           <button
+            data-guide="guide-button"
             onClick={openGuide}
             className={`hidden sm:flex btn-ghost relative ${!guideSeen ? 'ring-1 ring-teal-500/40 text-teal-300' : ''}`}
             title={`Help: ${SECTION_TITLES[activeSection]}`}
@@ -330,6 +499,7 @@ export default function TopBar() {
         </div>
 
         <button
+          data-guide="settings-button"
           onClick={() => setActiveSection(SECTIONS.SETTINGS)}
           className="btn-ghost"
         >
@@ -369,11 +539,30 @@ export default function TopBar() {
               </div>
             </div>
           )}
+          <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3">
+            <div className="text-white text-xs font-display font-semibold mb-2">Get started</div>
+            <p className="text-slate-400 text-xs leading-relaxed mb-3">
+              Follow the highlighted path once: add an application, open its workspace, then build Learning topics from the role requirements.
+            </p>
+            <button onClick={startGuidedTour} className="btn-primary text-xs w-full justify-center">
+              Start guided tour
+            </button>
+          </div>
           <div className="space-y-1">
             {help.tips.map((tip, i) => (
               <p key={i} className="text-slate-400 text-xs">• {renderGuideTip(tip)}</p>
             ))}
           </div>
+          {helpDetails.length > 0 && (
+            <div className="mt-3 rounded-xl border border-navy-700 bg-navy-900/45 p-3">
+              <div className="text-slate-300 text-xs font-display font-semibold mb-2">How this page works</div>
+              <div className="space-y-1">
+                {helpDetails.map((detail, i) => (
+                  <p key={i} className="text-slate-400 text-xs leading-relaxed">- {detail}</p>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="mt-3 pt-3 border-t border-navy-700 flex items-center gap-1.5 text-xs text-slate-500">
             <Shield size={11} />
             <span>Sensei = supportive coaching</span>

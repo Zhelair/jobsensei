@@ -140,7 +140,7 @@ export function VisualsProvider({ children }) {
   const addToast = useCallback((msg) => {
     const id = Date.now() + Math.random()
     setToasts(t => [...t.slice(-3), { id, msg }])
-    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3700)
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 7200)
   }, [])
 
   const triggerConfetti = useCallback((count = 120) => {
@@ -151,7 +151,7 @@ export function VisualsProvider({ children }) {
     if (Math.random() > 0.6) {
       const msg = WIN_MSGS[Math.floor(Math.random() * WIN_MSGS.length)]
       setBigWin(msg)
-      setTimeout(() => setBigWin(null), 2000)
+      setTimeout(() => setBigWin(null), 3800)
     }
   }, [enabled])
 
