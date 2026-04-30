@@ -8,6 +8,7 @@ import ChatWindow from '../shared/ChatWindow'
 import VoiceChatBar from '../shared/VoiceChatBar'
 import { X, History, Play, ArrowLeft } from 'lucide-react'
 import { useVisuals } from '../../context/VisualsContext'
+import { useLanguage } from '../../context/LanguageContext'
 
 const MODES = [
   { id: 'hr', label: 'HR Screen', desc: 'Culture fit, motivation, soft skills' },
@@ -21,6 +22,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData, activeApplication } = useProject()
   const { triggerConfetti, showToast } = useVisuals()
+  const { language } = useLanguage()
 
   const sessions = getProjectData('interviewSessions')
   const resume = getProjectData('resume')
@@ -113,7 +115,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
       let full = ''
       setMessages([{ role: 'assistant', content: '' }])
       await callAI({
-        systemPrompt: prompts.interviewSimulator(jd, mode, drillMode, background),
+        systemPrompt: prompts.interviewSimulator(jd, mode, drillMode, background, language),
         messages: [{ role: 'user', content: `Start the interview. Ask ${questionCount} questions total.` }],
         temperature: 0.8,
         onChunk: (_, acc) => { full = acc; setMessages([{ role: 'assistant', content: acc }]) },
@@ -139,7 +141,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
       setMessages([...newMessages, { role: 'assistant', content: '' }])
       abortRef.current = new AbortController()
       await callAI({
-        systemPrompt: prompts.interviewSimulator(jdRef.current, modeRef.current, drillMode, background),
+        systemPrompt: prompts.interviewSimulator(jdRef.current, modeRef.current, drillMode, background, language),
         messages: newMessages, temperature: 0.8,
         onChunk: (_, acc) => { full = acc; setMessages([...newMessages, { role: 'assistant', content: acc }]) },
         signal: abortRef.current.signal,

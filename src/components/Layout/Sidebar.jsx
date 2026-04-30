@@ -1,5 +1,6 @@
 import React from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
+import { useLanguage } from '../../context/LanguageContext'
 import {
   LayoutDashboard, BookOpen,
   Briefcase, Settings, ChevronLeft, ChevronRight
@@ -15,6 +16,7 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const { activeSection, setActiveSection, sidebarOpen, setSidebarOpen, navKey, setNavKey } = useApp()
+  const { t } = useLanguage()
 
   function isNavActive(id) {
     if (id === SECTIONS.APPLICATIONS) {
@@ -55,7 +57,7 @@ export default function Sidebar() {
             className={`nav-item w-full ${isNavActive(id) ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-0' : ''}`}
           >
             <Icon size={18} className="flex-shrink-0" />
-            {sidebarOpen && <span>{label}</span>}
+            {sidebarOpen && <span>{id === SECTIONS.TODAY ? t('nav.today') : id === SECTIONS.APPLICATIONS ? t('nav.applications') : id === SECTIONS.LEARNING ? t('nav.learning') : label}</span>}
           </button>
         ))}
       </nav>
@@ -68,7 +70,7 @@ export default function Sidebar() {
           className={`nav-item w-full ${activeSection === SECTIONS.SETTINGS ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-0' : ''}`}
         >
           <Settings size={18} className="flex-shrink-0" />
-          {sidebarOpen && <span>Settings</span>}
+          {sidebarOpen && <span>{t('nav.settings')}</span>}
         </button>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}

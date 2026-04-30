@@ -11,6 +11,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Mic, MicOff, Send, Volume2, VolumeX, AlertCircle, X, BellOff, RotateCcw, Trash2 } from 'lucide-react'
 import { useVoice } from '../../hooks/useVoice'
 import { useApp } from '../../context/AppContext'
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function VoiceChatBar({
   onSend,
@@ -19,8 +20,10 @@ export default function VoiceChatBar({
   placeholder = 'Type your message…',
 }) {
   const { isMuted } = useApp()
+  const { t, languageOption } = useLanguage()
   const {
     isListening, isPaused, transcript, isSpeaking, supported, error, clearError,
+    voiceSupport,
     startListening, resumeListening, stopListening, discardRecording, speak, stopSpeaking, replayLast,
   } = useVoice()
 
@@ -167,6 +170,13 @@ export default function VoiceChatBar({
       )}
 
       {/* ── Muted warning ── */}
+      {voiceSupport === 'fallback' && (
+        <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-3 py-2 mb-2 text-yellow-300 text-xs animate-in">
+          <AlertCircle size={13} className="flex-shrink-0" />
+          <span className="flex-1">{languageOption.voiceNote || t('settings.voiceFallback')}</span>
+        </div>
+      )}
+
       {mutedWarning && (
         <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2 mb-2 text-amber-300 text-xs animate-in">
           <BellOff size={13} className="flex-shrink-0" />

@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { useLanguage } from '../context/LanguageContext'
 
-function getBestVoice() {
+function getBestVoice(preferredVoice, speechLang) {
+  if (preferredVoice) return preferredVoice
   const voices = window.speechSynthesis?.getVoices() || []
   const preferred = [
     'Google UK English Female', 'Google US English',
@@ -10,10 +12,15 @@ function getBestVoice() {
     const v = voices.find(v => v.name === name)
     if (v) return v
   }
-  return voices.find(v => v.lang?.startsWith('en')) || voices[0] || null
+  return voices.find(v => v.lang === speechLang)
+    || voices.find(v => v.lang?.startsWith(speechLang?.split('-')[0]))
+    || voices.find(v => v.lang?.startsWith('en'))
+    || voices[0]
+    || null
 }
 
 export function useVoice() {
+  const { activeVoice, speechLang, recognitionLang, voiceSupport } = useLanguage()
   const [isListening, setIsListening] = useState(false)
   // isPaused = recognition auto-stopped (mobile), popup stays open so user can resume or send
   const [isPaused, setIsPaused] = useState(false)
@@ -60,7 +67,7 @@ export function useVoice() {
     const recognition = new SR()
     recognition.continuous = true
     recognition.interimResults = true
-    recognition.lang = 'en-US'
+    recognition.lang = recognitionLang || 'en-US'
     recognition.maxAlternatives = 1
 
     // Per-session highest finalized index — prevents reprocessing same index twice.
@@ -203,7 +210,7 @@ export function useVoice() {
 
     setIsSpeaking(true)
     let index = 0
-    const voice = getBestVoice()
+    const voice = getBestVoice(activeVoice, speechLang)
 
     function speakNext() {
       if (gen !== speakGenRef.current) return
@@ -213,7 +220,7 @@ export function useVoice() {
         return
       }
       const utt = new SpeechSynthesisUtterance(chunks[index++])
-      utt.lang = 'en-US'
+      utt.lang = speechLang || 'en-US'
       utt.rate = 0.92
       utt.pitch = 1.05
       utt.volume = 1
@@ -228,7 +235,7 @@ export function useVoice() {
     }
 
     speakNext()
-  }, [voicesLoaded])
+  }, [voicesLoaded, activeVoice, speechLang])
 
   const stopSpeaking = useCallback(() => {
     speakGenRef.current++
@@ -244,6 +251,7 @@ export function useVoice() {
 
   return {
     isListening, isPaused, transcript, isSpeaking, supported, error,
+    voiceSupport, speechLang, recognitionLang,
     startListening, resumeListening, stopListening, discardRecording,
     speak, stopSpeaking, clearError, replayLast,
   }
