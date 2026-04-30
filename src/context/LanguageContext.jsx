@@ -10,12 +10,12 @@ export const LANGUAGE_OPTIONS = [
     voiceSearch: ['Google US English', 'Google UK English Female', 'Google UK English Male', 'Samantha', 'Microsoft Zira'],
   },
   {
-    code: 'ru',
-    label: 'Russian',
-    nativeLabel: 'Русский',
-    speechLang: 'ru-RU',
-    recognitionLang: 'ru-RU',
-    voiceSearch: ['Google русский'],
+    code: 'de',
+    label: 'German',
+    nativeLabel: 'Deutsch',
+    speechLang: 'de-DE',
+    recognitionLang: 'de-DE',
+    voiceSearch: ['Google Deutsch'],
   },
   {
     code: 'bg',
@@ -27,13 +27,12 @@ export const LANGUAGE_OPTIONS = [
     voiceNote: 'Bulgarian browser voices са често липсващи. Ако браузърът няма BG voice, JobSensei ще използва fallback и може да звучи странно.',
   },
   {
-    code: 'ka',
-    label: 'Georgian',
-    nativeLabel: 'ქართული',
-    speechLang: 'ka-GE',
-    recognitionLang: 'ka-GE',
-    voiceSearch: ['Georgian', 'ka-GE'],
-    voiceNote: 'Georgian browser voices are often missing. If your browser has no GE voice, JobSensei will use a fallback voice and pronunciation can be rough.',
+    code: 'ru',
+    label: 'Russian',
+    nativeLabel: 'Русский',
+    speechLang: 'ru-RU',
+    recognitionLang: 'ru-RU',
+    voiceSearch: ['Google русский'],
   },
   {
     code: 'es-ES',
@@ -54,6 +53,14 @@ export const LANGUAGE_OPTIONS = [
     voiceSearch: ['Google español de Estados Unidos', 'Google español'],
   },
   {
+    code: 'fr',
+    label: 'French',
+    nativeLabel: 'Français',
+    speechLang: 'fr-FR',
+    recognitionLang: 'fr-FR',
+    voiceSearch: ['Google français'],
+  },
+  {
     code: 'it',
     label: 'Italian',
     nativeLabel: 'Italiano',
@@ -70,12 +77,13 @@ export const LANGUAGE_OPTIONS = [
     voiceSearch: ['Google polski'],
   },
   {
-    code: 'de',
-    label: 'German',
-    nativeLabel: 'Deutsch',
-    speechLang: 'de-DE',
-    recognitionLang: 'de-DE',
-    voiceSearch: ['Google Deutsch'],
+    code: 'pt-BR',
+    label: 'Portuguese (Brazil)',
+    nativeLabel: 'Português (Brasil)',
+    speechLang: 'pt-BR',
+    recognitionLang: 'pt-BR',
+    dictionary: 'pt',
+    voiceSearch: ['Google português do Brasil'],
   },
 ]
 
@@ -256,35 +264,6 @@ const TRANSLATIONS = {
     'settings.profile': 'Твоят профил',
     'voice.placeholder': 'Напиши съобщение...',
   },
-  ka: {
-    'nav.today': 'დღეს',
-    'nav.applications': 'აპლიკაციები',
-    'nav.learning': 'სწავლა',
-    'nav.settings': 'პარამეტრები',
-    'nav.projects': 'პროექტები',
-    'nav.apps': 'აპები',
-    'topbar.guide': 'გიდი',
-    'topbar.start': 'დაწყება',
-    'topbar.aiConnected': 'AI დაკავშირებულია',
-    'topbar.locked': 'დაბლოკილია',
-    'topbar.thinking': 'ფიქრობს...',
-    'gate.title': 'ჯერ დაამატეთ აპლიკაცია',
-    'gate.copy': '{section} უკეთ მუშაობს, როცა JobSensei იცნობს კომპანიას, როლს და ვაკანსიის აღწერას. ჯერ შექმენით ერთი რეალური აპლიკაცია, შემდეგ ინსტრუმენტები სწორ კონტექსტში გაიხსნება.',
-    'gate.add': 'აპლიკაციის დამატება',
-    'gate.back': 'უკან დღეზე',
-    'today.hello': 'გამარჯობა, {name}',
-    'settings.title': 'პარამეტრები',
-    'settings.subtitle': 'მართეთ გეგმა, AI წვდომა, რეზიუმე, პროექტის მონაცემები, ენა და ხმა.',
-    'settings.languageTitle': 'ენა და ხმა',
-    'settings.languageCopy': 'აირჩიეთ ინტერფეისის ენა და ბრაუზერის ხმა AI პასუხებისთვის.',
-    'settings.interfaceLanguage': 'ინტერფეისის ენა',
-    'settings.voice': 'AI ხმა',
-    'settings.voiceAuto': 'ავტომატური ხმა არჩეული ენისთვის',
-    'settings.voicePreview': 'ხმის მოსმენა',
-    'settings.voiceFallback': 'შესაფერისი ხმა ვერ მოიძებნა. გამოყენებული იქნება fallback და ჟღერადობა შეიძლება უხეში იყოს.',
-    'settings.voiceNote': 'ხმის შენიშვნა',
-    'voice.placeholder': 'დაწერეთ შეტყობინება...',
-  },
   es: {
     'nav.today': 'Hoy',
     'nav.applications': 'Aplicaciones',
@@ -317,8 +296,51 @@ const TRANSLATIONS = {
     'settings.voice': 'Voz AI',
     'settings.voiceAuto': 'Voz automática para el idioma',
     'settings.voicePreview': 'Probar voz',
+    'settings.voiceExact': 'Voz compatible encontrada.',
+    'settings.voiceRelated': 'Se está usando una voz relacionada para este idioma.',
     'settings.voiceFallback': 'No se encontró una voz compatible. JobSensei usará una voz alternativa.',
+    'settings.voiceNone': 'Aún no hay voces del navegador disponibles.',
+    'settings.voiceNote': 'Nota sobre la voz',
     'voice.placeholder': 'Escribe tu mensaje...',
+  },
+  fr: {
+    'nav.today': 'Aujourd’hui',
+    'nav.applications': 'Candidatures',
+    'nav.learning': 'Apprentissage',
+    'nav.settings': 'Paramètres',
+    'nav.projects': 'Projets',
+    'nav.apps': 'Apps',
+    'topbar.guide': 'Guide',
+    'topbar.start': 'Démarrer',
+    'topbar.aiConnected': 'AI connectée',
+    'topbar.locked': 'Verrouillé',
+    'topbar.thinking': 'Réflexion...',
+    'gate.title': 'Ajoutez d’abord une candidature',
+    'gate.copy': '{section} fonctionne mieux lorsque JobSensei connaît l’entreprise, le poste et la JD. Créez ou capturez d’abord une vraie candidature, puis les outils se déverrouilleront avec le bon contexte.',
+    'gate.add': 'Ajouter une candidature',
+    'gate.back': 'Retour à Aujourd’hui',
+    'today.hello': 'Bonjour, {name}',
+    'today.subtitle': 'Un seul endroit pour voir la prochaine vraie action dans votre recherche d’emploi.',
+    'today.activeFocus': 'Focus actif',
+    'today.startFirst': 'Commencez votre première candidature',
+    'today.openApplications': 'Ouvrir les candidatures',
+    'today.applications': 'Candidatures',
+    'today.firstStep': 'Première étape',
+    'today.firstStepTitle': 'Ajoutez une vraie candidature pour déverrouiller le workspace',
+    'settings.title': 'Paramètres',
+    'settings.subtitle': 'Gérez le plan, l’accès AI, le CV, les données du projet, la langue et la voix.',
+    'settings.languageTitle': 'Langue et voix',
+    'settings.languageCopy': 'Choisissez la langue de l’interface et la voix du navigateur pour les réponses parlées.',
+    'settings.interfaceLanguage': 'Langue de l’interface',
+    'settings.voice': 'Voix AI',
+    'settings.voiceAuto': 'Voix automatique pour la langue sélectionnée',
+    'settings.voicePreview': 'Tester la voix',
+    'settings.voiceExact': 'Voix correspondante trouvée.',
+    'settings.voiceRelated': 'Une voix proche est utilisée pour cette langue.',
+    'settings.voiceFallback': 'Aucune voix compatible trouvée. JobSensei utilisera une voix de secours.',
+    'settings.voiceNone': 'Aucune voix de navigateur n’est encore disponible.',
+    'settings.voiceNote': 'Note sur la voix',
+    'voice.placeholder': 'Écrivez votre message...',
   },
   it: {
     'nav.today': 'Oggi',
@@ -340,8 +362,51 @@ const TRANSLATIONS = {
     'settings.voice': 'Voce AI',
     'settings.voiceAuto': 'Voce automatica per la lingua',
     'settings.voicePreview': 'Prova voce',
+    'settings.voiceExact': 'Voce corrispondente trovata.',
+    'settings.voiceRelated': 'Viene usata una voce correlata per questa lingua.',
     'settings.voiceFallback': 'Nessuna voce compatibile trovata. JobSensei userà una voce di fallback.',
+    'settings.voiceNone': 'Nessuna voce del browser è ancora disponibile.',
+    'settings.voiceNote': 'Nota sulla voce',
     'voice.placeholder': 'Scrivi il tuo messaggio...',
+  },
+  pt: {
+    'nav.today': 'Hoje',
+    'nav.applications': 'Candidaturas',
+    'nav.learning': 'Aprendizagem',
+    'nav.settings': 'Configurações',
+    'nav.projects': 'Projetos',
+    'nav.apps': 'Apps',
+    'topbar.guide': 'Guia',
+    'topbar.start': 'Iniciar',
+    'topbar.aiConnected': 'AI conectada',
+    'topbar.locked': 'Bloqueado',
+    'topbar.thinking': 'Pensando...',
+    'gate.title': 'Adicione uma candidatura primeiro',
+    'gate.copy': '{section} funciona melhor quando o JobSensei conhece a empresa, o cargo e a JD. Crie ou capture uma candidatura real primeiro; depois, as ferramentas serão desbloqueadas com o contexto correto.',
+    'gate.add': 'Adicionar candidatura',
+    'gate.back': 'Voltar para Hoje',
+    'today.hello': 'Olá, {name}',
+    'today.subtitle': 'Um só lugar para ver o próximo passo real na sua busca por emprego.',
+    'today.activeFocus': 'Foco ativo',
+    'today.startFirst': 'Comece sua primeira candidatura',
+    'today.openApplications': 'Abrir candidaturas',
+    'today.applications': 'Candidaturas',
+    'today.firstStep': 'Primeiro passo',
+    'today.firstStepTitle': 'Adicione uma candidatura real para desbloquear o workspace',
+    'settings.title': 'Configurações',
+    'settings.subtitle': 'Gerencie plano, acesso AI, CV, dados do projeto, idioma e voz.',
+    'settings.languageTitle': 'Idioma e voz',
+    'settings.languageCopy': 'Escolha o idioma da interface e a voz do navegador para respostas faladas.',
+    'settings.interfaceLanguage': 'Idioma da interface',
+    'settings.voice': 'Voz AI',
+    'settings.voiceAuto': 'Voz automática para o idioma selecionado',
+    'settings.voicePreview': 'Testar voz',
+    'settings.voiceExact': 'Voz correspondente encontrada.',
+    'settings.voiceRelated': 'Usando uma voz relacionada para este idioma.',
+    'settings.voiceFallback': 'Nenhuma voz compatível encontrada. O JobSensei usará uma voz alternativa.',
+    'settings.voiceNone': 'Nenhuma voz do navegador está disponível ainda.',
+    'settings.voiceNote': 'Nota sobre a voz',
+    'voice.placeholder': 'Digite sua mensagem...',
   },
   pl: {
     'nav.today': 'Dzisiaj',
@@ -363,7 +428,11 @@ const TRANSLATIONS = {
     'settings.voice': 'Głos AI',
     'settings.voiceAuto': 'Automatyczny głos dla języka',
     'settings.voicePreview': 'Test głosu',
+    'settings.voiceExact': 'Znaleziono pasujący głos.',
+    'settings.voiceRelated': 'Używany jest pokrewny głos dla tego języka.',
     'settings.voiceFallback': 'Nie znaleziono pasującego głosu. JobSensei użyje głosu zastępczego.',
+    'settings.voiceNone': 'Głosy przeglądarki nie są jeszcze dostępne.',
+    'settings.voiceNote': 'Uwaga dotycząca głosu',
     'voice.placeholder': 'Wpisz wiadomość...',
   },
   de: {
@@ -382,16 +451,22 @@ const TRANSLATIONS = {
     'settings.title': 'Einstellungen',
     'settings.subtitle': 'Plan, AI-Zugang, Lebenslauf, Projektdaten, Sprache und Stimme verwalten.',
     'settings.languageTitle': 'Sprache und Stimme',
+    'settings.languageCopy': 'Wählen Sie die Oberflächensprache und die Browser-Stimme für gesprochene Antworten.',
     'settings.interfaceLanguage': 'Oberflächensprache',
     'settings.voice': 'AI-Stimme',
     'settings.voiceAuto': 'Automatische Stimme für diese Sprache',
     'settings.voicePreview': 'Stimme testen',
+    'settings.voiceExact': 'Passende Stimme gefunden.',
+    'settings.voiceRelated': 'Es wird eine verwandte Stimme für diese Sprache verwendet.',
     'settings.voiceFallback': 'Keine passende Stimme gefunden. JobSensei nutzt eine Ersatzstimme.',
+    'settings.voiceNone': 'Noch keine Browser-Stimmen verfügbar.',
+    'settings.voiceNote': 'Hinweis zur Stimme',
     'voice.placeholder': 'Nachricht eingeben...',
   },
 }
 
 const LanguageContext = createContext(null)
+const SUPPORTED_LANGUAGE_CODES = new Set(LANGUAGE_OPTIONS.map(option => option.code))
 
 function dictionaryKey(option) {
   return option?.dictionary || option?.code || 'en'
@@ -430,7 +505,10 @@ function getVoiceSupport(option, voice, voices) {
 }
 
 export function LanguageProvider({ children }) {
-  const [language, setLanguageState] = useState(() => localStorage.getItem('js_language') || 'en')
+  const [language, setLanguageState] = useState(() => {
+    const saved = localStorage.getItem('js_language')
+    return SUPPORTED_LANGUAGE_CODES.has(saved) ? saved : 'en'
+  })
   const [voiceName, setVoiceNameState] = useState(() => localStorage.getItem('js_voice_name') || '')
   const [voices, setVoices] = useState([])
 
@@ -461,9 +539,10 @@ export function LanguageProvider({ children }) {
   }
 
   function setLanguage(nextLanguage) {
-    setLanguageState(nextLanguage)
+    const safeLanguage = SUPPORTED_LANGUAGE_CODES.has(nextLanguage) ? nextLanguage : 'en'
+    setLanguageState(safeLanguage)
     setVoiceNameState('')
-    localStorage.setItem('js_language', nextLanguage)
+    localStorage.setItem('js_language', safeLanguage)
     localStorage.removeItem('js_voice_name')
   }
 

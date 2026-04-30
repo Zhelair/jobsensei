@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { Star, Plus, Wand2, Copy, Trash2, ArrowLeft, Tag, Edit3, Check, Eye } from 'lucide-react'
@@ -10,6 +11,7 @@ export default function STARBuilder({ onBack, backLabel = 'Back' }) {
   const { drillMode } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData, activeApplication } = useProject()
+  const { language } = useLanguage()
 
   const stories = getProjectData('starStories')
   function setStories(updater) {
@@ -30,7 +32,7 @@ export default function STARBuilder({ onBack, backLabel = 'Back' }) {
     if (!situation.trim()) return
     setLoading(true); setResult(null)
     try {
-      const raw = await callAI({ systemPrompt: prompts.starBuilder(situation, drillMode), messages: [{ role: 'user', content: 'Build STAR.' }], temperature: 0.7 })
+      const raw = await callAI({ systemPrompt: prompts.starBuilder(situation, drillMode, language), messages: [{ role: 'user', content: 'Build STAR.' }], temperature: 0.7 })
       const parsed = tryParseJSON(raw)
       if (parsed) setResult(parsed)
     } catch {}

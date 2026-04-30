@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, matchColor, generateId } from '../../utils/helpers'
 import ScoreRing from '../shared/ScoreRing'
@@ -37,6 +38,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
   const { profile, drillMode, openLearningTopic } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData, activeApplication } = useProject()
+  const { language } = useLanguage()
 
   const resume = getProjectData('resume')
   const savedResults = getProjectData('gapResults')
@@ -78,7 +80,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
     try {
       let full = ''
       await callAI({
-        systemPrompt: prompts.gapAnalysis(background, jd, drillMode),
+        systemPrompt: prompts.gapAnalysis(background, jd, drillMode, language),
         messages: [{ role: 'user', content: 'Analyze the gap.' }],
         temperature: 0.6,
         onChunk: (_, acc) => { full = acc; setGapResult(acc) },
@@ -91,7 +93,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
     if (!jd.trim() || !background.trim()) return
     setLoading(true); setError(''); setScoreResult(null)
     try {
-      const raw = await callAI({ systemPrompt: prompts.applicationScoring(background, jd), messages: [{ role: 'user', content: 'Score.' }], temperature: 0.3 })
+      const raw = await callAI({ systemPrompt: prompts.applicationScoring(background, jd, language), messages: [{ role: 'user', content: 'Score.' }], temperature: 0.3 })
       const parsed = tryParseJSON(raw)
       if (parsed) setScoreResult(parsed)
       else setError('Could not parse result. Try again.')
@@ -103,7 +105,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
     if (!jd.trim()) return
     setLoading(true); setError(''); setRedFlags(null)
     try {
-      const raw = await callAI({ systemPrompt: prompts.redFlagDetector(jd), messages: [{ role: 'user', content: 'Analyze.' }], temperature: 0.4 })
+      const raw = await callAI({ systemPrompt: prompts.redFlagDetector(jd, language), messages: [{ role: 'user', content: 'Analyze.' }], temperature: 0.4 })
       const parsed = tryParseJSON(raw)
       if (parsed) setRedFlags(parsed)
       else setError('Could not parse. Try again.')
