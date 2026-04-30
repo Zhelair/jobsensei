@@ -180,13 +180,18 @@ export default function Settings() {
   function previewVoice() {
     if (!window.speechSynthesis || !activeVoice) return
     window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(
-      language === 'bg'
-        ? 'Здравей, аз съм JobSensei. Ако гласът звучи странно, браузърът няма добър български voice.'
-        : language === 'ka'
-          ? 'გამარჯობა, მე ვარ JobSensei. თუ ხმა უცნაურად ჟღერს, ბრაუზერს ქართული ხმა არ აქვს.'
-          : 'Hello, I am JobSensei. This is the selected browser voice.',
-    )
+    const previewSamples = {
+      bg: 'Здравейте, аз съм JobSensei. Ако гласът звучи странно, браузърът няма добър български voice.',
+      ru: 'Здравствуйте, я JobSensei. Это выбранный голос браузера.',
+      de: 'Guten Tag, ich bin JobSensei. Dies ist die ausgewählte Browser-Stimme.',
+      'es-ES': 'Hola, soy JobSensei. Esta es la voz seleccionada del navegador.',
+      'es-US': 'Hola, soy JobSensei. Esta es la voz seleccionada del navegador.',
+      fr: 'Bonjour, je suis JobSensei. Voici la voix de navigateur sélectionnée.',
+      it: 'Buongiorno, sono JobSensei. Questa è la voce del browser selezionata.',
+      pl: 'Dzień dobry, tu JobSensei. To jest wybrany głos przeglądarki.',
+      'pt-BR': 'Olá, eu sou o JobSensei. Esta é a voz selecionada do navegador.',
+    }
+    const utterance = new SpeechSynthesisUtterance(previewSamples[language] || 'Hello, I am JobSensei. This is the selected browser voice.')
     utterance.lang = languageOption.speechLang
     utterance.voice = activeVoice
     window.speechSynthesis.speak(utterance)

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Bot, User } from 'lucide-react'
+import { useLanguage } from '../../context/LanguageContext'
 
 export function TypingIndicator() {
   return (
@@ -18,6 +19,7 @@ export function TypingIndicator() {
 
 export default function ChatWindow({ messages, isLoading, emptyText }) {
   const bottomRef = useRef(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -26,7 +28,7 @@ export default function ChatWindow({ messages, isLoading, emptyText }) {
   if (messages.length === 0 && !isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center text-slate-500 text-sm font-body">
-        {emptyText || 'Start the conversation...'}
+        {emptyText || t('voice.placeholder')}
       </div>
     )
   }

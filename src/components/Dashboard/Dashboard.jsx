@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
 import { generateId } from '../../utils/helpers'
 import { Mic, Search, BookOpen, Plus, TrendingUp, Award, Target, Sparkles, FolderOpen } from 'lucide-react'
@@ -22,6 +23,7 @@ function hasPrepNotes(noteData = {}) {
 export default function Dashboard() {
   const { setActiveSection, profile, stats } = useApp()
   const { callAI, isConnected } = useAI()
+  const { language } = useLanguage()
   const {
     activeProject,
     activeApplication,
@@ -101,7 +103,7 @@ export default function Dashboard() {
     setLoadingTip(true)
     try {
       const nextTip = await callAI({
-        systemPrompt: prompts.senseiTip(profile, stats),
+        systemPrompt: prompts.senseiTip(profile, stats, language),
         messages: [{ role: 'user', content: 'Give me my daily tip.' }],
         temperature: 0.8,
       })

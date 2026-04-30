@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { sm2, getNextReviewDate, isDueToday } from '../../utils/spacedRepetition'
@@ -30,6 +31,7 @@ export default function LearningSection() {
   const { drillMode, profile, pendingLearningRequest, clearPendingLearningRequest, pushAppHistory } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData } = useProject()
+  const { language } = useLanguage()
 
   const topics = getProjectData('topics')
   const quizHistory = getProjectData('quizHistory') || []
@@ -148,6 +150,7 @@ export default function LearningSection() {
       onBack={() => navigateLearningView('library')}
       onUpdate={updateTopic}
       drillMode={drillMode}
+      language={language}
       profile={profile}
       callAI={callAI}
       isConnected={isConnected}
@@ -155,7 +158,7 @@ export default function LearningSection() {
     />
   )
   if (view === 'quiz' && selectedTopic) return (
-    <QuizMode topic={selectedTopic} onBack={() => navigateLearningView('library')} onUpdate={updateTopic} onQuizComplete={saveQuizHistory} callAI={callAI} isConnected={isConnected} />
+    <QuizMode topic={selectedTopic} onBack={() => navigateLearningView('library')} onUpdate={updateTopic} onQuizComplete={saveQuizHistory} callAI={callAI} isConnected={isConnected} language={language} />
   )
   if (view === 'quizHistory') return (
     <QuizHistory
@@ -173,6 +176,7 @@ export default function LearningSection() {
       onDeleteNote={(id) => updateProjectData('topicNotes', topicNotes.filter(n => n.id !== id))}
       callAI={callAI}
       isConnected={isConnected}
+      language={language}
     />
   )
 
@@ -384,7 +388,7 @@ export default function LearningSection() {
 
 // ─── Topic Tutor (chat) ────────────────────────────────────────────────────────
 
-function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isConnected, onSaveNote }) {
+function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isConnected, onSaveNote, language }) {
   const [messages, setMessages] = useState(topic.messages || [])
   const [loading, setLoading] = useState(false)
   const [depth, setDepth] = useState('Have basics')
@@ -399,7 +403,7 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
       let full = ''
       setMessages([...newMsgs, { role: 'assistant', content: '' }])
       await callAI({
-        systemPrompt: prompts.topicTutor(topic.title, depth, profile?.currentRole, drillMode),
+        systemPrompt: prompts.topicTutor(topic.title, depth, profile?.currentRole, drillMode, language),
         messages: newMsgs, temperature: 0.7,
         onChunk: (_, acc) => { full = acc; setMessages([...newMsgs, { role: 'assistant', content: acc }]) },
       })
@@ -461,7 +465,7 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
 
 // ─── Quiz Mode ─────────────────────────────────────────────────────────────────
 
-function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected }) {
+function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected, language }) {
   const [phase, setPhase] = useState('loading')
   const [questions, setQuestions] = useState([])
   const [current, setCurrent] = useState(0)
@@ -475,7 +479,7 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
   async function loadQuiz() {
     setLoading(true)
     try {
-      const raw = await callAI({ systemPrompt: prompts.quizGenerator(topic.title, topic.difficulty), messages: [{ role: 'user', content: 'Generate.' }], temperature: 0.6 })
+      const raw = await callAI({ systemPrompt: prompts.quizGenerator(topic.title, topic.difficulty, language), messages: [{ role: 'user', content: 'Generate.' }], temperature: 0.6 })
       const parsed = tryParseJSON(raw)
       if (parsed?.questions) { setQuestions(parsed.questions); setPhase('quiz') }
     } catch {}
@@ -487,7 +491,7 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
     if (q.type === 'open_ended') {
       setLoading(true)
       try {
-        const raw = await callAI({ systemPrompt: prompts.quizEvaluator(q.question, q.sampleAnswer, answer), messages: [{ role: 'user', content: 'Evaluate.' }], temperature: 0.3 })
+        const raw = await callAI({ systemPrompt: prompts.quizEvaluator(q.question, q.sampleAnswer, answer, language), messages: [{ role: 'user', content: 'Evaluate.' }], temperature: 0.3 })
         const parsed = tryParseJSON(raw)
         if (parsed) setFeedback(prev => ({ ...prev, [q.id]: parsed }))
       } catch {}
@@ -597,7 +601,7 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
 
 // ─── Notes View ────────────────────────────────────────────────────────────────
 
-function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callAI, isConnected }) {
+function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callAI, isConnected, language }) {
   const [selectedTopicId, setSelectedTopicId] = useState('all')
   const [showAdd, setShowAdd] = useState(false)
   const [newContent, setNewContent] = useState('')
@@ -628,8 +632,8 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
     try {
       let full = ''
       const systemPrompt = mode === 'summarize'
-        ? prompts.summarizeNotes(topicTitle, notesForAI)
-        : prompts.cheatCard(topicTitle, notesForAI)
+        ? prompts.summarizeNotes(topicTitle, notesForAI, language)
+        : prompts.cheatCard(topicTitle, notesForAI, language)
       await callAI({
         systemPrompt,
         messages: [{ role: 'user', content: mode === 'summarize' ? 'Summarize my notes.' : 'Generate cheat card.' }],

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X, Search, Star, Zap, Trash2, Mic } from 'lucide-react'
@@ -811,6 +812,7 @@ function FullHistoryResult({ item }) {
 function TransferableSkillsTool({ onBack, hubLabel = 'Back', resume, saveHistory, history, onDelete }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
+  const { language } = useLanguage()
   const [experience, setExperience] = useState(resume || (profile?.currentRole ? `I worked as ${profile.currentRole} for ${profile.experience} in ${profile.industry}.` : ''))
   const [targetRole, setTargetRole] = useState('')
   const [result, setResult] = useState('')
@@ -824,7 +826,7 @@ function TransferableSkillsTool({ onBack, hubLabel = 'Back', resume, saveHistory
     let full = ''
     try {
       await callAI({
-        systemPrompt: prompts.transferableSkills(experience, targetRole, drillMode),
+        systemPrompt: prompts.transferableSkills(experience, targetRole, drillMode, language),
         messages: [{ role: 'user', content: 'Analyze.' }],
         temperature: 0.7,
         onChunk: (_, acc) => { full = acc; setResult(acc) },
@@ -879,6 +881,7 @@ function TransferableSkillsTool({ onBack, hubLabel = 'Back', resume, saveHistory
 function QuestionPredictor({ onBack, hubLabel = 'Back', resume, activeContext, saveHistory, history, onDelete }) {
   const { profile } = useApp()
   const { callAI, isConnected } = useAI()
+  const { language } = useLanguage()
   const [jd, setJd] = useState(activeContext?.jd || '')
   const [background, setBackground] = useState(resume || profile?.currentRole || '')
   const [loading, setLoading] = useState(false)
@@ -893,7 +896,7 @@ function QuestionPredictor({ onBack, hubLabel = 'Back', resume, activeContext, s
   async function predict() {
     setLoading(true); setResult(null)
     try {
-      const raw = await callAI({ systemPrompt: prompts.questionPredictor(jd, background), messages: [{ role: 'user', content: 'Predict the questions.' }], temperature: 0.5 })
+      const raw = await callAI({ systemPrompt: prompts.questionPredictor(jd, background, language), messages: [{ role: 'user', content: 'Predict the questions.' }], temperature: 0.5 })
       const parsed = tryParseJSON(raw)
       if (parsed) { setResult(parsed); saveHistory({ jd: jd.slice(0, 80) }, parsed) }
     } catch {}
@@ -945,7 +948,9 @@ function QuestionPredictor({ onBack, hubLabel = 'Back', resume, activeContext, s
 // ─── Tone Analyzer ─────────────────────────────────────────────────────────────
 
 function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelete }) {
+  const { drillMode } = useApp()
   const { callAI, isConnected } = useAI()
+  const { language } = useLanguage()
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
@@ -956,7 +961,7 @@ function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelet
   async function analyze() {
     setLoading(true); setResult(null)
     try {
-      const raw = await callAI({ systemPrompt: prompts.toneAnalyzer(answer), messages: [{ role: 'user', content: 'Analyze.' }], temperature: 0.4 })
+      const raw = await callAI({ systemPrompt: prompts.toneAnalyzer(answer, drillMode, language), messages: [{ role: 'user', content: 'Analyze.' }], temperature: 0.4 })
       const parsed = tryParseJSON(raw)
       if (parsed) { setResult(parsed); saveHistory({ answer: answer.slice(0, 100) }, parsed) }
     } catch {}
@@ -1027,6 +1032,7 @@ function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelet
 
 function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
+  const { language } = useLanguage()
   const [company, setCompany] = useState(activeContext?.application?.company || '')
   const [interviewer, setInterviewer] = useState('')
   const [role, setRole] = useState(activeContext?.application?.role || '')
@@ -1041,7 +1047,7 @@ function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, 
   async function generate() {
     setLoading(true); setResult(null)
     try {
-      const raw = await callAI({ systemPrompt: prompts.followUpEmail(company, interviewer, role, notes, tone), messages: [{ role: 'user', content: 'Generate the email.' }], temperature: 0.7 })
+      const raw = await callAI({ systemPrompt: prompts.followUpEmail(company, interviewer, role, notes, tone, language), messages: [{ role: 'user', content: 'Generate the email.' }], temperature: 0.7 })
       const parsed = tryParseJSON(raw)
       if (parsed) { setResult(parsed); saveHistory({ company, role }, parsed) }
     } catch {}
@@ -1094,6 +1100,7 @@ function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, 
 function ElevatorPitch({ onBack, hubLabel = 'Back', resume, saveHistory, history, onDelete }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
+  const { language } = useLanguage()
   const [role, setRole] = useState(profile?.targetRole || '')
   const [strengths, setStrengths] = useState(resume ? resume.slice(0, 300) : '')
   const [loading, setLoading] = useState(false)
@@ -1105,7 +1112,7 @@ function ElevatorPitch({ onBack, hubLabel = 'Back', resume, saveHistory, history
   async function generate() {
     setLoading(true); setResult(null)
     try {
-      const raw = await callAI({ systemPrompt: prompts.elevatorPitch(role, strengths, drillMode), messages: [{ role: 'user', content: 'Write my elevator pitch.' }], temperature: 0.8 })
+      const raw = await callAI({ systemPrompt: prompts.elevatorPitch(role, strengths, drillMode, language), messages: [{ role: 'user', content: 'Write my elevator pitch.' }], temperature: 0.8 })
       const parsed = tryParseJSON(raw)
       if (parsed) { setResult(parsed); saveHistory({ role }, parsed) }
     } catch {}
@@ -1161,6 +1168,7 @@ function ElevatorPitch({ onBack, hubLabel = 'Back', resume, saveHistory, history
 
 function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
+  const { language } = useLanguage()
   const [jd, setJd] = useState(activeContext?.jd || '')
   const [resumeText, setResumeText] = useState(resume || '')
   const [loading, setLoading] = useState(false)
@@ -1173,7 +1181,7 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
   async function generate() {
     setLoading(true); setResult(null)
     try {
-      const raw = await callAI({ systemPrompt: prompts.coverLetterOptimizer(jd, resumeText), messages: [{ role: 'user', content: 'Generate cover letters.' }], temperature: 0.8 })
+      const raw = await callAI({ systemPrompt: prompts.coverLetterOptimizer(jd, resumeText, language), messages: [{ role: 'user', content: 'Generate cover letters.' }], temperature: 0.8 })
       const parsed = tryParseJSON(raw)
       if (parsed) { setResult(parsed); saveHistory({ jd: jd.slice(0, 80) }, parsed) }
     } catch {}
@@ -1248,6 +1256,7 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
 
 function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
+  const { language } = useLanguage()
   const [resumeText, setResumeText] = useState(resume || '')
   const [jd, setJd] = useState(activeContext?.jd || '')
   const [loading, setLoading] = useState(false)
@@ -1259,7 +1268,7 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
   async function analyze() {
     setLoading(true); setResult(null)
     try {
-      const raw = await callAI({ systemPrompt: prompts.resumeChecker(resumeText, jd), messages: [{ role: 'user', content: 'Analyze my resume.' }], temperature: 0.4 })
+      const raw = await callAI({ systemPrompt: prompts.resumeChecker(resumeText, jd, language), messages: [{ role: 'user', content: 'Analyze my resume.' }], temperature: 0.4 })
       const parsed = tryParseJSON(raw)
       if (parsed) { setResult(parsed); saveHistory({ resumeSlice: resumeText.slice(0, 80) }, parsed) }
     } catch {}
@@ -1426,6 +1435,7 @@ function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, o
 
 function LinkedInAuditor({ onBack, hubLabel = 'Back', saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
+  const { language } = useLanguage()
   const [profileText, setProfileText] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
@@ -1436,7 +1446,7 @@ function LinkedInAuditor({ onBack, hubLabel = 'Back', saveHistory, history, onDe
   async function audit() {
     setLoading(true); setResult(null)
     try {
-      const raw = await callAI({ systemPrompt: prompts.linkedInAuditor(profileText), messages: [{ role: 'user', content: 'Audit my LinkedIn profile.' }], temperature: 0.5 })
+      const raw = await callAI({ systemPrompt: prompts.linkedInAuditor(profileText, language), messages: [{ role: 'user', content: 'Audit my LinkedIn profile.' }], temperature: 0.5 })
       const parsed = tryParseJSON(raw)
       if (parsed) { setResult(parsed); saveHistory({ profileSlice: profileText.slice(0, 80) }, parsed) }
     } catch {}

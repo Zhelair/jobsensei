@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useProject } from '../../context/ProjectContext'
 import { useAI } from '../../context/AIContext'
 import { useApp, SECTIONS } from '../../context/AppContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
 import { generateId, formatDate, timeAgo, tryParseJSON } from '../../utils/helpers'
 import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale, Copy, Printer, Save, Sparkles, FileText, Mic, Target, Star, Gauge, Mail, Megaphone, ClipboardCheck, Globe, Camera, Zap } from 'lucide-react'
@@ -89,6 +90,7 @@ function exportToJSON(applications, notes) {
 export default function JobTracker() {
   const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId } = useProject()
   const { pendingTrackerRequest, clearPendingTrackerRequest, pushAppHistory } = useApp()
+  const { language } = useLanguage()
   const applications = getProjectData('applications') || []
   const notes = getProjectData('companyNotes') || {}
   const offerData = getProjectData('offerComparisons') || {}
@@ -210,7 +212,7 @@ export default function JobTracker() {
         }
       } catch {}
       const raw = await callAI({
-        systemPrompt: prompts.companyResearch(newApp.company, newApp.role, searchContext),
+        systemPrompt: prompts.companyResearch(newApp.company, newApp.role, searchContext, language),
         messages: [{ role: 'user', content: 'Research this company.' }],
         temperature: 0.5,
       })
@@ -839,6 +841,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const { callAI, isConnected } = useAI()
   const { getProjectData } = useProject()
   const { launchTool, pushAppHistory } = useApp()
+  const { language } = useLanguage()
   const initialWorkspaceTab = initialTab === 'notes' ? 'research' : initialTab
   const [workspaceTab, setWorkspaceTab] = useState(initialWorkspaceTab)
   const [form, setForm] = useState({
@@ -1036,7 +1039,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
         }
       } catch {}
       const raw = await callAI({
-        systemPrompt: prompts.companyResearch(app.company, app.role, searchContext),
+        systemPrompt: prompts.companyResearch(app.company, app.role, searchContext, language),
         messages: [{ role: 'user', content: 'Research this company.' }],
         temperature: 0.5,
       })
@@ -1069,7 +1072,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     setCheatSheet('')
     try {
       await callAI({
-        systemPrompt: prompts.interviewCheatSheet(app.company, app.role, notesText),
+        systemPrompt: prompts.interviewCheatSheet(app.company, app.role, notesText, language),
         messages: [{ role: 'user', content: 'Generate interview cheat sheet.' }],
         temperature: 0.5,
         onChunk: (_, acc) => setCheatSheet(acc),
@@ -1086,7 +1089,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     saveWorkspace(false)
     try {
       await callAI({
-        systemPrompt: prompts.workspaceResearchSummary(app.company, app.role, notesText),
+        systemPrompt: prompts.workspaceResearchSummary(app.company, app.role, notesText, language),
         messages: [{ role: 'user', content: 'Summarize workspace research notes.' }],
         temperature: 0.45,
         onChunk: (_, acc) => setWorkspaceSummary(acc),
@@ -1862,6 +1865,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
 
 function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
   const { callAI, isConnected } = useAI()
+  const { language } = useLanguage()
   const [form, setForm] = useState({
     people: '', theyMentioned: '', techStack: '', culture: '', openQ: '', prepNotes: '', wowFacts: '', ...notes
   })
@@ -1902,7 +1906,7 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
         }
       } catch {}
       const raw = await callAI({
-        systemPrompt: prompts.companyResearch(app.company, app.role, searchContext),
+        systemPrompt: prompts.companyResearch(app.company, app.role, searchContext, language),
         messages: [{ role: 'user', content: 'Research this company.' }],
         temperature: 0.5,
       })
@@ -1944,7 +1948,7 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
     try {
       let full = ''
       await callAI({
-        systemPrompt: prompts.interviewCheatSheet(app.company, app.role, notesText),
+        systemPrompt: prompts.interviewCheatSheet(app.company, app.role, notesText, language),
         messages: [{ role: 'user', content: 'Generate interview cheat sheet.' }],
         temperature: 0.5,
         onChunk: (_, acc) => { full = acc; setCheatSheet(acc) },
@@ -2184,6 +2188,7 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
 function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectApp }) {
   const { callAI, isConnected } = useAI()
   const { profile } = useApp()
+  const { language } = useLanguage()
   const offerApps = applications.filter(a => a.stage === 'Offer')
   const [weights, setWeights] = useState(() =>
     Object.fromEntries(OFFER_FIELDS.map(f => [f.key, f.defaultWeight]))
@@ -2210,7 +2215,7 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
     const profileSummary = `${profile?.currentRole || 'professional'}, targeting ${profile?.targetRole || 'new role'}`
     try {
       await callAI({
-        systemPrompt: prompts.offerAdvisor(offersText, profileSummary),
+        systemPrompt: prompts.offerAdvisor(offersText, profileSummary, language),
         messages: [{ role: 'user', content: 'Which offer should I take?' }],
         temperature: 0.6,
         onChunk: (_, acc) => setAdvice(acc),
