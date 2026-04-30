@@ -355,7 +355,7 @@ export default function Settings() {
                   <label className="text-sm text-slate-400 mb-1.5 block">Model</label>
                   <input
                     className="input-field font-mono text-xs"
-                    placeholder="e.g. deepseek-chat"
+                    placeholder="e.g. deepseek-v4-flash"
                     value={form.model}
                     onChange={e => update('model', e.target.value)}
                   />
@@ -372,8 +372,8 @@ export default function Settings() {
                   </div>
                 )}
                 <div className="bg-navy-900 rounded-xl p-3 text-xs text-slate-500 space-y-1">
-                  <div><span className="text-slate-400">DeepSeek:</span> deepseek-chat / deepseek-reasoner</div>
-                  <div><span className="text-slate-400">OpenAI:</span> gpt-4o / gpt-4o-mini</div>
+                  <div><span className="text-slate-400">DeepSeek:</span> deepseek-v4-flash / deepseek-v4-pro</div>
+                  <div><span className="text-slate-400">OpenAI:</span> gpt-5.4-mini / gpt-5.5</div>
                   <div><span className="text-slate-400">Anthropic:</span> claude-sonnet-4-6 / claude-haiku-4-5-20251001</div>
                 </div>
                 <div className="flex gap-2">
@@ -393,7 +393,13 @@ export default function Settings() {
                     <button
                       onClick={() => {
                         restoreToProxy()
-                        setForm(f => ({ ...f, apiKey: '', provider: PROVIDERS.DEEPSEEK, model: 'deepseek-chat', customBaseUrl: '' }))
+                        setForm(f => ({
+                          ...f,
+                          apiKey: '',
+                          provider: PROVIDERS.DEEPSEEK,
+                          model: PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel,
+                          customBaseUrl: '',
+                        }))
                       }}
                       className="btn-ghost text-xs text-yellow-400 hover:text-yellow-300 w-full justify-center"
                     >

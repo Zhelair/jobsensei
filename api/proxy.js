@@ -52,7 +52,7 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: 'deepseek-v4-flash',
         temperature,
         stream,
         messages: systemPrompt
