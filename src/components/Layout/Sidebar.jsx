@@ -49,6 +49,7 @@ export default function Sidebar() {
         {NAV_ITEMS.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
+            data-guide={`nav-${id}`}
             onClick={() => handleNavClick(id)}
             title={!sidebarOpen ? label : undefined}
             className={`nav-item w-full ${isNavActive(id) ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-0' : ''}`}
