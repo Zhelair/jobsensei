@@ -16,7 +16,7 @@ export default function Settings() {
     bmacToken, bmacEmail, verifyBmac, clearBmacToken, restoreToProxy, isConnected,
   } = useAI()
   const { profile, setShowOnboarding } = useApp()
-  const { activeProject, getProjectData, updateProjectData, exportProject, exportAll, importProjects } = useProject()
+  const { activeProject, getProjectData, updateProjectData } = useProject()
   const {
     t, language, setLanguage, languageOption, languages,
     activeVoice, voiceSupport,
@@ -27,7 +27,7 @@ export default function Settings() {
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState(null)
   const [saved, setSaved] = useState(false)
-  const [showOwnKey, setShowOwnKey] = useState(!bmacToken)
+  const [showOwnKey, setShowOwnKey] = useState(false)
 
   const [bmacInput, setBmacInput] = useState('')
   const [bmacLoading, setBmacLoading] = useState(false)
@@ -38,15 +38,17 @@ export default function Settings() {
   const [resumeSaved, setResumeSaved] = useState(false)
   const [extracting, setExtracting] = useState(false)
   const fileRef = useRef(null)
-  const importRef = useRef(null)
-  const [importMsg, setImportMsg] = useState('')
 
   useEffect(() => {
     setForm({ provider, model, apiKey, customBaseUrl: customBaseUrl || '' })
   }, [provider, model, apiKey, customBaseUrl])
 
   useEffect(() => {
-    if (!bmacToken) setShowOwnKey(true)
+    if (!bmacToken) {
+      setShowOwnKey(false)
+      return
+    }
+    setShowOwnKey(true)
   }, [bmacToken])
 
   function update(k, v) {
@@ -153,19 +155,6 @@ export default function Settings() {
       setResumeText('[Could not read file. Please paste your resume text below.]')
     }
     setExtracting(false)
-    e.target.value = ''
-  }
-
-  async function handleImportProject(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    try {
-      const count = await importProjects(file)
-      setImportMsg(`Imported ${count} project${count > 1 ? 's' : ''}.`)
-    } catch {
-      setImportMsg('Invalid file format.')
-    }
-    setTimeout(() => setImportMsg(''), 3000)
     e.target.value = ''
   }
 
@@ -367,132 +356,6 @@ export default function Settings() {
           </div>
 
           <div className="card">
-            <button
-              onClick={() => setShowOwnKey(o => !o)}
-              className="w-full flex items-center justify-between gap-3"
-            >
-              <span className="font-display font-semibold text-white text-sm flex items-center gap-2">
-                <Zap size={15} className="text-teal-400" /> Bring your own API key
-              </span>
-              {showOwnKey ? <ChevronUp size={15} className="text-slate-400" /> : <ChevronDown size={15} className="text-slate-400" />}
-            </button>
-
-            <p className="text-slate-400 text-xs mt-2">
-              Optional after unlock. Use your own OpenAI, DeepSeek, Anthropic, or compatible endpoint instead of JobSensei-hosted AI.
-            </p>
-
-            {showOwnKey && (
-              <div className="mt-4 space-y-3">
-                {!hasPlanAccess ? (
-                  <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-4">
-                    <div className="text-yellow-300 text-sm font-display font-semibold mb-1">Unlock JobSensei to use BYOK</div>
-                    <p className="text-slate-300 text-xs leading-relaxed mb-3">
-                      Personal API keys are still a premium app mode. Activate your access code above first, then this setup opens.
-                    </p>
-                    <button
-                      onClick={() => {
-                        document.querySelector('input[placeholder="Enter your access code or email..."]')?.focus()
-                      }}
-                      className="btn-secondary text-xs"
-                    >
-                      <Coffee size={13} /> Enter access code
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                <DeepSeekGuide />
-                <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-3 py-3">
-                  <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Current BYOK status</div>
-                  <div className="text-white text-sm">
-                    {usingOwnKey ? `${currentProviderLabel} - ${form.model}` : 'No personal API key saved yet'}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-400 mb-1.5 block">Provider</label>
-                  <select className="input-field" value={form.provider} onChange={e => update('provider', e.target.value)}>
-                    {Object.entries(PROVIDER_CONFIGS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-400 mb-1.5 block">API Key</label>
-                  <div className="relative">
-                    <input
-                      className="input-field pr-10 font-mono text-xs"
-                      type={showKey ? 'text' : 'password'}
-                      placeholder="Enter your API key..."
-                      value={form.apiKey}
-                      onChange={e => update('apiKey', e.target.value)}
-                    />
-                    <button onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
-                      {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                  <p className="text-slate-600 text-xs mt-1">Stored locally on this device. Never sent to JobSensei.</p>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-400 mb-1.5 block">Model</label>
-                  <input
-                    className="input-field font-mono text-xs"
-                    placeholder="e.g. deepseek-v4-flash"
-                    value={form.model}
-                    onChange={e => update('model', e.target.value)}
-                  />
-                </div>
-                {form.provider === PROVIDERS.CUSTOM && (
-                  <div>
-                    <label className="text-sm text-slate-400 mb-1.5 block">Custom Base URL</label>
-                    <input
-                      className="input-field font-mono text-xs"
-                      placeholder="https://..."
-                      value={form.customBaseUrl}
-                      onChange={e => update('customBaseUrl', e.target.value)}
-                    />
-                  </div>
-                )}
-                <div className="bg-navy-900 rounded-xl p-3 text-xs text-slate-500 space-y-1">
-                  <div><span className="text-slate-400">DeepSeek:</span> deepseek-v4-flash / deepseek-v4-pro</div>
-                  <div><span className="text-slate-400">OpenAI:</span> gpt-5.4-mini / gpt-5.5</div>
-                  <div><span className="text-slate-400">Anthropic:</span> claude-sonnet-4-6 / claude-haiku-4-5-20251001</div>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={testConnection} disabled={!form.apiKey || testing} className="btn-secondary flex-1 justify-center">
-                    <Zap size={14} /> {testing ? 'Testing...' : 'Test'}
-                  </button>
-                  <button onClick={save} className={`btn-primary flex-1 justify-center ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-                    {saved ? <><Check size={14} /> Saved!</> : 'Save Config'}
-                  </button>
-                </div>
-                {testResult === 'success' && <p className="text-green-400 text-sm text-center">Connection successful.</p>}
-                {testResult === 'error' && <p className="text-red-400 text-sm text-center">Connection failed. Check the key and model name.</p>}
-                {testResult === 'locked' && <p className="text-yellow-400 text-sm text-center">Unlock JobSensei before using BYOK.</p>}
-
-                {bmacToken && apiKey && (
-                  <div className="pt-2 border-t border-navy-700">
-                    <button
-                      onClick={() => {
-                        restoreToProxy()
-                        setForm(f => ({
-                          ...f,
-                          apiKey: '',
-                          provider: PROVIDERS.DEEPSEEK,
-                          model: PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel,
-                          customBaseUrl: '',
-                        }))
-                      }}
-                      className="btn-ghost text-xs text-yellow-400 hover:text-yellow-300 w-full justify-center"
-                    >
-                      <Coffee size={13} /> Switch back to JobSensei AI
-                    </button>
-                    <p className="text-slate-600 text-xs text-center mt-1">Keeps your plan active and clears the personal API key from this device.</p>
-                  </div>
-                )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="card">
             <h3 className="font-display font-semibold text-white mb-3">{t('settings.profile')}</h3>
             {profile ? (
               <div className="space-y-1 text-sm mb-3">
@@ -508,34 +371,6 @@ export default function Settings() {
             </button>
           </div>
 
-          <div className="card border-teal-500/20">
-            <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-              <Puzzle size={16} className="text-teal-400" /> Chrome Extension
-            </h3>
-            <p className="text-slate-400 text-xs mb-3">
-              Capture job pages or selected JD text into your tracker.
-            </p>
-            <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3 space-y-1.5">
-              {[
-                'Download and unzip the package.',
-                'Open chrome://extensions and enable Developer mode.',
-                'Load unpacked and select the extension folder.',
-              ].map((step, i) => (
-                <div key={step} className="flex gap-2 text-xs text-slate-300">
-                  <span className="text-teal-400 font-mono">{i + 1}</span>
-                  <span>{step}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <a href="/jobsensei-capture-extension.zip" download className="btn-secondary text-xs">
-                <Download size={13} /> Download ZIP
-              </a>
-              <button disabled className="btn-ghost text-xs opacity-60 cursor-not-allowed">
-                <ExternalLink size={13} /> Chrome Store soon
-              </button>
-            </div>
-          </div>
         </div>
 
         <div className="space-y-4">
@@ -567,35 +402,157 @@ export default function Settings() {
             <p className="text-slate-600 text-xs mt-2">For visual design analysis, use the Visual Review tool inside the application workflow.</p>
           </div>
 
-          <div className="card">
-            <h3 className="font-display font-semibold text-white mb-3 flex items-center gap-2">
-              <FileText size={16} className="text-teal-400" /> {t('settings.projectData')}
-            </h3>
-            <div className="text-slate-400 text-xs mb-3">
-              Active project: <span className="text-white">{activeProject?.name || 'No project selected'}</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => activeProject && exportProject(activeProject.id)} className="btn-secondary text-xs">
-                <Download size={13} /> Export This
-              </button>
-              <button onClick={exportAll} className="btn-secondary text-xs">
-                <Download size={13} /> Export All
-              </button>
-              <button onClick={() => importRef.current?.click()} className="btn-secondary text-xs">
-                <Upload size={13} /> Import
-              </button>
-              <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImportProject} />
-            </div>
-            {importMsg && <p className="text-xs mt-2 text-slate-300">{importMsg}</p>}
-          </div>
-
           <div className="card border-red-500/20">
             <h3 className="font-display font-semibold text-white mb-1">Data Management</h3>
-            <p className="text-slate-400 text-xs mb-3">Local data controls for this device.</p>
+            <div className="space-y-2 text-slate-400 text-xs leading-relaxed mb-3">
+              <p>Your profile, projects, resume, notes, and tool history are stored locally in this browser on this device.</p>
+              <p>When you use AI features, JobSensei sends only the text needed for that request to your selected AI provider, either JobSensei-hosted AI or your own BYOK provider, so the model can generate a reply.</p>
+              <p>Your full workspace is not public inside the app, but any text you send into an AI request is processed by that provider under its own policies and your account setup.</p>
+              <p>You can wipe everything saved on this device any time with Clear All Data.</p>
+            </div>
             <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm">
               <Trash2 size={14} /> Clear All Data
             </button>
           </div>
+        </div>
+      </div>
+
+      <div className="grid xl:grid-cols-2 gap-4 items-start">
+        <div className="card border-teal-500/20">
+          <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+            <Puzzle size={16} className="text-teal-400" /> Chrome Extension
+          </h3>
+          <p className="text-slate-400 text-xs mb-3">
+            Capture job pages or selected JD text into your tracker.
+          </p>
+          <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3 space-y-1.5">
+            {[
+              'Download and unzip the package.',
+              'Open chrome://extensions and enable Developer mode.',
+              'Load unpacked and select the extension folder.',
+            ].map((step, i) => (
+              <div key={step} className="flex gap-2 text-xs text-slate-300">
+                <span className="text-teal-400 font-mono">{i + 1}</span>
+                <span>{step}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a href="/jobsensei-capture-extension.zip" download className="btn-secondary text-xs">
+              <Download size={13} /> Download ZIP
+            </a>
+            <button disabled className="btn-ghost text-xs opacity-60 cursor-not-allowed">
+              <ExternalLink size={13} /> Chrome Store soon
+            </button>
+          </div>
+        </div>
+
+        <div className="card">
+          <button
+            onClick={() => hasPlanAccess && setShowOwnKey(o => !o)}
+            className="w-full flex items-center justify-between gap-3"
+          >
+            <span className="font-display font-semibold text-white text-sm flex items-center gap-2">
+              <Zap size={15} className="text-teal-400" /> Bring your own API key
+            </span>
+            {hasPlanAccess && (showOwnKey ? <ChevronUp size={15} className="text-slate-400" /> : <ChevronDown size={15} className="text-slate-400" />)}
+          </button>
+
+          <p className="text-slate-400 text-xs mt-2">
+            {hasPlanAccess
+              ? 'Use your own OpenAI, DeepSeek, Anthropic, or compatible endpoint instead of JobSensei-hosted AI.'
+              : 'BYOK becomes available after JobSensei AI is activated.'}
+          </p>
+
+          {hasPlanAccess && showOwnKey && (
+            <div className="mt-4 space-y-3">
+              <DeepSeekGuide />
+              <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-3 py-3">
+                <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Current BYOK status</div>
+                <div className="text-white text-sm">
+                  {usingOwnKey ? `${currentProviderLabel} - ${form.model}` : 'No personal API key saved yet'}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm text-slate-400 mb-1.5 block">Provider</label>
+                <select className="input-field" value={form.provider} onChange={e => update('provider', e.target.value)}>
+                  {Object.entries(PROVIDER_CONFIGS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-slate-400 mb-1.5 block">API Key</label>
+                <div className="relative">
+                  <input
+                    className="input-field pr-10 font-mono text-xs"
+                    type={showKey ? 'text' : 'password'}
+                    placeholder="Enter your API key..."
+                    value={form.apiKey}
+                    onChange={e => update('apiKey', e.target.value)}
+                  />
+                  <button onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                    {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+                <p className="text-slate-600 text-xs mt-1">Stored locally on this device. Never sent to JobSensei.</p>
+              </div>
+              <div>
+                <label className="text-sm text-slate-400 mb-1.5 block">Model</label>
+                <input
+                  className="input-field font-mono text-xs"
+                  placeholder="e.g. deepseek-v4-flash"
+                  value={form.model}
+                  onChange={e => update('model', e.target.value)}
+                />
+              </div>
+              {form.provider === PROVIDERS.CUSTOM && (
+                <div>
+                  <label className="text-sm text-slate-400 mb-1.5 block">Custom Base URL</label>
+                  <input
+                    className="input-field font-mono text-xs"
+                    placeholder="https://..."
+                    value={form.customBaseUrl}
+                    onChange={e => update('customBaseUrl', e.target.value)}
+                  />
+                </div>
+              )}
+              <div className="bg-navy-900 rounded-xl p-3 text-xs text-slate-500 space-y-1">
+                <div><span className="text-slate-400">DeepSeek:</span> deepseek-v4-flash / deepseek-v4-pro</div>
+                <div><span className="text-slate-400">OpenAI:</span> gpt-5.4-mini / gpt-5.5</div>
+                <div><span className="text-slate-400">Anthropic:</span> claude-sonnet-4-6 / claude-haiku-4-5-20251001</div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={testConnection} disabled={!form.apiKey || testing} className="btn-secondary flex-1 justify-center">
+                  <Zap size={14} /> {testing ? 'Testing...' : 'Test'}
+                </button>
+                <button onClick={save} className={`btn-primary flex-1 justify-center ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
+                  {saved ? <><Check size={14} /> Saved!</> : 'Save Config'}
+                </button>
+              </div>
+              {testResult === 'success' && <p className="text-green-400 text-sm text-center">Connection successful.</p>}
+              {testResult === 'error' && <p className="text-red-400 text-sm text-center">Connection failed. Check the key and model name.</p>}
+
+              {bmacToken && apiKey && (
+                <div className="pt-2 border-t border-navy-700">
+                  <button
+                    onClick={() => {
+                      restoreToProxy()
+                      setForm(f => ({
+                        ...f,
+                        apiKey: '',
+                        provider: PROVIDERS.DEEPSEEK,
+                        model: PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel,
+                        customBaseUrl: '',
+                      }))
+                    }}
+                    className="btn-ghost text-xs text-yellow-400 hover:text-yellow-300 w-full justify-center"
+                  >
+                    <Coffee size={13} /> Switch back to JobSensei AI
+                  </button>
+                  <p className="text-slate-600 text-xs text-center mt-1">Keeps your plan active and clears the personal API key from this device.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

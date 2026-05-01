@@ -183,16 +183,22 @@ export default function BottomNav() {
             )}
 
             {/* Import / Export */}
-            <div className="flex gap-2 pt-1">
+            <div className="grid grid-cols-3 gap-2 pt-1">
               <button
                 onClick={exportAll}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-navy-700/50 text-slate-400 hover:text-white text-xs transition-all"
+                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-navy-700/50 text-slate-400 hover:text-white text-xs transition-all"
               >
                 <FolderArchive size={13} /> {t('projects.exportAll')}
               </button>
               <button
+                onClick={() => activeProject && exportProject(activeProject.id)}
+                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-navy-700/50 text-slate-400 hover:text-white text-xs transition-all"
+              >
+                <Download size={13} /> {t('projects.exportCurrentProject')}
+              </button>
+              <button
                 onClick={() => fileRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-navy-700/50 text-slate-400 hover:text-white text-xs transition-all"
+                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-navy-700/50 text-slate-400 hover:text-white text-xs transition-all"
               >
                 <Upload size={13} /> {importing ? t('projects.importingShort') : t('projects.import')}
               </button>
