@@ -38,7 +38,7 @@ const SECTION_TITLES = {
 const SECTION_HELP = {
   today: {
     title: 'Today',
-    desc: 'Your daily command center. Pick one active application and JobSensei shows the next useful move instead of making you hunt through tools.',
+    desc: 'Your daily command center. Pick one active application and JobSensei shows the next useful move.',
     tips: [],
   },
   applications: {
@@ -89,7 +89,7 @@ const SECTION_HELP = {
   settings: {
     title: 'Settings',
     desc: 'Unlock JobSensei, choose hosted AI or BYOK, save your resume, and back up project data.',
-    tips: ['BYOK still requires an active JobSensei unlock', 'Save your resume once per project to prefill tools', 'Export backups before switching machines'],
+    tips: [],
   },
 }
 
@@ -101,7 +101,7 @@ const GUIDE_DETAILS = {
   learning: ['Build own topics for the skills the target role expects.', `${SAVE_LAST_RESPONSE_LABEL} stores useful tutor replies in Learning Notes`, 'Click Quiz for a 6-question test on that topic and chat history.', 'Due reviews appear at the top — don\'t skip them!'],
   tools: ['Gap Analysis scores fit against the JD and calls out missing skills.', 'Resume Checker reads the resume through ATS and recruiter lenses.', 'Cover Letter Optimizer creates role-specific versions.', 'LinkedIn Auditor finds profile gaps and quick wins.', 'Visual Design Review checks layout from a screenshot.', 'Transferable Skills Coach reframes experience for a new role.'],
   tracker: ['Use Add for a new role or the browser extension to capture a JD.', 'Open Workspace to work inside one application.', 'Use the Offers tab after a role reaches Offer stage.'],
-  settings: ['Connect AI first if tools are locked.', 'Save your resume here so Resume Checker, Cover Letter, and prep tools can reuse it.', 'Export project backups before changing devices or browsers.'],
+  settings: ['Connect AI first if tools are locked.', 'Save your resume here so Resume Checker, Cover Letter, and prep tools can reuse it.', 'Export project backups before changing devices or browsers.', 'BYOK still requires an active JobSensei unlock'],
 }
 
 function TopBarLanguageSelect({ compact = false, onChangeComplete = null }) {
@@ -571,7 +571,7 @@ export default function TopBar() {
           <div className="guide-start-card rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3">
             <div className="text-white text-xs font-display font-semibold mb-2">Get started</div>
             <p className="text-slate-400 text-xs leading-relaxed mb-3">
-              Follow the highlighted path once: add an application, open its workspace, then build Learning topics from the role requirements.
+              Get started ..
             </p>
             <button onClick={startGuidedTour} className="btn-primary text-xs w-full justify-center">
               Start guided tour
@@ -589,7 +589,7 @@ export default function TopBar() {
               <div className="text-slate-300 text-xs font-display font-semibold mb-2">How this page works</div>
               <div className="space-y-1">
                 {helpDetails.map((detail, i) => (
-                  <p key={i} className="text-slate-400 text-xs leading-relaxed">- {detail}</p>
+                  <p key={i} className="text-slate-400 text-xs leading-relaxed">- {renderGuideTip(detail)}</p>
                 ))}
               </div>
             </div>
