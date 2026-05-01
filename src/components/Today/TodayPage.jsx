@@ -331,7 +331,7 @@ export default function TodayPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className={`section-title dashboard-greeting ${drillMode ? 'drill' : 'sensei'}`}>
-            {t('today.hello', { name: profile?.name || 'there' })} <span className="dashboard-greeting-hand" aria-hidden="true">🤝</span>
+            {t('today.hello', { name: profile?.name || t('today.helloFallbackName') })} <span className="dashboard-greeting-hand" aria-hidden="true">🤝</span>
           </h2>
           <p className="section-sub">{t('today.subtitle')}</p>
         </div>
@@ -355,7 +355,7 @@ export default function TodayPage() {
                   {stageLabel(focusApplication.stage)}
                 </span>
                 <span className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
-                  {completedFocusSteps}/6 steps complete
+                  {t('today.progress.stepsComplete', { count: completedFocusSteps, total: 6 })}
                 </span>
                 {!activeApplication && suggestedFocus && (
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
