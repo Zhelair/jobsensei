@@ -402,7 +402,8 @@ export default function Settings() {
               'Your profile, projects, resume, notes, and tool history stay only in this browser on this device.',
               'AI requests send only the text needed for that task to your selected provider, either JobSensei-hosted AI or your own BYOK provider.',
               'The secure account rollout is being designed around up to 2 approved devices per account.',
-              'Your full workspace stays local, but anything you send in an AI request is processed by that provider under its own policies. You can erase everything saved here any time with Clear All Data.',
+              'Your full workspace stays local, but anything you send in an AI request is processed by that provider under its own policies.',
+              'You can erase everything saved here any time with Clear All Data.',
             ].map(line => (
               <p key={line} className="flex items-start gap-2">
                 <span className="text-slate-500">-</span>
