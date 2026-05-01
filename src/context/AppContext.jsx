@@ -151,9 +151,10 @@ export function AppProvider({ children }) {
   }
 
   function launchTool(section, toolId) {
-    setPendingToolRequest({ section, toolId, requestedAt: Date.now() })
+    const requestedAt = Date.now()
+    setPendingToolRequest({ section, toolId, requestedAt })
     setNavKey(prev => prev + 1)
-    setActiveSection(section)
+    setActiveSection(section, { toolId, requestedAt })
   }
 
   function clearPendingToolRequest() {

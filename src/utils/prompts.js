@@ -10,12 +10,11 @@ const LANGUAGE_NAMES = {
   ru: 'Russian',
   bg: 'Bulgarian',
   'es-ES': 'Spanish',
-  'es-US': 'Spanish',
   fr: 'French',
   it: 'Italian',
   pl: 'Polish',
-  'pt-BR': 'Brazilian Portuguese',
-  pt: 'Brazilian Portuguese',
+  'pt-PT': 'European Portuguese',
+  pt: 'European Portuguese',
   de: 'German',
 }
 

@@ -58,6 +58,14 @@ function ApplicationRequiredGate({ sectionLabel }) {
   )
 }
 
+function InterviewPrepSection() {
+  return <Tools mode="interview-prep" />
+}
+
+function PrepToolsSection() {
+  return <Tools mode="prep-tools" />
+}
+
 function AppContent() {
   const { activeSection, showOnboarding, navKey } = useApp()
   const { getProjectData } = useProject()
@@ -67,9 +75,9 @@ function AppContent() {
     [SECTIONS.TODAY]: TodayPage,
     [SECTIONS.APPLICATIONS]: JobTracker,
     [SECTIONS.DASHBOARD]: Dashboard,
-    [SECTIONS.INTERVIEW]: () => <Tools mode="interview-prep" />,
+    [SECTIONS.INTERVIEW]: InterviewPrepSection,
     [SECTIONS.LEARNING]: LearningSection,
-    [SECTIONS.TOOLS]: () => <Tools mode="prep-tools" />,
+    [SECTIONS.TOOLS]: PrepToolsSection,
     [SECTIONS.TRACKER]: JobTracker,
     [SECTIONS.SETTINGS]: Settings,
   }
