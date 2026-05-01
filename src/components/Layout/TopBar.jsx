@@ -4,7 +4,7 @@ import { useAI } from '../../context/AIContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 import { useVisuals } from '../../context/VisualsContext'
 import { useLanguage } from '../../context/LanguageContext'
-import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal } from 'lucide-react'
+import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal, Languages } from 'lucide-react'
 import BrandMark from '../shared/BrandMark'
 
 const THEME_ICONS = {
@@ -109,6 +109,35 @@ const GUIDE_DETAILS = {
   tools: ['Gap Analysis scores fit against the JD and calls out missing skills.', 'Resume Checker reads the resume through ATS and recruiter lenses.', 'Cover Letter Optimizer creates role-specific versions.', 'LinkedIn Auditor finds profile gaps and quick wins.', 'Visual Design Review checks layout from a screenshot.', 'Transferable Skills Coach reframes experience for a new role.'],
   tracker: ['Use Add for a new role or the browser extension to capture a JD.', 'Open Workspace to work inside one application.', 'Use the Offers tab after a role reaches Offer stage.'],
   settings: ['Connect AI first if tools are locked.', 'Save your resume here so Resume Checker, Cover Letter, and prep tools can reuse it.', 'Export project backups before changing devices or browsers.'],
+}
+
+function TopBarLanguageSelect({ compact = false, onChangeComplete = null }) {
+  const { language, setLanguage, languages } = useLanguage()
+
+  return (
+    <label
+      className={`flex items-center gap-2 rounded-xl border border-navy-600 bg-navy-800/80 text-slate-300 transition-all hover:border-teal-500/40 hover:text-white ${
+        compact ? 'w-full px-3 py-2' : 'px-2.5 py-1.5'
+      }`}
+      title="Interface language"
+    >
+      <Languages size={compact ? 14 : 15} className="text-teal-400 flex-shrink-0" />
+      <select
+        className={`bg-transparent text-xs font-display font-semibold outline-none ${compact ? 'w-full' : 'w-[128px]'}`}
+        value={language}
+        onChange={e => {
+          setLanguage(e.target.value)
+          onChangeComplete?.()
+        }}
+      >
+        {languages.map(option => (
+          <option key={option.code} value={option.code} className="bg-navy-900 text-white">
+            {option.nativeLabel} - {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
 }
 
 const GUIDED_TOUR_STEPS = [
@@ -346,6 +375,10 @@ export default function TopBar() {
 
       {/* Right side */}
       <div className="flex items-center gap-1 sm:gap-2">
+        <div className="hidden sm:block">
+          <TopBarLanguageSelect />
+        </div>
+
         {/* Mobile: compact AI status dot — tap for details */}
         <button
           className="flex sm:hidden items-center gap-1 px-2 py-1 rounded-lg bg-navy-800 border border-navy-700"
@@ -470,7 +503,8 @@ export default function TopBar() {
             <>
               {/* Backdrop to close on outside tap */}
               <div className="fixed inset-0 z-40" onClick={() => setShowMore(false)} />
-              <div className="absolute right-0 top-full mt-1.5 bg-navy-800 border border-navy-700 rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-0.5 min-w-[160px]">
+              <div className="absolute right-0 top-full mt-1.5 bg-navy-800 border border-navy-700 rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-0.5 min-w-[190px]">
+                <TopBarLanguageSelect compact onChangeComplete={() => setShowMore(false)} />
                 <button
                   onClick={() => {
                     const next = !visualsEnabled

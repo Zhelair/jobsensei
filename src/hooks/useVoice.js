@@ -6,7 +6,7 @@ function getBestVoice(preferredVoice, speechLang) {
   const voices = window.speechSynthesis?.getVoices() || []
   const preferred = [
     'Google UK English Female', 'Google US English',
-    'Samantha', 'Karen', 'Daniel', 'Moira', 'Google UK English Male',
+    'Microsoft Zira', 'Samantha', 'Karen', 'Moira', 'Tessa',
   ]
   for (const name of preferred) {
     const v = voices.find(v => v.name === name)

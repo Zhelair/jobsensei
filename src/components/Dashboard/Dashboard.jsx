@@ -21,7 +21,7 @@ function hasPrepNotes(noteData = {}) {
 }
 
 export default function Dashboard() {
-  const { setActiveSection, profile, stats } = useApp()
+  const { setActiveSection, launchTool, profile, stats } = useApp()
   const { callAI, isConnected } = useAI()
   const { language } = useLanguage()
   const {
@@ -180,7 +180,7 @@ export default function Dashboard() {
   ]
 
   const quickActions = [
-    { label: 'Start Mock Interview', icon: Mic, section: SECTIONS.INTERVIEW, color: 'teal' },
+    { label: 'Start Mock Interview', icon: Mic, section: SECTIONS.INTERVIEW, toolId: 'interview', color: 'teal' },
     { label: 'Analyze a JD', icon: Search, section: SECTIONS.TOOLS, color: 'indigo' },
     { label: 'Study a Topic', icon: BookOpen, section: SECTIONS.LEARNING, color: 'teal' },
     { label: 'Add Application', icon: Plus, section: SECTIONS.APPLICATIONS, color: 'indigo' },
@@ -387,10 +387,10 @@ export default function Dashboard() {
         <div className="card">
           <h3 className="font-display font-semibold text-white mb-3">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-2">
-            {quickActions.map(({ label, icon: Icon, section, color }) => (
+            {quickActions.map(({ label, icon: Icon, section, toolId, color }) => (
               <button
                 key={label}
-                onClick={() => setActiveSection(section)}
+                onClick={() => toolId ? launchTool(section, toolId) : setActiveSection(section)}
                 className={`flex flex-col items-start gap-2 p-3 rounded-xl border transition-all hover:scale-[1.02] text-left ${color === 'teal' ? 'bg-teal-500/5 border-teal-500/20 hover:bg-teal-500/10' : 'bg-indigo-500/5 border-indigo-500/20 hover:bg-indigo-500/10'}`}
               >
                 <Icon size={18} className={color === 'teal' ? 'text-teal-400' : 'text-indigo-400'} />

@@ -7,7 +7,7 @@ export const LANGUAGE_OPTIONS = [
     nativeLabel: 'English',
     speechLang: 'en-US',
     recognitionLang: 'en-US',
-    voiceSearch: ['Google US English', 'Google UK English Female', 'Google UK English Male', 'Samantha', 'Microsoft Zira'],
+    voiceSearch: ['Google UK English Female', 'Google US English', 'Microsoft Zira', 'Samantha', 'Karen', 'Moira', 'Tessa'],
   },
   {
     code: 'de',
@@ -15,7 +15,7 @@ export const LANGUAGE_OPTIONS = [
     nativeLabel: 'Deutsch',
     speechLang: 'de-DE',
     recognitionLang: 'de-DE',
-    voiceSearch: ['Google Deutsch'],
+    voiceSearch: ['Google Deutsch', 'Microsoft Katja', 'Anna'],
   },
   {
     code: 'bg',
@@ -23,7 +23,7 @@ export const LANGUAGE_OPTIONS = [
     nativeLabel: 'Български',
     speechLang: 'bg-BG',
     recognitionLang: 'bg-BG',
-    voiceSearch: ['Bulgarian', 'bg-BG'],
+    voiceSearch: ['Bulgarian', 'bg-BG', 'Daria'],
     voiceNote: 'Bulgarian browser voices са често липсващи. Ако браузърът няма BG voice, JobSensei ще използва fallback и може да звучи странно.',
   },
   {
@@ -32,7 +32,7 @@ export const LANGUAGE_OPTIONS = [
     nativeLabel: 'Русский',
     speechLang: 'ru-RU',
     recognitionLang: 'ru-RU',
-    voiceSearch: ['Google русский'],
+    voiceSearch: ['Google русский', 'Microsoft Irina', 'Milena'],
   },
   {
     code: 'es-ES',
@@ -41,16 +41,7 @@ export const LANGUAGE_OPTIONS = [
     speechLang: 'es-ES',
     recognitionLang: 'es-ES',
     dictionary: 'es',
-    voiceSearch: ['Google español'],
-  },
-  {
-    code: 'es-US',
-    label: 'Spanish (US / LatAm)',
-    nativeLabel: 'Español (EE. UU.)',
-    speechLang: 'es-US',
-    recognitionLang: 'es-US',
-    dictionary: 'es',
-    voiceSearch: ['Google español de Estados Unidos', 'Google español'],
+    voiceSearch: ['Google español', 'Microsoft Elvira', 'Monica'],
   },
   {
     code: 'fr',
@@ -58,7 +49,7 @@ export const LANGUAGE_OPTIONS = [
     nativeLabel: 'Français',
     speechLang: 'fr-FR',
     recognitionLang: 'fr-FR',
-    voiceSearch: ['Google français'],
+    voiceSearch: ['Google français', 'Microsoft Hortense', 'Amelie', 'Aurelie', 'Audrey'],
   },
   {
     code: 'it',
@@ -66,7 +57,7 @@ export const LANGUAGE_OPTIONS = [
     nativeLabel: 'Italiano',
     speechLang: 'it-IT',
     recognitionLang: 'it-IT',
-    voiceSearch: ['Google italiano'],
+    voiceSearch: ['Google italiano', 'Microsoft Elsa', 'Alice'],
   },
   {
     code: 'pl',
@@ -74,16 +65,16 @@ export const LANGUAGE_OPTIONS = [
     nativeLabel: 'Polski',
     speechLang: 'pl-PL',
     recognitionLang: 'pl-PL',
-    voiceSearch: ['Google polski'],
+    voiceSearch: ['Google polski', 'Microsoft Paulina', 'Zosia'],
   },
   {
-    code: 'pt-BR',
-    label: 'Portuguese (Brazil)',
-    nativeLabel: 'Português (Brasil)',
-    speechLang: 'pt-BR',
-    recognitionLang: 'pt-BR',
+    code: 'pt-PT',
+    label: 'Portuguese (Portugal)',
+    nativeLabel: 'Português (Portugal)',
+    speechLang: 'pt-PT',
+    recognitionLang: 'pt-PT',
     dictionary: 'pt',
-    voiceSearch: ['Google português do Brasil'],
+    voiceSearch: ['Google português de Portugal', 'Google português', 'Microsoft Helia', 'Joana', 'Ines'],
   },
 ]
 
@@ -467,6 +458,20 @@ const TRANSLATIONS = {
 
 const LanguageContext = createContext(null)
 const SUPPORTED_LANGUAGE_CODES = new Set(LANGUAGE_OPTIONS.map(option => option.code))
+const LEGACY_LANGUAGE_MAP = {
+  'es-US': 'es-ES',
+  'pt-BR': 'pt-PT',
+}
+const FEMALE_VOICE_HINTS = [
+  'female', 'woman', 'zira', 'samantha', 'karen', 'moira', 'tessa', 'victoria', 'fiona',
+  'serena', 'susan', 'joanna', 'jenny', 'aria', 'ana', 'maria', 'monica', 'elvira',
+  'hortense', 'amelie', 'aurelie', 'audrey', 'elsa', 'alice', 'paulina', 'zosia',
+  'helia', 'joana', 'ines', 'irina', 'milena', 'katja', 'anna', 'daria',
+]
+const MALE_VOICE_HINTS = [
+  'male', 'man', 'david', 'daniel', 'mark', 'george', 'jorge', 'diego', 'thomas',
+  'paul', 'yuri', 'fred', 'joris', 'stefan', 'pavel',
+]
 
 function dictionaryKey(option) {
   return option?.dictionary || option?.code || 'en'
@@ -486,14 +491,29 @@ export function findVoiceForLanguage(option, voices, preferredVoiceName = '') {
   const lang = option?.speechLang || 'en-US'
   const baseLang = lang.split('-')[0]
   const searchNames = option?.voiceSearch || []
-  for (const name of searchNames) {
-    const match = voices.find(voice => voice.name === name || voice.name.toLowerCase().includes(name.toLowerCase()))
-    if (match) return match
+
+  const nameIncludes = (voice, hint) => voice.name?.toLowerCase().includes(hint.toLowerCase())
+  const hasFemaleHint = voice => FEMALE_VOICE_HINTS.some(hint => nameIncludes(voice, hint))
+  const hasMaleHint = voice => MALE_VOICE_HINTS.some(hint => nameIncludes(voice, hint))
+  const pickBest = (pool) => {
+    if (!pool.length) return null
+    for (const name of searchNames) {
+      const match = pool.find(voice => voice.name === name || nameIncludes(voice, name))
+      if (match) return match
+    }
+    return pool.find(hasFemaleHint)
+      || pool.find(voice => !hasMaleHint(voice))
+      || pool[0]
   }
-  return voices.find(voice => voice.lang === lang)
-    || voices.find(voice => voice.lang?.toLowerCase().startsWith(`${baseLang}-`))
-    || voices.find(voice => voice.lang?.startsWith('en'))
-    || voices[0]
+
+  const exactLang = voices.filter(voice => voice.lang === lang)
+  const relatedLang = voices.filter(voice => voice.lang?.toLowerCase().startsWith(`${baseLang}-`))
+  const englishFallback = voices.filter(voice => voice.lang?.startsWith('en'))
+
+  return pickBest(exactLang)
+    || pickBest(relatedLang)
+    || pickBest(englishFallback)
+    || pickBest(voices)
 }
 
 function getVoiceSupport(option, voice, voices) {
@@ -507,9 +527,10 @@ function getVoiceSupport(option, voice, voices) {
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(() => {
     const saved = localStorage.getItem('js_language')
+    if (LEGACY_LANGUAGE_MAP[saved]) return LEGACY_LANGUAGE_MAP[saved]
     return SUPPORTED_LANGUAGE_CODES.has(saved) ? saved : 'en'
   })
-  const [voiceName, setVoiceNameState] = useState(() => localStorage.getItem('js_voice_name') || '')
+  const [voiceName, setVoiceNameState] = useState('')
   const [voices, setVoices] = useState([])
 
   useEffect(() => {
@@ -524,13 +545,14 @@ export function LanguageProvider({ children }) {
   const languageOption = LANGUAGE_OPTIONS.find(option => option.code === language) || LANGUAGE_OPTIONS[0]
   const dictKey = dictionaryKey(languageOption)
   const activeVoice = useMemo(
-    () => findVoiceForLanguage(languageOption, voices, voiceName),
-    [languageOption, voices, voiceName],
+    () => findVoiceForLanguage(languageOption, voices),
+    [languageOption, voices],
   )
   const voiceSupport = getVoiceSupport(languageOption, activeVoice, voices)
 
   useEffect(() => {
     document.documentElement.lang = languageOption.speechLang || languageOption.code || 'en'
+    localStorage.removeItem('js_voice_name')
   }, [languageOption])
 
   const t = (key, vars) => {

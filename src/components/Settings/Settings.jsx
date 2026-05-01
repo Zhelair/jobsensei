@@ -19,7 +19,7 @@ export default function Settings() {
   const { activeProject, getProjectData, updateProjectData, exportProject, exportAll, importProjects } = useProject()
   const {
     t, language, setLanguage, languageOption, languages,
-    voices, voiceName, setVoiceName, activeVoice, voiceSupport,
+    activeVoice, voiceSupport,
   } = useLanguage()
 
   const [form, setForm] = useState({ provider, model, apiKey, customBaseUrl: customBaseUrl || '' })
@@ -185,11 +185,10 @@ export default function Settings() {
       ru: 'Здравствуйте, я JobSensei. Это выбранный голос браузера.',
       de: 'Guten Tag, ich bin JobSensei. Dies ist die ausgewählte Browser-Stimme.',
       'es-ES': 'Hola, soy JobSensei. Esta es la voz seleccionada del navegador.',
-      'es-US': 'Hola, soy JobSensei. Esta es la voz seleccionada del navegador.',
       fr: 'Bonjour, je suis JobSensei. Voici la voix de navigateur sélectionnée.',
       it: 'Buongiorno, sono JobSensei. Questa è la voce del browser selezionata.',
       pl: 'Dzień dobry, tu JobSensei. To jest wybrany głos przeglądarki.',
-      'pt-BR': 'Olá, eu sou o JobSensei. Esta é a voz selecionada do navegador.',
+      'pt-PT': 'Olá, eu sou o JobSensei. Esta é a voz selecionada do navegador.',
     }
     const utterance = new SpeechSynthesisUtterance(previewSamples[language] || 'Hello, I am JobSensei. This is the selected browser voice.')
     utterance.lang = languageOption.speechLang
@@ -264,14 +263,12 @@ export default function Settings() {
           </div>
           <div>
             <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.voice')}</label>
-            <select className="input-field" value={voiceName} onChange={e => setVoiceName(e.target.value)}>
-              <option value="">{t('settings.voiceAuto')}</option>
-              {voices.map(voice => (
-                <option key={voice.voiceURI || voice.name} value={voice.name}>
-                  {voice.name} ({voice.lang})
-                </option>
-              ))}
-            </select>
+            <div className="input-field flex min-h-[46px] items-center justify-between gap-3">
+              <span className="truncate">{t('settings.voiceAuto')}</span>
+              <span className="text-xs text-slate-500 flex-shrink-0">
+                {activeVoice ? activeVoice.lang : 'Auto'}
+              </span>
+            </div>
           </div>
         </div>
 
