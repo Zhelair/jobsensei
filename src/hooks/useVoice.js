@@ -1,9 +1,15 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useLanguage } from '../context/LanguageContext'
 
+function normalizeVoiceLang(lang = '') {
+  return String(lang || '').replace(/_/g, '-').toLowerCase()
+}
+
 function getBestVoice(preferredVoice, speechLang) {
   if (preferredVoice) return preferredVoice
   const voices = window.speechSynthesis?.getVoices() || []
+  const normalizedSpeechLang = normalizeVoiceLang(speechLang)
+  const baseSpeechLang = normalizedSpeechLang.split('-')[0]
   const preferred = [
     'Google UK English Female', 'Google US English',
     'Microsoft Zira', 'Samantha', 'Karen', 'Moira', 'Tessa',
@@ -12,9 +18,12 @@ function getBestVoice(preferredVoice, speechLang) {
     const v = voices.find(v => v.name === name)
     if (v) return v
   }
-  return voices.find(v => v.lang === speechLang)
-    || voices.find(v => v.lang?.startsWith(speechLang?.split('-')[0]))
-    || voices.find(v => v.lang?.startsWith('en'))
+  return voices.find(v => normalizeVoiceLang(v.lang) === normalizedSpeechLang)
+    || voices.find((v) => {
+      const voiceLang = normalizeVoiceLang(v.lang)
+      return voiceLang === baseSpeechLang || voiceLang.startsWith(`${baseSpeechLang}-`)
+    })
+    || voices.find(v => normalizeVoiceLang(v.lang).startsWith('en'))
     || voices[0]
     || null
 }
