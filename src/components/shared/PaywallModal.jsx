@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { useAI } from '../../context/AIContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { Coffee, X, Check, ExternalLink } from 'lucide-react'
 
 const BMAC_URL = 'https://buymeacoffee.com/niksales73l/e/515014'
 
 export default function PaywallModal() {
   const { showPaywall, closePaywall, verifyBmac } = useAI()
+  const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -15,11 +17,16 @@ export default function PaywallModal() {
 
   async function handleVerify() {
     if (!email.trim()) return
-    setLoading(true); setError('')
+    setLoading(true)
+    setError('')
     try {
       await verifyBmac(email.trim())
       setDone(true)
-      setTimeout(() => { closePaywall(); setDone(false); setEmail('') }, 1500)
+      setTimeout(() => {
+        closePaywall()
+        setDone(false)
+        setEmail('')
+      }, 1500)
     } catch (e) {
       setError(e.message)
     }
@@ -29,7 +36,6 @@ export default function PaywallModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in">
       <div className="relative w-full max-w-sm bg-navy-800 border border-white/10 rounded-2xl shadow-2xl p-6">
-        {/* Close */}
         <button
           onClick={closePaywall}
           className="absolute top-4 right-4 text-slate-500 hover:text-slate-300 transition-colors"
@@ -37,18 +43,14 @@ export default function PaywallModal() {
           <X size={18} />
         </button>
 
-        {/* Header */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-500/30 to-yellow-600/10 border border-yellow-500/20 flex items-center justify-center mb-3">
             <Coffee size={28} className="text-yellow-400" />
           </div>
-          <h2 className="font-display font-bold text-white text-xl mb-1">Unlock JobSensei</h2>
-          <p className="text-slate-400 text-sm leading-relaxed">
-            Support JobSensei to use hosted AI or connect your own API key.
-          </p>
+          <h2 className="font-display font-bold text-white text-xl mb-1">{t('paywall.title')}</h2>
+          <p className="text-slate-400 text-sm leading-relaxed">{t('paywall.copy')}</p>
         </div>
 
-        {/* Primary CTA */}
         <a
           href={BMAC_URL}
           target="_blank"
@@ -56,54 +58,50 @@ export default function PaywallModal() {
           className="btn-primary w-full justify-center mb-4 bg-yellow-500 hover:bg-yellow-400 text-black border-0"
         >
           <Coffee size={16} />
-          Support on Buy Me a Coffee
+          {t('paywall.cta')}
           <ExternalLink size={13} className="opacity-60" />
         </a>
 
-        {/* Divider */}
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-white/10" />
-          <span className="text-slate-500 text-xs">Already a supporter?</span>
+          <span className="text-slate-500 text-xs">{t('paywall.alreadySupporter')}</span>
           <div className="flex-1 h-px bg-white/10" />
         </div>
 
-        {/* Verify existing membership */}
         {done ? (
           <div className="flex items-center justify-center gap-2 text-green-400 py-2">
-            <Check size={16} /> Access activated!
+            <Check size={16} /> {t('paywall.activated')}
           </div>
         ) : (
           <div className="space-y-2">
             <input
               className="input-field text-sm w-full"
               type="text"
-              placeholder="Enter your access code..."
+              placeholder={t('paywall.codePlaceholder')}
               value={email}
               onChange={e => { setEmail(e.target.value); setError('') }}
               onKeyDown={e => e.key === 'Enter' && handleVerify()}
             />
-            <p className="text-slate-600 text-xs">You'll receive a code after supporting.</p>
+            <p className="text-slate-600 text-xs">{t('paywall.codeHint')}</p>
             <button
               onClick={handleVerify}
               disabled={!email.trim() || loading}
               className="btn-secondary w-full justify-center"
             >
               <Coffee size={14} />
-              {loading ? 'Verifying...' : 'Activate Access'}
+              {loading ? t('paywall.verifying') : t('paywall.activate')}
             </button>
             {error && <p className="text-red-400 text-xs text-center">{error}</p>}
           </div>
         )}
 
-        {/* Fallback link to Settings */}
         <p className="text-slate-600 text-xs text-center mt-4">
-          Have your own API key?{' '}
+          {t('paywall.byokPrefix')}{' '}
           <button
             onClick={closePaywall}
             className="text-teal-400 hover:underline"
-            // Settings is always accessible — user can navigate there after closing
           >
-            Unlock first, then add it in Settings
+            {t('paywall.byokLink')}
           </button>
         </p>
       </div>

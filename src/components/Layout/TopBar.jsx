@@ -22,17 +22,17 @@ const THEME_LABELS = {
 const SAVE_LAST_RESPONSE_KEY = 'guide.learning.saveLastResponseLabel'
 
 const SECTION_TITLES = {
-  today: 'Today',
-  applications: 'Applications',
-  dashboard: 'Dashboard',
-  interview: 'Interview Prep',
-  gap: 'Gap Analysis',
-  learning: 'Learning',
-  star: 'STAR Builder',
-  tools: 'Prep Tools',
-  tracker: 'Applications',
-  notes: 'Notes & Workbook',
-  settings: 'Settings',
+  today: 'nav.today',
+  applications: 'nav.applications',
+  dashboard: 'guide.dashboard.title',
+  interview: 'guide.interview.title',
+  gap: 'guide.gap.title',
+  learning: 'nav.learning',
+  star: 'guide.star.title',
+  tools: 'guide.tools.title',
+  tracker: 'nav.applications',
+  notes: 'guide.notes.title',
+  settings: 'nav.settings',
 }
 
 const SECTION_HELP = {
@@ -105,7 +105,7 @@ const GUIDE_DETAILS = {
 }
 
 function TopBarLanguageSelect({ compact = false, onChangeComplete = null }) {
-  const { language, setLanguage, languages } = useLanguage()
+  const { language, setLanguage, languages, t } = useLanguage()
   const selectedLanguage = languages.find(option => option.code === language) || languages[0]
 
   return (
@@ -113,7 +113,7 @@ function TopBarLanguageSelect({ compact = false, onChangeComplete = null }) {
       className={`language-select-shell relative flex items-center gap-2 rounded-xl border border-navy-600 bg-navy-800/80 text-slate-300 transition-all hover:border-teal-500/40 hover:text-white ${
         compact ? 'w-full px-3 py-2' : 'w-fit px-2.5 py-1.5'
       }`}
-      title="Interface language"
+      title={t('settings.interfaceLanguage')}
     >
       <Languages size={compact ? 14 : 15} className="text-teal-400 flex-shrink-0" />
       <span className="text-xs font-display font-semibold whitespace-nowrap pr-4">
@@ -121,7 +121,7 @@ function TopBarLanguageSelect({ compact = false, onChangeComplete = null }) {
       </span>
       <ChevronDown size={13} className="absolute right-2 text-current opacity-80 pointer-events-none" />
       <select
-        aria-label="Interface language"
+        aria-label={t('settings.interfaceLanguage')}
         className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         value={language}
         onChange={e => {
@@ -311,6 +311,7 @@ export default function TopBar() {
   }, [])
 
   const THEME_ORDER = [THEMES.DARK, THEMES.DAYLIGHT, THEMES.MYSPACE]
+  const currentThemeLabel = THEME_LABELS[theme]
   const nextThemeLabel = THEME_LABELS[THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length]]
 
   const help = SECTION_HELP[activeSection]
@@ -326,7 +327,7 @@ export default function TopBar() {
         ? t('nav.learning')
         : activeSection === SECTIONS.SETTINGS
           ? t('nav.settings')
-          : SECTION_TITLES[activeSection] || ''
+          : t(SECTION_TITLES[activeSection] || '') || ''
 
   useEffect(() => {
     if (showOnboarding || guideSeen || !help) return
@@ -381,7 +382,7 @@ export default function TopBar() {
         <BrandMark className="w-8 h-8" />
         <div className="flex flex-col gap-0.5">
           <span className="font-display font-bold text-white text-base leading-tight tracking-tight">JobSensei</span>
-          <span className="logo-mantra text-xs leading-tight">Be confident. Get hired.</span>
+          <span className="logo-mantra text-xs leading-tight">{t('brand.tagline')}</span>
         </div>
       </div>
 
