@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useProject } from '../../context/ProjectContext'
 import { FolderOpen, Plus, ChevronDown, Download, Upload, Trash2, Edit3, Check, X, FolderArchive } from 'lucide-react'
 
@@ -12,6 +12,12 @@ export default function ProjectSwitcher({ collapsed }) {
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
   const fileRef = useRef(null)
+
+  useEffect(() => {
+    const openProjectMenu = () => setOpen(true)
+    window.addEventListener('jobsensei:open-project-menu', openProjectMenu)
+    return () => window.removeEventListener('jobsensei:open-project-menu', openProjectMenu)
+  }, [])
 
   function handleCreate() {
     if (!newName.trim()) return
@@ -49,7 +55,7 @@ export default function ProjectSwitcher({ collapsed }) {
   }
 
   if (collapsed) return (
-    <button onClick={() => setOpen(!open)} className="nav-item w-full justify-center px-0" title={activeProject?.name || 'Projects'}>
+    <button onClick={() => setOpen(!open)} data-guide="project-switcher" className="nav-item w-full justify-center px-0" title={activeProject?.name || 'Projects'}>
       <FolderOpen size={18} className="text-teal-400" />
     </button>
   )
@@ -59,6 +65,7 @@ export default function ProjectSwitcher({ collapsed }) {
       {/* Active project button */}
       <button
         onClick={() => setOpen(!open)}
+        data-guide="project-switcher"
         className="flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-teal-500/10 border border-teal-500/20 hover:bg-teal-500/15 transition-all"
       >
         <FolderOpen size={14} className="text-teal-400 flex-shrink-0" />
@@ -121,7 +128,7 @@ export default function ProjectSwitcher({ collapsed }) {
                 <button onClick={() => setCreating(false)} className="text-slate-500 px-1"><X size={14} /></button>
               </div>
             ) : (
-              <button onClick={() => setCreating(true)} className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all">
+              <button onClick={() => setCreating(true)} data-guide="project-new" className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all">
                 <Plus size={13} /> New Project
               </button>
             )}

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
@@ -30,6 +30,12 @@ export default function BottomNav() {
   const [importMsg, setImportMsg] = useState('')
   const [importing, setImporting] = useState(false)
   const fileRef = useRef(null)
+
+  useEffect(() => {
+    const openProjectMenu = () => setShowProjects(true)
+    window.addEventListener('jobsensei:open-project-menu', openProjectMenu)
+    return () => window.removeEventListener('jobsensei:open-project-menu', openProjectMenu)
+  }, [])
 
   function isNavActive(id) {
     if (id === SECTIONS.APPLICATIONS) {
@@ -169,6 +175,7 @@ export default function BottomNav() {
             ) : (
               <button
                 onClick={() => setCreating(true)}
+                data-guide="project-new"
                 className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-navy-700 text-sm transition-all"
               >
                 <Plus size={14} /> New Project
