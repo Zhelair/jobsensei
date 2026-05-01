@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useProject } from '../../context/ProjectContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { FolderOpen, Plus, ChevronDown, Download, Upload, Trash2, Edit3, Check, X, FolderArchive } from 'lucide-react'
 
 export default function ProjectSwitcher({ collapsed }) {
   const { projects, activeProject, switchProject, createProject, deleteProject, renameProject, exportProject, exportAll, importProjects } = useProject()
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
@@ -43,10 +45,10 @@ export default function ProjectSwitcher({ collapsed }) {
     setImporting(true)
     try {
       const count = await importProjects(file)
-      setImportMsg(`✅ Imported ${count} project${count > 1 ? 's' : ''}`)
+      setImportMsg(count === 1 ? t('projects.importedOne') : t('projects.importedMany', { count }))
       setTimeout(() => setImportMsg(''), 3000)
     } catch {
-      setImportMsg('❌ Invalid file')
+      setImportMsg(t('projects.invalidFile'))
       setTimeout(() => setImportMsg(''), 3000)
     }
     setImporting(false)
@@ -55,7 +57,7 @@ export default function ProjectSwitcher({ collapsed }) {
   }
 
   if (collapsed) return (
-    <button onClick={() => setOpen(!open)} data-guide="project-switcher" className="nav-item w-full justify-center px-0" title={activeProject?.name || 'Projects'}>
+    <button onClick={() => setOpen(!open)} data-guide="project-switcher" className="nav-item w-full justify-center px-0" title={activeProject?.name || t('projects.title')}>
       <FolderOpen size={18} className="text-teal-400" />
     </button>
   )
@@ -70,7 +72,7 @@ export default function ProjectSwitcher({ collapsed }) {
       >
         <FolderOpen size={14} className="text-teal-400 flex-shrink-0" />
         <span className="text-teal-300 text-xs font-body font-medium truncate flex-1 text-left">
-          {activeProject?.name || 'No project'}
+          {activeProject?.name || t('projects.noProject')}
         </span>
         <ChevronDown size={12} className={`text-teal-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -103,7 +105,7 @@ export default function ProjectSwitcher({ collapsed }) {
                       <button onClick={() => startEdit(p)} className="text-slate-500 hover:text-slate-300 p-0.5"><Edit3 size={11} /></button>
                       <button onClick={() => exportProject(p.id)} className="text-slate-500 hover:text-teal-400 p-0.5"><Download size={11} /></button>
                       {projects.length > 1 && (
-                        <button onClick={() => { if (confirm(`Delete "${p.name}"?`)) deleteProject(p.id) }} className="text-slate-500 hover:text-red-400 p-0.5"><Trash2 size={11} /></button>
+                        <button onClick={() => { if (confirm(t('projects.confirmDelete', { name: p.name }))) deleteProject(p.id) }} className="text-slate-500 hover:text-red-400 p-0.5"><Trash2 size={11} /></button>
                       )}
                     </div>
                   </>
@@ -118,7 +120,7 @@ export default function ProjectSwitcher({ collapsed }) {
               <div className="flex gap-1">
                 <input
                   className="flex-1 bg-navy-900 border border-navy-600 rounded-lg px-2 py-1 text-white text-xs focus:outline-none focus:border-teal-500"
-                  placeholder="Project name..."
+                  placeholder={t('projects.namePlaceholder')}
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setCreating(false) }}
@@ -129,16 +131,16 @@ export default function ProjectSwitcher({ collapsed }) {
               </div>
             ) : (
               <button onClick={() => setCreating(true)} data-guide="project-new" className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all">
-                <Plus size={13} /> New Project
+                <Plus size={13} /> {t('projects.new')}
               </button>
             )}
 
             <button onClick={exportAll} className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all">
-              <FolderArchive size={13} /> Export All Projects
+              <FolderArchive size={13} /> {t('projects.exportAllProjects')}
             </button>
 
             <button onClick={() => fileRef.current?.click()} className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all">
-              <Upload size={13} /> {importing ? 'Importing...' : 'Import Project'}
+              <Upload size={13} /> {importing ? t('projects.importing') : t('projects.importProject')}
             </button>
             <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
 
