@@ -506,31 +506,27 @@ export default function JobTracker() {
           </div>
 
           {newApp.company.trim() && (
-            <div className={`flex items-center justify-between gap-3 p-3 rounded-xl border mb-3 transition-all ${pendingResearch ? 'bg-teal-500/10 border-teal-500/30' : 'bg-indigo-500/5 border-indigo-500/25'}`}>
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${pendingResearch ? 'bg-teal-500/20' : 'bg-indigo-500/20'}`}>
-                  {pendingResearch ? <Check size={14} className="text-teal-400"/> : <Search size={14} className="text-indigo-400"/>}
+            <div className={`ai-research-card ${pendingResearch ? 'is-ready' : ''}`}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="ai-research-icon">
+                  {pendingResearch ? <Check size={18}/> : <Sparkles size={18}/>}
                 </div>
                 <div className="min-w-0">
                   {pendingResearch
                     ? <>
-                        <div className="text-teal-400 text-xs font-semibold">Research ready {pendingResearch._liveData ? '(live data)' : '(AI)'}</div>
-                        <div className="text-slate-500 text-xs">Wow facts, culture, and prep notes will be saved into Research.</div>
+                        <div className="ai-research-title">Research ready {pendingResearch._liveData ? '(live data)' : '(AI)'}</div>
+                        <div className="ai-research-copy">Wow facts, culture, and prep notes will be saved into Research.</div>
                       </>
                     : <>
-                        <div className="text-white text-xs font-semibold">Research <span className="text-indigo-300">{newApp.company}</span> with AI</div>
-                        <div className="text-slate-500 text-xs">Pull wow facts, news, culture, and prep notes before you create the workspace.</div>
+                        <div className="ai-research-title">Research <span>{newApp.company}</span> with AI</div>
+                        <div className="ai-research-copy">Pull wow facts, news, culture, and prep notes before you create the workspace.</div>
                       </>
                   }
                 </div>
               </div>
               <button onClick={researchForAdd} disabled={researchLoading || !isConnected}
-                className={`text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 flex-shrink-0 transition-all ${
-                  pendingResearch
-                    ? 'bg-teal-500/20 text-teal-300 hover:bg-teal-500/30'
-                    : 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-md shadow-indigo-500/25'
-                }`}>
-                <Search size={12}/> {researchLoading ? 'Researching...' : pendingResearch ? 'Re-run' : 'Research'}
+                className={`ai-research-button ${pendingResearch ? 'is-ready' : ''}`}>
+                <Search size={15}/> {researchLoading ? 'Researching...' : pendingResearch ? 'Re-run' : 'Research'}
               </button>
             </div>
           )}
