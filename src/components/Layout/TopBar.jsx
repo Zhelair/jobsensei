@@ -19,7 +19,7 @@ const THEME_LABELS = {
   [THEMES.MYSPACE]: 'Neon',
 }
 
-const SAVE_LAST_RESPONSE_LABEL = 'Save last response to Notes'
+const SAVE_LAST_RESPONSE_KEY = 'guide.learning.saveLastResponseLabel'
 
 const SECTION_TITLES = {
   today: 'Today',
@@ -37,71 +37,71 @@ const SECTION_TITLES = {
 
 const SECTION_HELP = {
   today: {
-    title: 'Today',
-    desc: 'Your daily command center. Pick one active application and JobSensei shows the next useful move.',
-    tips: [],
+    titleKey: 'guide.today.title',
+    descKey: 'guide.today.desc',
+    tipKeys: [],
   },
   applications: {
-    title: 'Applications',
-    desc: 'Your CRM for job hunting. Each role has its own workspace so research, JD text, notes, tools, and follow-up stay together.',
-    tips: [],
+    titleKey: 'guide.applications.title',
+    descKey: 'guide.applications.desc',
+    tipKeys: [],
   },
   dashboard: {
-    title: 'Dashboard',
-    desc: 'Your home base. See your stats, daily tips, and quick links to every tool.',
-    tips: ['Check your streak and interview count here', 'Quick-jump to any tool from the cards below'],
+    titleKey: 'guide.dashboard.title',
+    descKey: 'guide.dashboard.desc',
+    tipKeys: ['guide.dashboard.tip.streak', 'guide.dashboard.tip.quickJump'],
   },
   interview: {
-    title: 'Interview Prep',
-    desc: 'Practice interviews, predict likely questions, polish STAR stories, and tighten your follow-up.',
-    tips: ['Use the Interview Simulator for full mock sessions', 'Question Predictor and STAR Builder now live under this prep hub', 'Saved prep history still stays inside each tool'],
+    titleKey: 'guide.interview.title',
+    descKey: 'guide.interview.desc',
+    tipKeys: ['guide.interview.tip.simulator', 'guide.interview.tip.hub', 'guide.interview.tip.history'],
   },
   gap: {
-    title: 'Gap Analysis',
-    desc: 'Paste a job description + your background. AI identifies skill gaps and strengths.',
-    tips: ['Paste the full JD in the first box', 'Paste your CV/background in the second', 'Get a match score and action plan'],
+    titleKey: 'guide.gap.title',
+    descKey: 'guide.gap.desc',
+    tipKeys: ['guide.gap.tip.jd', 'guide.gap.tip.cv', 'guide.gap.tip.score'],
   },
   learning: {
-    title: 'Learning',
-    desc: 'Study topics with an AI tutor, then test yourself with quizzes. Spaced repetition keeps reviews smart.',
-    tips: [],
+    titleKey: 'guide.learning.title',
+    descKey: 'guide.learning.desc',
+    tipKeys: [],
   },
   star: {
-    title: 'STAR Builder',
-    desc: 'Turn rough situation notes into polished STAR (Situation-Task-Action-Result) interview answers.',
-    tips: ['Click New Story and describe what happened (rough notes are fine)', 'AI structures it into a full STAR answer', 'Save to your Story Bank, then view or copy anytime'],
+    titleKey: 'guide.star.title',
+    descKey: 'guide.star.desc',
+    tipKeys: ['guide.star.tip.newStory', 'guide.star.tip.structure', 'guide.star.tip.save'],
   },
   tools: {
-    title: 'Prep Tools',
-    desc: 'Focused AI tools for the active application: fit checks, resume review, cover letter, LinkedIn, and visual resume feedback.',
-    tips: ['Set an active application first for better context', 'Use Visual Review with a vision-capable model', 'Recent results stay saved to project history'],
+    titleKey: 'guide.tools.title',
+    descKey: 'guide.tools.desc',
+    tipKeys: ['guide.tools.tip.activeApplication', 'guide.tools.tip.visualReview', 'guide.tools.tip.history'],
   },
   tracker: {
-    title: 'Applications',
-    desc: 'Track every application, open a workspace for each role, and keep one active context flowing through the prep tools.',
-    tips: ['Add a new application with the + button', 'Open a card to work on that application in context', 'Set one application active so your prep tools stay aligned'],
+    titleKey: 'guide.tracker.title',
+    descKey: 'guide.tracker.desc',
+    tipKeys: ['guide.tracker.tip.add', 'guide.tracker.tip.openCard', 'guide.tracker.tip.active'],
   },
   notes: {
-    title: 'Notes & Workbook',
-    desc: 'A free-form scratchpad for your job search. My Notes is your personal workspace; Company Notes lets you keep notes per company.',
-    tips: ['Everything auto-saves as you type', 'Use Company Notes to track research per company', 'Notes are saved per project'],
+    titleKey: 'guide.notes.title',
+    descKey: 'guide.notes.desc',
+    tipKeys: ['guide.notes.tip.autosave', 'guide.notes.tip.companyNotes', 'guide.notes.tip.project'],
   },
   settings: {
-    title: 'Settings',
-    desc: 'Unlock JobSensei, choose hosted AI or BYOK, save your resume, and back up project data.',
-    tips: [],
+    titleKey: 'guide.settings.title',
+    descKey: 'guide.settings.desc',
+    tipKeys: [],
   },
 }
 
 const GUIDE_DETAILS = {
-  today: ['Active Focus is the current role JobSensei is guiding.', 'Workspace Progress shows the 6-step application path: capture, research, tailor, predict, mock, follow-up.', 'Open the active workspace for research, JD, prep notes, and follow-up.'],
-  applications: ['Kanban tracks stages like Researching, Applied, Interviewing, Offer, and Rejected.', 'Workspace is where the JD, research, prep notes, and cheat sheet live for one role.', 'Offers compares roles by salary, growth, culture, work-life, benefits, and flexibility.'],
-  dashboard: ['Dashboard is gated until an application exists.', 'Once unlocked, it shows saved interviews, learning progress, active application context, and quick actions.'],
-  interview: ['Interview Simulator runs full mock sessions and saves score/history.', 'Question Predictor uses the active JD to generate likely questions.', 'STAR Builder turns rough stories into structured answers.', 'Tone Analyzer checks clarity, confidence, and delivery.', 'Follow-up Email drafts post-interview messages.', 'Elevator Pitch helps answer why you should be hired.'],
-  learning: ['Build own topics for the skills the target role expects.', `${SAVE_LAST_RESPONSE_LABEL} stores useful tutor replies in Learning Notes`, 'Click Quiz for a 6-question test on that topic and chat history.', 'Due reviews appear at the top — don\'t skip them!'],
-  tools: ['Gap Analysis scores fit against the JD and calls out missing skills.', 'Resume Checker reads the resume through ATS and recruiter lenses.', 'Cover Letter Optimizer creates role-specific versions.', 'LinkedIn Auditor finds profile gaps and quick wins.', 'Visual Design Review checks layout from a screenshot.', 'Transferable Skills Coach reframes experience for a new role.'],
-  tracker: ['Use Add for a new role or the browser extension to capture a JD.', 'Open Workspace to work inside one application.', 'Use the Offers tab after a role reaches Offer stage.'],
-  settings: ['Connect AI first if tools are locked.', 'Save your resume here so Resume Checker, Cover Letter, and prep tools can reuse it.', 'Export project backups before changing devices or browsers.', 'BYOK still requires an active JobSensei unlock'],
+  today: ['guide.today.detail.activeFocus', 'guide.today.detail.progress', 'guide.today.detail.workspace'],
+  applications: ['guide.applications.detail.kanban', 'guide.applications.detail.workspace', 'guide.applications.detail.offers'],
+  dashboard: ['guide.dashboard.detail.gated', 'guide.dashboard.detail.unlocked'],
+  interview: ['guide.interview.detail.simulator', 'guide.interview.detail.predictor', 'guide.interview.detail.star', 'guide.interview.detail.tone', 'guide.interview.detail.followUp', 'guide.interview.detail.pitch'],
+  learning: ['guide.learning.detail.topics', 'guide.learning.detail.saveNotes', 'guide.learning.detail.quiz', 'guide.learning.detail.reviews'],
+  tools: ['guide.tools.detail.gap', 'guide.tools.detail.resume', 'guide.tools.detail.coverLetter', 'guide.tools.detail.linkedin', 'guide.tools.detail.visual', 'guide.tools.detail.transferable'],
+  tracker: ['guide.tracker.detail.add', 'guide.tracker.detail.workspace', 'guide.tracker.detail.offers'],
+  settings: ['guide.settings.detail.connect', 'guide.settings.detail.resume', 'guide.settings.detail.backups', 'guide.settings.detail.byok'],
 }
 
 function TopBarLanguageSelect({ compact = false, onChangeComplete = null }) {
@@ -143,50 +143,51 @@ const GUIDED_TOUR_STEPS = [
   {
     section: SECTIONS.TODAY,
     target: '[data-guide="guide-button"]',
-    title: 'Start with Guide',
-    body: 'Use Guide any time you feel lost. It explains the current page and can restart this walkthrough.',
+    titleKey: 'tour.guide.title',
+    bodyKey: 'tour.guide.body',
   },
   {
     section: SECTIONS.TODAY,
     target: '[data-guide="today-active-focus"], [data-guide="today-first-application"]',
-    title: 'Today shows the next move',
-    body: 'This area is the daily command center. Before an application exists, it points you to the first application step.',
+    titleKey: 'tour.today.title',
+    bodyKey: 'tour.today.body',
   },
   {
     section: SECTIONS.APPLICATIONS,
     target: '[data-guide="applications-add"]',
-    title: 'Add the first application',
-    body: 'Press Add to create the workspace. Add company, role, and the JD so every tool can use the same context.',
+    titleKey: 'tour.addApplication.title',
+    bodyKey: 'tour.addApplication.body',
   },
   {
     section: SECTIONS.APPLICATIONS,
     target: '[data-guide="applications-workspace-tab"]',
-    title: 'Workspace keeps the role together',
-    body: 'Workspace is where you review the JD, research the company, save notes, and generate prep material for one role.',
+    titleKey: 'tour.workspace.title',
+    bodyKey: 'tour.workspace.body',
   },
   {
     section: SECTIONS.APPLICATIONS,
     target: '[data-guide="applications-offers-tab"]',
-    title: 'Offers compares final choices',
-    body: 'When an application reaches Offer, this tab helps compare salary, growth, culture, work-life, benefits, and flexibility.',
+    titleKey: 'tour.offers.title',
+    bodyKey: 'tour.offers.body',
   },
   {
     section: SECTIONS.LEARNING,
     target: '[data-guide="learning-add-topic"]',
-    title: 'Learning is the long game',
-    body: 'Add topics for the skills each role expects. Study, quiz, and save notes so preparation compounds over time.',
+    titleKey: 'tour.learning.title',
+    bodyKey: 'tour.learning.body',
   },
   {
     section: SECTIONS.TODAY,
     target: '[data-guide="project-new"], [data-guide="project-switcher"]',
-    title: 'Create own Projects',
-    body: 'Projects keep each job search separate: applications, resume/CV, notes, interview prep, learning topics, and saved AI results stay inside the selected project. Use New Project for a fresh workspace.',
+    titleKey: 'tour.projects.title',
+    bodyKey: 'tour.projects.body',
     openProjectMenu: true,
   },
 ]
 
 function GuidedTour({ onClose }) {
   const { setActiveSection } = useApp()
+  const { t } = useLanguage()
   const [stepIndex, setStepIndex] = useState(0)
   const [targetRect, setTargetRect] = useState(null)
   const step = GUIDED_TOUR_STEPS[stepIndex]
@@ -243,27 +244,27 @@ function GuidedTour({ onClose }) {
           <div className="flex items-start justify-between gap-3 mb-2">
             <div>
               <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">
-                Step {stepIndex + 1} of {GUIDED_TOUR_STEPS.length}
+                {t('tour.stepCounter', { current: stepIndex + 1, total: GUIDED_TOUR_STEPS.length })}
               </div>
-              <h3 className="font-display font-semibold text-white text-base">{step.title}</h3>
+              <h3 className="font-display font-semibold text-white text-base">{t(step.titleKey)}</h3>
             </div>
             <button onClick={onClose} className="text-slate-500 hover:text-slate-300">
               <X size={16} />
             </button>
           </div>
-          <p className="text-slate-300 text-sm leading-relaxed mb-4">{step.body}</p>
+          <p className="text-slate-300 text-sm leading-relaxed mb-4">{t(step.bodyKey)}</p>
           <div className="flex items-center justify-between gap-2">
             <button
               onClick={() => setStepIndex(i => Math.max(0, i - 1))}
               disabled={stepIndex === 0}
               className="btn-ghost text-xs disabled:opacity-40 disabled:pointer-events-none"
             >
-              Back
+              {t('tour.back')}
             </button>
             <div className="flex gap-1.5">
               {GUIDED_TOUR_STEPS.map((item, i) => (
                 <span
-                  key={item.title}
+                  key={item.titleKey}
                   className={`w-1.5 h-1.5 rounded-full ${i === stepIndex ? 'bg-teal-300' : 'bg-slate-600'}`}
                 />
               ))}
@@ -272,7 +273,7 @@ function GuidedTour({ onClose }) {
               onClick={() => isLast ? onClose() : setStepIndex(i => i + 1)}
               className="btn-primary text-xs"
             >
-              {isLast ? 'Finish' : 'Next'}
+              {isLast ? t('tour.finish') : t('tour.next')}
             </button>
           </div>
         </div>
@@ -315,6 +316,9 @@ export default function TopBar() {
 
   const help = SECTION_HELP[activeSection]
   const helpDetails = GUIDE_DETAILS[activeSection] || []
+  const helpTitle = help ? t(help.titleKey) : ''
+  const helpDesc = help ? t(help.descKey) : ''
+  const helpTips = help?.tipKeys?.map(key => t(key)) || []
   const translatedSectionTitle = activeSection === SECTIONS.TODAY
     ? t('nav.today')
     : activeSection === SECTIONS.APPLICATIONS || activeSection === SECTIONS.TRACKER
@@ -332,12 +336,13 @@ export default function TopBar() {
   }, [guideSeen, help])
 
   const renderGuideTip = (tip) => {
-    const parts = tip.split(SAVE_LAST_RESPONSE_LABEL)
+    const saveLastResponseLabel = t(SAVE_LAST_RESPONSE_KEY)
+    const parts = tip.split(saveLastResponseLabel)
     if (parts.length === 1) return tip
     return parts.map((part, i) => (
       <React.Fragment key={`${part}-${i}`}>
         {part}
-        {i < parts.length - 1 && <span className="guide-tip-highlight">{SAVE_LAST_RESPONSE_LABEL}</span>}
+        {i < parts.length - 1 && <span className="guide-tip-highlight">{saveLastResponseLabel}</span>}
       </React.Fragment>
     ))
   }
@@ -485,7 +490,7 @@ export default function TopBar() {
             data-guide="guide-button"
             onClick={openGuide}
             className={`hidden sm:flex btn-ghost relative ${!guideSeen ? 'ring-1 ring-teal-500/40 text-teal-300' : ''}`}
-            title={`Help: ${SECTION_TITLES[activeSection]}`}
+            title={t('guide.helpTitle', { section: helpTitle || SECTION_TITLES[activeSection] || '' })}
           >
             <HelpCircle size={16} className={showHelp ? 'text-teal-400' : ''} />
             <span className="text-xs">{t('topbar.guide')}</span>
@@ -570,40 +575,40 @@ export default function TopBar() {
       {showHelp && help && (
         <div className="guide-popover absolute right-4 top-full mt-2 z-50 w-80 bg-navy-800 border border-navy-600 rounded-2xl shadow-xl p-4 animate-in">
           <div className="flex items-start justify-between mb-2">
-            <h3 className="font-display font-semibold text-white text-sm">{help.title}</h3>
+            <h3 className="font-display font-semibold text-white text-sm">{helpTitle}</h3>
             <button onClick={() => setShowHelp(false)} className="text-slate-500 hover:text-slate-300 -mt-0.5">
               <X size={14} />
             </button>
           </div>
-          <p className="text-slate-300 text-xs mb-3 leading-relaxed">{help.desc}</p>
+          <p className="text-slate-300 text-xs mb-3 leading-relaxed">{helpDesc}</p>
           <div className="guide-start-card rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3">
-            <div className="text-white text-xs font-display font-semibold mb-2">Get started</div>
+            <div className="text-white text-xs font-display font-semibold mb-2">{t('guide.getStarted')}</div>
             <button onClick={startGuidedTour} className="btn-primary text-xs w-full justify-center">
-              Start guided tour
+              {t('guide.startTour')}
             </button>
           </div>
-          {help.tips.length > 0 && (
+          {helpTips.length > 0 && (
             <div className="space-y-1">
-              {help.tips.map((tip, i) => (
+              {helpTips.map((tip, i) => (
                 <p key={i} className="text-slate-400 text-xs">• {renderGuideTip(tip)}</p>
               ))}
             </div>
           )}
           {helpDetails.length > 0 && (
             <div className="guide-details-card mt-3 rounded-xl border border-navy-700 bg-navy-900/45 p-3">
-              <div className="text-slate-300 text-xs font-display font-semibold mb-2">How this page works</div>
+              <div className="text-slate-300 text-xs font-display font-semibold mb-2">{t('guide.howThisPageWorks')}</div>
               <div className="space-y-1">
-                {helpDetails.map((detail, i) => (
-                  <p key={i} className="text-slate-400 text-xs leading-relaxed">- {renderGuideTip(detail)}</p>
+                {helpDetails.map((detailKey) => (
+                  <p key={detailKey} className="text-slate-400 text-xs leading-relaxed">- {renderGuideTip(t(detailKey))}</p>
                 ))}
               </div>
             </div>
           )}
           <div className="mt-3 pt-3 border-t border-navy-700 flex items-center gap-1.5 text-xs text-slate-500">
             <Shield size={11} />
-            <span>Sensei = supportive coaching</span>
+            <span>{t('guide.footer.sensei')}</span>
             <Zap size={11} className="ml-2" />
-            <span>Drill = brutal honesty</span>
+            <span>{t('guide.footer.drill')}</span>
           </div>
         </div>
       )}
