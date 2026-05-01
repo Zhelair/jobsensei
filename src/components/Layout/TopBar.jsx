@@ -227,10 +227,9 @@ function GuidedTour({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-[80] pointer-events-none">
-      <div className="absolute inset-0 bg-navy-950/55 backdrop-blur-[1px]" />
       {targetRect && (
         <div
-          className="absolute rounded-2xl border-2 border-teal-300 shadow-[0_0_0_9999px_rgba(2,6,23,0.48),0_0_28px_rgba(45,212,191,0.75)] transition-all duration-200"
+          className="absolute rounded-2xl border-2 border-teal-300 shadow-[0_0_28px_rgba(45,212,191,0.75)] transition-all duration-200"
           style={{
             top: Math.max(8, targetRect.top - 8),
             left: Math.max(8, targetRect.left - 8),
@@ -283,7 +282,7 @@ function GuidedTour({ onClose }) {
 }
 
 export default function TopBar() {
-  const { activeSection, setActiveSection, drillMode, setDrillMode, isMuted, setIsMuted } = useApp()
+  const { activeSection, setActiveSection, drillMode, setDrillMode, isMuted, setIsMuted, showOnboarding } = useApp()
   const { isConnected, isThinking } = useAI()
   const { theme, cycleTheme } = useTheme()
   const { enabled: visualsEnabled, setEnabled: setVisualsEnabled, triggerConfetti } = useVisuals()
@@ -330,10 +329,16 @@ export default function TopBar() {
           : SECTION_TITLES[activeSection] || ''
 
   useEffect(() => {
-    if (guideSeen || !help) return
+    if (showOnboarding || guideSeen || !help) return
     const id = setTimeout(() => setShowHelp(true), 700)
     return () => clearTimeout(id)
-  }, [guideSeen, help])
+  }, [guideSeen, help, showOnboarding])
+
+  useEffect(() => {
+    if (!showOnboarding) return
+    setShowHelp(false)
+    setShowTour(false)
+  }, [showOnboarding])
 
   const renderGuideTip = (tip) => {
     const saveLastResponseLabel = t(SAVE_LAST_RESPONSE_KEY)

@@ -848,8 +848,8 @@ export function LanguageProvider({ children }) {
   const languageOption = LANGUAGE_OPTIONS.find(option => option.code === language) || LANGUAGE_OPTIONS[0]
   const dictKey = dictionaryKey(languageOption)
   const activeVoice = useMemo(
-    () => findVoiceForLanguage(languageOption, voices),
-    [languageOption, voices],
+    () => findVoiceForLanguage(languageOption, voices, voiceName),
+    [languageOption, voiceName, voices],
   )
   const voiceSupport = getVoiceSupport(languageOption, activeVoice, voices)
 

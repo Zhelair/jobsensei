@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
-import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Languages, FolderOpen } from 'lucide-react'
+import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Languages } from 'lucide-react'
 
 const ONBOARDING_COPY = {
   en: {
@@ -450,13 +450,6 @@ export default function OnboardingWizard() {
           <div>
             <label className="text-sm text-slate-400 font-body mb-1.5 block">{tt('targetRoleLabel')}</label>
             <input className="input-field" placeholder={tt('targetRolePlaceholder')} value={data.targetRole} onChange={e => update('targetRole', e.target.value)} />
-          </div>
-          <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-3 flex items-start gap-3">
-            <FolderOpen size={16} className="text-teal-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <div className="text-white text-xs font-display font-semibold mb-1">{tt('projectHintTitle')}</div>
-              <p className="text-slate-400 text-xs leading-relaxed">{tt('projectHintCopy')}</p>
-            </div>
           </div>
         </div>
       )

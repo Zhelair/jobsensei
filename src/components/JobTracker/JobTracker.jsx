@@ -698,16 +698,19 @@ export default function JobTracker() {
           {applications.length === 0 ? (
             <div className="card text-center py-10 text-slate-500">{t('applications.empty.addFirst')}</div>
           ) : [...applications].sort((a, b) => new Date(b.date) - new Date(a.date)).map(app => (
-            <div key={app.id} className="card-hover w-full flex items-center gap-3">
-              <button onClick={() => openApplication(app)} className="flex items-center gap-3 text-left flex-1 min-w-0">
-                <Building2 size={18} className="text-slate-500 flex-shrink-0"/>
-                <div className="flex-1 min-w-0">
-                  <div className="text-white font-body font-medium text-sm">{app.company}</div>
-                  <div className="text-slate-500 text-xs">{app.role}</div>
-                  <div className="text-slate-600 text-xs">{timeAgo(app.date)}</div>
-                </div>
-              </button>
-              <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+            <div key={app.id} className="card-hover w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3 min-w-0 w-full sm:flex-1">
+                <button onClick={() => openApplication(app)} className="flex items-start gap-3 text-left flex-1 min-w-0">
+                  <Building2 size={18} className="text-slate-500 flex-shrink-0 mt-0.5"/>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white font-body font-medium text-sm">{app.company}</div>
+                    <div className="text-slate-500 text-xs">{app.role}</div>
+                    <div className="text-slate-600 text-xs">{timeAgo(app.date)}</div>
+                  </div>
+                </button>
+                <span className={`badge text-xs border flex-shrink-0 self-start ${STAGE_COLORS[app.stage]}`}>{stageLabel(app.stage)}</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:justify-end">
                 {activeApplicationId === app.id ? (
                   <span className="badge-teal">{t('applications.badges.active')}</span>
                 ) : (
@@ -733,7 +736,6 @@ export default function JobTracker() {
                     {t('applications.badges.notes')}
                   </span>
                 )}
-                <span className={`badge text-xs border ${STAGE_COLORS[app.stage]}`}>{stageLabel(app.stage)}</span>
               </div>
             </div>
           ))}
