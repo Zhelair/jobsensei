@@ -68,15 +68,13 @@ export const LANGUAGE_OPTIONS = [
     voiceSearch: ['Google polski', 'Microsoft Paulina', 'Zosia'],
   },
   {
-    code: 'pt-PT',
-    label: 'Portuguese (Portugal)',
+    code: 'pt-BR',
+    label: 'Portuguese (Brazil)',
     nativeLabel: 'Português',
-    speechLang: 'pt-PT',
-    recognitionLang: 'pt-PT',
+    speechLang: 'pt-BR',
+    recognitionLang: 'pt-BR',
     dictionary: 'pt',
-    voiceSearch: ['Google português de Portugal', 'Microsoft Helia', 'Joana', 'Ines', 'pt-PT'],
-    excludedVoiceLangs: ['pt-BR'],
-    excludedVoiceNames: ['brasil', 'brazil'],
+    voiceSearch: ['Google português do Brasil', 'Google português', 'Microsoft Francisca', 'Maria', 'Luciana', 'pt-BR'],
   },
 ]
 
@@ -462,7 +460,7 @@ const LanguageContext = createContext(null)
 const SUPPORTED_LANGUAGE_CODES = new Set(LANGUAGE_OPTIONS.map(option => option.code))
 const LEGACY_LANGUAGE_MAP = {
   'es-US': 'es-ES',
-  'pt-BR': 'pt-PT',
+  'pt-PT': 'pt-BR',
 }
 const FEMALE_VOICE_HINTS = [
   'female', 'woman', 'zira', 'samantha', 'karen', 'moira', 'tessa', 'victoria', 'fiona',
@@ -561,6 +559,7 @@ export function LanguageProvider({ children }) {
 
   useEffect(() => {
     document.documentElement.lang = languageOption.speechLang || languageOption.code || 'en'
+    localStorage.setItem('js_language', languageOption.code)
     localStorage.removeItem('js_voice_name')
   }, [languageOption])
 
