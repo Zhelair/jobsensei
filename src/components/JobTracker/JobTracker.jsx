@@ -8,6 +8,15 @@ import { generateId, formatDate, timeAgo, tryParseJSON } from '../../utils/helpe
 import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale, Copy, Printer, Save, Sparkles, FileText, Mic, Target, Star, Gauge, Mail, Megaphone, ClipboardCheck, Globe, Camera, Zap } from 'lucide-react'
 
 const STAGES = ['Researching', 'Applied', 'Screening', 'Interviewing', 'Awaiting', 'Offer', 'Rejected']
+const STAGE_LABEL_KEYS = {
+  Researching: 'applications.stage.researching',
+  Applied: 'applications.stage.applied',
+  Screening: 'applications.stage.screening',
+  Interviewing: 'applications.stage.interviewing',
+  Awaiting: 'applications.stage.awaiting',
+  Offer: 'applications.stage.offer',
+  Rejected: 'applications.stage.rejected',
+}
 const FOLLOWUP_DAYS = { Applied: 7, Screening: 5, Interviewing: 3, Awaiting: 5 }
 const EMPTY_APPLICATION = { company: '', role: '', stage: 'Researching', jdUrl: '', jdText: '', notes: '' }
 
@@ -39,19 +48,25 @@ const STAGE_COLORS = {
   Rejected: 'text-red-400 bg-red-400/10 border-red-400/20',
 }
 const TABS = ['Kanban', 'Workspace', 'Offers', 'Stats']
+const TAB_LABEL_KEYS = {
+  Kanban: 'applications.tabs.kanban',
+  Workspace: 'applications.tabs.workspace',
+  Offers: 'applications.tabs.offers',
+  Stats: 'applications.tabs.stats',
+}
 const WORKSPACE_TABS = [
-  { id: 'overview', label: 'Workspace' },
-  { id: 'jd', label: 'Capture' },
-  { id: 'research', label: 'Research' },
+  { id: 'overview', labelKey: 'applications.workspaceTabs.workspace' },
+  { id: 'jd', labelKey: 'applications.workspaceTabs.capture' },
+  { id: 'research', labelKey: 'applications.workspaceTabs.research' },
 ]
 
 const OFFER_FIELDS = [
-  { key: 'salaryScore', label: 'Salary', defaultWeight: 30 },
-  { key: 'growth',      label: 'Growth', defaultWeight: 25 },
-  { key: 'cultureFit',  label: 'Culture', defaultWeight: 20 },
-  { key: 'workLife',    label: 'Work-Life', defaultWeight: 15 },
-  { key: 'benefits',    label: 'Benefits', defaultWeight: 7 },
-  { key: 'remote',      label: 'Flexibility', defaultWeight: 3 },
+  { key: 'salaryScore', labelKey: 'applications.offer.salary', defaultWeight: 30 },
+  { key: 'growth',      labelKey: 'applications.offer.growth', defaultWeight: 25 },
+  { key: 'cultureFit',  labelKey: 'applications.offer.culture', defaultWeight: 20 },
+  { key: 'workLife',    labelKey: 'applications.offer.workLife', defaultWeight: 15 },
+  { key: 'benefits',    labelKey: 'applications.offer.benefits', defaultWeight: 7 },
+  { key: 'remote',      labelKey: 'applications.offer.flexibility', defaultWeight: 3 },
 ]
 
 function AutoTextarea({ className, value, onChange, placeholder }) {
@@ -90,7 +105,7 @@ function exportToJSON(applications, notes) {
 export default function JobTracker() {
   const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId } = useProject()
   const { pendingTrackerRequest, clearPendingTrackerRequest, pushAppHistory } = useApp()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
   const applications = getProjectData('applications') || []
   const notes = getProjectData('companyNotes') || {}
   const offerData = getProjectData('offerComparisons') || {}
@@ -118,6 +133,8 @@ export default function JobTracker() {
   const [synced, setSynced] = useState(false)
   const importRef = useRef(null)
   const selectedApp = selectedAppId ? applications.find(app => app.id === selectedAppId) || null : null
+  const stageLabel = (stage) => t(STAGE_LABEL_KEYS[stage] || 'applications.stage.unknown', { stage })
+  const tabLabel = (tabName) => t(TAB_LABEL_KEYS[tabName] || 'applications.tabs.unknown', { tab: tabName })
 
   useEffect(() => {
     if (!pendingTrackerRequest?.applicationId) return
@@ -349,9 +366,9 @@ export default function JobTracker() {
           applications: [...applications, ...importedApps],
           companyNotes: { ...notes, ...importedNotes },
         })
-        setImportMsg(`✅ Imported ${importedApps.length} applications`)
+        setImportMsg(t('applications.importedMany', { count: importedApps.length }))
       } else throw new Error()
-    } catch { setImportMsg('❌ Invalid file') }
+    } catch { setImportMsg(t('applications.invalidFile')) }
     setTimeout(() => setImportMsg(''), 3000)
     e.target.value = ''
   }
@@ -362,19 +379,21 @@ export default function JobTracker() {
   const addJd = newApp.jdText.trim()
   const addPrepNote = newApp.notes.trim()
   const addReadiness = [
-    { label: 'Company', complete: !!addCompany, hint: addCompany || 'Required' },
-    { label: 'Role', complete: !!addRole, hint: addRole || 'Recommended' },
-    { label: 'JD', complete: !!addJd, hint: addJd ? 'Saved' : 'Add now or later' },
+    { label: t('applications.add.readiness.company'), complete: !!addCompany, hint: addCompany || t('applications.add.required') },
+    { label: t('applications.add.readiness.role'), complete: !!addRole, hint: addRole || t('applications.add.recommended') },
+    { label: t('applications.add.readiness.jd'), complete: !!addJd, hint: addJd ? t('applications.add.saved') : t('applications.add.addNowOrLater') },
     {
-      label: 'Research',
+      label: t('applications.add.readiness.research'),
       complete: !!pendingResearch,
-      hint: pendingResearch ? `Ready ${pendingResearch._liveData ? '(live)' : '(AI)'}` : isConnected ? 'Optional AI assist' : 'Connect AI in Settings',
+      hint: pendingResearch
+        ? t(pendingResearch._liveData ? 'applications.add.readyLive' : 'applications.add.readyAi')
+        : isConnected ? t('applications.add.optionalAiAssist') : t('applications.add.connectAiSettings'),
     },
   ]
   const addReadyCount = addReadiness.filter(item => item.complete).length
   const addPrimaryLabel = addJd
-    ? 'Create & open workspace'
-    : 'Create & add JD later'
+    ? t('applications.add.createOpenWorkspace')
+    : t('applications.add.createAddJdLater')
 
   if (selectedApp) return (
     <ApplicationWorkspaceView
@@ -403,14 +422,14 @@ export default function JobTracker() {
 
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="section-title">Applications</h2>
-          <p className="section-sub">{applications.length} application{applications.length !== 1 ? 's' : ''} in your workspace</p>
+          <h2 className="section-title">{t('applications.title')}</h2>
+          <p className="section-sub">{t('applications.subtitle', { count: applications.length })}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <div className="relative">
             <button onClick={() => document.getElementById('tracker-export-menu').classList.toggle('hidden')}
               className="btn-ghost text-xs">
-              <Download size={14}/> Export Jobs
+              <Download size={14}/> {t('applications.exportJobs')}
             </button>
             <div id="tracker-export-menu" className="hidden absolute right-0 top-full mt-1 bg-navy-800 border border-navy-600 rounded-xl shadow-xl z-20 min-w-36 overflow-hidden">
               <button onClick={() => { exportToJSON(applications, notes); document.getElementById('tracker-export-menu').classList.add('hidden') }}
@@ -423,10 +442,10 @@ export default function JobTracker() {
               </button>
             </div>
           </div>
-          <button onClick={() => importRef.current?.click()} className="btn-ghost text-xs"><Upload size={14}/> Import Jobs</button>
+          <button onClick={() => importRef.current?.click()} className="btn-ghost text-xs"><Upload size={14}/> {t('applications.importJobs')}</button>
           <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImport}/>
           <button onClick={syncToProject} className={`btn-ghost text-xs transition-colors ${synced ? 'text-green-400' : ''}`}>
-            <Save size={14}/> {synced ? 'Synced ✓' : 'Sync'}
+            <Save size={14}/> {synced ? t('applications.synced') : t('applications.sync')}
           </button>
           <button
             data-guide="applications-add"
@@ -434,7 +453,7 @@ export default function JobTracker() {
             className="btn-primary text-xs"
           >
             {showAdd && applications.length > 0 ? <X size={14}/> : <Plus size={14}/>}
-            {showAdd && applications.length > 0 ? 'Close' : 'Add'}
+            {showAdd && applications.length > 0 ? t('common.close') : t('common.add')}
           </button>
         </div>
       </div>
@@ -445,17 +464,17 @@ export default function JobTracker() {
         <div className="card mb-4 border-teal-500/20 bg-teal-500/5">
           <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
             <div className="min-w-0 max-w-3xl">
-              <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">Create Application Workspace</div>
-              <h3 className="font-display font-semibold text-white text-lg mb-1">Start one role, then let JobSensei guide the rest</h3>
+              <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">{t('applications.add.kicker')}</div>
+              <h3 className="font-display font-semibold text-white text-lg mb-1">{t('applications.add.title')}</h3>
               <p className="text-slate-300 text-sm leading-relaxed">
-                Add the company and role first. The JD, AI research, and prep note can be added now or later without breaking the workflow.
+                {t('applications.add.copy')}
               </p>
             </div>
             <div className="px-3 py-2 rounded-xl border border-navy-600 bg-navy-950/70">
-              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Readiness</div>
-              <div className="text-white text-sm font-display font-semibold">{addReadyCount}/4 signals ready</div>
+              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{t('applications.add.readiness.title')}</div>
+              <div className="text-white text-sm font-display font-semibold">{t('applications.add.readiness.count', { count: addReadyCount })}</div>
               <div className="text-slate-400 text-xs mt-1">
-                {addJd ? 'You can open the full workspace immediately.' : 'You can still create now and add the JD inside the workspace.'}
+                {addJd ? t('applications.add.openImmediately') : t('applications.add.addJdLaterHelp')}
               </div>
             </div>
           </div>
@@ -473,36 +492,36 @@ export default function JobTracker() {
 
           <div className="grid sm:grid-cols-2 gap-3 mb-2">
             <div>
-              <label className="text-sm text-slate-400 mb-1.5 block">Company *</label>
-              <input className="input-field" placeholder="e.g. TBI Bank" value={newApp.company}
+              <label className="text-sm text-slate-400 mb-1.5 block">{t('applications.fields.companyRequired')}</label>
+              <input className="input-field" placeholder={t('applications.placeholders.company')} value={newApp.company}
               onChange={e => { setNewApp(p => ({ ...p, company: e.target.value })); setPendingResearch(null) }}
               onKeyDown={e => e.key === 'Enter' && createAndOpenApplication()} />
             </div>
             <div>
-              <label className="text-sm text-slate-400 mb-1.5 block">Role title</label>
-              <input className="input-field" placeholder="e.g. Fraud Detection Analyst" value={newApp.role}
+              <label className="text-sm text-slate-400 mb-1.5 block">{t('applications.fields.roleTitle')}</label>
+              <input className="input-field" placeholder={t('applications.placeholders.roleTitle')} value={newApp.role}
                 onChange={e => { setNewApp(p => ({ ...p, role: e.target.value })); setPendingResearch(null) }} />
             </div>
           </div>
           <div className="grid sm:grid-cols-2 gap-3 mb-3">
             <div>
-              <label className="text-sm text-slate-400 mb-1.5 block">Stage</label>
+              <label className="text-sm text-slate-400 mb-1.5 block">{t('applications.fields.stage')}</label>
               <select className="input-field" value={newApp.stage}
                 onChange={e => setNewApp(p => ({ ...p, stage: e.target.value }))}>
-                {STAGES.map(s => <option key={s}>{s}</option>)}
+                {STAGES.map(s => <option key={s} value={s}>{stageLabel(s)}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-sm text-slate-400 mb-1.5 block">JD URL</label>
-              <input className="input-field" placeholder="Optional source link" value={newApp.jdUrl}
+              <label className="text-sm text-slate-400 mb-1.5 block">{t('applications.fields.jdUrl')}</label>
+              <input className="input-field" placeholder={t('applications.placeholders.jdUrl')} value={newApp.jdUrl}
                 onChange={e => setNewApp(p => ({ ...p, jdUrl: e.target.value }))} />
             </div>
           </div>
           <div className="mb-3">
-            <label className="text-sm text-slate-400 mb-1.5 block">Job Description</label>
-            <AutoTextarea className="textarea-field" placeholder="Paste the job description once to make this application available across the main tools..."
+            <label className="text-sm text-slate-400 mb-1.5 block">{t('applications.fields.jobDescription')}</label>
+            <AutoTextarea className="textarea-field" placeholder={t('applications.placeholders.jobDescription')}
               value={newApp.jdText} onChange={e => setNewApp(p => ({ ...p, jdText: e.target.value }))} />
-            <p className="text-slate-500 text-xs mt-2">Recommended. If you skip this now, you can paste it later from the Capture step inside the workspace.</p>
+            <p className="text-slate-500 text-xs mt-2">{t('applications.add.jdHelp')}</p>
           </div>
 
           {newApp.company.trim() && (
@@ -514,29 +533,29 @@ export default function JobTracker() {
                 <div className="min-w-0">
                   {pendingResearch
                     ? <>
-                        <div className="ai-research-title">Research ready {pendingResearch._liveData ? '(live data)' : '(AI)'}</div>
-                        <div className="ai-research-copy">Wow facts, culture, and prep notes will be saved into Research.</div>
+                        <div className="ai-research-title">{pendingResearch._liveData ? t('applications.add.researchReadyLive') : t('applications.add.researchReadyAi')}</div>
+                        <div className="ai-research-copy">{t('applications.add.researchReadyCopy')}</div>
                       </>
                     : <>
-                        <div className="ai-research-title">Research <span>{newApp.company}</span> with AI</div>
-                        <div className="ai-research-copy">Pull wow facts, news, culture, and prep notes before you create the workspace.</div>
+                        <div className="ai-research-title">{t('applications.add.researchPrefix')} <span>{newApp.company}</span> {t('applications.add.researchSuffix')}</div>
+                        <div className="ai-research-copy">{t('applications.add.researchCopy')}</div>
                       </>
                   }
                 </div>
               </div>
               <button onClick={researchForAdd} disabled={researchLoading || !isConnected}
                 className={`ai-research-button ${pendingResearch ? 'is-ready' : ''}`}>
-                <Search size={15}/> {researchLoading ? 'Researching...' : pendingResearch ? 'Re-run' : 'Research'}
+                <Search size={15}/> {researchLoading ? t('applications.add.researching') : pendingResearch ? t('applications.add.rerun') : t('applications.add.research')}
               </button>
             </div>
           )}
 
           <div className="mb-3">
-            <label className="text-sm text-slate-400 mb-1.5 block">Initial prep note</label>
-            <AutoTextarea className="textarea-field mb-1" placeholder="Optional reminders, talking points, or recruiter context..."
+            <label className="text-sm text-slate-400 mb-1.5 block">{t('applications.fields.initialPrepNote')}</label>
+            <AutoTextarea className="textarea-field mb-1" placeholder={t('applications.placeholders.initialPrepNote')}
               value={newApp.notes} onChange={e => setNewApp(p => ({ ...p, notes: e.target.value }))} />
             <p className="text-slate-500 text-xs mt-2">
-              Saved to <strong className="text-slate-400">Research / My prep notes</strong>{addPrepNote ? ' when you create the application.' : '.'}
+              {t('applications.add.savedTo')} <strong className="text-slate-400">{t('applications.add.myPrepNotes')}</strong>{addPrepNote ? ` ${t('applications.add.whenCreated')}` : '.'}
             </p>
           </div>
 
@@ -545,9 +564,9 @@ export default function JobTracker() {
               {addPrimaryLabel}
             </button>
             <button onClick={addApplication} disabled={!newApp.company.trim()} className="btn-secondary">
-              Save to board only
+              {t('applications.add.saveToBoardOnly')}
             </button>
-            <button onClick={resetAddForm} className="btn-ghost">Cancel</button>
+            <button onClick={resetAddForm} className="btn-ghost">{t('common.cancel')}</button>
           </div>
         </div>
       )}
@@ -558,7 +577,7 @@ export default function JobTracker() {
             key={t}
             data-guide={t === 'Workspace' ? 'applications-workspace-tab' : t === 'Offers' ? 'applications-offers-tab' : undefined}
             onClick={() => setTab(i)}
-            className={`flex-1 py-2 rounded-lg text-xs font-body font-medium transition-all ${tab === i ? 'bg-navy-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{t}</button>
+            className={`flex-1 py-2 rounded-lg text-xs font-body font-medium transition-all ${tab === i ? 'bg-navy-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{tabLabel(t)}</button>
         ))}
       </div>
 
@@ -566,7 +585,7 @@ export default function JobTracker() {
         <div className="mb-3 card border-yellow-500/20 bg-yellow-500/5">
           <div className="flex items-center gap-2 mb-2">
             <Clock size={14} className="text-yellow-400"/>
-            <span className="text-yellow-400 text-xs font-display font-semibold">Follow Up Today ({overdueApps.length})</span>
+            <span className="text-yellow-400 text-xs font-display font-semibold">{t('applications.followUpToday', { count: overdueApps.length })}</span>
           </div>
           <div className="space-y-2">
             {overdueApps.map(app => (
@@ -575,7 +594,7 @@ export default function JobTracker() {
                   {app.company}{app.role ? ` — ${app.role}` : ''}
                 </button>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <span className={`badge text-xs border ${STAGE_COLORS[app.stage]}`}>{app.stage}</span>
+                  <span className={`badge text-xs border ${STAGE_COLORS[app.stage]}`}>{stageLabel(app.stage)}</span>
                   <span className="text-slate-500 text-xs">{timeAgo(app.stageUpdatedAt || app.date)}</span>
                   <select
                     className="bg-navy-800 border border-navy-600 rounded-lg px-1.5 py-0.5 text-xs text-slate-400 focus:outline-none focus:border-teal-500 cursor-pointer"
@@ -606,7 +625,7 @@ export default function JobTracker() {
               return (
                 <div key={stage} className="w-52 flex-shrink-0">
                   <div className={`flex items-center gap-2 px-3 py-2 rounded-xl mb-2 border text-xs font-display font-semibold ${STAGE_COLORS[stage]}`}>
-                    {stage} <span className="ml-auto opacity-60">{stageApps.length}</span>
+                    {stageLabel(stage)} <span className="ml-auto opacity-60">{stageApps.length}</span>
                   </div>
                   <div className="space-y-2 min-h-16">
                     {stageApps.map(app => (
@@ -631,13 +650,13 @@ export default function JobTracker() {
                         {app.role && <div className="text-slate-500 text-xs mb-1.5 leading-snug">{app.role}</div>}
                         <div className="flex flex-wrap gap-1.5 mb-2">
                           {activeApplicationId === app.id ? (
-                            <span className="badge-teal inline-flex">Active</span>
+                            <span className="badge-teal inline-flex">{t('applications.badges.active')}</span>
                           ) : (
                             <button
                               onClick={() => activateApplication(app)}
                               className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300 hover:border-teal-500/40 hover:text-teal-300 transition-colors"
                             >
-                              Set Active
+                              {t('applications.setActive')}
                             </button>
                           )}
                           {app.jdText?.trim() && (
@@ -647,12 +666,12 @@ export default function JobTracker() {
                           )}
                           {hasResearchData(notes[app.id]) && (
                             <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
-                              Research
+                              {t('applications.badges.research')}
                             </span>
                           )}
                           {hasPrepNotes(notes[app.id]) && (
                             <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
-                              Notes
+                              {t('applications.badges.notes')}
                             </span>
                           )}
                         </div>
@@ -662,7 +681,7 @@ export default function JobTracker() {
                           value={app.stage}
                           onChange={e => updateApp(app.id, { stage: e.target.value })}
                         >
-                          {STAGES.map(s => <option key={s}>{s}</option>)}
+                          {STAGES.map(s => <option key={s} value={s}>{stageLabel(s)}</option>)}
                         </select>
                       </div>
                     ))}
@@ -677,7 +696,7 @@ export default function JobTracker() {
       {tab === 1 && (
         <div className="space-y-2">
           {applications.length === 0 ? (
-            <div className="card text-center py-10 text-slate-500">Add applications first.</div>
+            <div className="card text-center py-10 text-slate-500">{t('applications.empty.addFirst')}</div>
           ) : [...applications].sort((a, b) => new Date(b.date) - new Date(a.date)).map(app => (
             <div key={app.id} className="card-hover w-full flex items-center gap-3">
               <button onClick={() => openApplication(app)} className="flex items-center gap-3 text-left flex-1 min-w-0">
@@ -690,13 +709,13 @@ export default function JobTracker() {
               </button>
               <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                 {activeApplicationId === app.id ? (
-                  <span className="badge-teal">Active</span>
+                  <span className="badge-teal">{t('applications.badges.active')}</span>
                 ) : (
                   <button
                     onClick={() => activateApplication(app)}
                     className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300 hover:border-teal-500/40 hover:text-teal-300 transition-colors"
                   >
-                    Set Active
+                    {t('applications.setActive')}
                   </button>
                 )}
                 {app.jdText?.trim() && (
@@ -706,15 +725,15 @@ export default function JobTracker() {
                 )}
                 {hasResearchData(notes[app.id]) && (
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
-                    Research
+                    {t('applications.badges.research')}
                   </span>
                 )}
                 {hasPrepNotes(notes[app.id]) && (
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
-                    Notes
+                    {t('applications.badges.notes')}
                   </span>
                 )}
-                <span className={`badge text-xs border ${STAGE_COLORS[app.stage]}`}>{app.stage}</span>
+                <span className={`badge text-xs border ${STAGE_COLORS[app.stage]}`}>{stageLabel(app.stage)}</span>
               </div>
             </div>
           ))}
@@ -738,50 +757,52 @@ export default function JobTracker() {
 // ── Edit Job Modal ──────────────────────────────────────────────────────────
 function EditJobModal({ app, onSave, onClose }) {
   const [form, setForm] = useState({ ...app })
+  const { t } = useLanguage()
+  const stageLabel = (stage) => t(STAGE_LABEL_KEYS[stage] || 'applications.stage.unknown', { stage })
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-navy-800 border border-navy-600 rounded-2xl p-5 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-semibold text-white">Edit Application</h3>
+          <h3 className="font-display font-semibold text-white">{t('applications.edit.title')}</h3>
           <button onClick={onClose}><X size={16} className="text-slate-400"/></button>
         </div>
         <div className="space-y-3 mb-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Company *</label>
+              <label className="text-xs text-slate-400 mb-1 block">{t('applications.fields.companyRequired')}</label>
               <input className="input-field" value={form.company}
                 onChange={e => setForm(f => ({ ...f, company: e.target.value }))} />
             </div>
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Role title</label>
+              <label className="text-xs text-slate-400 mb-1 block">{t('applications.fields.roleTitle')}</label>
               <input className="input-field" value={form.role}
                 onChange={e => setForm(f => ({ ...f, role: e.target.value }))} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Stage</label>
+              <label className="text-xs text-slate-400 mb-1 block">{t('applications.fields.stage')}</label>
               <select className="input-field" value={form.stage}
                 onChange={e => setForm(f => ({ ...f, stage: e.target.value }))}>
-                {STAGES.map(s => <option key={s}>{s}</option>)}
+                {STAGES.map(s => <option key={s} value={s}>{stageLabel(s)}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">JD URL</label>
+              <label className="text-xs text-slate-400 mb-1 block">{t('applications.fields.jdUrl')}</label>
               <input className="input-field" placeholder="https://…" value={form.jdUrl || ''}
                 onChange={e => setForm(f => ({ ...f, jdUrl: e.target.value }))} />
             </div>
           </div>
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">Job Description</label>
-            <AutoTextarea className="textarea-field" placeholder="Paste the saved job description for this application..."
+            <label className="text-xs text-slate-400 mb-1 block">{t('applications.fields.jobDescription')}</label>
+            <AutoTextarea className="textarea-field" placeholder={t('applications.placeholders.editJobDescription')}
               value={form.jdText || ''} onChange={e => setForm(f => ({ ...f, jdText: e.target.value }))} />
           </div>
         </div>
         <div className="flex gap-2">
           <button onClick={() => onSave(form)} disabled={!form.company.trim()}
-            className="btn-primary flex-1 justify-center"><Check size={14}/> Save</button>
-          <button onClick={onClose} className="btn-ghost">Cancel</button>
+            className="btn-primary flex-1 justify-center"><Check size={14}/> {t('common.save')}</button>
+          <button onClick={onClose} className="btn-ghost">{t('common.cancel')}</button>
         </div>
       </div>
     </div>
@@ -790,13 +811,20 @@ function EditJobModal({ app, onSave, onClose }) {
 
 // ── Stats ───────────────────────────────────────────────────────────────────
 function TrackerStats({ applications }) {
+  const { t } = useLanguage()
+  const stageLabel = (stage) => t(STAGE_LABEL_KEYS[stage] || 'applications.stage.unknown', { stage })
   const total = applications.length
   const byStage = STAGES.reduce((acc, s) => ({ ...acc, [s]: applications.filter(a => a.stage === s).length }), {})
   const active = applications.filter(a => !['Offer', 'Rejected'].includes(a.stage)).length
   return (
     <div className="space-y-4 animate-in">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[['Total', total, 'text-white'], ['Active', active, 'text-teal-400'], ['Offers', byStage.Offer, 'text-green-400'], ['Rejected', byStage.Rejected, 'text-red-400']].map(([l, v, c]) => (
+        {[
+          [t('applications.stats.total'), total, 'text-white'],
+          [t('applications.stats.active'), active, 'text-teal-400'],
+          [t('applications.stats.offers'), byStage.Offer, 'text-green-400'],
+          [t('applications.stats.rejected'), byStage.Rejected, 'text-red-400'],
+        ].map(([l, v, c]) => (
           <div key={l} className="card text-center">
             <div className={`font-display font-bold text-2xl mb-1 ${c}`}>{v}</div>
             <div className="text-slate-400 text-xs">{l}</div>
@@ -804,14 +832,14 @@ function TrackerStats({ applications }) {
         ))}
       </div>
       <div className="card">
-        <h3 className="font-display font-semibold text-white text-sm mb-3">Pipeline</h3>
+        <h3 className="font-display font-semibold text-white text-sm mb-3">{t('applications.stats.pipeline')}</h3>
         <div className="space-y-2">
           {STAGES.map(stage => {
             const count = byStage[stage]
             const pct = total > 0 ? (count / total) * 100 : 0
             return (
               <div key={stage} className="flex items-center gap-3">
-                <span className="text-slate-400 text-xs w-20 flex-shrink-0">{stage}</span>
+                <span className="text-slate-400 text-xs w-20 flex-shrink-0">{stageLabel(stage)}</span>
                 <div className="flex-1 h-1.5 bg-navy-700 rounded-full overflow-hidden">
                   <div className="h-full bg-teal-500 rounded-full" style={{ width: `${pct}%` }}/>
                 </div>
@@ -824,8 +852,8 @@ function TrackerStats({ applications }) {
       {byStage.Offer > 0 && (
         <div className="card border-green-500/20 bg-green-500/5 text-center py-6">
           <div className="text-3xl mb-2">🎉</div>
-          <div className="font-display font-bold text-green-400 text-lg">{byStage.Offer} Offer{byStage.Offer > 1 ? 's' : ''}!</div>
-          <div className="text-slate-400 text-sm">Conversion: {total > 0 ? Math.round((byStage.Offer / total) * 100) : 0}%</div>
+          <div className="font-display font-bold text-green-400 text-lg">{t('applications.stats.offerCount', { count: byStage.Offer })}</div>
+          <div className="text-slate-400 text-sm">{t('applications.stats.conversion', { percent: total > 0 ? Math.round((byStage.Offer / total) * 100) : 0 })}</div>
         </div>
       )}
     </div>
@@ -837,7 +865,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const { callAI, isConnected } = useAI()
   const { getProjectData } = useProject()
   const { launchTool, pushAppHistory } = useApp()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
   const initialWorkspaceTab = initialTab === 'notes' ? 'research' : initialTab
   const [workspaceTab, setWorkspaceTab] = useState(initialWorkspaceTab)
   const [form, setForm] = useState({
@@ -892,6 +920,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const hasPrep = hasPrepNotes(form)
   const noteCount = Object.values(form).filter(value => (value || '').trim()).length
   const applicationLabel = `${app.company}${app.role ? ` - ${app.role}` : ''}`
+  const stageLabel = (stage) => t(STAGE_LABEL_KEYS[stage] || 'applications.stage.unknown', { stage })
 
   function matchesApplicationEntry(entry) {
     if (!entry) return false
@@ -915,27 +944,27 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   function statusInfo(state) {
     if (state === 'complete') {
       return {
-        label: 'Complete',
+        label: t('applications.workspace.status.complete'),
         badge: 'border-green-500/30 bg-green-500/10 text-green-300',
         card: 'border-green-500/20 bg-green-500/5',
       }
     }
     if (state === 'in-progress') {
       return {
-        label: 'In Progress',
+        label: t('applications.workspace.status.inProgress'),
         badge: 'border-teal-500/30 bg-teal-500/10 text-teal-300',
         card: 'border-teal-500/20 bg-teal-500/5',
       }
     }
     if (state === 'blocked') {
       return {
-        label: 'Blocked',
+        label: t('applications.workspace.status.blocked'),
         badge: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300',
         card: 'border-yellow-500/20 bg-yellow-500/5',
       }
     }
     return {
-      label: 'Ready',
+      label: t('applications.workspace.status.ready'),
       badge: 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300',
       card: 'border-indigo-500/20 bg-indigo-500/5',
     }
@@ -1470,7 +1499,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
               </p>
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300">
-                    {app.stage}
+                    {stageLabel(app.stage)}
                   </span>
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
                     {completedSteps}/6 steps complete
@@ -1800,32 +1829,32 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     <div className="p-4 md:p-6 max-w-5xl mx-auto animate-in">
       <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
         <div>
-          <button onClick={onBack} className="btn-ghost mb-3"><ArrowLeft size={16} /> Back to Applications</button>
+          <button onClick={onBack} className="btn-ghost mb-3"><ArrowLeft size={16} /> {t('applications.workspace.back')}</button>
           <h2 className="section-title">{app.company}</h2>
-          <p className="section-sub">{app.role || 'Application workspace'}</p>
+          <p className="section-sub">{app.role || t('applications.workspace.defaultTitle')}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <span className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
-            Active workspace
+            {t('applications.workspace.activeWorkspace')}
           </span>
           <span className={`px-2.5 py-1 rounded-full text-[11px] border ${hasJd ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
-            {hasJd ? 'JD attached' : 'No JD'}
+            {hasJd ? t('applications.badges.jdAttached') : t('applications.badges.noJd')}
           </span>
           {hasResearch && (
             <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
-              Research ready
+              {t('applications.badges.researchReady')}
             </span>
           )}
           {hasPrep && (
             <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
-              Prep notes
+              {t('applications.badges.prepNotes')}
             </span>
           )}
           <select className="input-field w-36" value={app.stage} onChange={e => onUpdateApp({ stage: e.target.value })}>
-            {STAGES.map(s => <option key={s}>{s}</option>)}
+            {STAGES.map(s => <option key={s} value={s}>{stageLabel(s)}</option>)}
           </select>
           <button onClick={() => saveWorkspace(true)} className={`btn-primary ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-            {saved ? <><Check size={16} /> Saved!</> : <>Save Workspace</>}
+            {saved ? <><Check size={16} /> {t('applications.workspace.saved')}</> : <>{t('applications.workspace.save')}</>}
           </button>
         </div>
       </div>
@@ -1842,7 +1871,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
                   : 'bg-navy-900 text-slate-400 border border-transparent hover:text-slate-200'
               }`}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </button>
           ))}
         </div>
@@ -1852,7 +1881,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
 
       <div className="flex items-center justify-end gap-2 mt-5 mb-6">
         <button onClick={() => saveWorkspace(true)} className={`btn-primary ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-          {saved ? <><Check size={16} /> Saved!</> : <>Save Workspace</>}
+          {saved ? <><Check size={16} /> {t('applications.workspace.saved')}</> : <>{t('applications.workspace.save')}</>}
         </button>
       </div>
     </div>
@@ -1861,7 +1890,8 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
 
 function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
   const { callAI, isConnected } = useAI()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
+  const stageLabel = (stage) => t(STAGE_LABEL_KEYS[stage] || 'applications.stage.unknown', { stage })
   const [form, setForm] = useState({
     people: '', theyMentioned: '', techStack: '', culture: '', openQ: '', prepNotes: '', wowFacts: '', ...notes
   })
@@ -2033,7 +2063,7 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
         </div>
         <select className="input-field w-36" value={app.stage}
           onChange={e => onUpdateApp({ stage: e.target.value })}>
-          {STAGES.map(s => <option key={s}>{s}</option>)}
+          {STAGES.map(s => <option key={s} value={s}>{stageLabel(s)}</option>)}
         </select>
       </div>
 
@@ -2184,7 +2214,7 @@ function CompanyNotesView({ app, notes, onSaveNotes, onBack, onUpdateApp }) {
 function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectApp }) {
   const { callAI, isConnected } = useAI()
   const { profile } = useApp()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
   const offerApps = applications.filter(a => a.stage === 'Offer')
   const [weights, setWeights] = useState(() =>
     Object.fromEntries(OFFER_FIELDS.map(f => [f.key, f.defaultWeight]))
@@ -2206,7 +2236,7 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
     setLoadingAdvice(true); setAdvice('')
     const offersText = offerApps.map(app => {
       const d = offerData[app.id] || {}
-      return `${app.company} (${app.role || 'role n/a'}): Score ${getScore(app.id)}/100 | Salary: ${d.baseSalary || 'not listed'} | Bonus: ${d.bonus || 'n/a'} | ${OFFER_FIELDS.map(f => `${f.label}: ${d[f.key] || 3}/5`).join(', ')}`
+      return `${app.company} (${app.role || 'role n/a'}): Score ${getScore(app.id)}/100 | Salary: ${d.baseSalary || 'not listed'} | Bonus: ${d.bonus || 'n/a'} | ${OFFER_FIELDS.map(f => `${t(f.labelKey)}: ${d[f.key] || 3}/5`).join(', ')}`
     }).join('\n')
     const profileSummary = `${profile?.currentRole || 'professional'}, targeting ${profile?.targetRole || 'new role'}`
     try {
@@ -2223,8 +2253,8 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
   if (offerApps.length === 0) return (
     <div className="card text-center py-12 animate-in">
       <Scale size={32} className="text-slate-600 mx-auto mb-3"/>
-      <div className="text-white font-display font-semibold mb-1">No Offers Yet</div>
-      <div className="text-slate-400 text-sm">Move an application to "Offer" stage to compare here.</div>
+      <div className="text-white font-display font-semibold mb-1">{t('applications.offer.noOffers')}</div>
+      <div className="text-slate-400 text-sm">{t('applications.offer.noOffersCopy')}</div>
     </div>
   )
 
@@ -2236,14 +2266,14 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
       {/* Weights */}
       <div className="card">
         <button onClick={() => setShowWeights(!showWeights)} className="flex items-center justify-between w-full">
-          <span className="text-white text-sm font-display font-semibold">What matters to you?</span>
-          <span className="text-teal-400 text-xs">{showWeights ? 'Hide ↑' : 'Customize weights ↓'}</span>
+          <span className="text-white text-sm font-display font-semibold">{t('applications.offer.whatMatters')}</span>
+          <span className="text-teal-400 text-xs">{showWeights ? t('applications.offer.hide') : t('applications.offer.customizeWeights')}</span>
         </button>
         {showWeights && (
           <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
             {OFFER_FIELDS.map(f => (
               <div key={f.key}>
-                <label className="text-xs text-slate-400 mb-1 block">{f.label} <span className="text-teal-400">{weights[f.key]}%</span></label>
+                <label className="text-xs text-slate-400 mb-1 block">{t(f.labelKey)} <span className="text-teal-400">{weights[f.key]}%</span></label>
                 <input type="range" min="0" max="50" value={weights[f.key]}
                   onChange={e => setWeights(w => ({ ...w, [f.key]: parseInt(e.target.value) }))}
                   className="w-full accent-teal-500"/>
@@ -2251,7 +2281,7 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
             ))}
             <div className="col-span-2 sm:col-span-3">
               <p className={`text-xs ${weightTotal !== 100 ? 'text-yellow-400' : 'text-green-400'}`}>
-                Total: {weightTotal}% {weightTotal !== 100 ? '— adjust sliders to reach 100%' : '✓'}
+                {t('applications.offer.weightTotal', { total: weightTotal })} {weightTotal !== 100 ? t('applications.offer.adjustWeights') : t('applications.offer.weightOk')}
               </p>
             </div>
           </div>
@@ -2261,7 +2291,7 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
       {/* Winner badge */}
       {sortedOffers.length > 1 && (
         <div className="card border-green-500/20 bg-green-500/5 text-center py-3">
-          <div className="text-green-400 text-xs font-display font-semibold mb-0.5">Current Leader</div>
+          <div className="text-green-400 text-xs font-display font-semibold mb-0.5">{t('applications.offer.currentLeader')}</div>
           <div className="text-white font-display font-bold text-lg">{sortedOffers[0].company}</div>
           <div className="text-slate-400 text-xs">{sortedOffers[0].role} · Score {getScore(sortedOffers[0].id)}/100</div>
         </div>
@@ -2297,7 +2327,7 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
             <div className="space-y-2">
               {OFFER_FIELDS.map(f => (
                 <div key={f.key} className="flex items-center gap-3">
-                  <span className="text-slate-400 text-xs w-20 flex-shrink-0">{f.label}</span>
+                  <span className="text-slate-400 text-xs w-20 flex-shrink-0">{t(f.labelKey)}</span>
                   <div className="flex gap-1">
                     {[1,2,3,4,5].map(v => (
                       <button key={v} onClick={() => updateField(app.id, f.key, v)}
