@@ -8,7 +8,11 @@ import { tryParseJSON, matchColor, generateId } from '../../utils/helpers'
 import ScoreRing from '../shared/ScoreRing'
 import { Search, AlertTriangle, Zap, Save, Clock, Trash2, ArrowLeft } from 'lucide-react'
 
-const TABS = ['Gap Analysis', 'App Scoring', 'Red Flags']
+const TAB_KEYS = [
+  'gapAnalysis.tabs.gapAnalysis',
+  'gapAnalysis.tabs.appScoring',
+  'gapAnalysis.tabs.redFlags',
+]
 
 function normalizeStudyTopic(value = '') {
   return value
@@ -38,7 +42,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
   const { profile, drillMode, openLearningTopic } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData, activeApplication } = useProject()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
 
   const resume = getProjectData('resume')
   const savedResults = getProjectData('gapResults')
@@ -96,7 +100,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
       const raw = await callAI({ systemPrompt: prompts.applicationScoring(background, jd, language), messages: [{ role: 'user', content: 'Score.' }], temperature: 0.3 })
       const parsed = tryParseJSON(raw)
       if (parsed) setScoreResult(parsed)
-      else setError('Could not parse result. Try again.')
+      else setError(t('gapAnalysis.errors.parseScore'))
     } catch (e) { setError(e.message) }
     setLoading(false)
   }
@@ -108,7 +112,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
       const raw = await callAI({ systemPrompt: prompts.redFlagDetector(jd, language), messages: [{ role: 'user', content: 'Analyze.' }], temperature: 0.4 })
       const parsed = tryParseJSON(raw)
       if (parsed) setRedFlags(parsed)
-      else setError('Could not parse. Try again.')
+      else setError(t('gapAnalysis.errors.parseRedFlags'))
     } catch (e) { setError(e.message) }
     setLoading(false)
   }
@@ -118,7 +122,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
     const entry = {
       id: generateId(),
       date: new Date().toISOString(),
-      tab: TABS[tab],
+      tab: t(TAB_KEYS[tab]),
       jdSnippet: jd.slice(0, 120),
       gapResult: tab === 0 ? gapResult : null,
       scoreResult: tab === 1 ? scoreResult : null,
@@ -155,7 +159,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
         )
       }
       openLearningTopic(existingTopic.id, 'tutor')
-      setStudyMsg(`Opened study topic: ${existingTopic.title}`)
+      setStudyMsg(t('gapAnalysis.study.openedTopic', { topic: existingTopic.title }))
       return
     }
 
@@ -180,7 +184,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
 
     updateProjectData('topics', [...topics, newTopic])
     openLearningTopic(newTopic.id, 'tutor')
-    setStudyMsg(`Added study topic: ${newTopic.title}`)
+    setStudyMsg(t('gapAnalysis.study.addedTopic', { topic: newTopic.title }))
   }
 
   const suggestedStudyTopics = Array.from(new Set([
@@ -196,11 +200,11 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
 
   if (showHistory) return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
-      <button onClick={() => setShowHistory(false)} className="btn-ghost mb-4"><ArrowLeft size={16} /> Back</button>
-      <h2 className="section-title mb-1">Saved Analyses</h2>
-      <p className="section-sub mb-4">{savedResults.length} saved in this project</p>
+      <button onClick={() => setShowHistory(false)} className="btn-ghost mb-4"><ArrowLeft size={16} /> {t('common.back')}</button>
+      <h2 className="section-title mb-1">{t('gapAnalysis.history.title')}</h2>
+      <p className="section-sub mb-4">{t('gapAnalysis.history.savedCount', { count: savedResults.length })}</p>
       {savedResults.length === 0 ? (
-        <div className="card text-center py-10 text-slate-500">No saved analyses yet. Run one and click Save.</div>
+        <div className="card text-center py-10 text-slate-500">{t('gapAnalysis.history.empty')}</div>
       ) : (
         <div className="space-y-2">
           {[...savedResults].reverse().map(r => (
@@ -225,18 +229,18 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
       )}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="section-title">Gap Analysis</h2>
-          <p className="section-sub">Analyze fit, score applications, detect red flags.</p>
+          <h2 className="section-title">{t('gapAnalysis.title')}</h2>
+          <p className="section-sub">{t('gapAnalysis.subtitle')}</p>
         </div>
         <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs">
-          <Clock size={14} /> History ({savedResults.length})
+          <Clock size={14} /> {t('gapAnalysis.history.button', { count: savedResults.length })}
         </button>
       </div>
 
       <div className="flex gap-1 bg-navy-900 p-1 rounded-xl mb-5">
-        {TABS.map((t, i) => (
-          <button key={t} onClick={() => setTab(i)}
-            className={`flex-1 py-2 rounded-lg text-sm font-body font-medium transition-all ${tab === i ? 'bg-navy-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{t}</button>
+        {TAB_KEYS.map((tabKey, i) => (
+          <button key={tabKey} onClick={() => setTab(i)}
+            className={`flex-1 py-2 rounded-lg text-sm font-body font-medium transition-all ${tab === i ? 'bg-navy-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{t(tabKey)}</button>
         ))}
       </div>
 
@@ -244,16 +248,16 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
         <div className="card border-teal-500/20 bg-teal-500/5 mb-4">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <div className="text-white text-sm font-display font-semibold">Active Job Context</div>
+              <div className="text-white text-sm font-display font-semibold">{t('gapAnalysis.activeJobContext.title')}</div>
               <div className="text-teal-300 text-sm">{activeApplication.company}{activeApplication.role ? ` - ${activeApplication.role}` : ''}</div>
               <div className="text-slate-400 text-xs mt-1">
                 {activeContextJD.trim()
-                  ? 'Using the saved JD from Job Tracker. You can still edit the field below for this run.'
-                  : 'This application is active, but it does not have a saved JD yet.'}
+                  ? t('gapAnalysis.activeJobContext.usingSavedJd')
+                  : t('gapAnalysis.activeJobContext.noSavedJd')}
               </div>
             </div>
             <span className={`text-xs px-2.5 py-1 rounded-full border ${activeContextJD.trim() ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
-              {activeContextJD.trim() ? 'JD attached' : 'No JD saved'}
+              {activeContextJD.trim() ? t('applications.badges.jdAttached') : t('gapAnalysis.activeJobContext.noJdSaved')}
             </span>
           </div>
         </div>
@@ -261,13 +265,13 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
 
       <div className="space-y-3 mb-4">
         <div>
-          <label className="text-sm text-slate-400 mb-1.5 block">Job Description</label>
-          <textarea className="textarea-field h-28" placeholder="Paste the job description..." value={jd} onChange={e => setJd(e.target.value)} />
+          <label className="text-sm text-slate-400 mb-1.5 block">{t('gapAnalysis.fields.jobDescription')}</label>
+          <textarea className="textarea-field h-28" placeholder={t('gapAnalysis.placeholders.jobDescription')} value={jd} onChange={e => setJd(e.target.value)} />
         </div>
         {tab !== 2 && (
           <div>
-            <label className="text-sm text-slate-400 mb-1.5 block">Your Background {resume && <span className="text-teal-400 text-xs ml-1">← from resume</span>}</label>
-            <textarea className="textarea-field h-20" placeholder="Describe your experience..." value={background} onChange={e => setBackground(e.target.value)} />
+            <label className="text-sm text-slate-400 mb-1.5 block">{t('gapAnalysis.fields.background')} {resume && <span className="text-teal-400 text-xs ml-1">← {t('gapAnalysis.fields.fromResume')}</span>}</label>
+            <textarea className="textarea-field h-20" placeholder={t('gapAnalysis.placeholders.background')} value={background} onChange={e => setBackground(e.target.value)} />
           </div>
         )}
       </div>
@@ -277,10 +281,10 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
           disabled={loading || !isConnected || !jd.trim()}
           className="btn-primary">
           {tab === 0 ? <Search size={16} /> : tab === 1 ? <Zap size={16} /> : <AlertTriangle size={16} />}
-          {loading ? 'Analyzing...' : tab === 0 ? 'Analyze Gap' : tab === 1 ? 'Score Application' : 'Detect Red Flags'}
+          {loading ? t('gapAnalysis.actions.analyzing') : tab === 0 ? t('gapAnalysis.actions.analyzeGap') : tab === 1 ? t('gapAnalysis.actions.scoreApplication') : t('gapAnalysis.actions.detectRedFlags')}
         </button>
         {(gapResult || scoreResult || redFlags) && (
-          <button onClick={saveResult} className="btn-secondary"><Save size={14} /> Save to Project</button>
+          <button onClick={saveResult} className="btn-secondary"><Save size={14} /> {t('gapAnalysis.actions.saveToProject')}</button>
         )}
       </div>
 
@@ -299,12 +303,12 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
           </div>
           {suggestedStudyTopics.length > 0 && (
             <div className="card border-teal-500/20 bg-teal-500/5">
-              <div className="text-white text-sm font-display font-semibold mb-1">Study from this analysis</div>
-              <div className="text-slate-400 text-xs mb-3">Send the biggest gaps into Learning and open tutor mode right away.</div>
+              <div className="text-white text-sm font-display font-semibold mb-1">{t('gapAnalysis.study.title')}</div>
+              <div className="text-slate-400 text-xs mb-3">{t('gapAnalysis.study.subtitle')}</div>
               <div className="flex flex-wrap gap-2">
                 {suggestedStudyTopics.map(topic => (
                   <button key={topic} onClick={() => addStudyTopic(topic)} className="btn-secondary text-xs py-1.5 px-3">
-                    Study: {topic}
+                    {t('gapAnalysis.study.action', { topic })}
                   </button>
                 ))}
               </div>
@@ -337,16 +341,16 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
               </div>
             ))}
           </div>
-          {scoreResult.topStrengths?.length > 0 && <div><div className="text-slate-400 text-xs mb-2">Top Strengths</div><div className="flex flex-wrap gap-2">{scoreResult.topStrengths.map((s, i) => <span key={i} className="badge-green">{s}</span>)}</div></div>}
+          {scoreResult.topStrengths?.length > 0 && <div><div className="text-slate-400 text-xs mb-2">{t('gapAnalysis.results.topStrengths')}</div><div className="flex flex-wrap gap-2">{scoreResult.topStrengths.map((s, i) => <span key={i} className="badge-green">{s}</span>)}</div></div>}
           {scoreResult.keyGaps?.length > 0 && (
             <div className="space-y-3">
-              <div><div className="text-slate-400 text-xs mb-2">Key Gaps</div><div className="flex flex-wrap gap-2">{scoreResult.keyGaps.map((s, i) => <span key={i} className="badge-red">{s}</span>)}</div></div>
+              <div><div className="text-slate-400 text-xs mb-2">{t('gapAnalysis.results.keyGaps')}</div><div className="flex flex-wrap gap-2">{scoreResult.keyGaps.map((s, i) => <span key={i} className="badge-red">{s}</span>)}</div></div>
               <div>
-                <div className="text-slate-400 text-xs mb-2">Study These Gaps</div>
+                <div className="text-slate-400 text-xs mb-2">{t('gapAnalysis.study.studyTheseGaps')}</div>
                 <div className="flex flex-wrap gap-2">
                   {suggestedStudyTopics.map(topic => (
                     <button key={topic} onClick={() => addStudyTopic(topic)} className="btn-secondary text-xs py-1.5 px-3">
-                      Study: {topic}
+                      {t('gapAnalysis.study.action', { topic })}
                     </button>
                   ))}
                 </div>

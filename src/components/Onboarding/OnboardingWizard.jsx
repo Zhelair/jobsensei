@@ -26,7 +26,10 @@ const ONBOARDING_COPY = {
     reading: 'Reading...',
     resumePlaceholder: 'Or paste your resume / CV text here...',
     resumeCaptured: 'Resume captured',
+    resumeCapturedWithCount: 'Resume captured - {count} characters',
     resumeLater: 'You can skip this and upload it later in Settings.',
+    pdfNoReadableText: '[PDF had no readable text. Paste below.]',
+    resumeReadError: '[Could not read file. Please paste your resume below.]',
     activateTitle: 'Activate JobSensei AI',
     activateSubtitle: 'Choose how to power the AI features.',
     supporter: 'Buy Me a Coffee Supporter',
@@ -62,7 +65,10 @@ const ONBOARDING_COPY = {
     reading: 'Читаю...',
     resumePlaceholder: 'Или вставьте текст резюме / CV здесь...',
     resumeCaptured: 'Резюме сохранено',
+    resumeCapturedWithCount: 'Резюме сохранено - {count} символов',
     resumeLater: 'Можно пропустить и загрузить позже в Settings.',
+    pdfNoReadableText: '[В PDF нет читаемого текста. Вставьте его ниже.]',
+    resumeReadError: '[Не удалось прочитать файл. Пожалуйста, вставьте резюме ниже.]',
     activateTitle: 'Активируйте JobSensei AI',
     activateSubtitle: 'Выберите, как включить AI-функции.',
     supporter: 'Buy Me a Coffee Supporter',
@@ -98,7 +104,10 @@ const ONBOARDING_COPY = {
     reading: 'Чета...',
     resumePlaceholder: 'Или постави текста на резюмето / CV тук...',
     resumeCaptured: 'Резюмето е запазено',
+    resumeCapturedWithCount: 'Резюмето е запазено - {count} символа',
     resumeLater: 'Можеш да пропуснеш и да го качиш по-късно в Settings.',
+    pdfNoReadableText: '[В PDF няма четим текст. Постави го отдолу.]',
+    resumeReadError: '[Файлът не можа да се прочете. Моля, постави резюмето отдолу.]',
     activateTitle: 'Активирай JobSensei AI',
     activateSubtitle: 'Избери как да захраниш AI функциите.',
     supporter: 'Buy Me a Coffee Supporter',
@@ -134,7 +143,10 @@ const ONBOARDING_COPY = {
     reading: 'Leyendo...',
     resumePlaceholder: 'O pega aquí el texto de tu resume / CV...',
     resumeCaptured: 'Resume guardado',
+    resumeCapturedWithCount: 'Resume guardado - {count} caracteres',
     resumeLater: 'Puedes saltarlo y subirlo más tarde en Settings.',
+    pdfNoReadableText: '[El PDF no tenía texto legible. Pégalo abajo.]',
+    resumeReadError: '[No se pudo leer el archivo. Pega tu resume abajo.]',
     activateTitle: 'Activa JobSensei AI',
     activateSubtitle: 'Elige cómo activar las funciones AI.',
     supporter: 'Buy Me a Coffee Supporter',
@@ -170,7 +182,10 @@ const ONBOARDING_COPY = {
     reading: 'Lecture...',
     resumePlaceholder: 'Ou collez le texte de votre resume / CV ici...',
     resumeCaptured: 'Resume enregistré',
+    resumeCapturedWithCount: 'Resume enregistré - {count} caractères',
     resumeLater: 'Vous pouvez ignorer cette étape et le téléverser plus tard dans Settings.',
+    pdfNoReadableText: '[Le PDF ne contenait pas de texte lisible. Collez-le ci-dessous.]',
+    resumeReadError: '[Impossible de lire le fichier. Veuillez coller votre resume ci-dessous.]',
     activateTitle: 'Activez JobSensei AI',
     activateSubtitle: 'Choisissez comment alimenter les fonctions AI.',
     supporter: 'Buy Me a Coffee Supporter',
@@ -206,7 +221,10 @@ const ONBOARDING_COPY = {
     reading: 'Lettura...',
     resumePlaceholder: 'Oppure incolla qui il testo del resume / CV...',
     resumeCaptured: 'Resume salvato',
+    resumeCapturedWithCount: 'Resume salvato - {count} caratteri',
     resumeLater: 'Puoi saltare questo passaggio e caricarlo più tardi in Settings.',
+    pdfNoReadableText: '[Il PDF non conteneva testo leggibile. Incollalo qui sotto.]',
+    resumeReadError: '[Impossibile leggere il file. Incolla il tuo resume qui sotto.]',
     activateTitle: 'Attiva JobSensei AI',
     activateSubtitle: 'Scegli come alimentare le funzioni AI.',
     supporter: 'Buy Me a Coffee Supporter',
@@ -242,7 +260,10 @@ const ONBOARDING_COPY = {
     reading: 'A ler...',
     resumePlaceholder: 'Ou cole aqui o texto do seu resume / CV...',
     resumeCaptured: 'Resume guardado',
+    resumeCapturedWithCount: 'Resume guardado - {count} caracteres',
     resumeLater: 'Pode saltar isto e carregar mais tarde em Settings.',
+    pdfNoReadableText: '[O PDF não tinha texto legível. Cole-o abaixo.]',
+    resumeReadError: '[Não foi possível ler o ficheiro. Cole o seu resume abaixo.]',
     activateTitle: 'Ativar JobSensei AI',
     activateSubtitle: 'Escolha como alimentar as funções AI.',
     supporter: 'Buy Me a Coffee Supporter',
@@ -278,7 +299,10 @@ const ONBOARDING_COPY = {
     reading: 'Czytam...',
     resumePlaceholder: 'Albo wklej tutaj tekst resume / CV...',
     resumeCaptured: 'Resume zapisane',
+    resumeCapturedWithCount: 'Resume zapisane - {count} znaków',
     resumeLater: 'Możesz to pominąć i przesłać później w Settings.',
+    pdfNoReadableText: '[PDF nie zawierał czytelnego tekstu. Wklej go poniżej.]',
+    resumeReadError: '[Nie udało się odczytać pliku. Wklej swoje resume poniżej.]',
     activateTitle: 'Aktywuj JobSensei AI',
     activateSubtitle: 'Wybierz, jak zasilić funkcje AI.',
     supporter: 'Buy Me a Coffee Supporter',
@@ -314,7 +338,10 @@ const ONBOARDING_COPY = {
     reading: 'Lese...',
     resumePlaceholder: 'Oder fügen Sie den Text Ihres resume / CV hier ein...',
     resumeCaptured: 'Resume gespeichert',
+    resumeCapturedWithCount: 'Resume gespeichert - {count} Zeichen',
     resumeLater: 'Sie können dies überspringen und später in Settings hochladen.',
+    pdfNoReadableText: '[Die PDF enthielt keinen lesbaren Text. Fügen Sie ihn unten ein.]',
+    resumeReadError: '[Die Datei konnte nicht gelesen werden. Bitte fügen Sie Ihr Resume unten ein.]',
     activateTitle: 'JobSensei AI aktivieren',
     activateSubtitle: 'Wählen Sie, wie die AI-Funktionen betrieben werden.',
     supporter: 'Buy Me a Coffee Supporter',
@@ -397,12 +424,12 @@ export default function OnboardingWizard() {
           const content = await page.getTextContent()
           fullText += content.items.map(item => item.str).join(' ') + '\n'
         }
-        update('resume', fullText.trim().replace(/\s{3,}/g, '\n') || '[PDF had no readable text. Paste below.]')
+        update('resume', fullText.trim().replace(/\s{3,}/g, '\n') || tt('pdfNoReadableText'))
       } else {
         update('resume', (await file.text()).replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s{3,}/g, '\n'))
       }
     } catch {
-      update('resume', '[Could not read file. Please paste your resume below.]')
+      update('resume', tt('resumeReadError'))
     }
     setExtractingResume(false)
     e.target.value = ''
@@ -483,7 +510,7 @@ export default function OnboardingWizard() {
           />
           {data.resume?.trim() ? (
             <p className="text-teal-400 text-xs text-center flex items-center justify-center gap-1.5">
-              <Check size={13} /> {tt('resumeCaptured')} - {data.resume.length.toLocaleString()} characters
+              <Check size={13} /> {tt('resumeCapturedWithCount', { count: data.resume.length.toLocaleString() })}
             </p>
           ) : (
             <p className="text-slate-500 text-xs text-center">
