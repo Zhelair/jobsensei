@@ -203,6 +203,9 @@ export default function Settings() {
       : voiceSupport === 'fallback'
         ? t('settings.voiceFallback')
         : t('settings.voiceNone')
+  const voiceBadgeLabel = activeVoice && voiceSupport === 'exact'
+    ? `${activeVoice.name} (${activeVoice.lang})`
+    : `${languageOption.nativeLabel} (${languageOption.speechLang})`
 
   const hasPlanAccess = !!bmacToken
   const usingOwnKey = hasPlanAccess && !!apiKey
@@ -246,7 +249,7 @@ export default function Settings() {
                 ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'
                 : 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300'
           }`}>
-            {activeVoice ? `${activeVoice.name} (${activeVoice.lang})` : 'No voice'}
+            {voiceBadgeLabel}
           </span>
         </div>
 
