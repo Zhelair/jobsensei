@@ -217,7 +217,7 @@ const TRANSLATIONS = {
     'projects.namePlaceholderShort': 'Project name…',
     'projects.exportAll': 'Export All',
     'projects.exportAllProjects': 'Export All Projects',
-    'projects.exportCurrentProject': 'Export This Project',
+    'projects.exportCurrentProject': 'Export Project',
     'projects.import': 'Import',
     'projects.importProject': 'Import Project',
     'projects.importing': 'Importing...',
@@ -479,7 +479,7 @@ const TRANSLATIONS = {
     'today.prepHubsCopy': 'Два пути: практика интервью или подготовка документов/профиля.',
     'settings.title': 'Настройки',
     'settings.subtitle': 'План, AI-доступ, резюме, язык, голос и локальные данные.',
-    'projects.exportCurrentProject': 'Экспортировать этот проект',
+    'projects.exportCurrentProject': 'Экспорт проекта',
     'settings.languageTitle': 'Язык и голос',
     'settings.languageCopy': 'Выберите язык интерфейса и голос браузера для озвучки ответов.',
     'settings.interfaceLanguage': 'Язык интерфейса',
@@ -536,7 +536,7 @@ const TRANSLATIONS = {
     'today.prepHubsCopy': 'Две ясни посоки: интервю практика или документи/профил.',
     'settings.title': 'Настройки',
     'settings.subtitle': 'Управлявай план, AI достъп, CV, език, глас и локални данни.',
-    'projects.exportCurrentProject': 'Експортирай този проект',
+    'projects.exportCurrentProject': 'Експорт на проекта',
     'settings.languageTitle': 'Език и глас',
     'settings.languageCopy': 'Избери език на интерфейса и browser voice за AI отговорите.',
     'settings.interfaceLanguage': 'Език на интерфейса',
@@ -580,7 +580,7 @@ const TRANSLATIONS = {
     'today.firstStepTitle': 'Añade una aplicación real para desbloquear el workspace',
     'settings.title': 'Ajustes',
     'settings.subtitle': 'Gestiona plan, acceso AI, CV, idioma, voz y datos locales.',
-    'projects.exportCurrentProject': 'Exportar este proyecto',
+    'projects.exportCurrentProject': 'Exportar proyecto',
     'settings.languageTitle': 'Idioma y voz',
     'settings.languageCopy': 'Elige el idioma de la interfaz y la voz del navegador para respuestas habladas.',
     'settings.interfaceLanguage': 'Idioma de interfaz',
@@ -620,7 +620,7 @@ const TRANSLATIONS = {
     'today.firstStepTitle': 'Ajoutez une vraie candidature pour déverrouiller le workspace',
     'settings.title': 'Paramètres',
     'settings.subtitle': 'Gérez le plan, l’accès AI, le CV, la langue, la voix et les données locales.',
-    'projects.exportCurrentProject': 'Exporter ce projet',
+    'projects.exportCurrentProject': 'Exporter le projet',
     'settings.languageTitle': 'Langue et voix',
     'settings.languageCopy': 'Choisissez la langue de l’interface et la voix du navigateur pour les réponses parlées.',
     'settings.interfaceLanguage': 'Langue de l’interface',
@@ -649,7 +649,7 @@ const TRANSLATIONS = {
     'today.hello': 'Ciao, {name}',
     'settings.title': 'Impostazioni',
     'settings.subtitle': 'Gestisci piano, accesso AI, CV, lingua, voce e dati locali.',
-    'projects.exportCurrentProject': 'Esporta questo progetto',
+    'projects.exportCurrentProject': 'Esporta progetto',
     'settings.languageTitle': 'Lingua e voce',
     'settings.interfaceLanguage': 'Lingua interfaccia',
     'settings.voice': 'Voce AI',
@@ -688,7 +688,7 @@ const TRANSLATIONS = {
     'today.firstStepTitle': 'Adicione uma candidatura real para desbloquear o workspace',
     'settings.title': 'Configurações',
     'settings.subtitle': 'Gerencie plano, acesso AI, CV, idioma, voz e dados locais.',
-    'projects.exportCurrentProject': 'Exportar este projeto',
+    'projects.exportCurrentProject': 'Exportar projeto',
     'settings.languageTitle': 'Idioma e voz',
     'settings.languageCopy': 'Escolha o idioma da interface e a voz do navegador para respostas faladas.',
     'settings.interfaceLanguage': 'Idioma da interface',
@@ -717,7 +717,7 @@ const TRANSLATIONS = {
     'today.hello': 'Cześć, {name}',
     'settings.title': 'Ustawienia',
     'settings.subtitle': 'Zarządzaj planem, dostępem AI, CV, językiem, głosem i danymi lokalnymi.',
-    'projects.exportCurrentProject': 'Eksportuj ten projekt',
+    'projects.exportCurrentProject': 'Eksport projektu',
     'settings.languageTitle': 'Język i głos',
     'settings.interfaceLanguage': 'Język interfejsu',
     'settings.voice': 'Głos AI',
@@ -745,7 +745,7 @@ const TRANSLATIONS = {
     'today.hello': 'Hallo, {name}',
     'settings.title': 'Einstellungen',
     'settings.subtitle': 'Plan, AI-Zugang, Lebenslauf, Sprache, Stimme und lokale Daten verwalten.',
-    'projects.exportCurrentProject': 'Dieses Projekt exportieren',
+    'projects.exportCurrentProject': 'Projekt exportieren',
     'settings.languageTitle': 'Sprache und Stimme',
     'settings.languageCopy': 'Wählen Sie die Oberflächensprache und die Browser-Stimme für gesprochene Antworten.',
     'settings.interfaceLanguage': 'Oberflächensprache',
@@ -786,6 +786,10 @@ function interpolate(template, vars = {}) {
   return String(template).replace(/\{(\w+)\}/g, (_, key) => vars[key] ?? '')
 }
 
+function normalizeVoiceLang(lang = '') {
+  return String(lang || '').replace(/_/g, '-').toLowerCase()
+}
+
 export function findVoiceForLanguage(option, voices, preferredVoiceName = '') {
   if (!Array.isArray(voices) || voices.length === 0) return null
   if (preferredVoiceName) {
@@ -794,45 +798,53 @@ export function findVoiceForLanguage(option, voices, preferredVoiceName = '') {
   }
 
   const lang = option?.speechLang || 'en-US'
-  const baseLang = lang.split('-')[0]
+  const normalizedLang = normalizeVoiceLang(lang)
+  const baseLang = normalizedLang.split('-')[0]
   const searchNames = option?.voiceSearch || []
   const excludedVoiceLangs = option?.excludedVoiceLangs || []
   const excludedVoiceNames = option?.excludedVoiceNames || []
 
   const nameIncludes = (voice, hint) => voice.name?.toLowerCase().includes(hint.toLowerCase())
   const isAllowedVoice = voice => (
-    !excludedVoiceLangs.some(lang => voice.lang?.toLowerCase() === lang.toLowerCase())
+    !excludedVoiceLangs.some(lang => normalizeVoiceLang(voice.lang) === normalizeVoiceLang(lang))
     && !excludedVoiceNames.some(name => nameIncludes(voice, name))
   )
   const hasFemaleHint = voice => FEMALE_VOICE_HINTS.some(hint => nameIncludes(voice, hint))
   const hasMaleHint = voice => MALE_VOICE_HINTS.some(hint => nameIncludes(voice, hint))
-  const pickBest = (pool) => {
+  const pickBest = (pool, useSearchNames = true) => {
     const allowedPool = pool.filter(isAllowedVoice)
     if (!allowedPool.length) return null
-    for (const name of searchNames) {
-      const match = allowedPool.find(voice => voice.name === name || nameIncludes(voice, name))
-      if (match) return match
+    if (useSearchNames) {
+      for (const name of searchNames) {
+        const match = allowedPool.find(voice => voice.name === name || nameIncludes(voice, name))
+        if (match) return match
+      }
     }
     return allowedPool.find(hasFemaleHint)
       || allowedPool.find(voice => !hasMaleHint(voice))
       || allowedPool[0]
   }
 
-  const exactLang = voices.filter(voice => voice.lang === lang)
-  const relatedLang = voices.filter(voice => voice.lang?.toLowerCase().startsWith(`${baseLang}-`))
-  const englishFallback = voices.filter(voice => voice.lang?.startsWith('en'))
+  const exactLang = voices.filter(voice => normalizeVoiceLang(voice.lang) === normalizedLang)
+  const relatedLang = voices.filter((voice) => {
+    const voiceLang = normalizeVoiceLang(voice.lang)
+    return voiceLang === baseLang || voiceLang.startsWith(`${baseLang}-`)
+  })
+  const englishFallback = voices.filter(voice => normalizeVoiceLang(voice.lang).startsWith('en'))
 
   return pickBest(exactLang)
     || pickBest(relatedLang)
-    || pickBest(englishFallback)
-    || pickBest(voices)
+    || pickBest(englishFallback, false)
+    || pickBest(voices, false)
 }
 
 function getVoiceSupport(option, voice, voices) {
   if (!voices.length) return 'none'
   if (!voice) return 'none'
-  if (voice.lang === option.speechLang) return 'exact'
-  if (voice.lang?.split('-')[0] === option.speechLang.split('-')[0]) return 'related'
+  const voiceLang = normalizeVoiceLang(voice.lang)
+  const optionLang = normalizeVoiceLang(option.speechLang)
+  if (voiceLang === optionLang) return 'exact'
+  if (voiceLang.split('-')[0] === optionLang.split('-')[0]) return 'related'
   return 'fallback'
 }
 

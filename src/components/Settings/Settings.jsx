@@ -43,14 +43,6 @@ export default function Settings() {
     setForm({ provider, model, apiKey, customBaseUrl: customBaseUrl || '' })
   }, [provider, model, apiKey, customBaseUrl])
 
-  useEffect(() => {
-    if (!bmacToken) {
-      setShowOwnKey(false)
-      return
-    }
-    setShowOwnKey(true)
-  }, [bmacToken])
-
   function update(k, v) {
     if (k === 'provider') {
       setForm(f => ({ ...f, provider: v, model: PROVIDER_CONFIGS[v].defaultModel }))
@@ -192,7 +184,7 @@ export default function Settings() {
       : voiceSupport === 'fallback'
         ? t('settings.voiceFallback')
         : t('settings.voiceNone')
-  const voiceBadgeLabel = activeVoice && voiceSupport === 'exact'
+  const voiceBadgeLabel = activeVoice
     ? `${activeVoice.name} (${activeVoice.lang})`
     : `${languageOption.nativeLabel} (${languageOption.speechLang})`
 
@@ -217,6 +209,8 @@ export default function Settings() {
     : usingJobsenseiAI
       ? 'JobSensei is powering AI for this workspace. You can still switch to your own key at any time.'
       : 'Unlock JobSensei first, then use hosted AI or connect your own API key.'
+
+  const pairedCardClass = 'card h-full flex flex-col'
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in space-y-4">
@@ -297,9 +291,8 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4 items-start">
-        <div className="space-y-4">
-          <div className={`card ${bmacToken ? 'border-green-500/30 bg-green-500/5' : 'border-teal-500/20'}`}>
+      <div className="grid xl:grid-cols-2 gap-4 items-stretch">
+        <div className={`${pairedCardClass} ${bmacToken ? 'border-green-500/30 bg-green-500/5' : 'border-teal-500/20'}`}>
             <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
               <Coffee size={16} className="text-yellow-400" /> JobSensei AI
             </h3>
@@ -353,9 +346,37 @@ export default function Settings() {
                 {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
               </div>
             )}
-          </div>
+        </div>
 
-          <div className="card">
+        <div className={pairedCardClass}>
+          <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+            <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
+          </h3>
+          <p className="text-slate-400 text-xs mb-3">Saved per project. Used to prefill your background across the main tools.</p>
+          <div className="flex gap-2 mb-3">
+            <button onClick={() => fileRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
+              <Upload size={13} /> {extracting ? 'Reading...' : 'Upload (.txt, .pdf)'}
+            </button>
+            <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.rtf" className="hidden" onChange={handleResumeFile} />
+            {resumeText && (
+              <button onClick={clearResume} className="btn-ghost text-xs text-red-400 hover:text-red-300 px-2">
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <textarea
+            className="textarea-field h-36 text-xs mb-3"
+            placeholder="Or paste your resume or CV text here directly..."
+            value={resumeText}
+            onChange={e => setResumeText(e.target.value)}
+          />
+          <button onClick={saveResume} className={`btn-primary text-sm ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
+            {resumeSaved ? <><Check size={14} /> Saved!</> : 'Save Resume To Project'}
+          </button>
+          <p className="text-slate-600 text-xs mt-2">For visual design analysis, use the Visual Review tool inside the application workflow.</p>
+        </div>
+
+        <div className={pairedCardClass}>
             <h3 className="font-display font-semibold text-white mb-3">{t('settings.profile')}</h3>
             {profile ? (
               <div className="space-y-1 text-sm mb-3">
@@ -369,56 +390,21 @@ export default function Settings() {
             <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-sm">
               {profile ? 'Edit Profile' : 'Set Up Profile'}
             </button>
-          </div>
-
         </div>
 
-        <div className="space-y-4">
-          <div className="card">
-            <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-              <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
-            </h3>
-            <p className="text-slate-400 text-xs mb-3">Saved per project. Used to prefill your background across the main tools.</p>
-            <div className="flex gap-2 mb-3">
-              <button onClick={() => fileRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
-                <Upload size={13} /> {extracting ? 'Reading...' : 'Upload (.txt, .pdf)'}
-              </button>
-              <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.rtf" className="hidden" onChange={handleResumeFile} />
-              {resumeText && (
-                <button onClick={clearResume} className="btn-ghost text-xs text-red-400 hover:text-red-300 px-2">
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-            <textarea
-              className="textarea-field h-36 text-xs mb-3"
-              placeholder="Or paste your resume or CV text here directly..."
-              value={resumeText}
-              onChange={e => setResumeText(e.target.value)}
-            />
-            <button onClick={saveResume} className={`btn-primary text-sm ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-              {resumeSaved ? <><Check size={14} /> Saved!</> : 'Save Resume To Project'}
-            </button>
-            <p className="text-slate-600 text-xs mt-2">For visual design analysis, use the Visual Review tool inside the application workflow.</p>
+        <div className={`${pairedCardClass} border-red-500/20`}>
+          <h3 className="font-display font-semibold text-white mb-1">Data Management</h3>
+          <div className="space-y-2 text-slate-400 text-xs leading-relaxed mb-3">
+            <p>Your profile, projects, resume, notes, and tool history stay only in this browser on this device.</p>
+            <p>AI requests send only the text needed for that task to your selected provider, either JobSensei-hosted AI or your own BYOK provider.</p>
+            <p>Your full workspace stays local, but anything you send in an AI request is processed by that provider under its own policies. You can erase everything saved here any time with Clear All Data.</p>
           </div>
-
-          <div className="card border-red-500/20">
-            <h3 className="font-display font-semibold text-white mb-1">Data Management</h3>
-            <div className="space-y-2 text-slate-400 text-xs leading-relaxed mb-3">
-              <p>Your profile, projects, resume, notes, and tool history are stored locally in this browser on this device.</p>
-              <p>When you use AI features, JobSensei sends only the text needed for that request to your selected AI provider, either JobSensei-hosted AI or your own BYOK provider, so the model can generate a reply.</p>
-              <p>Your full workspace is not public inside the app, but any text you send into an AI request is processed by that provider under its own policies and your account setup.</p>
-              <p>You can wipe everything saved on this device any time with Clear All Data.</p>
-            </div>
-            <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm">
-              <Trash2 size={14} /> Clear All Data
-            </button>
-          </div>
+          <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm mt-auto">
+            <Trash2 size={14} /> Clear All Data
+          </button>
         </div>
-      </div>
 
-      <div className="grid xl:grid-cols-2 gap-4 items-start">
-        <div className="card border-teal-500/20">
+        <div className={`${pairedCardClass} border-teal-500/20`}>
           <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
             <Puzzle size={16} className="text-teal-400" /> Chrome Extension
           </h3>
@@ -437,7 +423,7 @@ export default function Settings() {
               </div>
             ))}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mt-auto pt-1">
             <a href="/jobsensei-capture-extension.zip" download className="btn-secondary text-xs">
               <Download size={13} /> Download ZIP
             </a>
@@ -447,10 +433,11 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="card">
+        <div className={pairedCardClass}>
           <button
             onClick={() => hasPlanAccess && setShowOwnKey(o => !o)}
             className="w-full flex items-center justify-between gap-3"
+            aria-expanded={hasPlanAccess && showOwnKey}
           >
             <span className="font-display font-semibold text-white text-sm flex items-center gap-2">
               <Zap size={15} className="text-teal-400" /> Bring your own API key

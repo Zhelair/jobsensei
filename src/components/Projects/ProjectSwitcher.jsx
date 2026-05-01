@@ -14,6 +14,8 @@ export default function ProjectSwitcher({ collapsed }) {
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
   const fileRef = useRef(null)
+  const actionButtonClass = 'grid grid-cols-[14px_minmax(0,1fr)] items-start gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all text-left'
+  const actionLabelClass = 'leading-snug'
 
   useEffect(() => {
     const openProjectMenu = () => setOpen(true)
@@ -130,24 +132,28 @@ export default function ProjectSwitcher({ collapsed }) {
                 <button onClick={() => setCreating(false)} className="text-slate-500 px-1"><X size={14} /></button>
               </div>
             ) : (
-              <button onClick={() => setCreating(true)} data-guide="project-new" className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all">
-                <Plus size={13} /> {t('projects.new')}
+              <button onClick={() => setCreating(true)} data-guide="project-new" className={actionButtonClass}>
+                <Plus size={13} className="mt-0.5" />
+                <span className={actionLabelClass}>{t('projects.new')}</span>
               </button>
             )}
 
-            <button onClick={exportAll} className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all">
-              <FolderArchive size={13} /> {t('projects.exportAllProjects')}
+            <button onClick={exportAll} className={actionButtonClass}>
+              <FolderArchive size={13} className="mt-0.5" />
+              <span className={actionLabelClass}>{t('projects.exportAllProjects')}</span>
             </button>
 
             <button
               onClick={() => activeProject && exportProject(activeProject.id)}
-              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all"
+              className={actionButtonClass}
             >
-              <Download size={13} /> {t('projects.exportCurrentProject')}
+              <Download size={13} className="mt-0.5" />
+              <span className={actionLabelClass}>{t('projects.exportCurrentProject')}</span>
             </button>
 
-            <button onClick={() => fileRef.current?.click()} className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all">
-              <Upload size={13} /> {importing ? t('projects.importing') : t('projects.importProject')}
+            <button onClick={() => fileRef.current?.click()} className={actionButtonClass}>
+              <Upload size={13} className="mt-0.5" />
+              <span className={actionLabelClass}>{importing ? t('projects.importing') : t('projects.importProject')}</span>
             </button>
             <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
 
