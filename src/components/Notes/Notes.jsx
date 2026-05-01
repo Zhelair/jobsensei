@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { useProject } from '../../context/ProjectContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { FileText, Building2, Plus, Trash2, X } from 'lucide-react'
 
 export default function Notes() {
   const { getProjectData, updateProjectData } = useProject()
+  const { t } = useLanguage()
   const [tab, setTab] = useState('my')
   const [newCompany, setNewCompany] = useState('')
   const [showAddCompany, setShowAddCompany] = useState(false)
@@ -30,7 +32,7 @@ export default function Notes() {
   }
 
   function deleteCompany(name) {
-    if (!confirm(`Delete notes for "${name}"?`)) return
+    if (!confirm(t('notes.deleteCompanyConfirm', { name }))) return
     const next = { ...companyNotes }
     delete next[name]
     updateProjectData('companyNotes', next)
@@ -43,24 +45,23 @@ export default function Notes() {
     <div className="p-4 md:p-6 animate-in">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="section-title">Notes & Workbook</h2>
-          <p className="section-sub">Your personal scratchpad — auto-saves as you type</p>
+          <h2 className="section-title">{t('notes.title')}</h2>
+          <p className="section-sub">{t('notes.subtitle')}</p>
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 mb-5 bg-navy-800 p-1 rounded-xl w-fit">
         <button
           onClick={() => setTab('my')}
           className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-display font-medium transition-all ${tab === 'my' ? 'bg-teal-500/20 text-teal-300' : 'text-slate-400 hover:text-slate-200'}`}
         >
-          <FileText size={14} /> My Notes
+          <FileText size={14} /> {t('notes.myNotes')}
         </button>
         <button
           onClick={() => setTab('company')}
           className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-display font-medium transition-all ${tab === 'company' ? 'bg-teal-500/20 text-teal-300' : 'text-slate-400 hover:text-slate-200'}`}
         >
-          <Building2 size={14} /> Company Notes
+          <Building2 size={14} /> {t('notes.companyNotes')}
           {companies.length > 0 && <span className="text-xs bg-navy-700 rounded-full px-1.5 py-0.5">{companies.length}</span>}
         </button>
       </div>
@@ -70,20 +71,21 @@ export default function Notes() {
           <textarea
             className="textarea-field w-full font-mono text-sm leading-relaxed"
             style={{ minHeight: '60vh' }}
-            placeholder={`Write anything here…\n\nIdeas, prep notes, things to research, key talking points, salary targets — whatever helps your job search.\n\nAuto-saves as you type.`}
+            placeholder={t('notes.myNotesPlaceholder')}
             value={notes}
             onChange={e => setNotes(e.target.value)}
           />
-          <p className="text-slate-600 text-xs mt-2 text-right">{notes.length} characters · auto-saved</p>
+          <p className="text-slate-600 text-xs mt-2 text-right">
+            {t('notes.characterCount', { count: notes.length })}
+          </p>
         </div>
       )}
 
       {tab === 'company' && (
         <div className="flex gap-4 animate-in" style={{ minHeight: '60vh' }}>
-          {/* Company list */}
           <div className="w-52 flex-shrink-0 flex flex-col gap-2">
             {companies.length === 0 && !showAddCompany && (
-              <p className="text-slate-500 text-xs px-1">No companies yet. Add one to start.</p>
+              <p className="text-slate-500 text-xs px-1">{t('notes.noCompanies')}</p>
             )}
             {companies.map(name => (
               <button
@@ -109,20 +111,25 @@ export default function Notes() {
               <div className="flex gap-1">
                 <input
                   className="input-field text-sm py-1.5 flex-1"
-                  placeholder="Company name"
+                  placeholder={t('notes.companyNamePlaceholder')}
                   value={newCompany}
                   onChange={e => setNewCompany(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') addCompany(); if (e.key === 'Escape') { setShowAddCompany(false); setNewCompany('') } }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') addCompany()
+                    if (e.key === 'Escape') {
+                      setShowAddCompany(false)
+                      setNewCompany('')
+                    }
+                  }}
                   autoFocus
                 />
                 <button onClick={() => { setShowAddCompany(false); setNewCompany('') }} className="btn-ghost p-1.5"><X size={14} /></button>
               </div>
             ) : (
-              <button onClick={() => setShowAddCompany(true)} className="btn-secondary text-xs justify-center"><Plus size={13} /> Add Company</button>
+              <button onClick={() => setShowAddCompany(true)} className="btn-secondary text-xs justify-center"><Plus size={13} /> {t('notes.addCompany')}</button>
             )}
           </div>
 
-          {/* Note editor */}
           <div className="flex-1">
             {selectedCompany ? (
               <>
@@ -133,17 +140,19 @@ export default function Notes() {
                 <textarea
                   className="textarea-field w-full font-mono text-sm leading-relaxed"
                   style={{ minHeight: '52vh' }}
-                  placeholder={`Notes for ${selectedCompany}…\n\nResearch, contacts, interview prep, salary data, follow-up tasks…`}
+                  placeholder={t('notes.companyNotesPlaceholder', { company: selectedCompany })}
                   value={companyNotes[selectedCompany] || ''}
                   onChange={e => setCompanyNote(selectedCompany, e.target.value)}
                 />
-                <p className="text-slate-600 text-xs mt-2 text-right">{(companyNotes[selectedCompany] || '').length} characters · auto-saved</p>
+                <p className="text-slate-600 text-xs mt-2 text-right">
+                  {t('notes.characterCount', { count: (companyNotes[selectedCompany] || '').length })}
+                </p>
               </>
             ) : (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
                   <Building2 size={32} className="text-slate-700 mx-auto mb-3" />
-                  <p className="text-slate-500 text-sm">Select a company to view or edit notes</p>
+                  <p className="text-slate-500 text-sm">{t('notes.selectCompany')}</p>
                 </div>
               </div>
             )}

@@ -23,7 +23,7 @@ function hasPrepNotes(noteData = {}) {
 export default function Dashboard() {
   const { setActiveSection, launchTool, profile, stats } = useApp()
   const { callAI, isConnected } = useAI()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
   const {
     activeProject,
     activeApplication,
@@ -173,25 +173,25 @@ export default function Dashboard() {
   }
 
   const statCards = [
-    { label: 'Mock Interviews', value: sessions.length, icon: Mic, color: 'teal' },
-    { label: 'Avg Score', value: avgScore ? `${avgScore}/10` : '-', icon: TrendingUp, color: 'indigo' },
-    { label: 'Topics Mastered', value: completedTopics, icon: Award, color: 'teal' },
-    { label: 'Active Applications', value: activeApps, icon: Target, color: 'indigo' },
+    { label: t('dashboard.stats.mockInterviews'), value: sessions.length, icon: Mic, color: 'teal' },
+    { label: t('dashboard.stats.avgScore'), value: avgScore ? `${avgScore}/10` : '-', icon: TrendingUp, color: 'indigo' },
+    { label: t('dashboard.stats.topicsMastered'), value: completedTopics, icon: Award, color: 'teal' },
+    { label: t('dashboard.stats.activeApplications'), value: activeApps, icon: Target, color: 'indigo' },
   ]
 
   const quickActions = [
-    { label: 'Start Mock Interview', icon: Mic, section: SECTIONS.INTERVIEW, toolId: 'interview', color: 'teal' },
-    { label: 'Analyze a JD', icon: Search, section: SECTIONS.TOOLS, color: 'indigo' },
-    { label: 'Study a Topic', icon: BookOpen, section: SECTIONS.LEARNING, color: 'teal' },
-    { label: 'Add Application', icon: Plus, section: SECTIONS.APPLICATIONS, color: 'indigo' },
+    { label: t('dashboard.quick.startMockInterview'), icon: Mic, section: SECTIONS.INTERVIEW, toolId: 'interview', color: 'teal' },
+    { label: t('dashboard.quick.analyzeJd'), icon: Search, section: SECTIONS.TOOLS, color: 'indigo' },
+    { label: t('dashboard.quick.studyTopic'), icon: BookOpen, section: SECTIONS.LEARNING, color: 'teal' },
+    { label: t('dashboard.quick.addApplication'), icon: Plus, section: SECTIONS.APPLICATIONS, color: 'indigo' },
   ]
 
   return (
     <div className="p-4 md:p-6 space-y-5 animate-in">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="section-title">{profile?.name ? `Hey, ${profile.name}` : 'Welcome back'}</h2>
-          <p className="section-sub">Here&apos;s your job hunt at a glance.</p>
+          <h2 className="section-title">{profile?.name ? t('dashboard.greetingName', { name: profile.name }) : t('dashboard.greeting')}</h2>
+          <p className="section-sub">{t('dashboard.subtitle')}</p>
         </div>
         {activeProject && (
           <div className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/20 rounded-xl px-3 py-2">
@@ -218,11 +218,11 @@ export default function Dashboard() {
           <div className="max-w-2xl">
             <h3 className="font-display font-semibold text-white text-base mb-1">Active Application</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Choose the tracker job that should drive your JD-based tools. The saved JD follows that active application.
+              {t('dashboard.active.copy')}
             </p>
           </div>
           <button onClick={() => setActiveSection(SECTIONS.APPLICATIONS)} className="btn-ghost text-xs self-start">
-            <FolderOpen size={14}/> Open Tracker
+            <FolderOpen size={14}/> {t('dashboard.active.openTracker')}
           </button>
         </div>
 
@@ -230,7 +230,7 @@ export default function Dashboard() {
           {applications.length > 0 ? (
             <>
               <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">Tracker application</label>
+                <label className="text-sm text-slate-400 mb-1.5 block">{t('dashboard.active.trackerApplication')}</label>
                 <select
                   className="input-field"
                   value={selectedAppId}
@@ -254,26 +254,26 @@ export default function Dashboard() {
                           {selectedApplication.stage}
                         </span>
                         <span className={`px-2.5 py-1 rounded-full text-[11px] border ${hasSavedJd ? 'border-teal-500/30 bg-teal-500/10 text-teal-300' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'}`}>
-                          {hasSavedJd ? 'JD saved' : 'No JD'}
+                          {hasSavedJd ? t('dashboard.active.jdSaved') : t('dashboard.active.noJd')}
                         </span>
                         {hasUnsavedJdChanges && (
                           <span className="px-2.5 py-1 rounded-full text-[11px] border border-yellow-500/30 bg-yellow-500/10 text-yellow-300">
-                            Draft edits
+                            {t('dashboard.active.draftEdits')}
                           </span>
                         )}
                         {selectedHasResearch && (
                           <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
-                            Research
+                            {t('applications.badges.research')}
                           </span>
                         )}
                         {selectedHasNotes && (
                           <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
-                            Notes
+                            {t('applications.badges.notes')}
                           </span>
                         )}
                         {activeApplication?.id === selectedApplication.id && (
                           <span className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
-                            Active
+                            {t('applications.badges.active')}
                           </span>
                         )}
                       </div>
@@ -281,11 +281,11 @@ export default function Dashboard() {
 
                     <div className="flex flex-wrap gap-2">
                       <button onClick={() => setShowJdEditor(prev => !prev)} className="btn-ghost text-xs">
-                        {showJdEditor ? 'Close Editor' : selectedJd ? 'Edit JD' : 'Add JD'}
+                        {showJdEditor ? t('dashboard.active.closeEditor') : selectedJd ? t('dashboard.active.editJd') : t('dashboard.active.addJd')}
                       </button>
                       {selectedJd && (
                         <button onClick={() => setIsJdExpanded(prev => !prev)} className="btn-ghost text-xs">
-                          {isJdExpanded ? 'Collapse' : 'Expand'}
+                          {isJdExpanded ? t('common.collapse') : t('common.expand')}
                         </button>
                       )}
                     </div>
@@ -299,16 +299,16 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <p className="text-slate-500 text-xs mt-3">
-                      No JD saved yet. Add one here and the main tools will reuse it automatically.
+                      {t('dashboard.active.noJdCopy')}
                     </p>
                   )}
 
                   {showJdEditor && (
                     <div className="mt-3">
-                      <label className="text-sm text-slate-400 mb-1.5 block">Job Description</label>
+                      <label className="text-sm text-slate-400 mb-1.5 block">{t('applications.fields.jobDescription')}</label>
                       <textarea
                         className="textarea-field h-32"
-                        placeholder="Paste the job description once for this application."
+                        placeholder={t('dashboard.active.jdPlaceholder')}
                         value={jdDraft}
                         onChange={e => setJdDraft(e.target.value)}
                       />
@@ -323,27 +323,27 @@ export default function Dashboard() {
                   disabled={!selectedAppId || !jdDraft.trim()}
                   className="btn-primary text-xs"
                 >
-                  <Search size={14}/> Save JD Changes
+                  <Search size={14}/> {t('dashboard.active.saveJdChanges')}
                 </button>
                 <button onClick={() => setActiveSection(SECTIONS.TOOLS)} className="btn-ghost text-xs">
-                  <Target size={14}/> Open Tools
+                  <Target size={14}/> {t('dashboard.active.openTools')}
                 </button>
                 <button onClick={() => setShowCreateForm(prev => !prev)} className="btn-ghost text-xs">
-                  <Plus size={14}/> {showCreateForm ? 'Hide New Application' : 'New Application from JD'}
+                  <Plus size={14}/> {showCreateForm ? t('dashboard.active.hideNewApplication') : t('dashboard.active.newApplicationFromJd')}
                 </button>
-                {jdSaveState === 'saved' && <span className="text-teal-300 text-xs">JD saved to the active tracker application.</span>}
-                {jdSaveState === 'created' && <span className="text-teal-300 text-xs">New application created and set active.</span>}
+                {jdSaveState === 'saved' && <span className="text-teal-300 text-xs">{t('dashboard.active.jdSavedToast')}</span>}
+                {jdSaveState === 'created' && <span className="text-teal-300 text-xs">{t('dashboard.active.applicationCreatedToast')}</span>}
               </div>
             </>
           ) : (
             <div className="rounded-2xl border border-dashed border-navy-600 bg-navy-900/50 p-4">
-              <div className="text-white text-sm font-display font-semibold mb-1">No tracker applications yet</div>
-              <p className="text-slate-400 text-sm">Create your first application here and save the JD once so the main tools can reuse it.</p>
+              <div className="text-white text-sm font-display font-semibold mb-1">{t('dashboard.active.noApplications')}</div>
+              <p className="text-slate-400 text-sm">{t('dashboard.active.noApplicationsCopy')}</p>
               <div className="mt-3">
-                <label className="text-sm text-slate-400 mb-1.5 block">Job Description</label>
+                <label className="text-sm text-slate-400 mb-1.5 block">{t('applications.fields.jobDescription')}</label>
                 <textarea
                   className="textarea-field h-32"
-                  placeholder="Paste the job description once for the new application."
+                  placeholder={t('dashboard.active.newApplicationJdPlaceholder')}
                   value={jdDraft}
                   onChange={e => setJdDraft(e.target.value)}
                 />
@@ -353,17 +353,17 @@ export default function Dashboard() {
 
           {showCreateForm && (
             <div className="rounded-2xl border border-navy-600 bg-navy-900/70 p-4">
-              <div className="text-white text-sm font-display font-semibold mb-3">Create New Application</div>
+              <div className="text-white text-sm font-display font-semibold mb-3">{t('dashboard.active.createApplication')}</div>
               <div className="grid sm:grid-cols-2 gap-3">
                 <input
                   className="input-field"
-                  placeholder="Company name"
+                  placeholder={t('dashboard.active.companyName')}
                   value={newApplication.company}
                   onChange={e => setNewApplication(prev => ({ ...prev, company: e.target.value }))}
                 />
                 <input
                   className="input-field"
-                  placeholder="Role title (optional)"
+                  placeholder={t('dashboard.active.roleTitleOptional')}
                   value={newApplication.role}
                   onChange={e => setNewApplication(prev => ({ ...prev, role: e.target.value }))}
                 />
@@ -374,9 +374,9 @@ export default function Dashboard() {
                   disabled={!newApplication.company.trim() || !jdDraft.trim()}
                   className="btn-secondary text-xs"
                 >
-                  <Plus size={14}/> Create Application with This JD
+                  <Plus size={14}/> {t('dashboard.active.createWithJd')}
                 </button>
-                <span className="text-slate-500 text-xs">The new application will become active right away.</span>
+                <span className="text-slate-500 text-xs">{t('dashboard.active.createWithJdNote')}</span>
               </div>
             </div>
           )}
@@ -385,7 +385,7 @@ export default function Dashboard() {
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="card">
-          <h3 className="font-display font-semibold text-white mb-3">Quick Actions</h3>
+          <h3 className="font-display font-semibold text-white mb-3">{t('dashboard.quick.title')}</h3>
           <div className="grid grid-cols-2 gap-2">
             {quickActions.map(({ label, icon: Icon, section, toolId, color }) => (
               <button
@@ -403,10 +403,10 @@ export default function Dashboard() {
         <div className="card">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-display font-semibold text-white flex items-center gap-2">
-              <Sparkles size={16} className="text-teal-400"/> Sensei Tip
+              <Sparkles size={16} className="text-teal-400"/> {t('dashboard.tip.title')}
             </h3>
             <button onClick={fetchTip} disabled={loadingTip} className="text-xs text-slate-400 hover:text-teal-400 transition-colors">
-              {loadingTip ? '...' : 'Refresh'}
+              {loadingTip ? '...' : t('dashboard.tip.refresh')}
             </button>
           </div>
           {loadingTip ? (
@@ -417,23 +417,23 @@ export default function Dashboard() {
           ) : tip ? (
             <p className="text-slate-300 text-sm leading-relaxed">{tip}</p>
           ) : (
-            <p className="text-slate-500 text-sm italic">{isConnected ? 'Loading tip...' : 'Connect your AI in Settings to get personalized tips.'}</p>
+            <p className="text-slate-500 text-sm italic">{isConnected ? t('dashboard.tip.loading') : t('dashboard.tip.connectAi')}</p>
           )}
         </div>
       </div>
 
       {dueTopics > 0 && (
         <div className="card border-yellow-500/20 bg-yellow-500/5">
-          <h3 className="font-display font-semibold text-white mb-2 flex items-center gap-2">Reviews Due</h3>
+          <h3 className="font-display font-semibold text-white mb-2 flex items-center gap-2">{t('dashboard.reviews.title')}</h3>
           <button onClick={() => setActiveSection(SECTIONS.LEARNING)} className="badge-yellow hover:opacity-80 cursor-pointer">
-            {dueTopics} review{dueTopics > 1 ? 's' : ''} due today
+            {t('dashboard.reviews.dueToday', { count: dueTopics })}
           </button>
         </div>
       )}
 
       {sessions.length > 0 && (
         <div className="card">
-          <h3 className="font-display font-semibold text-white mb-3">Recent Interviews</h3>
+          <h3 className="font-display font-semibold text-white mb-3">{t('dashboard.recentInterviews')}</h3>
           <div className="space-y-2">
             {[...sessions].slice(-3).reverse().map((session, index) => (
               <div key={index} className="flex items-center justify-between py-1.5 border-b border-navy-700 last:border-0">
