@@ -279,23 +279,13 @@ export default function Settings() {
               )}
             </div>
           </div>
-          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-3 min-w-[220px]">
-            <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Current Mode</div>
-            <div className="text-white text-sm font-display font-semibold">
-              {usingOwnKey ? currentProviderLabel : usingJobsenseiAI ? 'JobSensei hosted AI' : 'No AI provider'}
-            </div>
-            <div className="text-slate-400 text-xs mt-1">
-              {usingOwnKey ? form.model : usingJobsenseiAI ? (bmacEmail || 'Access active') : 'Connect a plan or API key below.'}
-            </div>
-          </div>
         </div>
-      </div>
 
-      <div className="grid xl:grid-cols-2 gap-4 items-stretch">
-        <div className={`${pairedCardClass} ${bmacToken ? 'border-green-500/30 bg-green-500/5' : 'border-teal-500/20'}`}>
-            <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-              <Coffee size={16} className="text-yellow-400" /> JobSensei AI
-            </h3>
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_240px] gap-4 mt-4 items-start">
+          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-4">
+            <h4 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+              <Coffee size={15} className="text-yellow-400" /> JobSensei AI access
+            </h4>
             <p className="text-slate-400 text-xs mb-4">
               Use JobSensei-hosted AI through your plan, or activate access with your code. Billing is handled through Buy Me a Coffee.
             </p>
@@ -346,8 +336,21 @@ export default function Settings() {
                 {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
               </div>
             )}
-        </div>
+          </div>
 
+          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-4 min-w-[220px]">
+            <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Current Mode</div>
+            <div className="text-white text-sm font-display font-semibold">
+              {usingOwnKey ? currentProviderLabel : usingJobsenseiAI ? 'JobSensei hosted AI' : 'No AI provider'}
+            </div>
+            <div className="text-slate-400 text-xs mt-1">
+              {usingOwnKey ? form.model : usingJobsenseiAI ? (bmacEmail || 'Access active') : 'Connect a plan or API key below.'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid xl:grid-cols-2 gap-4 items-stretch">
         <div className={pairedCardClass}>
           <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
             <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
@@ -397,6 +400,7 @@ export default function Settings() {
           <div className="space-y-2 text-slate-400 text-xs leading-relaxed mb-3">
             <p>Your profile, projects, resume, notes, and tool history stay only in this browser on this device.</p>
             <p>AI requests send only the text needed for that task to your selected provider, either JobSensei-hosted AI or your own BYOK provider.</p>
+            <p>The secure account rollout is being designed around up to 2 approved devices per account.</p>
             <p>Your full workspace stays local, but anything you send in an AI request is processed by that provider under its own policies. You can erase everything saved here any time with Clear All Data.</p>
           </div>
           <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm mt-auto">
