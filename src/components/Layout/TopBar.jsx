@@ -39,12 +39,12 @@ const SECTION_HELP = {
   today: {
     title: 'Today',
     desc: 'Your daily command center. Pick one active application and JobSensei shows the next useful move instead of making you hunt through tools.',
-    tips: ['New user flow: add or capture a job first', 'Open the active workspace for research, JD, prep notes, and follow-up', 'Reviews due and follow-ups due surface here first'],
+    tips: [],
   },
   applications: {
     title: 'Applications',
     desc: 'Your CRM for job hunting. Each role has its own workspace so research, JD text, notes, tools, and follow-up stay together.',
-    tips: ['Use the extension to capture jobs faster', 'Open a card to work on one role in context', 'Keep stages updated so follow-up reminders stay useful'],
+    tips: [],
   },
   dashboard: {
     title: 'Dashboard',
@@ -64,7 +64,7 @@ const SECTION_HELP = {
   learning: {
     title: 'Learning',
     desc: 'Study topics with an AI tutor, then test yourself with quizzes. Spaced repetition keeps reviews smart.',
-    tips: ['Click Study to chat with the AI about a topic', `${SAVE_LAST_RESPONSE_LABEL} stores useful tutor replies in Learning Notes`, 'Click Quiz for a 5-question test on that topic', 'Due reviews appear at the top — don\'t skip them!'],
+    tips: [],
   },
   star: {
     title: 'STAR Builder',
@@ -93,19 +93,12 @@ const SECTION_HELP = {
   },
 }
 
-const FIRST_TIME_GUIDE_STEPS = [
-  'Capture or add one real job first.',
-  'Review the company, role, and JD text.',
-  'Open the application workspace and run the next suggested prep step.',
-  'Save research notes, likely questions, and follow-up reminders in that workspace.',
-]
-
 const GUIDE_DETAILS = {
-  today: ['Active Focus is the current role JobSensei is guiding.', 'Workspace Progress shows the 6-step application path: capture, research, tailor, predict, mock, follow-up.', 'Prep Hubs stay hidden until at least one application exists so new users do not start in the wrong place.'],
+  today: ['Active Focus is the current role JobSensei is guiding.', 'Workspace Progress shows the 6-step application path: capture, research, tailor, predict, mock, follow-up.', 'Open the active workspace for research, JD, prep notes, and follow-up.'],
   applications: ['Kanban tracks stages like Researching, Applied, Interviewing, Offer, and Rejected.', 'Workspace is where the JD, research, prep notes, and cheat sheet live for one role.', 'Offers compares roles by salary, growth, culture, work-life, benefits, and flexibility.'],
   dashboard: ['Dashboard is gated until an application exists.', 'Once unlocked, it shows saved interviews, learning progress, active application context, and quick actions.'],
   interview: ['Interview Simulator runs full mock sessions and saves score/history.', 'Question Predictor uses the active JD to generate likely questions.', 'STAR Builder turns rough stories into structured answers.', 'Tone Analyzer checks clarity, confidence, and delivery.', 'Follow-up Email drafts post-interview messages.', 'Elevator Pitch helps answer why you should be hired.'],
-  learning: ['This is the most important long-term area: build topics for the skills the target role expects.', 'Study opens the tutor for explanations and practice prompts.', 'Quiz turns the topic into spaced repetition so weak areas come back at the right time.', 'Notes keeps saved tutor answers, summaries, and cheat cards.'],
+  learning: ['Build own topics for the skills the target role expects.', `${SAVE_LAST_RESPONSE_LABEL} stores useful tutor replies in Learning Notes`, 'Click Quiz for a 6-question test on that topic and chat history.', 'Due reviews appear at the top — don\'t skip them!'],
   tools: ['Gap Analysis scores fit against the JD and calls out missing skills.', 'Resume Checker reads the resume through ATS and recruiter lenses.', 'Cover Letter Optimizer creates role-specific versions.', 'LinkedIn Auditor finds profile gaps and quick wins.', 'Visual Design Review checks layout from a screenshot.', 'Transferable Skills Coach reframes experience for a new role.'],
   tracker: ['Use Add for a new role or the browser extension to capture a JD.', 'Open Workspace to work inside one application.', 'Use the Offers tab after a role reaches Offer stage.'],
   settings: ['Connect AI first if tools are locked.', 'Save your resume here so Resume Checker, Cover Letter, and prep tools can reuse it.', 'Export project backups before changing devices or browsers.'],
@@ -567,7 +560,7 @@ export default function TopBar() {
 
       {/* Help popover */}
       {showHelp && help && (
-        <div className="absolute right-4 top-full mt-2 z-50 w-80 bg-navy-800 border border-navy-600 rounded-2xl shadow-xl p-4 animate-in">
+        <div className="guide-popover absolute right-4 top-full mt-2 z-50 w-80 bg-navy-800 border border-navy-600 rounded-2xl shadow-xl p-4 animate-in">
           <div className="flex items-start justify-between mb-2">
             <h3 className="font-display font-semibold text-white text-sm">{help.title}</h3>
             <button onClick={() => setShowHelp(false)} className="text-slate-500 hover:text-slate-300 -mt-0.5">
@@ -575,22 +568,7 @@ export default function TopBar() {
             </button>
           </div>
           <p className="text-slate-300 text-xs mb-3 leading-relaxed">{help.desc}</p>
-          {activeSection === 'today' && (
-            <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-3 mb-3">
-              <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-wide mb-2">
-                First time path
-              </div>
-              <div className="space-y-1.5">
-                {FIRST_TIME_GUIDE_STEPS.map((step, i) => (
-                  <div key={step} className="flex gap-2 text-xs text-slate-300">
-                    <span className="text-teal-300 font-mono">{i + 1}</span>
-                    <span>{step}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3">
+          <div className="guide-start-card rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3">
             <div className="text-white text-xs font-display font-semibold mb-2">Get started</div>
             <p className="text-slate-400 text-xs leading-relaxed mb-3">
               Follow the highlighted path once: add an application, open its workspace, then build Learning topics from the role requirements.
@@ -599,13 +577,15 @@ export default function TopBar() {
               Start guided tour
             </button>
           </div>
-          <div className="space-y-1">
-            {help.tips.map((tip, i) => (
-              <p key={i} className="text-slate-400 text-xs">• {renderGuideTip(tip)}</p>
-            ))}
-          </div>
+          {help.tips.length > 0 && (
+            <div className="space-y-1">
+              {help.tips.map((tip, i) => (
+                <p key={i} className="text-slate-400 text-xs">• {renderGuideTip(tip)}</p>
+              ))}
+            </div>
+          )}
           {helpDetails.length > 0 && (
-            <div className="mt-3 rounded-xl border border-navy-700 bg-navy-900/45 p-3">
+            <div className="guide-details-card mt-3 rounded-xl border border-navy-700 bg-navy-900/45 p-3">
               <div className="text-slate-300 text-xs font-display font-semibold mb-2">How this page works</div>
               <div className="space-y-1">
                 {helpDetails.map((detail, i) => (
