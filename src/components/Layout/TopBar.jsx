@@ -116,7 +116,7 @@ function TopBarLanguageSelect({ compact = false, onChangeComplete = null }) {
 
   return (
     <label
-      className={`flex items-center gap-2 rounded-xl border border-navy-600 bg-navy-800/80 text-slate-300 transition-all hover:border-teal-500/40 hover:text-white ${
+      className={`language-select-shell flex items-center gap-2 rounded-xl border border-navy-600 bg-navy-800/80 text-slate-300 transition-all hover:border-teal-500/40 hover:text-white ${
         compact ? 'w-full px-3 py-2' : 'px-2.5 py-1.5'
       }`}
       title="Interface language"
@@ -132,7 +132,7 @@ function TopBarLanguageSelect({ compact = false, onChangeComplete = null }) {
       >
         {languages.map(option => (
           <option key={option.code} value={option.code} className="bg-navy-900 text-white">
-            {option.nativeLabel} - {option.label}
+            {option.nativeLabel}
           </option>
         ))}
       </select>

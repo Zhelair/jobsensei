@@ -109,6 +109,10 @@
     color: #FBBF24;
   }
 
+  .language-select-shell select {
+    color: inherit;
+  }
+
   .card {
     @apply bg-navy-800 border border-navy-700 rounded-2xl p-5;
   }
@@ -651,6 +655,23 @@
 [data-theme="daylight"] ::-webkit-scrollbar-thumb:hover { background: #0D9488; }
 [data-theme="daylight"] ::selection { background: rgba(13,148,136,0.22); color: #1A120A; }
 [data-theme="daylight"] .typing-dot { background: #0D9488; }
+
+[data-theme="daylight"] .language-select-shell {
+  background: #FFFFFF !important;
+  border-color: #D8CFC4 !important;
+  color: #333333 !important;
+  box-shadow: 0 1px 6px rgba(50,40,30,0.07), 0 1px 2px rgba(50,40,30,0.04);
+}
+
+[data-theme="daylight"] .language-select-shell:hover {
+  background: #FDFCFB !important;
+  border-color: rgba(226, 114, 91, 0.35) !important;
+}
+
+[data-theme="daylight"] .language-select-shell option {
+  background: #FFFFFF;
+  color: #333333;
+}
 
 /* Animate-in override for daylight */
 [data-theme="daylight"] .animate-in {

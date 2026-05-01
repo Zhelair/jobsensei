@@ -256,7 +256,7 @@ export default function Settings() {
             <select className="input-field" value={language} onChange={e => setLanguage(e.target.value)}>
               {languages.map(option => (
                 <option key={option.code} value={option.code}>
-                  {option.nativeLabel} - {option.label}
+                  {option.nativeLabel}
                 </option>
               ))}
             </select>
