@@ -37,7 +37,7 @@ export const LANGUAGE_OPTIONS = [
   {
     code: 'es-ES',
     label: 'Spanish (Spain)',
-    nativeLabel: 'Español (España)',
+    nativeLabel: 'Español',
     speechLang: 'es-ES',
     recognitionLang: 'es-ES',
     dictionary: 'es',
@@ -70,11 +70,13 @@ export const LANGUAGE_OPTIONS = [
   {
     code: 'pt-PT',
     label: 'Portuguese (Portugal)',
-    nativeLabel: 'Português (Portugal)',
+    nativeLabel: 'Português',
     speechLang: 'pt-PT',
     recognitionLang: 'pt-PT',
     dictionary: 'pt',
-    voiceSearch: ['Google português de Portugal', 'Google português', 'Microsoft Helia', 'Joana', 'Ines'],
+    voiceSearch: ['Google português de Portugal', 'Microsoft Helia', 'Joana', 'Ines', 'pt-PT'],
+    excludedVoiceLangs: ['pt-BR'],
+    excludedVoiceNames: ['brasil', 'brazil'],
   },
 ]
 
@@ -491,19 +493,26 @@ export function findVoiceForLanguage(option, voices, preferredVoiceName = '') {
   const lang = option?.speechLang || 'en-US'
   const baseLang = lang.split('-')[0]
   const searchNames = option?.voiceSearch || []
+  const excludedVoiceLangs = option?.excludedVoiceLangs || []
+  const excludedVoiceNames = option?.excludedVoiceNames || []
 
   const nameIncludes = (voice, hint) => voice.name?.toLowerCase().includes(hint.toLowerCase())
+  const isAllowedVoice = voice => (
+    !excludedVoiceLangs.some(lang => voice.lang?.toLowerCase() === lang.toLowerCase())
+    && !excludedVoiceNames.some(name => nameIncludes(voice, name))
+  )
   const hasFemaleHint = voice => FEMALE_VOICE_HINTS.some(hint => nameIncludes(voice, hint))
   const hasMaleHint = voice => MALE_VOICE_HINTS.some(hint => nameIncludes(voice, hint))
   const pickBest = (pool) => {
-    if (!pool.length) return null
+    const allowedPool = pool.filter(isAllowedVoice)
+    if (!allowedPool.length) return null
     for (const name of searchNames) {
-      const match = pool.find(voice => voice.name === name || nameIncludes(voice, name))
+      const match = allowedPool.find(voice => voice.name === name || nameIncludes(voice, name))
       if (match) return match
     }
-    return pool.find(hasFemaleHint)
-      || pool.find(voice => !hasMaleHint(voice))
-      || pool[0]
+    return allowedPool.find(hasFemaleHint)
+      || allowedPool.find(voice => !hasMaleHint(voice))
+      || allowedPool[0]
   }
 
   const exactLang = voices.filter(voice => voice.lang === lang)

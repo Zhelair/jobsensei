@@ -34,7 +34,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
   const [mode, setMode] = useState(persistedMode || 'hr')
   const [jd, setJd] = useState(activeContextJD || '')
   const [background, setBackground] = useState('')
-  const [questionCount, setQuestionCount] = useState(10)
+  const [questionCount, setQuestionCount] = useState(5)
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [questionsAsked, setQuestionsAsked] = useState(0)
