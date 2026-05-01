@@ -139,6 +139,13 @@ export default function ProjectSwitcher({ collapsed }) {
               <FolderArchive size={13} /> {t('projects.exportAllProjects')}
             </button>
 
+            <button
+              onClick={() => activeProject && exportProject(activeProject.id)}
+              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all"
+            >
+              <Download size={13} /> {t('projects.exportCurrentProject')}
+            </button>
+
             <button onClick={() => fileRef.current?.click()} className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 text-xs transition-all">
               <Upload size={13} /> {importing ? t('projects.importing') : t('projects.importProject')}
             </button>
