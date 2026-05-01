@@ -101,7 +101,6 @@ function MetricCard({ label, value, hint, tone = 'slate' }) {
 
 function FirstApplicationPrompt({ onAddApplication }) {
   const { t } = useLanguage()
-  const stageLabel = (stage) => t(STAGE_LABEL_KEYS[stage] || 'applications.stage.unknown', { stage })
 
   return (
     <div className="card border-teal-500/25 bg-teal-500/5" data-guide="today-first-application">
@@ -127,6 +126,7 @@ export default function TodayPage() {
   const { profile, launchTool, openTrackerApplication, setActiveSection, drillMode } = useApp()
   const { activeProject, activeApplication, getProjectData, updateProjectDataMultiple } = useProject()
   const { t } = useLanguage()
+  const stageLabel = (stage) => t(STAGE_LABEL_KEYS[stage] || 'applications.stage.unknown', { stage })
 
   const applications = getProjectData('applications') || []
   const companyNotes = getProjectData('companyNotes') || {}
