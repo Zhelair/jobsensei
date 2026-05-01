@@ -4,7 +4,7 @@ import { useAI } from '../../context/AIContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 import { useVisuals } from '../../context/VisualsContext'
 import { useLanguage } from '../../context/LanguageContext'
-import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal, Languages } from 'lucide-react'
+import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal, Languages, ChevronDown } from 'lucide-react'
 import BrandMark from '../shared/BrandMark'
 
 const THEME_ICONS = {
@@ -113,17 +113,23 @@ const GUIDE_DETAILS = {
 
 function TopBarLanguageSelect({ compact = false, onChangeComplete = null }) {
   const { language, setLanguage, languages } = useLanguage()
+  const selectedLanguage = languages.find(option => option.code === language) || languages[0]
 
   return (
     <label
-      className={`language-select-shell flex items-center gap-2 rounded-xl border border-navy-600 bg-navy-800/80 text-slate-300 transition-all hover:border-teal-500/40 hover:text-white ${
-        compact ? 'w-full px-3 py-2' : 'px-2.5 py-1.5'
+      className={`language-select-shell relative flex items-center gap-2 rounded-xl border border-navy-600 bg-navy-800/80 text-slate-300 transition-all hover:border-teal-500/40 hover:text-white ${
+        compact ? 'w-full px-3 py-2' : 'w-fit px-2.5 py-1.5'
       }`}
       title="Interface language"
     >
       <Languages size={compact ? 14 : 15} className="text-teal-400 flex-shrink-0" />
+      <span className="text-xs font-display font-semibold whitespace-nowrap pr-4">
+        {selectedLanguage?.nativeLabel}
+      </span>
+      <ChevronDown size={13} className="absolute right-2 text-current opacity-80 pointer-events-none" />
       <select
-        className={`bg-transparent text-xs font-display font-semibold outline-none ${compact ? 'w-full' : 'w-[128px]'}`}
+        aria-label="Interface language"
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         value={language}
         onChange={e => {
           setLanguage(e.target.value)

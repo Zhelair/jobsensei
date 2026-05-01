@@ -188,7 +188,7 @@ export default function Settings() {
       fr: 'Bonjour, je suis JobSensei. Voici la voix de navigateur sélectionnée.',
       it: 'Buongiorno, sono JobSensei. Questa è la voce del browser selezionata.',
       pl: 'Dzień dobry, tu JobSensei. To jest wybrany głos przeglądarki.',
-      'pt-PT': 'Olá, eu sou o JobSensei. Esta é a voz selecionada do navegador.',
+      'pt-BR': 'Olá, eu sou o JobSensei. Esta é a voz selecionada do navegador.',
     }
     const utterance = new SpeechSynthesisUtterance(previewSamples[language] || 'Hello, I am JobSensei. This is the selected browser voice.')
     utterance.lang = languageOption.speechLang

@@ -13,8 +13,8 @@ const LANGUAGE_NAMES = {
   fr: 'French',
   it: 'Italian',
   pl: 'Polish',
-  'pt-PT': 'European Portuguese',
-  pt: 'European Portuguese',
+  'pt-BR': 'Brazilian Portuguese',
+  pt: 'Brazilian Portuguese',
   de: 'German',
 }
 
