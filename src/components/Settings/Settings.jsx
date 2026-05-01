@@ -250,7 +250,7 @@ export default function Settings() {
           </span>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-3">
+        <div className="grid md:grid-cols-[minmax(0,1fr)_auto] gap-3 items-end">
           <div>
             <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.interfaceLanguage')}</label>
             <select className="input-field" value={language} onChange={e => setLanguage(e.target.value)}>
@@ -261,31 +261,15 @@ export default function Settings() {
               ))}
             </select>
           </div>
-          <div>
-            <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.voice')}</label>
-            <div className="input-field flex min-h-[46px] items-center justify-between gap-3">
-              <span className="truncate">{t('settings.voiceAuto')}</span>
-              <span className="text-xs text-slate-500 flex-shrink-0">
-                {activeVoice ? activeVoice.lang : 'Auto'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-3 rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-3">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <div className="text-white text-sm font-display font-semibold">{voiceSupportCopy}</div>
-              {(languageOption.voiceNote || voiceSupport === 'fallback') && (
-                <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-                  <span className="text-yellow-300">{t('settings.voiceNote')}:</span> {languageOption.voiceNote || t('settings.voiceFallback')}
-                </p>
-              )}
-            </div>
-            <button onClick={previewVoice} disabled={!activeVoice} className="btn-secondary text-xs">
+          <div className="flex md:justify-end">
+            <button onClick={previewVoice} disabled={!activeVoice} className="btn-secondary text-xs min-h-[46px] w-full md:w-auto md:px-5">
               <Volume2 size={13} /> {t('settings.voicePreview')}
             </button>
           </div>
+        </div>
+
+        <div className="mt-3 rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-2">
+          <div className="text-white text-xs font-display font-semibold leading-relaxed">{voiceSupportCopy}</div>
         </div>
       </div>
 
