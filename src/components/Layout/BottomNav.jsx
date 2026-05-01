@@ -8,9 +8,9 @@ import {
 } from 'lucide-react'
 
 const MOBILE_NAV = [
-  { id: SECTIONS.TODAY, icon: LayoutDashboard, label: 'Today' },
-  { id: SECTIONS.APPLICATIONS, icon: Briefcase, label: 'Apps' },
-  { id: SECTIONS.LEARNING, icon: BookOpen, label: 'Learn' },
+  { id: SECTIONS.TODAY, icon: LayoutDashboard, labelKey: 'nav.today' },
+  { id: SECTIONS.APPLICATIONS, icon: Briefcase, labelKey: 'nav.apps' },
+  { id: SECTIONS.LEARNING, icon: BookOpen, labelKey: 'nav.learning' },
 ]
 
 export default function BottomNav() {
@@ -71,10 +71,10 @@ export default function BottomNav() {
     setImporting(true)
     try {
       const count = await importProjects(file)
-      setImportMsg(`✅ Imported ${count} project${count > 1 ? 's' : ''}`)
+      setImportMsg(count === 1 ? t('projects.importedOne') : t('projects.importedMany', { count }))
       setTimeout(() => setImportMsg(''), 3000)
     } catch {
-      setImportMsg('❌ Invalid file')
+      setImportMsg(t('projects.invalidFile'))
       setTimeout(() => setImportMsg(''), 3000)
     }
     setImporting(false)
@@ -88,7 +88,7 @@ export default function BottomNav() {
         <div className="absolute bottom-full left-0 right-0 bg-navy-800 border-t border-navy-700 shadow-2xl">
           <div className="p-3 space-y-1.5 max-h-72 overflow-y-auto">
             <div className="flex items-center justify-between px-1 pb-1">
-              <p className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide">Projects</p>
+              <p className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide">{t('projects.title')}</p>
               <button onClick={() => setShowProjects(false)} className="text-slate-500 hover:text-slate-300 p-1">
                 <X size={14} />
               </button>
@@ -132,22 +132,22 @@ export default function BottomNav() {
                       <button
                         onClick={() => { setEditingId(p.id); setEditName(p.name) }}
                         className="p-1.5 text-slate-500 hover:text-slate-300 rounded"
-                        title="Rename"
+                        title={t('common.rename')}
                       >
                         <Edit3 size={13} />
                       </button>
                       <button
                         onClick={() => exportProject(p.id)}
                         className="p-1.5 text-slate-500 hover:text-teal-400 rounded"
-                        title="Export"
+                        title={t('common.export')}
                       >
                         <Download size={13} />
                       </button>
                       {projects.length > 1 && (
                         <button
-                          onClick={() => { if (confirm(`Delete "${p.name}"?`)) deleteProject(p.id) }}
+                          onClick={() => { if (confirm(t('projects.confirmDelete', { name: p.name }))) deleteProject(p.id) }}
                           className="p-1.5 text-slate-500 hover:text-red-400 rounded"
-                          title="Delete"
+                          title={t('common.delete')}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -163,7 +163,7 @@ export default function BottomNav() {
               <div className="flex gap-1 pt-1">
                 <input
                   className="flex-1 bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-teal-500"
-                  placeholder="Project name…"
+                  placeholder={t('projects.namePlaceholderShort')}
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setCreating(false) }}
@@ -178,7 +178,7 @@ export default function BottomNav() {
                 data-guide="project-new"
                 className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-navy-700 text-sm transition-all"
               >
-                <Plus size={14} /> New Project
+                <Plus size={14} /> {t('projects.new')}
               </button>
             )}
 
@@ -188,13 +188,13 @@ export default function BottomNav() {
                 onClick={exportAll}
                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-navy-700/50 text-slate-400 hover:text-white text-xs transition-all"
               >
-                <FolderArchive size={13} /> Export All
+                <FolderArchive size={13} /> {t('projects.exportAll')}
               </button>
               <button
                 onClick={() => fileRef.current?.click()}
                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-navy-700/50 text-slate-400 hover:text-white text-xs transition-all"
               >
-                <Upload size={13} /> {importing ? 'Importing…' : 'Import'}
+                <Upload size={13} /> {importing ? t('projects.importingShort') : t('projects.import')}
               </button>
               <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
             </div>
@@ -206,7 +206,7 @@ export default function BottomNav() {
 
       {/* Nav row */}
       <div className="flex">
-        {MOBILE_NAV.map(({ id, icon: Icon, label }) => (
+        {MOBILE_NAV.map(({ id, icon: Icon, labelKey }) => (
           <button
             key={id}
             data-guide={`mobile-nav-${id}`}
@@ -216,7 +216,7 @@ export default function BottomNav() {
             }`}
           >
             <Icon size={19} />
-            <span className="font-body">{id === SECTIONS.TODAY ? t('nav.today') : id === SECTIONS.APPLICATIONS ? t('nav.apps') : id === SECTIONS.LEARNING ? t('nav.learning') : label}</span>
+            <span className="font-body">{t(labelKey)}</span>
           </button>
         ))}
 
