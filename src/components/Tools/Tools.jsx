@@ -12,34 +12,34 @@ import InterviewSimulator from '../InterviewSimulator/InterviewSimulator'
 
 const HUBS = {
   'interview-prep': {
-    title: 'Interview Prep',
-    subtitle: 'Practice interviews, predict likely questions, and sharpen how you show up.',
+    titleKey: 'tools.hubs.interviewPrep.title',
+    subtitleKey: 'tools.hubs.interviewPrep.subtitle',
     toolIds: ['interview', 'predictor', 'star', 'tone', 'followup', 'pitch'],
-    recentTitle: 'Recent Prep History',
-    emptyHistory: 'No interview prep history yet.',
+    recentTitleKey: 'tools.hubs.interviewPrep.recentTitle',
+    emptyHistoryKey: 'tools.hubs.interviewPrep.emptyHistory',
   },
   'prep-tools': {
-    title: 'Prep Tools',
-    subtitle: 'Documents, fit checks, profile polish, and support tools for your job hunt.',
+    titleKey: 'tools.hubs.prepTools.title',
+    subtitleKey: 'tools.hubs.prepTools.subtitle',
     toolIds: ['gap', 'coverletter', 'resumechecker', 'linkedin', 'visualreview', 'transferable'],
-    recentTitle: 'Recent Results',
-    emptyHistory: 'No prep tool history yet.',
+    recentTitleKey: 'tools.hubs.prepTools.recentTitle',
+    emptyHistoryKey: 'tools.hubs.prepTools.emptyHistory',
   },
 }
 
 const TOOL_CARDS = [
-  { id: 'interview', icon: Mic, label: 'Interview Simulator', desc: 'Run mock interviews with saved session history' },
-  { id: 'gap', icon: Search, label: 'Gap Analysis', desc: 'Match to JD, score application, detect red flags' },
-  { id: 'star', icon: Star, label: 'STAR Builder', desc: 'Structure interview answers and build your story bank' },
-  { id: 'predictor', icon: Target, label: 'Question Predictor', desc: 'Predict the 10 most likely questions for any JD' },
-  { id: 'transferable', icon: Zap, label: 'Transferable Skills Coach', desc: 'Reframe your experience for new roles and industries' },
-  { id: 'tone', icon: Gauge, label: 'Tone Analyzer', desc: 'Analyze your answer for confidence and clarity' },
-  { id: 'followup', icon: Mail, label: 'Follow-up Email', desc: 'Generate a perfect post-interview email' },
+  { id: 'interview', icon: Mic },
+  { id: 'gap', icon: Search },
+  { id: 'star', icon: Star },
+  { id: 'predictor', icon: Target },
+  { id: 'transferable', icon: Zap },
+  { id: 'tone', icon: Gauge },
+  { id: 'followup', icon: Mail },
   { id: 'pitch', icon: Megaphone, label: 'Elevator Pitch', desc: '"Why should we hire you?" — perfected' },
   { id: 'coverletter', icon: FileText, label: 'Cover Letter Optimizer', desc: '3 versions — Corporate, Creative, Casual — with keyword analysis' },
-  { id: 'resumechecker', icon: ClipboardCheck, label: 'Resume Checker', desc: 'ATS score + recruiter lens on your resume' },
-  { id: 'linkedin', icon: Globe, label: 'LinkedIn Auditor', desc: 'Score your profile and get quick wins' },
-  { id: 'visualreview', icon: Camera, label: 'Visual Design Review', desc: 'AI analyzes your resume design, layout, and visual impact' },
+  { id: 'resumechecker', icon: ClipboardCheck },
+  { id: 'linkedin', icon: Globe },
+  { id: 'visualreview', icon: Camera },
 ]
 
 const FILTER_LABELS = {
@@ -56,6 +56,30 @@ const FILTER_LABELS = {
   resumechecker: 'Resume Checker',
   linkedin: 'LinkedIn',
   visualreview: 'Visual Review',
+}
+
+const FILTER_LABEL_KEYS = {
+  all: 'tools.filters.all',
+  interview: 'tools.filters.interview',
+  gap: 'tools.filters.gap',
+  star: 'tools.filters.star',
+  predictor: 'tools.filters.predictor',
+  transferable: 'tools.filters.transferable',
+  tone: 'tools.filters.tone',
+  followup: 'tools.filters.followup',
+  pitch: 'tools.filters.pitch',
+  coverletter: 'tools.filters.coverletter',
+  resumechecker: 'tools.filters.resumechecker',
+  linkedin: 'tools.filters.linkedin',
+  visualreview: 'tools.filters.visualreview',
+}
+
+function getToolLabel(t, toolId) {
+  return t(`tools.toolLabels.${toolId}`)
+}
+
+function getToolDescription(t, toolId) {
+  return t(`tools.toolDescriptions.${toolId}`)
 }
 
 function applicationLabel(app) {
@@ -77,6 +101,7 @@ export default function Tools({ mode = 'prep-tools' }) {
   const [showContextJd, setShowContextJd] = useState(false)
   const hub = HUBS[mode] || HUBS['prep-tools']
   const isInterviewHub = mode === 'interview-prep'
+  const { t } = useLanguage()
   const { setActiveSection, clearPendingToolRequest, pendingToolRequest } = useApp()
   const {
     getProjectData,
@@ -92,6 +117,10 @@ export default function Tools({ mode = 'prep-tools' }) {
   const interviewSessions = getProjectData('interviewSessions') || []
   const starStories = getProjectData('starStories') || []
   const companyNotes = getProjectData('companyNotes') || {}
+  const hubTitle = t(hub.titleKey)
+  const hubSubtitle = t(hub.subtitleKey)
+  const hubRecentTitle = t(hub.recentTitleKey)
+  const hubEmptyHistory = t(hub.emptyHistoryKey)
   const hubCards = hub.toolIds
     .map(id => TOOL_CARDS.find(tool => tool.id === id))
     .filter(Boolean)
@@ -170,7 +199,7 @@ export default function Tools({ mode = 'prep-tools' }) {
     id: session.id,
     date: session.date,
     tool: 'interview',
-    toolLabel: 'Interview Simulator',
+    toolLabel: getToolLabel(t, 'interview'),
     inputs: { mode: session.mode, jd: session.jdSnippet || '' },
     result: {
       messages: session.messages,
@@ -180,12 +209,12 @@ export default function Tools({ mode = 'prep-tools' }) {
     },
   }))
   const normalizedGap = gapResults.map(g => ({
-    id: g.id, date: g.date, tool: 'gap', toolLabel: 'Gap Analysis',
+    id: g.id, date: g.date, tool: 'gap', toolLabel: getToolLabel(t, 'gap'),
     inputs: { jd: g.jdSnippet || '' },
     result: { gapResult: g.gapResult, scoreResult: g.scoreResult, redFlags: g.redFlags, tab: g.tab },
   }))
   const normalizedStar = starStories.map(s => ({
-    id: s.id, date: s.date, tool: 'star', toolLabel: 'STAR Builder',
+    id: s.id, date: s.date, tool: 'star', toolLabel: getToolLabel(t, 'star'),
     inputs: { situation: s.situation || '' },
     result: { fullAnswer: s.fullAnswer, situation: s.situation, task: s.task, action: s.action, result: s.result, weaknesses: s.weaknesses, suggestedTags: s.suggestedTags, targetQuestions: s.targetQuestions },
   }))
@@ -196,22 +225,22 @@ export default function Tools({ mode = 'prep-tools' }) {
 
   if (activeTool === 'interview') {
     return renderHubScreen(
-      <InterviewSimulator onExit={() => setActiveTool(null)} hubLabel={hub.title} />,
+      <InterviewSimulator onExit={() => setActiveTool(null)} hubLabel={hubTitle} />,
       { fullHeight: true }
     )
   }
-  if (activeTool === 'gap') return renderHubScreen(<GapAnalysis onBack={() => setActiveTool(null)} backLabel={hub.title} />)
-  if (activeTool === 'star') return renderHubScreen(<STARBuilder onBack={() => setActiveTool(null)} backLabel={hub.title} />)
+  if (activeTool === 'gap') return renderHubScreen(<GapAnalysis onBack={() => setActiveTool(null)} backLabel={hubTitle} />)
+  if (activeTool === 'star') return renderHubScreen(<STARBuilder onBack={() => setActiveTool(null)} backLabel={hubTitle} />)
 
-  if (activeTool === 'predictor') return renderHubScreen(<QuestionPredictor onBack={() => setActiveTool(null)} hubLabel={hub.title} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('predictor', 'Question Predictor', i, r)} history={historyFor('predictor')} onDelete={deleteHistory} />)
-  if (activeTool === 'transferable') return renderHubScreen(<TransferableSkillsTool onBack={() => setActiveTool(null)} hubLabel={hub.title} resume={resume} saveHistory={(i, r) => saveHistory('transferable', 'Transferable Skills Coach', i, r)} history={historyFor('transferable')} onDelete={deleteHistory} />)
-  if (activeTool === 'tone') return renderHubScreen(<ToneAnalyzer onBack={() => setActiveTool(null)} hubLabel={hub.title} saveHistory={(i, r) => saveHistory('tone', 'Tone Analyzer', i, r)} history={historyFor('tone')} onDelete={deleteHistory} />)
-  if (activeTool === 'followup') return renderHubScreen(<FollowUpEmail onBack={() => setActiveTool(null)} hubLabel={hub.title} activeContext={activeContext} saveHistory={(i, r) => saveHistory('followup', 'Follow-up Email', i, r)} history={historyFor('followup')} onDelete={deleteHistory} />)
-  if (activeTool === 'pitch') return renderHubScreen(<ElevatorPitch onBack={() => setActiveTool(null)} hubLabel={hub.title} resume={resume} saveHistory={(i, r) => saveHistory('pitch', 'Elevator Pitch', i, r)} history={historyFor('pitch')} onDelete={deleteHistory} />)
-  if (activeTool === 'coverletter') return renderHubScreen(<CoverLetterOptimizer onBack={() => setActiveTool(null)} hubLabel={hub.title} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('coverletter', 'Cover Letter Optimizer', i, r)} history={historyFor('coverletter')} onDelete={deleteHistory} />)
-  if (activeTool === 'resumechecker') return renderHubScreen(<ResumeChecker onBack={() => setActiveTool(null)} hubLabel={hub.title} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('resumechecker', 'Resume Checker', i, r)} history={historyFor('resumechecker')} onDelete={deleteHistory} />)
-  if (activeTool === 'linkedin') return renderHubScreen(<LinkedInAuditor onBack={() => setActiveTool(null)} hubLabel={hub.title} saveHistory={(i, r) => saveHistory('linkedin', 'LinkedIn Auditor', i, r)} history={historyFor('linkedin')} onDelete={deleteHistory} />)
-  if (activeTool === 'visualreview') return renderHubScreen(<VisualResumeReview onBack={() => setActiveTool(null)} hubLabel={hub.title} saveHistory={(i, r) => saveHistory('visualreview', 'Visual Design Review', i, r)} history={historyFor('visualreview')} onDelete={deleteHistory} />)
+  if (activeTool === 'predictor') return renderHubScreen(<QuestionPredictor onBack={() => setActiveTool(null)} hubLabel={hubTitle} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('predictor', getToolLabel(t, 'predictor'), i, r)} history={historyFor('predictor')} onDelete={deleteHistory} />)
+  if (activeTool === 'transferable') return renderHubScreen(<TransferableSkillsTool onBack={() => setActiveTool(null)} hubLabel={hubTitle} resume={resume} saveHistory={(i, r) => saveHistory('transferable', getToolLabel(t, 'transferable'), i, r)} history={historyFor('transferable')} onDelete={deleteHistory} />)
+  if (activeTool === 'tone') return renderHubScreen(<ToneAnalyzer onBack={() => setActiveTool(null)} hubLabel={hubTitle} saveHistory={(i, r) => saveHistory('tone', getToolLabel(t, 'tone'), i, r)} history={historyFor('tone')} onDelete={deleteHistory} />)
+  if (activeTool === 'followup') return renderHubScreen(<FollowUpEmail onBack={() => setActiveTool(null)} hubLabel={hubTitle} activeContext={activeContext} saveHistory={(i, r) => saveHistory('followup', getToolLabel(t, 'followup'), i, r)} history={historyFor('followup')} onDelete={deleteHistory} />)
+  if (activeTool === 'pitch') return renderHubScreen(<ElevatorPitch onBack={() => setActiveTool(null)} hubLabel={hubTitle} resume={resume} saveHistory={(i, r) => saveHistory('pitch', getToolLabel(t, 'pitch'), i, r)} history={historyFor('pitch')} onDelete={deleteHistory} />)
+  if (activeTool === 'coverletter') return renderHubScreen(<CoverLetterOptimizer onBack={() => setActiveTool(null)} hubLabel={hubTitle} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('coverletter', getToolLabel(t, 'coverletter'), i, r)} history={historyFor('coverletter')} onDelete={deleteHistory} />)
+  if (activeTool === 'resumechecker') return renderHubScreen(<ResumeChecker onBack={() => setActiveTool(null)} hubLabel={hubTitle} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('resumechecker', getToolLabel(t, 'resumechecker'), i, r)} history={historyFor('resumechecker')} onDelete={deleteHistory} />)
+  if (activeTool === 'linkedin') return renderHubScreen(<LinkedInAuditor onBack={() => setActiveTool(null)} hubLabel={hubTitle} saveHistory={(i, r) => saveHistory('linkedin', getToolLabel(t, 'linkedin'), i, r)} history={historyFor('linkedin')} onDelete={deleteHistory} />)
+  if (activeTool === 'visualreview') return renderHubScreen(<VisualResumeReview onBack={() => setActiveTool(null)} hubLabel={hubTitle} saveHistory={(i, r) => saveHistory('visualreview', getToolLabel(t, 'visualreview'), i, r)} history={historyFor('visualreview')} onDelete={deleteHistory} />)
 
   // Inline result detail view (clicked from Recent Results)
   if (selectedResult) {
@@ -221,11 +250,11 @@ export default function Tools({ mode = 'prep-tools' }) {
     return renderHubScreen(
       <div className="p-4 md:p-6 animate-in">
         <div className="flex items-center justify-between mb-4">
-          <button onClick={() => setSelectedResult(null)} className="btn-ghost"><ArrowLeft size={16} /> Recent Results</button>
+          <button onClick={() => setSelectedResult(null)} className="btn-ghost"><ArrowLeft size={16} /> {t('tools.history.recentResults')}</button>
           <button
-            onClick={() => { if (confirm('Delete this result?')) onDelete(selectedResult.id) }}
+            onClick={() => { if (confirm(t('tools.history.deleteResultConfirm'))) onDelete(selectedResult.id) }}
             className="btn-ghost text-xs text-red-400 hover:text-red-300"
-          ><Trash2 size={14}/> Delete</button>
+          ><Trash2 size={14}/> {t('common.delete')}</button>
         </div>
         <div className="flex items-center gap-3 mb-4">
           <span className="font-display font-bold text-white">{selectedResult.toolLabel}</span>
@@ -238,7 +267,7 @@ export default function Tools({ mode = 'prep-tools' }) {
 
   // Determine which filter chips to show based on what's actually in history
   const presentTools = [...new Set(relevantHistory.map(h => h.tool))]
-  const activeFilters = ['all', ...presentTools.filter(t => FILTER_LABELS[t])]
+  const activeFilters = ['all', ...presentTools.filter(toolId => FILTER_LABEL_KEYS[toolId])]
 
   const filteredRecent = relevantHistory
     .filter(h => recentFilter === 'all' || h.tool === recentFilter)
@@ -246,41 +275,41 @@ export default function Tools({ mode = 'prep-tools' }) {
 
   return renderHubScreen(
     <div className="p-4 md:p-6 animate-in">
-      <h2 className="section-title mb-1">{hub.title}</h2>
-      <p className="section-sub mb-5">{hub.subtitle}</p>
+      <h2 className="section-title mb-1">{hubTitle}</h2>
+      <p className="section-sub mb-5">{hubSubtitle}</p>
  
       {applications.length > 0 && (
         <div className="card border-teal-500/20 bg-teal-500/5 mb-5">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-white text-sm font-display font-semibold">Active Application</span>
+                <span className="text-white text-sm font-display font-semibold">{t('tools.activeApplication.title')}</span>
                 {activeContext?.application?.stage && (
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-800 text-slate-300">
                     {activeContext.application.stage}
                   </span>
                 )}
                 <span className={`px-2.5 py-1 rounded-full text-[11px] border ${activeContext?.jd?.trim() ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
-                  {activeContext?.jd?.trim() ? 'JD ready' : 'No JD'}
+                  {activeContext?.jd?.trim() ? t('tools.activeApplication.jdReady') : t('tools.activeApplication.noJd')}
                 </span>
                 {activeHasResearch && (
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
-                    Research
+                    {t('applications.badges.research')}
                   </span>
                 )}
                 {activeHasNotes && (
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
-                    Notes
+                    {t('applications.badges.notes')}
                   </span>
                 )}
               </div>
               <div className="text-teal-300 text-sm mt-2">
-                {activeContext?.application ? applicationLabel(activeContext.application) : 'Choose a tracker application'}
+                {activeContext?.application ? applicationLabel(activeContext.application) : t('tools.activeApplication.chooseApplication')}
               </div>
               <div className="text-slate-400 text-xs mt-1">
                 {activeContext?.jd?.trim()
-                  ? `${hub.title} will use this tracker application first.`
-                  : 'Pick a tracker job and add a JD there to prefill the main tools.'}
+                  ? t('tools.activeApplication.usesTrackerFirst', { hub: hubTitle })
+                  : t('tools.activeApplication.prefillHelp')}
               </div>
             </div>
 
@@ -291,7 +320,7 @@ export default function Tools({ mode = 'prep-tools' }) {
                   value={activeApplicationId || ''}
                   onChange={e => switchActiveApplication(e.target.value)}
                 >
-                  {!activeApplicationId && <option value="">Choose tracker application</option>}
+                  {!activeApplicationId && <option value="">{t('tools.activeApplication.chooseApplication')}</option>}
                   {applications.map(app => (
                     <option key={app.id} value={app.id}>
                       {applicationLabel(app)}
@@ -301,11 +330,11 @@ export default function Tools({ mode = 'prep-tools' }) {
               )}
               {activeContext?.jd?.trim() && (
                 <button onClick={() => setShowContextJd(prev => !prev)} className="btn-ghost text-xs">
-                  {showContextJd ? 'Hide JD' : 'Preview JD'}
+                  {showContextJd ? t('tools.activeApplication.hideJd') : t('tools.activeApplication.previewJd')}
                 </button>
               )}
               <button onClick={() => setActiveSection(SECTIONS.APPLICATIONS)} className="btn-ghost text-xs">
-                Open Tracker
+                {t('tools.activeApplication.openTracker')}
               </button>
             </div>
           </div>
@@ -321,14 +350,14 @@ export default function Tools({ mode = 'prep-tools' }) {
       )}
 
       <div className="grid sm:grid-cols-2 gap-3">
-        {hubCards.map(({ id, icon: Icon, label, desc }) => (
+        {hubCards.map(({ id, icon: Icon }) => (
           <button key={id} onClick={() => setActiveTool(id)} className="card-hover text-left flex gap-4 items-start">
             <div className="w-10 h-10 rounded-xl bg-teal-500/15 flex items-center justify-center flex-shrink-0">
               <Icon size={20} className="text-teal-400" />
             </div>
             <div>
-              <div className="text-white font-body font-medium text-sm mb-1">{label}</div>
-              <div className="text-slate-400 text-xs">{desc}</div>
+              <div className="text-white font-body font-medium text-sm mb-1">{getToolLabel(t, id)}</div>
+              <div className="text-slate-400 text-xs">{getToolDescription(t, id)}</div>
             </div>
             <ChevronRight size={16} className="text-slate-600 ml-auto mt-1 flex-shrink-0" />
           </button>
@@ -338,7 +367,7 @@ export default function Tools({ mode = 'prep-tools' }) {
       {filteredRecent.length > 0 || relevantHistory.length > 0 ? (
         <div className="mt-6">
           <h3 className="font-display font-semibold text-slate-400 text-sm mb-3 flex items-center gap-2">
-            <Clock size={14}/> {hub.recentTitle}
+            <Clock size={14}/> {hubRecentTitle}
           </h3>
 
           {activeFilters.length > 1 && (
@@ -349,14 +378,14 @@ export default function Tools({ mode = 'prep-tools' }) {
                   onClick={() => setRecentFilter(f)}
                   className={`px-3 py-1 rounded-full text-xs font-body transition-all ${recentFilter === f ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'bg-navy-800 text-slate-400 border border-navy-600 hover:border-slate-500'}`}
                 >
-                  {FILTER_LABELS[f] || f}
+                  {t(FILTER_LABEL_KEYS[f] || f)}
                 </button>
               ))}
             </div>
           )}
 
           {filteredRecent.length === 0 ? (
-            <p className="text-slate-500 text-sm">{recentFilter === 'all' ? hub.emptyHistory : 'No results match this filter.'}</p>
+            <p className="text-slate-500 text-sm">{recentFilter === 'all' ? hubEmptyHistory : t('tools.history.noResultsForFilter')}</p>
           ) : (
             <div className="space-y-2">
               {filteredRecent.map(h => (
@@ -380,16 +409,17 @@ export default function Tools({ mode = 'prep-tools' }) {
 
 function ToolHistoryView({ history, toolLabel, onBack, onDelete }) {
   const [selected, setSelected] = useState(null)
+  const { t } = useLanguage()
 
   if (selected) return (
     <div className="p-4 md:p-6 animate-in">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setSelected(null)} className="btn-ghost"><ArrowLeft size={16} /> {toolLabel} History</button>
+        <button onClick={() => setSelected(null)} className="btn-ghost"><ArrowLeft size={16} /> {t('tools.history.toolHistoryTitle', { tool: toolLabel })}</button>
         {onDelete && (
           <button
-            onClick={() => { if (confirm('Delete this result?')) { onDelete(selected.id); setSelected(null) } }}
+            onClick={() => { if (confirm(t('tools.history.deleteResultConfirm'))) { onDelete(selected.id); setSelected(null) } }}
             className="btn-ghost text-xs text-red-400 hover:text-red-300"
-          ><Trash2 size={14}/> Delete</button>
+          ><Trash2 size={14}/> {t('common.delete')}</button>
         )}
       </div>
       <div className="text-slate-400 text-xs mb-4">{new Date(selected.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}</div>
@@ -400,10 +430,10 @@ function ToolHistoryView({ history, toolLabel, onBack, onDelete }) {
   return (
     <div className="p-4 md:p-6 animate-in">
       <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> {toolLabel}</button>
-      <h2 className="section-title mb-1">{toolLabel} History</h2>
-      <p className="section-sub mb-4">{history.length} saved result{history.length !== 1 ? 's' : ''}</p>
+      <h2 className="section-title mb-1">{t('tools.history.toolHistoryTitle', { tool: toolLabel })}</h2>
+      <p className="section-sub mb-4">{t('tools.history.savedResultsCount', { count: history.length })}</p>
       {history.length === 0 ? (
-        <div className="card text-center py-10 text-slate-500">No results yet — run the tool to save history.</div>
+        <div className="card text-center py-10 text-slate-500">{t('tools.history.noResultsYet')}</div>
       ) : (
         <div className="space-y-2">
           {history.map(h => (
@@ -417,7 +447,7 @@ function ToolHistoryView({ history, toolLabel, onBack, onDelete }) {
               </button>
               {onDelete && (
                 <button
-                  onClick={() => { if (confirm('Delete?')) onDelete(h.id) }}
+                  onClick={() => { if (confirm(t('tools.history.deleteShortConfirm'))) onDelete(h.id) }}
                   className="text-slate-600 hover:text-red-400 p-1.5 flex-shrink-0 transition-colors"
                 ><Trash2 size={14}/></button>
               )}
@@ -433,6 +463,7 @@ function ToolHistoryView({ history, toolLabel, onBack, onDelete }) {
 
 function ActiveJobContextCard({ activeContext, note }) {
   if (!activeContext?.application) return null
+  const { t } = useLanguage()
 
   const label = `${activeContext.application.company}${activeContext.application.role ? ` - ${activeContext.application.role}` : ''}`
   const hasJD = !!activeContext.jd.trim()
@@ -441,16 +472,16 @@ function ActiveJobContextCard({ activeContext, note }) {
     <div className="card border-teal-500/20 bg-teal-500/5 mb-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <div className="text-white text-sm font-display font-semibold">Active Job Context</div>
+          <div className="text-white text-sm font-display font-semibold">{t('tools.activeJobContext.title')}</div>
           <div className="text-teal-300 text-sm">{label}</div>
           <div className="text-slate-400 text-xs mt-1">
             {note || (hasJD
-              ? 'Using the tracker JD here first. You can still edit the fields below for this run.'
-              : 'This application is active, but it does not have a saved JD yet.')}
+              ? t('tools.activeJobContext.usingTrackerJd')
+              : t('tools.activeJobContext.noSavedJd'))}
           </div>
         </div>
         <span className={`text-xs px-2.5 py-1 rounded-full border ${hasJD ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
-          {hasJD ? 'JD attached' : 'No JD saved'}
+          {hasJD ? t('applications.badges.jdAttached') : t('tools.activeJobContext.noJdSaved')}
         </span>
       </div>
     </div>
@@ -458,26 +489,27 @@ function ActiveJobContextCard({ activeContext, note }) {
 }
 
 function HistorySummary({ item }) {
+  const { t } = useLanguage()
   if (item.tool === 'interview')
-    return <p className="text-slate-400 text-xs truncate">{item.result?.mode || 'Interview'} · {item.result?.questionCount || 0} exchanges{item.result?.score != null ? ` · ${item.result.score}/10` : ''}</p>
+    return <p className="text-slate-400 text-xs truncate">{item.result?.mode || t('tools.history.interviewFallback')} · {item.result?.questionCount || 0} {t('tools.history.exchanges')}{item.result?.score != null ? ` · ${item.result.score}/10` : ''}</p>
   if (item.tool === 'gap')
-    return <p className="text-slate-400 text-xs truncate">JD: {item.inputs?.jd || '—'}</p>
+    return <p className="text-slate-400 text-xs truncate">{t('tools.history.jdPrefix')} {item.inputs?.jd || '—'}</p>
   if (item.tool === 'predictor' && item.result?.questions)
-    return <p className="text-slate-400 text-xs">{item.result.questions.length} questions predicted · {item.inputs?.jd || ''}</p>
+    return <p className="text-slate-400 text-xs">{item.result.questions.length} {t('tools.history.questionsPredicted')} · {item.inputs?.jd || ''}</p>
   if (item.tool === 'transferable' && item.inputs?.targetRole)
-    return <p className="text-slate-400 text-xs">Target: {item.inputs.targetRole}</p>
+    return <p className="text-slate-400 text-xs">{t('tools.history.targetPrefix')} {item.inputs.targetRole}</p>
   if (item.tool === 'tone' && item.result?.scores)
     return <p className="text-slate-400 text-xs">{Object.entries(item.result.scores).map(([k,v]) => `${k} ${v}/10`).join(' · ')}</p>
   if (item.tool === 'followup' && item.result?.subject)
-    return <p className="text-slate-400 text-xs truncate">Subject: {item.result.subject}</p>
+    return <p className="text-slate-400 text-xs truncate">{t('tools.history.subjectPrefix')} {item.result.subject}</p>
   if (item.tool === 'pitch' && item.result?.shortVersion)
     return <p className="text-slate-400 text-xs line-clamp-2">{item.result.shortVersion}</p>
   if (item.tool === 'coverletter' && item.result?.letters)
-    return <p className="text-slate-400 text-xs">{item.result.letters.length} versions · {item.result.keywordMatches?.length || 0} keywords matched</p>
+    return <p className="text-slate-400 text-xs">{item.result.letters.length} {t('tools.history.versions')} · {item.result.keywordMatches?.length || 0} {t('tools.history.keywordsMatched')}</p>
   if (item.tool === 'resumechecker' && item.result)
-    return <p className="text-slate-400 text-xs">ATS {item.result.atsScore}/100 · Recruiter {item.result.recruiterScore}/100</p>
+    return <p className="text-slate-400 text-xs">ATS {item.result.atsScore}/100 · {t('tools.history.recruiterScoreLabel')} {item.result.recruiterScore}/100</p>
   if (item.tool === 'linkedin' && item.result)
-    return <p className="text-slate-400 text-xs">Overall score {item.result.overallScore}/100</p>
+    return <p className="text-slate-400 text-xs">{t('tools.history.overallScoreLabel')} {item.result.overallScore}/100</p>
   if (item.tool === 'visualreview' && item.result?.analysis)
     return <p className="text-slate-400 text-xs line-clamp-1">{item.result.analysis.slice(0, 100)}…</p>
   if (item.tool === 'star' && item.inputs?.situation)
@@ -488,6 +520,7 @@ function HistorySummary({ item }) {
 // ─── Full history result renderer ─────────────────────────────────────────────
 
 function FullHistoryResult({ item }) {
+  const { t } = useLanguage()
   if (item.tool === 'interview' && item.result) {
     const msgs = item.result.messages || []
     return (
@@ -499,12 +532,12 @@ function FullHistoryResult({ item }) {
               {Number.isInteger(item.result.score) ? item.result.score : Number(item.result.score).toFixed(1)}/10
             </span>
           )}
-          <span className="badge badge-slate">{item.result.questionCount || 0} exchanges</span>
+          <span className="badge badge-slate">{item.result.questionCount || 0} {t('tools.history.exchanges')}</span>
         </div>
         <div className="space-y-2">
           {msgs.map((m, i) => (
             <div key={i} className={`rounded-xl px-4 py-3 text-sm ${m.role === 'user' ? 'chat-user ml-auto max-w-[85%]' : 'chat-ai max-w-[85%]'}`}>
-              <span className="text-xs opacity-60 block mb-1 font-display">{m.role === 'user' ? 'You' : 'Jordan Mitchell'}</span>
+              <span className="text-xs opacity-60 block mb-1 font-display">{m.role === 'user' ? t('tools.results.you') : t('tools.results.coachName')}</span>
               <span className="whitespace-pre-wrap">{m.content}</span>
             </div>
           ))}
@@ -812,14 +845,15 @@ function FullHistoryResult({ item }) {
 function TransferableSkillsTool({ onBack, hubLabel = 'Back', resume, saveHistory, history, onDelete }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
+  const toolLabel = getToolLabel(t, 'transferable')
   const [experience, setExperience] = useState(resume || (profile?.currentRole ? `I worked as ${profile.currentRole} for ${profile.experience} in ${profile.industry}.` : ''))
   const [targetRole, setTargetRole] = useState('')
   const [result, setResult] = useState('')
   const [loading, setLoading] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Transferable Skills Coach" onBack={() => setShowHistory(false)} onDelete={onDelete} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel={toolLabel} onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function analyze() {
     setLoading(true); setResult('')
@@ -842,25 +876,25 @@ function TransferableSkillsTool({ onBack, hubLabel = 'Back', resume, saveHistory
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
           <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs">
-            <History size={14}/> History ({history.length})
+            <History size={14}/> {t('tools.shared.historyButton', { count: history.length })}
           </button>
         )}
       </div>
-      <h2 className="section-title mb-1">Transferable Skills Coach</h2>
-      <p className="section-sub mb-5">Reframe your experience for your target role.</p>
+      <h2 className="section-title mb-1">{toolLabel}</h2>
+      <p className="section-sub mb-5">{t('tools.transferable.subtitle')}</p>
 
       <div className="space-y-3 mb-4">
         <div>
           <label className="text-sm text-slate-400 mb-1.5 block">Your current experience {resume && <span className="text-teal-400 text-xs ml-1">← from resume</span>}</label>
-          <textarea className="textarea-field h-24" placeholder="Describe what you've done..." value={experience} onChange={e => setExperience(e.target.value)} />
+          <textarea className="textarea-field h-24" placeholder={t('tools.transferable.experiencePlaceholder')} value={experience} onChange={e => setExperience(e.target.value)} />
         </div>
         <div>
-          <label className="text-sm text-slate-400 mb-1.5 block">Target role / context</label>
-          <input className="input-field" placeholder="e.g. B2B Compliance Manager at a bank" value={targetRole} onChange={e => setTargetRole(e.target.value)} />
+          <label className="text-sm text-slate-400 mb-1.5 block">{t('tools.transferable.targetRoleLabel')}</label>
+          <input className="input-field" placeholder={t('tools.transferable.targetRolePlaceholder')} value={targetRole} onChange={e => setTargetRole(e.target.value)} />
         </div>
       </div>
       <button onClick={analyze} disabled={loading || !isConnected || !experience.trim() || !targetRole.trim()} className="btn-primary mb-5">
-        <Zap size={16}/> {loading ? 'Analyzing...' : 'Analyze'}
+        <Zap size={16}/> {loading ? t('tools.transferable.analyzing') : t('tools.transferable.analyze')}
       </button>
       {result && (
         <div className="card animate-in">
@@ -881,7 +915,8 @@ function TransferableSkillsTool({ onBack, hubLabel = 'Back', resume, saveHistory
 function QuestionPredictor({ onBack, hubLabel = 'Back', resume, activeContext, saveHistory, history, onDelete }) {
   const { profile } = useApp()
   const { callAI, isConnected } = useAI()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
+  const toolLabel = getToolLabel(t, 'predictor')
   const [jd, setJd] = useState(activeContext?.jd || '')
   const [background, setBackground] = useState(resume || profile?.currentRole || '')
   const [loading, setLoading] = useState(false)
@@ -891,7 +926,7 @@ function QuestionPredictor({ onBack, hubLabel = 'Back', resume, activeContext, s
   const PROB_COLORS = { High: 'badge-red', Medium: 'badge-yellow', Low: 'badge-teal' }
   const CAT_COLORS = { Technical: 'badge-indigo', Behavioral: 'badge-teal', Culture: 'badge-green', Curveball: 'badge-yellow', 'Role-Specific': 'badge-red' }
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Question Predictor" onBack={() => setShowHistory(false)} onDelete={onDelete} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel={toolLabel} onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function predict() {
     setLoading(true); setResult(null)
@@ -908,18 +943,18 @@ function QuestionPredictor({ onBack, hubLabel = 'Back', resume, activeContext, s
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
-          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
+          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> {t('tools.shared.historyButton', { count: history.length })}</button>
         )}
       </div>
-      <h2 className="section-title mb-1">Interview Question Predictor</h2>
-      <p className="section-sub mb-5">See the 10 most likely questions before you walk in.</p>
+      <h2 className="section-title mb-1">{t('tools.predictor.title')}</h2>
+      <p className="section-sub mb-5">{t('tools.predictor.subtitle')}</p>
       <ActiveJobContextCard activeContext={activeContext} />
       <div className="space-y-3 mb-4">
-        <textarea className="textarea-field h-28" placeholder="Paste the job description..." value={jd} onChange={e => setJd(e.target.value)} />
-        <input className="input-field" placeholder="Your background (optional)..." value={background} onChange={e => setBackground(e.target.value)} />
+        <textarea className="textarea-field h-28" placeholder={t('tools.predictor.jdPlaceholder')} value={jd} onChange={e => setJd(e.target.value)} />
+        <input className="input-field" placeholder={t('tools.predictor.backgroundPlaceholder')} value={background} onChange={e => setBackground(e.target.value)} />
       </div>
       <button onClick={predict} disabled={loading || !isConnected || !jd.trim()} className="btn-primary mb-5">
-        <Target size={16} /> {loading ? 'Predicting...' : 'Predict Questions'}
+        <Target size={16} /> {loading ? t('tools.predictor.predicting') : t('tools.predictor.predict')}
       </button>
       {result?.questions && (
         <div className="space-y-2 animate-in">
@@ -930,10 +965,10 @@ function QuestionPredictor({ onBack, hubLabel = 'Back', resume, activeContext, s
                 <div className="flex-1">
                   <p className="text-white text-sm font-body mb-2">{q.question}</p>
                   <div className="flex flex-wrap gap-1.5 mb-2">
-                    <span className={PROB_COLORS[q.probability] || 'badge-slate'}>{q.probability} probability</span>
+                    <span className={PROB_COLORS[q.probability] || 'badge-slate'}>{q.probability} {t('tools.predictor.probabilitySuffix')}</span>
                     <span className={CAT_COLORS[q.category] || 'badge-slate'}>{q.category}</span>
                   </div>
-                  <p className="text-slate-500 text-xs mb-1">Why: {q.why}</p>
+                  <p className="text-slate-500 text-xs mb-1">{t('tools.predictor.whyPrefix')} {q.why}</p>
                   <p className="text-teal-400 text-xs">💡 {q.tip}</p>
                 </div>
               </div>
@@ -950,13 +985,14 @@ function QuestionPredictor({ onBack, hubLabel = 'Back', resume, activeContext, s
 function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelete }) {
   const { drillMode } = useApp()
   const { callAI, isConnected } = useAI()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
+  const toolLabel = getToolLabel(t, 'tone')
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Tone Analyzer" onBack={() => setShowHistory(false)} onDelete={onDelete} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel={toolLabel} onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function analyze() {
     setLoading(true); setResult(null)
@@ -973,14 +1009,14 @@ function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelet
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
-          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
+          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> {t('tools.shared.historyButton', { count: history.length })}</button>
         )}
       </div>
-      <h2 className="section-title mb-1">Tone & Confidence Analyzer</h2>
+      <h2 className="section-title mb-1">{t('tools.tone.title')}</h2>
       <p className="section-sub mb-5">Paste any interview answer — we'll score it and rewrite it stronger.</p>
-      <textarea className="textarea-field h-32 mb-4" placeholder="Paste your interview answer here..." value={answer} onChange={e => setAnswer(e.target.value)} />
+      <textarea className="textarea-field h-32 mb-4" placeholder={t('tools.tone.answerPlaceholder')} value={answer} onChange={e => setAnswer(e.target.value)} />
       <button onClick={analyze} disabled={loading || !isConnected || !answer.trim()} className="btn-primary mb-5">
-        <Gauge size={16} /> {loading ? 'Analyzing...' : 'Analyze Tone'}
+        <Gauge size={16} /> {loading ? t('tools.tone.analyzing') : t('tools.tone.analyze')}
       </button>
       {result && (
         <div className="space-y-4 animate-in">
@@ -1000,7 +1036,7 @@ function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelet
           )}
           {result.weakLanguage?.length > 0 && (
             <div className="card">
-              <h4 className="font-display font-semibold text-white text-sm mb-3">Weak Language Found</h4>
+              <h4 className="font-display font-semibold text-white text-sm mb-3">{t('tools.tone.weakLanguageFound')}</h4>
               <div className="space-y-2">
                 {result.weakLanguage.map((item, i) => (
                   <div key={i} className="bg-navy-900 rounded-xl p-3">
@@ -1032,7 +1068,8 @@ function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelet
 
 function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
+  const toolLabel = getToolLabel(t, 'followup')
   const [company, setCompany] = useState(activeContext?.application?.company || '')
   const [interviewer, setInterviewer] = useState('')
   const [role, setRole] = useState(activeContext?.application?.role || '')
@@ -1042,7 +1079,7 @@ function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, 
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Follow-up Email" onBack={() => setShowHistory(false)} onDelete={onDelete} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel={toolLabel} onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function generate() {
     setLoading(true); setResult(null)
@@ -1059,33 +1096,37 @@ function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, 
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
-          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
+          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> {t('tools.shared.historyButton', { count: history.length })}</button>
         )}
       </div>
-      <h2 className="section-title mb-1">Follow-up Email</h2>
-      <p className="section-sub mb-5">Generate the perfect post-interview thank you email.</p>
-      <ActiveJobContextCard activeContext={activeContext} note="Company, role, and prep notes were pulled from your active tracker application. Add interviewer details below." />
+      <h2 className="section-title mb-1">{toolLabel}</h2>
+      <p className="section-sub mb-5">{t('tools.followup.subtitle')}</p>
+      <ActiveJobContextCard activeContext={activeContext} note={t('tools.followup.contextNote')} />
       <div className="space-y-3 mb-4">
         <div className="grid grid-cols-2 gap-3">
-          <input className="input-field" placeholder="Company" value={company} onChange={e => setCompany(e.target.value)} />
-          <input className="input-field" placeholder="Interviewer name" value={interviewer} onChange={e => setInterviewer(e.target.value)} />
+          <input className="input-field" placeholder={t('tools.followup.companyPlaceholder')} value={company} onChange={e => setCompany(e.target.value)} />
+          <input className="input-field" placeholder={t('tools.followup.interviewerPlaceholder')} value={interviewer} onChange={e => setInterviewer(e.target.value)} />
         </div>
-        <input className="input-field" placeholder="Role title" value={role} onChange={e => setRole(e.target.value)} />
-        <textarea className="textarea-field h-20" placeholder="Brief notes about the interview..." value={notes} onChange={e => setNotes(e.target.value)} />
+        <input className="input-field" placeholder={t('tools.followup.rolePlaceholder')} value={role} onChange={e => setRole(e.target.value)} />
+        <textarea className="textarea-field h-20" placeholder={t('tools.followup.notesPlaceholder')} value={notes} onChange={e => setNotes(e.target.value)} />
         <div className="flex gap-2">
-          {['Warm', 'Professional', 'Enthusiastic'].map(t => (
-            <button key={t} onClick={() => setTone(t)} className={`flex-1 py-2 rounded-lg text-sm font-body border transition-all ${tone === t ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' : 'bg-navy-700 text-slate-400 border-navy-600'}`}>{t}</button>
+          {[
+            { value: 'Warm', label: t('tools.followup.toneWarm') },
+            { value: 'Professional', label: t('tools.followup.toneProfessional') },
+            { value: 'Enthusiastic', label: t('tools.followup.toneEnthusiastic') },
+          ].map(option => (
+            <button key={option.value} onClick={() => setTone(option.value)} className={`flex-1 py-2 rounded-lg text-sm font-body border transition-all ${tone === option.value ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' : 'bg-navy-700 text-slate-400 border-navy-600'}`}>{option.label}</button>
           ))}
         </div>
       </div>
       <button onClick={generate} disabled={loading || !isConnected || !company.trim()} className="btn-primary mb-5">
-        <Mail size={16} /> {loading ? 'Writing...' : 'Generate Email'}
+        <Mail size={16} /> {loading ? t('tools.followup.writing') : t('tools.followup.generate')}
       </button>
       {result && (
         <div className="card animate-in">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-slate-400 text-xs">Subject: <span className="text-white">{result.subject}</span></span>
-            <button onClick={() => navigator.clipboard?.writeText(`Subject: ${result.subject}\n\n${result.body}`)} className="btn-ghost text-xs"><Copy size={13} /> Copy</button>
+            <span className="text-slate-400 text-xs">{t('tools.shared.subject')} <span className="text-white">{result.subject}</span></span>
+            <button onClick={() => navigator.clipboard?.writeText(`Subject: ${result.subject}\n\n${result.body}`)} className="btn-ghost text-xs"><Copy size={13} /> {t('tools.shared.copy')}</button>
           </div>
           <div className="divider" />
           <p className="text-slate-200 text-sm font-body leading-relaxed whitespace-pre-wrap">{result.body}</p>
