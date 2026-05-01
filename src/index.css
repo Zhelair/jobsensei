@@ -113,6 +113,10 @@
     color: inherit;
   }
 
+  .onboarding-panel {
+    overflow: hidden;
+  }
+
   .card {
     @apply bg-navy-800 border border-navy-700 rounded-2xl p-5;
   }
@@ -671,6 +675,59 @@
 [data-theme="daylight"] .language-select-shell option {
   background: #FFFFFF;
   color: #333333;
+}
+
+[data-theme="daylight"] .guide-popover {
+  background: #FFFFFF !important;
+  border-color: #D8CFC4 !important;
+  box-shadow: 0 10px 30px rgba(50,40,30,0.14);
+}
+
+[data-theme="daylight"] .guide-start-card,
+[data-theme="daylight"] .guide-details-card {
+  background: #FFFFFF !important;
+  border-color: #C8D4E0 !important;
+  color: #333333 !important;
+}
+
+[data-theme="daylight"] .guide-details-card .text-slate-300,
+[data-theme="daylight"] .guide-details-card .text-slate-400,
+[data-theme="daylight"] .guide-start-card .text-slate-400 {
+  color: #5C5C5C !important;
+}
+
+[data-theme="daylight"] .onboarding-panel,
+[data-theme="daylight"] .onboarding-header,
+[data-theme="daylight"] .onboarding-body,
+[data-theme="daylight"] .onboarding-footer {
+  background: #1E293B !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="daylight"] .onboarding-panel .text-white {
+  color: #F8FAFC !important;
+}
+
+[data-theme="daylight"] .onboarding-panel .text-slate-400 {
+  color: #CBD5E1 !important;
+}
+
+[data-theme="daylight"] .onboarding-panel .text-slate-500,
+[data-theme="daylight"] .onboarding-panel .text-slate-600 {
+  color: #94A3B8 !important;
+}
+
+[data-theme="daylight"] .onboarding-panel .input-field,
+[data-theme="daylight"] .onboarding-panel .textarea-field {
+  background: #0F172A !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+  box-shadow: none !important;
+}
+
+[data-theme="daylight"] .onboarding-panel .input-field::placeholder,
+[data-theme="daylight"] .onboarding-panel .textarea-field::placeholder {
+  color: #64748B !important;
 }
 
 /* Animate-in override for daylight */
