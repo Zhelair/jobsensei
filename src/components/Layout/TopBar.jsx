@@ -177,10 +177,11 @@ const GUIDED_TOUR_STEPS = [
     body: 'Add topics for the skills each role expects. Study, quiz, and save notes so preparation compounds over time.',
   },
   {
-    section: SECTIONS.LEARNING,
-    target: '[data-guide="learning-topic-card"], [data-guide="learning-add-topic"]',
-    title: 'Study, quiz, repeat',
-    body: 'Study opens the tutor. Quiz schedules reviews with spaced repetition, and Notes keeps the useful answers.',
+    section: SECTIONS.TODAY,
+    target: '[data-guide="project-new"], [data-guide="project-switcher"]',
+    title: 'Create own Projects',
+    body: 'Projects keep each job search separate: applications, resume/CV, notes, interview prep, learning topics, and saved AI results stay inside the selected project. Use New Project for a fresh workspace.',
+    openProjectMenu: true,
   },
 ]
 
@@ -192,9 +193,16 @@ function GuidedTour({ onClose }) {
 
   useEffect(() => {
     setActiveSection(step.section)
+    if (step.openProjectMenu) {
+      window.dispatchEvent(new CustomEvent('jobsensei:open-project-menu'))
+    }
 
     function updateTarget() {
-      const target = document.querySelector(step.target)
+      const target = Array.from(document.querySelectorAll(step.target))
+        .find(el => {
+          const rect = el.getBoundingClientRect()
+          return rect.width > 0 && rect.height > 0
+        })
       if (!target) {
         setTargetRect(null)
         return
@@ -570,9 +578,6 @@ export default function TopBar() {
           <p className="text-slate-300 text-xs mb-3 leading-relaxed">{help.desc}</p>
           <div className="guide-start-card rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3">
             <div className="text-white text-xs font-display font-semibold mb-2">Get started</div>
-            <p className="text-slate-400 text-xs leading-relaxed mb-3">
-              Get started ..
-            </p>
             <button onClick={startGuidedTour} className="btn-primary text-xs w-full justify-center">
               Start guided tour
             </button>
