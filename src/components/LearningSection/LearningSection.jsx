@@ -479,7 +479,7 @@ export default function LearningSection() {
                 </div>
                 {!due && (
                   <div className="opacity-100 group-hover:opacity-0 transition-opacity flex-shrink-0">
-                    {topic.status === 'Completed' && <span className="text-green-400 text-xs">+</span>}
+                    {topic.status === 'Completed' && <Check size={12} className="text-green-400" />}
                   </div>
                 )}
               </div>
@@ -686,7 +686,7 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
       <div className="p-4 md:p-6 max-w-xl mx-auto animate-in">
         <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> {t('tour.back')}</button>
         <div className="card text-center py-8 mb-4">
-          <div className="text-4xl mb-2">Q</div>
+          <Brain size={32} className="mx-auto mb-2 text-teal-400" />
           <div className="font-display font-bold text-white text-2xl mb-1">{t('learning.quizCorrect', { correct, total: Object.values(feedback).length })}</div>
           <div className="text-slate-400 text-sm">{t('learning.nextReviewScheduled')}</div>
         </div>
@@ -1057,9 +1057,9 @@ function QuizHistory({ history, onBack, onDeleteQuiz }) {
   if (selected) {
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto animate-in">
-        <button onClick={() => setSelected(null)} className="btn-ghost mb-4"><ArrowLeft size={16} /> {t('interview.history')}</button>
+        <button onClick={() => setSelected(null)} className="btn-ghost mb-4"><ArrowLeft size={16} /> {t('learning.history')}</button>
         <div className="card text-center py-6 mb-4">
-          <div className="text-3xl mb-2">Q</div>
+          <Brain size={28} className="mx-auto mb-2 text-teal-400" />
           <div className="font-display font-bold text-white text-xl mb-1">{t('learning.quizCorrect', { correct: selected.correct, total: selected.total })}</div>
           <div className="text-teal-400 text-sm font-display font-semibold">{selected.topicTitle}</div>
           <div className="text-slate-500 text-xs mt-1">{new Date(selected.date).toLocaleDateString(undefined, { dateStyle: 'medium' })} - {t('learning.scoreLabel', { score: selected.score })}</div>

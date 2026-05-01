@@ -14,9 +14,9 @@ const THEME_ICONS = {
 }
 
 const THEME_LABELS = {
-  [THEMES.DARK]: 'Dark',
-  [THEMES.DAYLIGHT]: 'Daylight',
-  [THEMES.MYSPACE]: 'Neon',
+  [THEMES.DARK]: 'topbar.theme.dark',
+  [THEMES.DAYLIGHT]: 'topbar.theme.daylight',
+  [THEMES.MYSPACE]: 'topbar.theme.neon',
 }
 
 const SAVE_LAST_RESPONSE_KEY = 'guide.learning.saveLastResponseLabel'
@@ -311,8 +311,8 @@ export default function TopBar() {
   }, [])
 
   const THEME_ORDER = [THEMES.DARK, THEMES.DAYLIGHT, THEMES.MYSPACE]
-  const currentThemeLabel = THEME_LABELS[theme]
-  const nextThemeLabel = THEME_LABELS[THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length]]
+  const currentThemeLabel = t(THEME_LABELS[theme])
+  const nextThemeLabel = t(THEME_LABELS[THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length]])
 
   const help = SECTION_HELP[activeSection]
   const helpDetails = GUIDE_DETAILS[activeSection] || []
@@ -401,14 +401,14 @@ export default function TopBar() {
         <button
           className="flex sm:hidden items-center gap-1 px-2 py-1 rounded-lg bg-navy-800 border border-navy-700"
           onClick={() => showFeedback(
-            isThinking ? '🧠 AI is thinking…'
-            : isConnected ? '🟢 AI connected & ready'
-            : '🔴 JobSensei locked — go to Settings'
+            isThinking ? t('topbar.aiMobileThinking')
+            : isConnected ? t('topbar.aiMobileReady')
+            : t('topbar.aiMobileLocked')
           )}
         >
           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isThinking ? 'bg-indigo-400 animate-pulse' : isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
           <span className={`text-xs font-mono ${isThinking ? 'text-indigo-300' : isConnected ? 'text-green-400' : 'text-red-400'}`}>
-            {isThinking ? 'AI…' : isConnected ? 'AI' : 'Off'}
+            {isThinking ? t('topbar.aiCompactThinking') : isConnected ? t('topbar.aiCompactConnected') : t('topbar.aiCompactOff')}
           </span>
         </button>
 
@@ -433,7 +433,7 @@ export default function TopBar() {
             if (next) triggerConfetti(70)
           }}
           className={`hidden sm:flex btn-ghost ${visualsEnabled ? 'visuals-active ring-1 ring-current' : 'text-slate-400'}`}
-          title={visualsEnabled ? 'Visuals ON — click to disable' : 'Visuals OFF — click to enable'}
+          title={visualsEnabled ? t('topbar.visualsOnTitle') : t('topbar.visualsOffTitle')}
         >
           <Wand2 size={16} />
         </button>
@@ -442,7 +442,7 @@ export default function TopBar() {
         <button
           onClick={cycleTheme}
           className="hidden sm:flex btn-ghost"
-          title={`Theme: ${THEME_LABELS[theme]} — click to cycle`}
+          title={t('topbar.themeCycleTitle', { current: currentThemeLabel })}
         >
           <ThemeIcon size={16} />
         </button>
@@ -453,7 +453,7 @@ export default function TopBar() {
             if (!isMuted) window.speechSynthesis?.cancel()
             const next = !isMuted
             setIsMuted(next)
-            showFeedback(next ? '🔇 AI voice muted' : '🔊 AI voice on')
+            showFeedback(next ? t('topbar.voiceMutedFeedback') : t('topbar.voiceOnFeedback'))
           }}
           className={`btn-ghost relative transition-all ${
             isMuted
@@ -462,7 +462,7 @@ export default function TopBar() {
               ? 'text-teal-400 ring-1 ring-teal-500/50 rounded-lg bg-teal-500/10'
               : 'text-slate-400'
           }`}
-          title={isMuted ? 'Unmute AI voice' : aiSpeaking ? 'AI is speaking — tap to mute' : 'Mute AI voice'}
+          title={isMuted ? t('topbar.voiceUnmuteTitle') : aiSpeaking ? t('topbar.voiceSpeakingTitle') : t('topbar.voiceMuteTitle')}
         >
           {aiSpeaking && !isMuted && (
             <span className="absolute inset-0 rounded-lg animate-pulse bg-teal-400/10" />
@@ -475,16 +475,14 @@ export default function TopBar() {
           onClick={() => {
             const next = !drillMode
             setDrillMode(next)
-            showFeedback(next ? '🔱 Drill mode — brutal honesty' : '🏯 Sensei mode — supportive coaching')
+            showFeedback(next ? t('topbar.modeDrillFeedback') : t('topbar.modeSenseiFeedback'))
           }}
           className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-display font-semibold transition-all duration-200 ${
             drillMode
               ? 'bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25'
               : 'bg-teal-500/10 text-teal-400 border border-teal-500/20 hover:bg-teal-500/20'
           }`}
-          title={drillMode
-            ? 'Drill mode: brutal, honest feedback. Click to switch to Sensei (supportive).'
-            : 'Sensei mode: warm, constructive coaching. Click to switch to Drill (brutal honesty).'}
+          title={drillMode ? t('topbar.modeDrillTitle') : t('topbar.modeSenseiTitle')}
         >
           {drillMode ? <Zap size={12} /> : <Shield size={12} />}
           <span className="hidden sm:inline">{drillMode ? t('topbar.drill') : t('topbar.sensei')}</span>
@@ -513,7 +511,7 @@ export default function TopBar() {
           <button
             onClick={() => setShowMore(v => !v)}
             className={`btn-ghost text-base leading-none ${showMore ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
-            title="More options"
+            title={t('topbar.moreOptions')}
           >
             <MoreHorizontal size={18} />
           </button>
@@ -528,24 +526,24 @@ export default function TopBar() {
                     const next = !visualsEnabled
                     setVisualsEnabled(next)
                     if (next) triggerConfetti(70)
-                    showFeedback(next ? '✨ Visuals ON' : 'Visuals OFF')
+                    showFeedback(next ? t('topbar.visualsFeedbackOn') : t('topbar.visualsFeedbackOff'))
                     setShowMore(false)
                   }}
                   className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs w-full text-left transition-colors ${visualsEnabled ? 'text-yellow-400 bg-yellow-500/10' : 'text-slate-400 hover:text-white hover:bg-navy-700'}`}
                 >
                   <Wand2 size={14} />
-                  Visuals: {visualsEnabled ? 'ON' : 'OFF'}
+                  {t('topbar.visualsMenu')}: {visualsEnabled ? t('common.on') : t('common.off')}
                 </button>
                 <button
                   onClick={() => {
                     cycleTheme()
-                    showFeedback(`Theme → ${nextThemeLabel}`)
+                    showFeedback(t('topbar.themeFeedback', { theme: nextThemeLabel }))
                     setShowMore(false)
                   }}
                   className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-navy-700 w-full text-left transition-colors"
                 >
                   <ThemeIcon size={14} />
-                  Theme: {THEME_LABELS[theme]}
+                  {t('topbar.themeMenu')}: {currentThemeLabel}
                 </button>
                 {help && (
                   <button
