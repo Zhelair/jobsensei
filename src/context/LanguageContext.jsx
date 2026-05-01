@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import localizationPatches from './localizationPatches'
 
 export const LANGUAGE_OPTIONS = [
   {
@@ -881,7 +882,11 @@ export function LanguageProvider({ children }) {
   }, [languageOption])
 
   const t = (key, vars) => {
-    const value = TRANSLATIONS[dictKey]?.[key] || TRANSLATIONS.en[key] || key
+    const value = localizationPatches[dictKey]?.[key]
+      || TRANSLATIONS[dictKey]?.[key]
+      || localizationPatches.en[key]
+      || TRANSLATIONS.en[key]
+      || key
     return interpolate(value, vars)
   }
 

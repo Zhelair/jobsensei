@@ -1,36 +1,8 @@
 import React, { useState } from 'react'
 import { ChevronDown, ChevronUp, BookOpen, ExternalLink } from 'lucide-react'
+import { useLanguage } from '../../context/LanguageContext'
 
-const STEPS = [
-  {
-    num: 1,
-    title: 'Create a DeepSeek account',
-    desc: 'Go to platform.deepseek.com and sign up with your email. Check your inbox and confirm the verification email before moving on.',
-    img: '/guides/deepseek/step-1.png',
-    link: 'https://platform.deepseek.com',
-    linkLabel: 'Open DeepSeek Platform',
-  },
-  {
-    num: 2,
-    title: 'Navigate to API Keys',
-    desc: 'After logging in, click your profile icon in the top-right corner. Select "API Keys" from the dropdown menu.',
-    img: '/guides/deepseek/step-2.png',
-  },
-  {
-    num: 3,
-    title: 'Generate your key',
-    desc: 'Click "Create new secret key", give it any name (e.g. "JobSensei"), then copy the key immediately — DeepSeek will not show it again.',
-    img: '/guides/deepseek/step-3.png',
-  },
-  {
-    num: 4,
-    title: 'Add credits (EUR 3 minimum)',
-    desc: 'Open "Top Up" in the left sidebar. Add at least EUR 3 to activate the API. At DeepSeek pricing, EUR 3 will last months of typical use.',
-    img: '/guides/deepseek/step-4.png',
-  },
-]
-
-function StepCard({ step }) {
+function StepCard({ step, t }) {
   const [imgMissing, setImgMissing] = useState(false)
 
   return (
@@ -47,13 +19,13 @@ function StepCard({ step }) {
       <div className="pl-8">
         {imgMissing ? (
           <div className="h-24 rounded-xl border border-dashed border-navy-600 flex flex-col items-center justify-center text-slate-600 text-xs gap-1 select-none">
-            <span>Screenshot goes here</span>
+            <span>{t('settings.deepseekGuide.screenshot')}</span>
             <span className="font-mono text-slate-700">public/guides/deepseek/step-{step.num}.png</span>
           </div>
         ) : (
           <img
             src={step.img}
-            alt={`Step ${step.num} — ${step.title}`}
+            alt={`Step ${step.num} - ${step.title}`}
             className="w-full rounded-xl border border-navy-600 object-contain"
             onError={() => setImgMissing(true)}
           />
@@ -78,6 +50,36 @@ function StepCard({ step }) {
 
 export default function DeepSeekGuide() {
   const [open, setOpen] = useState(false)
+  const { t } = useLanguage()
+
+  const steps = [
+    {
+      num: 1,
+      title: t('settings.deepseekGuide.step1.title'),
+      desc: t('settings.deepseekGuide.step1.desc'),
+      img: '/guides/deepseek/step-1.png',
+      link: 'https://platform.deepseek.com',
+      linkLabel: t('settings.deepseekGuide.step1.link'),
+    },
+    {
+      num: 2,
+      title: t('settings.deepseekGuide.step2.title'),
+      desc: t('settings.deepseekGuide.step2.desc'),
+      img: '/guides/deepseek/step-2.png',
+    },
+    {
+      num: 3,
+      title: t('settings.deepseekGuide.step3.title'),
+      desc: t('settings.deepseekGuide.step3.desc'),
+      img: '/guides/deepseek/step-3.png',
+    },
+    {
+      num: 4,
+      title: t('settings.deepseekGuide.step4.title'),
+      desc: t('settings.deepseekGuide.step4.desc'),
+      img: '/guides/deepseek/step-4.png',
+    },
+  ]
 
   return (
     <div className="card border-teal-500/20">
@@ -87,8 +89,8 @@ export default function DeepSeekGuide() {
       >
         <div className="flex items-center gap-2">
           <BookOpen size={15} className="text-teal-400" />
-          <span className="font-display font-semibold text-white text-sm">DeepSeek Setup Guide</span>
-          <span className="badge-teal">Recommended</span>
+          <span className="font-display font-semibold text-white text-sm">{t('settings.deepseekGuide.title')}</span>
+          <span className="badge-teal">{t('common.recommended')}</span>
         </div>
         {open
           ? <ChevronUp size={15} className="text-slate-400" />
@@ -97,18 +99,17 @@ export default function DeepSeekGuide() {
 
       {open && (
         <div className="mt-4 space-y-5">
-          <p className="text-slate-400 text-xs leading-relaxed">
-            DeepSeek is the recommended AI for JobSensei — extremely capable, very cheap, and no waitlist.
-            Follow these 4 steps to get your API key.
-          </p>
+          <p className="text-slate-400 text-xs leading-relaxed">{t('settings.deepseekGuide.copy')}</p>
 
-          {STEPS.map(step => <StepCard key={step.num} step={step} />)}
+          {steps.map(step => <StepCard key={step.num} step={step} t={t} />)}
 
           <div className="bg-navy-900 rounded-xl p-3 text-xs space-y-1 border border-teal-500/10">
             <p className="text-slate-400">
-              Done? Select <span className="text-teal-400 font-mono">DeepSeek</span> in the provider dropdown above,
-              paste your key in the API Key field, and use model{' '}
-              <span className="text-teal-400 font-mono">deepseek-v4-flash</span>. Hit Test to confirm.
+              {t('settings.deepseekGuide.donePrefix')}{' '}
+              <span className="text-teal-400 font-mono">DeepSeek</span>{' '}
+              {t('settings.deepseekGuide.doneMiddle')}{' '}
+              <span className="text-teal-400 font-mono">deepseek-v4-flash</span>.{' '}
+              {t('settings.deepseekGuide.doneSuffix')}
             </p>
           </div>
         </div>
