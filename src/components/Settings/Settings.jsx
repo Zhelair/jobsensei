@@ -398,10 +398,17 @@ export default function Settings() {
         <div className={`${pairedCardClass} border-red-500/20`}>
           <h3 className="font-display font-semibold text-white mb-1">Data Management</h3>
           <div className="space-y-2 text-slate-400 text-xs leading-relaxed mb-3">
-            <p>Your profile, projects, resume, notes, and tool history stay only in this browser on this device.</p>
-            <p>AI requests send only the text needed for that task to your selected provider, either JobSensei-hosted AI or your own BYOK provider.</p>
-            <p>The secure account rollout is being designed around up to 2 approved devices per account.</p>
-            <p>Your full workspace stays local, but anything you send in an AI request is processed by that provider under its own policies. You can erase everything saved here any time with Clear All Data.</p>
+            {[
+              'Your profile, projects, resume, notes, and tool history stay only in this browser on this device.',
+              'AI requests send only the text needed for that task to your selected provider, either JobSensei-hosted AI or your own BYOK provider.',
+              'The secure account rollout is being designed around up to 2 approved devices per account.',
+              'Your full workspace stays local, but anything you send in an AI request is processed by that provider under its own policies. You can erase everything saved here any time with Clear All Data.',
+            ].map(line => (
+              <p key={line} className="flex items-start gap-2">
+                <span className="text-slate-500">-</span>
+                <span>{line}</span>
+              </p>
+            ))}
           </div>
           <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm mt-auto">
             <Trash2 size={14} /> Clear All Data
