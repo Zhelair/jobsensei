@@ -101,6 +101,30 @@ function getLinkedInSectionLabel(t, key) {
   return translated && translated !== translationKey ? translated : humanizeKey(key)
 }
 
+function getPredictorLevelLabel(t, level) {
+  const mapping = {
+    High: 'high',
+    Medium: 'medium',
+    Low: 'low',
+  }
+  const translationKey = `tools.predictor.level.${mapping[level]}`
+  const translated = mapping[level] ? t(translationKey) : null
+  return translated && translated !== translationKey ? translated : level
+}
+
+function getPredictorCategoryLabel(t, category) {
+  const mapping = {
+    Technical: 'technical',
+    Behavioral: 'behavioral',
+    Culture: 'culture',
+    Curveball: 'curveball',
+    'Role-Specific': 'roleSpecific',
+  }
+  const translationKey = `tools.predictor.category.${mapping[category]}`
+  const translated = mapping[category] ? t(translationKey) : null
+  return translated && translated !== translationKey ? translated : category
+}
+
 function applicationLabel(app) {
   return `${app.company}${app.role ? ` - ${app.role}` : ''}`
 }
@@ -596,13 +620,13 @@ function FullHistoryResult({ item }) {
         )}
         {redFlags?.length > 0 && (
           <div className="card border-red-500/20">
-            <h4 className="font-display font-semibold text-white text-sm mb-2">🚩 Red Flags</h4>
+            <h4 className="font-display font-semibold text-white text-sm mb-2">{t('gapAnalysis.tabs.redFlags')}</h4>
             <ul className="space-y-1">{redFlags.map((f, i) => <li key={i} className="text-red-300 text-xs">• {f.flag || f.detail || String(f)}</li>)}</ul>
           </div>
         )}
         {gapResult && (
           <div className="card">
-            <h4 className="font-display font-semibold text-white text-sm mb-2">Gap Analysis</h4>
+            <h4 className="font-display font-semibold text-white text-sm mb-2">{t('gapAnalysis.title')}</h4>
             <div className="space-y-1">
               {String(gapResult).split('\n').map((line, i) => {
                 if (line.startsWith('## ')) return <h3 key={i} className="font-display font-bold text-white text-base mt-4 mb-2">{line.slice(3)}</h3>
@@ -628,8 +652,8 @@ function FullHistoryResult({ item }) {
               <div className="flex-1">
                 <p className="text-white text-sm font-body mb-2">{q.question}</p>
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  <span className={PROB_COLORS[q.probability] || 'badge-slate'}>{q.probability} probability</span>
-                  <span className={CAT_COLORS[q.category] || 'badge-slate'}>{q.category}</span>
+                  <span className={PROB_COLORS[q.probability] || 'badge-slate'}>{getPredictorLevelLabel(t, q.probability)} {t('tools.predictor.probabilitySuffix')}</span>
+                  <span className={CAT_COLORS[q.category] || 'badge-slate'}>{getPredictorCategoryLabel(t, q.category)}</span>
                 </div>
                 <p className="text-teal-400 text-xs">💡 {q.tip}</p>
               </div>
@@ -815,7 +839,7 @@ function FullHistoryResult({ item }) {
     return (
       <div className="space-y-4">
         <div className="card border-teal-500/20">
-          <h3 className="font-display font-semibold text-white text-sm mb-3">Interview-Ready Answer</h3>
+          <h3 className="font-display font-semibold text-white text-sm mb-3">{t('starBuilder.interviewReadyAnswer')}</h3>
           <p className="text-slate-200 text-sm font-body leading-relaxed">{r.fullAnswer}</p>
         </div>
         <div className="grid sm:grid-cols-2 gap-3">
@@ -829,7 +853,7 @@ function FullHistoryResult({ item }) {
         </div>
         {r.weaknesses?.length > 0 && (
           <div className="card border-yellow-500/20 bg-yellow-500/5">
-            <div className="text-yellow-400 text-sm font-display font-semibold mb-2">⚠️ Areas to strengthen</div>
+            <div className="text-yellow-400 text-sm font-display font-semibold mb-2">{t('starBuilder.areasToStrengthen')}</div>
             {r.weaknesses.map((w, i) => <p key={i} className="text-slate-400 text-xs">• {w}</p>)}
           </div>
         )}
@@ -840,7 +864,7 @@ function FullHistoryResult({ item }) {
             )}
             {r.targetQuestions?.length > 0 && (
               <>
-                <div className="text-slate-400 text-xs mb-1">Answers questions like:</div>
+                <div className="text-slate-400 text-xs mb-1">{t('starBuilder.answersQuestionsLike')}</div>
                 {r.targetQuestions.map((q,i) => <p key={i} className="text-slate-300 text-xs">• {q}</p>)}
               </>
             )}
@@ -856,7 +880,7 @@ function FullHistoryResult({ item }) {
         <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{item.result.analysis}</div>
       </div>
     )
-  return <p className="text-slate-500 text-sm">No preview available.</p>
+  return <p className="text-slate-500 text-sm">{t('tools.shared.noPreview')}</p>
 }
 
 // ─── Transferable Skills Coach ─────────────────────────────────────────────────
@@ -904,7 +928,7 @@ function TransferableSkillsTool({ onBack, hubLabel = 'Back', resume, saveHistory
 
       <div className="space-y-3 mb-4">
         <div>
-          <label className="text-sm text-slate-400 mb-1.5 block">Your current experience {resume && <span className="text-teal-400 text-xs ml-1">← from resume</span>}</label>
+          <label className="text-sm text-slate-400 mb-1.5 block">{t('tools.transferable.currentExperienceLabel')} {resume && <span className="text-teal-400 text-xs ml-1">← {t('tools.transferable.fromResume')}</span>}</label>
           <textarea className="textarea-field h-24" placeholder={t('tools.transferable.experiencePlaceholder')} value={experience} onChange={e => setExperience(e.target.value)} />
         </div>
         <div>
