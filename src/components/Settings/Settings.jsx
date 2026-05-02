@@ -18,9 +18,10 @@ export default function Settings() {
   } = useAI()
   const {
     secureReady, secureAccountsEnabled, secureUser, secureAccount, secureDevices,
-    deviceLimit, statusError, accountError, sendingMagicLink,
+    deviceId, deviceLimit, statusError, accountError, sendingMagicLink,
     magicLinkSentTo, linkingAccess, loadingAccount, sendMagicLink, signOutSecure,
-    refreshSecureAccount, linkCurrentAccess,
+    refreshSecureAccount, linkCurrentAccess, revokeSecureDevice, revokingDeviceId,
+    deleteSecureAccount, deletingAccount,
   } = useAuth()
   const { profile, setShowOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData } = useProject()
@@ -41,6 +42,7 @@ export default function Settings() {
   const [bmacError, setBmacError] = useState('')
   const [secureEmailInput, setSecureEmailInput] = useState('')
   const [secureDeviceLabel, setSecureDeviceLabel] = useState('')
+  const [secureDeleteEmailInput, setSecureDeleteEmailInput] = useState('')
   const [secureNotice, setSecureNotice] = useState('')
   const [secureError, setSecureError] = useState('')
 
@@ -260,6 +262,41 @@ export default function Settings() {
         deviceLabel: secureDeviceLabel || undefined,
       })
       setSecureNotice(t('settings.secureAccountStatusLinked'))
+    } catch (err) {
+      setSecureError(err.message)
+    }
+  }
+
+  async function handleRevokeDevice(targetDeviceId) {
+    if (!targetDeviceId) return
+    if (!confirm(t('settings.secureAccountRevokeConfirm'))) return
+
+    setSecureError('')
+    setSecureNotice('')
+    try {
+      await revokeSecureDevice(targetDeviceId)
+      setSecureNotice(t('settings.secureAccountRevokeSuccess'))
+    } catch (err) {
+      setSecureError(err.message)
+    }
+  }
+
+  async function handleDeleteSecureAccount() {
+    if (!secureUser?.email) return
+    if (secureDeleteEmailInput.trim().toLowerCase() !== secureUser.email.toLowerCase()) {
+      setSecureError(t('settings.secureAccountDeleteMismatch'))
+      setSecureNotice('')
+      return
+    }
+
+    if (!confirm(t('settings.secureAccountDeleteConfirm'))) return
+
+    setSecureError('')
+    setSecureNotice('')
+    try {
+      await deleteSecureAccount(secureDeleteEmailInput.trim())
+      setSecureDeleteEmailInput('')
+      setSecureNotice(t('settings.secureAccountDeleteSuccess'))
     } catch (err) {
       setSecureError(err.message)
     }
@@ -523,10 +560,37 @@ export default function Settings() {
                   <div className="text-slate-300 text-xs">
                     {t('settings.secureAccountDevicesSummary', { count: approvedSecureDevices.length, limit: deviceLimit })}
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {approvedSecureDevices.map(device => (
-                      <div key={device.id} className="text-slate-400 text-xs">
-                        {device.deviceLabel || device.deviceName || t('settings.secureAccountCurrentDevice')}
+                      <div key={device.id} className="rounded-xl border border-navy-700 bg-navy-900/60 px-3 py-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-slate-200 text-xs font-display font-semibold flex flex-wrap gap-2 items-center">
+                              <span>{device.deviceLabel || device.deviceName || t('settings.secureAccountCurrentDevice')}</span>
+                              {device.deviceId === deviceId && (
+                                <span className="px-2 py-0.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-[10px] text-teal-300">
+                                  {t('settings.secureAccountCurrentBadge')}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-slate-500 text-[11px] mt-1">
+                              {device.lastSeenAt
+                                ? t('settings.secureAccountLastSeen', { date: new Date(device.lastSeenAt).toLocaleString() })
+                                : t('settings.secureAccountLastSeenUnknown')}
+                            </div>
+                          </div>
+                          {device.deviceId !== deviceId && (
+                            <button
+                              onClick={() => handleRevokeDevice(device.deviceId)}
+                              disabled={revokingDeviceId === device.deviceId}
+                              className="btn-ghost text-[11px] text-red-400 hover:text-red-300 px-2 py-1 min-h-0"
+                            >
+                              {revokingDeviceId === device.deviceId
+                                ? t('settings.secureAccountRevoking')
+                                : t('settings.secureAccountRevokeButton')}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -553,6 +617,31 @@ export default function Settings() {
                   </button>
                   <button onClick={signOutSecure} className="btn-ghost text-xs flex-1 justify-center">
                     {t('settings.secureAccountSignOut')}
+                  </button>
+                </div>
+              )}
+
+              {secureSignedIn && (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 space-y-2">
+                  <div className="text-red-300 text-sm font-display font-semibold">{t('settings.secureAccountDeleteTitle')}</div>
+                  <p className="text-slate-400 text-xs">{t('settings.secureAccountDeleteCopy')}</p>
+                  <input
+                    className="input-field text-sm"
+                    type="email"
+                    placeholder={t('settings.secureAccountDeletePlaceholder')}
+                    value={secureDeleteEmailInput}
+                    onChange={e => {
+                      setSecureDeleteEmailInput(e.target.value)
+                      setSecureError('')
+                      setSecureNotice('')
+                    }}
+                  />
+                  <button
+                    onClick={handleDeleteSecureAccount}
+                    disabled={!secureDeleteEmailInput.trim() || deletingAccount}
+                    className="btn-ghost text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 justify-center"
+                  >
+                    {deletingAccount ? t('settings.secureAccountDeleting') : t('settings.secureAccountDeleteButton')}
                   </button>
                 </div>
               )}

@@ -48,6 +48,8 @@ export function AuthProvider({ children }) {
   const [sendingMagicLink, setSendingMagicLink] = useState(false)
   const [magicLinkSentTo, setMagicLinkSentTo] = useState('')
   const [linkingAccess, setLinkingAccess] = useState(false)
+  const [revokingDeviceId, setRevokingDeviceId] = useState('')
+  const [deletingAccount, setDeletingAccount] = useState(false)
   const [deviceId] = useState(() => readOrCreateDeviceId())
 
   useEffect(() => {
@@ -230,6 +232,76 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function revokeSecureDevice(targetDeviceId) {
+    if (!secureSession?.access_token) {
+      throw new Error('Sign in to your secure account first.')
+    }
+
+    setRevokingDeviceId(targetDeviceId)
+    try {
+      const response = await fetch('/api/revoke-device', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${secureSession.access_token}`,
+          'X-Device-Id': deviceId,
+        },
+        body: JSON.stringify({
+          deviceId: targetDeviceId,
+        }),
+      })
+      const payload = await parseJsonSafe(response)
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Unable to revoke that device right now.')
+      }
+
+      setSecureDevices(payload.devices || [])
+      return payload
+    } finally {
+      setRevokingDeviceId('')
+    }
+  }
+
+  async function deleteSecureAccount(confirmEmail) {
+    if (!secureSession?.access_token) {
+      throw new Error('Sign in to your secure account first.')
+    }
+
+    setDeletingAccount(true)
+    try {
+      const response = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${secureSession.access_token}`,
+        },
+        body: JSON.stringify({
+          confirmEmail,
+        }),
+      })
+      const payload = await parseJsonSafe(response)
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Unable to delete this secure account right now.')
+      }
+
+      try {
+        await supabase?.auth?.signOut?.()
+      } catch {}
+
+      setSecureSession(null)
+      setSecureUser(null)
+      setSecureAccount(null)
+      setSecureDevices([])
+      setMagicLinkSentTo('')
+
+      return payload
+    } finally {
+      setDeletingAccount(false)
+    }
+  }
+
   const value = {
     bridgeStatus,
     statusError,
@@ -244,12 +316,16 @@ export function AuthProvider({ children }) {
     sendingMagicLink,
     magicLinkSentTo,
     linkingAccess,
+    revokingDeviceId,
+    deletingAccount,
     deviceId,
     deviceLimit: bridgeStatus.deviceLimit,
     sendMagicLink,
     signOutSecure,
     refreshSecureAccount,
     linkCurrentAccess,
+    revokeSecureDevice,
+    deleteSecureAccount,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
