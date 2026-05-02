@@ -7627,6 +7627,67 @@ Object.entries(translationFinishPatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
 
+const authPrivacyDisclosurePatches = {
+  en: {
+    settings: {
+      dataBullet1: 'Most of your profile, projects, resume, notes, and tool history stay in this browser on this device today.',
+      dataBullet6: 'The planned secure account sync will store only the account, approved-device, plan, and workspace data needed to run JobSensei safely across devices. The app does not request GPS or background location.',
+    },
+  },
+  ru: {
+    settings: {
+      dataBullet1: 'Сегодня большая часть вашего профиля, проектов, резюме, заметок и истории инструментов остаётся в этом браузере на этом устройстве.',
+      dataBullet6: 'Планируемая защищённая синхронизация аккаунта будет хранить только данные аккаунта, одобренных устройств, плана и workspace, необходимые для безопасной работы JobSensei на нескольких устройствах. Приложение не запрашивает GPS или фоновую геолокацию.',
+    },
+  },
+  bg: {
+    settings: {
+      dataBullet1: 'Към момента по-голямата част от профила, проектите, CV-то, бележките и историята на инструментите ти остават в този браузър на това устройство.',
+      dataBullet6: 'Планираната защитена синхронизация на акаунта ще пази само данните за акаунта, одобрените устройства, плана и workspace-а, нужни за безопасната работа на JobSensei между устройства. Приложението не изисква GPS или фонова локация.',
+    },
+  },
+  es: {
+    settings: {
+      dataBullet1: 'Hoy, la mayor parte de tu perfil, proyectos, CV, notas e historial de herramientas permanece en este navegador y en este dispositivo.',
+      dataBullet6: 'La sincronización segura de cuenta prevista almacenará solo la cuenta, los dispositivos aprobados, el plan y los datos del espacio de trabajo necesarios para que JobSensei funcione de forma segura entre dispositivos. La app no solicita GPS ni ubicación en segundo plano.',
+    },
+  },
+  fr: {
+    settings: {
+      dataBullet1: "Aujourd’hui, la majeure partie de votre profil, de vos projets, de votre CV, de vos notes et de l’historique des outils reste dans ce navigateur sur cet appareil.",
+      dataBullet6: "La synchronisation sécurisée du compte prévue ne stockera que les données de compte, d’appareils approuvés, d’abonnement et d’espace de travail nécessaires au fonctionnement sécurisé de JobSensei sur plusieurs appareils. L’application ne demande ni GPS ni localisation en arrière-plan.",
+    },
+  },
+  it: {
+    settings: {
+      dataBullet1: 'Oggi la maggior parte del tuo profilo, dei progetti, del CV, delle note e della cronologia degli strumenti resta in questo browser su questo dispositivo.',
+      dataBullet6: 'La sincronizzazione sicura dell’account prevista salverà solo i dati di account, dispositivi approvati, piano e workspace necessari a far funzionare JobSensei in modo sicuro tra dispositivi. L’app non richiede GPS né posizione in background.',
+    },
+  },
+  pt: {
+    settings: {
+      dataBullet1: 'Hoje, a maior parte do seu perfil, projetos, CV, notas e histórico de ferramentas continua neste navegador e neste dispositivo.',
+      dataBullet6: 'A sincronização segura de conta planeada irá guardar apenas os dados de conta, dispositivos aprovados, plano e workspace necessários para o JobSensei funcionar com segurança entre dispositivos. A app não pede GPS nem localização em segundo plano.',
+    },
+  },
+  pl: {
+    settings: {
+      dataBullet1: 'Obecnie większość Twojego profilu, projektów, CV, notatek i historii narzędzi pozostaje w tej przeglądarce na tym urządzeniu.',
+      dataBullet6: 'Planowana bezpieczna synchronizacja konta będzie przechowywać tylko dane konta, zatwierdzonych urządzeń, planu i workspace potrzebne do bezpiecznego działania JobSensei między urządzeniami. Aplikacja nie prosi o GPS ani lokalizację w tle.',
+    },
+  },
+  de: {
+    settings: {
+      dataBullet1: 'Heute bleibt der grösste Teil deines Profils, deiner Projekte, deines Lebenslaufs, deiner Notizen und deines Tool-Verlaufs in diesem Browser auf diesem Gerät.',
+      dataBullet6: 'Die geplante sichere Kontosynchronisierung speichert nur die Konto-, freigegebenen Geräte-, Plan- und Workspace-Daten, die JobSensei für den sicheren Betrieb über mehrere Geräte hinweg benötigt. Die App fordert weder GPS noch Hintergrundstandort an.',
+    },
+  },
+}
+
+Object.entries(authPrivacyDisclosurePatches).forEach(([locale, patch]) => {
+  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+})
+
 export default localizationPatches
 
 
