@@ -2334,9 +2334,9 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
 
             {/* Text fields */}
             <div className="grid sm:grid-cols-2 gap-2 mb-3">
-              <input className="input-field text-xs" placeholder="Base salary (e.g. BGN 80,000)"
+              <input className="input-field text-xs" placeholder={t('applications.offer.baseSalaryPlaceholder')}
                 value={d.baseSalary || ''} onChange={e => updateField(app.id, 'baseSalary', e.target.value)}/>
-              <input className="input-field text-xs" placeholder="Bonus / equity (e.g. 10% + options)"
+              <input className="input-field text-xs" placeholder={t('applications.offer.bonusPlaceholder')}
                 value={d.bonus || ''} onChange={e => updateField(app.id, 'bonus', e.target.value)}/>
             </div>
 
@@ -2365,12 +2365,12 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
       <div className="card border-indigo-500/20">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <div className="text-white text-sm font-display font-semibold">AI Offer Advisor</div>
-            <div className="text-slate-400 text-xs">Get a direct recommendation based on your ratings</div>
+            <div className="text-white text-sm font-display font-semibold">{t('applications.offer.aiAdvisorTitle')}</div>
+            <div className="text-slate-400 text-xs">{t('applications.offer.aiAdvisorCopy')}</div>
           </div>
           <button onClick={getAdvice} disabled={loadingAdvice || !isConnected || offerApps.length < 1}
             className="btn-primary text-xs">
-            {loadingAdvice ? 'Analyzing...' : 'Get Advice'}
+            {loadingAdvice ? t('applications.offer.analyzing') : t('applications.offer.getAdvice')}
           </button>
         </div>
         {advice && (

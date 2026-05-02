@@ -7341,6 +7341,292 @@ Object.entries(jobTrackerWorkspaceFinalPatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
 
+const translationFinishPatches = {
+  en: {
+    applications: {
+      offer: {
+        baseSalaryPlaceholder: 'Base salary (e.g. BGN 80,000)',
+        bonusPlaceholder: 'Bonus / equity (e.g. 10% + options)',
+        aiAdvisorTitle: 'AI Offer Advisor',
+        aiAdvisorCopy: 'Get a direct recommendation based on your ratings',
+        analyzing: 'Analyzing...',
+        getAdvice: 'Get Advice',
+      },
+    },
+    tools: {
+      shared: {
+        noPreview: 'No preview available.',
+      },
+      predictor: {
+        level: {
+          high: 'High',
+          medium: 'Medium',
+          low: 'Low',
+        },
+        category: {
+          technical: 'Technical',
+          behavioral: 'Behavioral',
+          culture: 'Culture',
+          curveball: 'Curveball',
+          roleSpecific: 'Role-Specific',
+        },
+      },
+    },
+  },
+  ru: {
+    applications: {
+      offer: {
+        baseSalaryPlaceholder: 'Базовая зарплата (например, 80 000 BGN)',
+        bonusPlaceholder: 'Бонус / опционы (например, 10% + опционы)',
+        aiAdvisorTitle: 'AI-консультант по офферам',
+        aiAdvisorCopy: 'Получите прямую рекомендацию на основе ваших оценок',
+        analyzing: 'Анализирую...',
+        getAdvice: 'Получить совет',
+      },
+    },
+    tools: {
+      shared: {
+        noPreview: 'Предпросмотр недоступен.',
+      },
+      predictor: {
+        level: {
+          high: 'Высокая',
+          medium: 'Средняя',
+          low: 'Низкая',
+        },
+        category: {
+          technical: 'Технический',
+          behavioral: 'Поведенческий',
+          culture: 'Культура',
+          curveball: 'Нестандартный',
+          roleSpecific: 'По роли',
+        },
+      },
+    },
+  },
+  bg: {
+    applications: {
+      offer: {
+        baseSalaryPlaceholder: 'Основна заплата (напр. 80 000 BGN)',
+        bonusPlaceholder: 'Бонус / дялове (напр. 10% + опции)',
+        aiAdvisorTitle: 'AI съветник за оферти',
+        aiAdvisorCopy: 'Получи директна препоръка според твоите оценки',
+        analyzing: 'Анализирам...',
+        getAdvice: 'Вземи съвет',
+      },
+    },
+    tools: {
+      shared: {
+        noPreview: 'Няма наличен преглед.',
+      },
+      predictor: {
+        level: {
+          high: 'Висока',
+          medium: 'Средна',
+          low: 'Ниска',
+        },
+        category: {
+          technical: 'Технически',
+          behavioral: 'Поведенчески',
+          culture: 'Култура',
+          curveball: 'Неочакван',
+          roleSpecific: 'По ролята',
+        },
+      },
+    },
+  },
+  es: {
+    applications: {
+      offer: {
+        baseSalaryPlaceholder: 'Salario base (p. ej. 80.000 BGN)',
+        bonusPlaceholder: 'Bonus / equity (p. ej. 10% + opciones)',
+        aiAdvisorTitle: 'Asesor AI de ofertas',
+        aiAdvisorCopy: 'Obtén una recomendación directa según tus valoraciones',
+        analyzing: 'Analizando...',
+        getAdvice: 'Obtener consejo',
+      },
+    },
+    tools: {
+      shared: {
+        noPreview: 'No hay vista previa disponible.',
+      },
+      predictor: {
+        level: {
+          high: 'Alta',
+          medium: 'Media',
+          low: 'Baja',
+        },
+        category: {
+          technical: 'Técnica',
+          behavioral: 'Conductual',
+          culture: 'Cultura',
+          curveball: 'Inesperada',
+          roleSpecific: 'Específica del puesto',
+        },
+      },
+    },
+  },
+  fr: {
+    applications: {
+      offer: {
+        baseSalaryPlaceholder: 'Salaire de base (ex. 80 000 BGN)',
+        bonusPlaceholder: 'Bonus / actions (ex. 10 % + options)',
+        aiAdvisorTitle: 'Conseiller IA pour les offres',
+        aiAdvisorCopy: 'Obtenez une recommandation directe selon vos notes',
+        analyzing: 'Analyse en cours...',
+        getAdvice: 'Obtenir un avis',
+      },
+    },
+    tools: {
+      shared: {
+        noPreview: 'Aucun aperçu disponible.',
+      },
+      predictor: {
+        level: {
+          high: 'Élevée',
+          medium: 'Moyenne',
+          low: 'Faible',
+        },
+        category: {
+          technical: 'Technique',
+          behavioral: 'Comportementale',
+          culture: 'Culture',
+          curveball: 'Surprise',
+          roleSpecific: 'Spécifique au poste',
+        },
+      },
+    },
+  },
+  it: {
+    applications: {
+      offer: {
+        baseSalaryPlaceholder: 'Stipendio base (es. 80.000 BGN)',
+        bonusPlaceholder: 'Bonus / equity (es. 10% + opzioni)',
+        aiAdvisorTitle: 'Consulente AI per le offerte',
+        aiAdvisorCopy: 'Ricevi una raccomandazione diretta in base alle tue valutazioni',
+        analyzing: 'Analisi in corso...',
+        getAdvice: 'Ottieni consiglio',
+      },
+    },
+    tools: {
+      shared: {
+        noPreview: 'Anteprima non disponibile.',
+      },
+      predictor: {
+        level: {
+          high: 'Alta',
+          medium: 'Media',
+          low: 'Bassa',
+        },
+        category: {
+          technical: 'Tecnica',
+          behavioral: 'Comportamentale',
+          culture: 'Cultura',
+          curveball: 'Spiazzante',
+          roleSpecific: 'Specifica del ruolo',
+        },
+      },
+    },
+  },
+  pt: {
+    applications: {
+      offer: {
+        baseSalaryPlaceholder: 'Salário base (ex.: 80.000 BGN)',
+        bonusPlaceholder: 'Bônus / equity (ex.: 10% + opções)',
+        aiAdvisorTitle: 'Consultor de ofertas por AI',
+        aiAdvisorCopy: 'Receba uma recomendação direta com base nas suas notas',
+        analyzing: 'Analisando...',
+        getAdvice: 'Receber conselho',
+      },
+    },
+    tools: {
+      shared: {
+        noPreview: 'Nenhuma prévia disponível.',
+      },
+      predictor: {
+        level: {
+          high: 'Alta',
+          medium: 'Média',
+          low: 'Baixa',
+        },
+        category: {
+          technical: 'Técnica',
+          behavioral: 'Comportamental',
+          culture: 'Cultura',
+          curveball: 'Inusitada',
+          roleSpecific: 'Específica da vaga',
+        },
+      },
+    },
+  },
+  pl: {
+    applications: {
+      offer: {
+        baseSalaryPlaceholder: 'Pensja podstawowa (np. 80 000 BGN)',
+        bonusPlaceholder: 'Bonus / udziały (np. 10% + opcje)',
+        aiAdvisorTitle: 'AI doradca ofert',
+        aiAdvisorCopy: 'Otrzymaj bezpośrednią rekomendację na podstawie swoich ocen',
+        analyzing: 'Analizuję...',
+        getAdvice: 'Uzyskaj poradę',
+      },
+    },
+    tools: {
+      shared: {
+        noPreview: 'Podgląd jest niedostępny.',
+      },
+      predictor: {
+        level: {
+          high: 'Wysokie',
+          medium: 'Średnie',
+          low: 'Niskie',
+        },
+        category: {
+          technical: 'Techniczne',
+          behavioral: 'Behawioralne',
+          culture: 'Kultura',
+          curveball: 'Nietypowe',
+          roleSpecific: 'Specyficzne dla roli',
+        },
+      },
+    },
+  },
+  de: {
+    applications: {
+      offer: {
+        baseSalaryPlaceholder: 'Grundgehalt (z. B. 80.000 BGN)',
+        bonusPlaceholder: 'Bonus / Beteiligung (z. B. 10 % + Optionen)',
+        aiAdvisorTitle: 'AI-Angebotsberater',
+        aiAdvisorCopy: 'Erhalte eine direkte Empfehlung auf Basis deiner Bewertungen',
+        analyzing: 'Analysiere...',
+        getAdvice: 'Rat holen',
+      },
+    },
+    tools: {
+      shared: {
+        noPreview: 'Keine Vorschau verfügbar.',
+      },
+      predictor: {
+        level: {
+          high: 'Hoch',
+          medium: 'Mittel',
+          low: 'Niedrig',
+        },
+        category: {
+          technical: 'Technisch',
+          behavioral: 'Verhaltensbezogen',
+          culture: 'Kultur',
+          curveball: 'Unerwartet',
+          roleSpecific: 'Rollenspezifisch',
+        },
+      },
+    },
+  },
+}
+
+Object.entries(translationFinishPatches).forEach(([locale, patch]) => {
+  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+})
+
 export default localizationPatches
 
 
