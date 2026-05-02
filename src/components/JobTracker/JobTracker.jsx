@@ -600,14 +600,14 @@ export default function JobTracker() {
                     className="bg-navy-800 border border-navy-600 rounded-lg px-1.5 py-0.5 text-xs text-slate-400 focus:outline-none focus:border-teal-500 cursor-pointer"
                     defaultValue=""
                     onChange={e => { if (e.target.value) { snoozeApp(app.id, parseInt(e.target.value)); e.target.value = '' } }}
-                    title="Snooze reminder"
+                    title={t('applications.reminders.snooze')}
                   >
                     <option value="" disabled>⏰</option>
-                    <option value="3">3 days</option>
-                    <option value="7">7 days</option>
-                    <option value="14">14 days</option>
+                    <option value="3">{t('applications.reminders.days', { count: 3 })}</option>
+                    <option value="7">{t('applications.reminders.days', { count: 7 })}</option>
+                    <option value="14">{t('applications.reminders.days', { count: 14 })}</option>
                   </select>
-                  <button onClick={() => dismissApp(app.id)} className="text-slate-500 hover:text-red-400 transition-colors" title="Dismiss">
+                  <button onClick={() => dismissApp(app.id)} className="text-slate-500 hover:text-red-400 transition-colors" title={t('applications.reminders.dismiss')}>
                     <X size={13}/>
                   </button>
                 </div>
@@ -638,7 +638,7 @@ export default function JobTracker() {
                           <div className="flex items-center gap-0.5 flex-shrink-0 ml-1">
                             {/* Edit button */}
                             <button onClick={() => setEditingApp({ ...app })}
-                              className="text-slate-600 hover:text-teal-400 p-0.5" title="Edit job">
+                              className="text-slate-600 hover:text-teal-400 p-0.5" title={t('applications.reminders.editJob')}>
                               <Edit3 size={11}/>
                             </button>
                             <button onClick={() => deleteApp(app.id)}
@@ -886,6 +886,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const [saved, setSaved] = useState(false)
   const [researching, setResearching] = useState(false)
   const [researchMsg, setResearchMsg] = useState('')
+  const [researchMsgTone, setResearchMsgTone] = useState('info')
   const [cheatSheet, setCheatSheet] = useState('')
   const [cheatLoading, setCheatLoading] = useState(false)
   const [workspaceSummary, setWorkspaceSummary] = useState('')
@@ -983,15 +984,15 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const appPitchRuns = toolsHistory.filter(entry => entry.tool === 'pitch' && matchesApplicationEntry(entry))
 
   const researchFields = [
-    ['wowFacts', 'Wow facts & recent news', 'Recent news, product launches, market shifts, or memorable company details.'],
-    ['techStack', 'Tools & systems', 'Software, processes, or systems likely used in this role.'],
-    ['culture', 'Culture signals', 'Values, interview style, team habits, or what the company rewards.'],
-    ['openQ', 'Open questions', 'Things to ask or research before the next step.'],
+    ['wowFacts', t('applications.workspace.research.fields.wowFacts.label'), t('applications.workspace.research.fields.wowFacts.placeholder')],
+    ['techStack', t('applications.workspace.research.fields.techStack.label'), t('applications.workspace.research.fields.techStack.placeholder')],
+    ['culture', t('applications.workspace.research.fields.culture.label'), t('applications.workspace.research.fields.culture.placeholder')],
+    ['openQ', t('applications.workspace.research.fields.openQ.label'), t('applications.workspace.research.fields.openQ.placeholder')],
   ]
   const prepFields = [
-    ['people', "People I've spoken to", 'Names, titles, LinkedIn notes, or who to mention in follow-up.'],
-    ['theyMentioned', 'Things they mentioned', 'Pain points, priorities, hiring goals, or details you should respond to.'],
-    ['prepNotes', 'My prep notes', 'Stories to tell, reminders for yourself, and key points to emphasize.'],
+    ['people', t('applications.workspace.research.fields.people.label'), t('applications.workspace.research.fields.people.placeholder')],
+    ['theyMentioned', t('applications.workspace.research.fields.theyMentioned.label'), t('applications.workspace.research.fields.theyMentioned.placeholder')],
+    ['prepNotes', t('applications.workspace.research.fields.prepNotes.label'), t('applications.workspace.research.fields.prepNotes.placeholder')],
   ]
   const prepActions = [
     { id: 'interview', label: t('tools.toolLabels.interview'), desc: t('tools.toolDescriptions.interview'), icon: Mic },
@@ -1050,6 +1051,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   async function runResearch() {
     setResearching(true)
     setResearchMsg('')
+    setResearchMsgTone('info')
     try {
       let searchContext = null
       try {
@@ -1081,13 +1083,15 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           prepNotes: parsed.prepNotes || prev.prepNotes,
         }))
         setResearchMsg(searchContext
-          ? 'Notes pre-filled with live data. Review and save when ready.'
-          : 'Notes pre-filled. Review and save when ready.')
+          ? t('applications.workspace.research.messages.livePrefill')
+          : t('applications.workspace.research.messages.prefill'))
       } else {
-        setResearchMsg('Could not parse research. Try again.')
+        setResearchMsg(t('applications.workspace.research.messages.parseFailed'))
+        setResearchMsgTone('error')
       }
     } catch {
-      setResearchMsg('Research failed. Check your AI connection.')
+      setResearchMsg(t('applications.workspace.research.messages.failed'))
+      setResearchMsgTone('error')
     }
     setResearching(false)
   }
@@ -1281,19 +1285,19 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
       <div className="card border-teal-500/20 bg-teal-500/5">
         <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
           <div>
-            <div className="text-white text-sm font-display font-semibold">Capture job details</div>
-            <div className="text-slate-400 text-xs">Save the JD once here so the rest of the workspace stays aligned to the same role.</div>
+            <div className="text-white text-sm font-display font-semibold">{t('applications.workspace.jd.captureTitle')}</div>
+            <div className="text-slate-400 text-xs">{t('applications.workspace.jd.captureSubtitle')}</div>
           </div>
           <div className="flex flex-wrap gap-2">
             <span className={`text-xs px-2.5 py-1 rounded-full border ${hasJd ? 'text-teal-300 border-teal-500/30 bg-teal-500/10' : 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10'}`}>
-              {hasJd ? 'JD attached' : 'Add JD to prefill tools'}
+              {hasJd ? t('applications.workspace.jd.badgeReady') : t('applications.workspace.jd.badgeMissing')}
             </span>
             <button onClick={() => setShowJdEditor(prev => !prev)} className="btn-ghost text-xs">
-              {showJdEditor ? 'Close Editor' : hasJd ? 'Edit JD' : 'Add JD'}
+              {showJdEditor ? t('applications.workspace.jd.closeEditor') : hasJd ? t('applications.workspace.jd.editJd') : t('applications.workspace.jd.addJd')}
             </button>
             {hasJd && (
               <button onClick={() => setIsJdExpanded(prev => !prev)} className="btn-ghost text-xs">
-                {isJdExpanded ? 'Collapse' : 'Expand'}
+                {isJdExpanded ? t('applications.workspace.jd.collapse') : t('applications.workspace.jd.expand')}
               </button>
             )}
           </div>
@@ -1306,7 +1310,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-teal-400 text-xs hover:text-teal-300 underline underline-offset-2 mb-3"
           >
-            View job description
+            {t('applications.workspace.jd.viewJobDescription')}
           </a>
         )}
 
@@ -1317,19 +1321,19 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
             </div>
           </div>
         ) : (
-          <p className="text-slate-500 text-xs">No JD saved yet. Paste it once here and the main tools will pick it up from this application.</p>
+          <p className="text-slate-500 text-xs">{t('applications.workspace.jd.empty')}</p>
         )}
 
         {showJdEditor && (
           <div className="mt-3">
-            <label className="text-sm text-slate-400 mb-1.5 block">Saved Job Description</label>
+            <label className="text-sm text-slate-400 mb-1.5 block">{t('applications.workspace.jd.savedJobDescription')}</label>
             <textarea
               className="textarea-field h-40"
-              placeholder="Paste the job description once. Interview Prep, Gap Analysis, Question Predictor, Cover Letter, and Resume Checker will use it."
+              placeholder={t('applications.workspace.jd.placeholder')}
               value={jdText}
               onChange={e => setJdText(e.target.value)}
             />
-            <p className="text-slate-500 text-xs mt-2">Use Save Workspace to keep JD changes for this application.</p>
+            <p className="text-slate-500 text-xs mt-2">{t('applications.workspace.jd.saveHint')}</p>
           </div>
         )}
       </div>
@@ -1344,6 +1348,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     const latestPredictorRun = latestEntry(appPredictorRuns)
     const latestFollowupRun = latestEntry(appFollowupRuns)
     const latestTailorRun = latestEntry([...appTailorRuns, ...appTransferableRuns])
+    const latestTailorActivity = latestEntry([latestStarStory, latestGapResult, latestTailorRun].filter(Boolean))
     const latestWorkspaceActivity = latestEntry([
       ...appGapResults,
       ...appStarStories,
@@ -1369,75 +1374,83 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     const predictState = appPredictorRuns.length > 0 ? 'complete' : hasJd ? 'ready' : 'blocked'
     const mockState = appInterviewSessions.length > 0 ? 'complete' : hasJd ? 'ready' : 'blocked'
     const followupState = appFollowupRuns.length > 0 ? 'complete' : 'ready'
+    const tailorArtifactCount = appGapResults.length + appStarStories.length + appTailorRuns.length
+    const latestMockScore = latestInterviewSession?.score != null
+      ? (Number.isInteger(latestInterviewSession.score) ? latestInterviewSession.score : latestInterviewSession.score.toFixed(1))
+      : null
 
     const stepCards = [
       {
         id: 'capture',
         step: '1',
-        title: 'Capture Job',
+        title: t('applications.workspace.steps.capture.title'),
         state: captureState,
         desc: hasJd
-          ? 'The job description is saved and powering the application-aware workflow.'
-          : 'Paste the job description once so research, prediction, and mock interviews stay aligned.',
+          ? t('applications.workspace.steps.capture.descReady')
+          : t('applications.workspace.steps.capture.descMissing'),
         summary: hasJd
-          ? `JD saved${app.jdUrl ? ' with source link attached.' : ' and ready across the workspace.'}`
-          : 'Add the JD to unlock role-specific prep.',
+          ? app.jdUrl
+            ? t('applications.workspace.steps.capture.summaryReadyLinked')
+            : t('applications.workspace.steps.capture.summaryReady')
+          : t('applications.workspace.steps.capture.summaryMissing'),
         actions: [
-          { label: hasJd ? 'Review Capture' : 'Add JD', onClick: () => navigateWorkspaceTab('jd'), variant: 'primary' },
-          { label: 'Research Notes', onClick: () => navigateWorkspaceTab('research'), variant: 'ghost' },
-          ...(app.jdUrl ? [{ label: 'Open JD Link', href: app.jdUrl, variant: 'ghost' }] : []),
+          { label: hasJd ? t('applications.workspace.steps.capture.actionReview') : t('applications.workspace.steps.capture.actionAdd'), onClick: () => navigateWorkspaceTab('jd'), variant: 'primary' },
+          { label: t('applications.workspace.overview.researchNotes'), onClick: () => navigateWorkspaceTab('research'), variant: 'ghost' },
+          ...(app.jdUrl ? [{ label: t('applications.workspace.steps.capture.actionOpenJdLink'), href: app.jdUrl, variant: 'ghost' }] : []),
         ],
       },
       {
         id: 'research',
         step: '2',
-        title: 'Research Company',
+        title: t('applications.workspace.steps.research.title'),
         state: researchState,
         desc: hasResearch
-          ? 'Company context is saved. You can review it or refresh the notes before the next round.'
-          : 'Fill company context, culture signals, and open questions before you start practicing.',
+          ? t('applications.workspace.steps.research.descReady')
+          : t('applications.workspace.steps.research.descMissing'),
         summary: hasResearch
-          ? `${researchFieldCount} research field${researchFieldCount === 1 ? '' : 's'} filled for this application.`
-          : 'Save company context so your prep stays specific.',
+          ? t('applications.workspace.steps.research.summaryReady', { count: researchFieldCount })
+          : t('applications.workspace.steps.research.summaryMissing'),
         actions: [
-          { label: hasResearch ? 'Review Research' : 'Open Research', onClick: () => navigateWorkspaceTab('research'), variant: 'primary' },
-          { label: researching ? 'Researching...' : 'Auto-fill Notes', onClick: () => runResearch(), variant: 'secondary', disabled: !isConnected || researching },
+          { label: hasResearch ? t('applications.workspace.steps.research.actionReview') : t('applications.workspace.steps.research.actionOpen'), onClick: () => navigateWorkspaceTab('research'), variant: 'primary' },
+          { label: researching ? t('applications.workspace.steps.research.actionResearching') : t('applications.workspace.steps.research.actionAutofill'), onClick: () => runResearch(), variant: 'secondary', disabled: !isConnected || researching },
         ],
       },
       {
         id: 'tailor',
         step: '3',
-        title: 'Tailor Story',
+        title: t('applications.workspace.steps.tailor.title'),
         state: tailorState,
-        desc: 'Use your application context to find gaps, shape STAR stories, and tailor how you position yourself.',
+        desc: t('applications.workspace.steps.tailor.desc'),
         summary: tailorComplete
-          ? `${appGapResults.length + appStarStories.length + appTailorRuns.length} saved tailoring artifact${appGapResults.length + appStarStories.length + appTailorRuns.length === 1 ? '' : 's'}${latestStarStory?.date || latestGapResult?.date || latestTailorRun?.date ? `, most recently ${timeAgo(latestEntry([latestStarStory, latestGapResult, latestTailorRun].filter(Boolean)).date)}` : ''}.`
+          ? latestTailorActivity?.date
+            ? t('applications.workspace.steps.tailor.summaryReadyWithActivity', { count: tailorArtifactCount, timeAgo: timeAgo(latestTailorActivity.date) })
+            : t('applications.workspace.steps.tailor.summaryReady', { count: tailorArtifactCount })
           : hasPrep
-            ? `${noteCount} workspace note${noteCount === 1 ? '' : 's'} saved to support your stories.`
-            : 'Start with gap analysis or a STAR story to tailor your pitch.',
+            ? t('applications.workspace.steps.tailor.summaryNotes', { count: noteCount })
+            : t('applications.workspace.steps.tailor.summaryMissing'),
         actions: [
-          { label: 'Gap Analysis', onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'gap'), variant: 'primary' },
-          { label: 'STAR Builder', onClick: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'star'), variant: 'secondary' },
-          { label: 'Resume Checker', onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'resumechecker'), variant: 'ghost' },
-          { label: 'Cover Letter', onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'coverletter'), variant: 'ghost' },
+          { label: t('applications.workspace.steps.tailor.actionGap'), onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'gap'), variant: 'primary' },
+          { label: t('applications.workspace.steps.tailor.actionStar'), onClick: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'star'), variant: 'secondary' },
+          { label: t('applications.workspace.steps.tailor.actionResume'), onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'resumechecker'), variant: 'ghost' },
+          { label: t('applications.workspace.steps.tailor.actionCover'), onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'coverletter'), variant: 'ghost' },
         ],
       },
       {
         id: 'predict',
         step: '4',
-        title: 'Predict Questions',
+        title: t('applications.workspace.steps.predict.title'),
         state: predictState,
         desc: hasJd
-          ? 'Generate likely interview questions from the saved JD before your next practice run.'
-          : 'Save the JD first so JobSensei can predict role-specific questions instead of generic ones.',
+          ? t('applications.workspace.steps.predict.descReady')
+          : t('applications.workspace.steps.predict.descMissing'),
         summary: latestPredictorRun?.date
-          ? `Latest question set generated ${timeAgo(latestPredictorRun.date)}.`
+          ? t('applications.workspace.steps.predict.summaryReady', { timeAgo: timeAgo(latestPredictorRun.date) })
           : hasJd
-            ? 'No question set generated for this application yet.'
-            : 'Capture the JD first to generate targeted questions.',
+            ? t('applications.workspace.steps.predict.summaryMissing')
+            : t('applications.workspace.steps.predict.summaryBlocked'),
         actions: [
           {
-            label: hasJd ? 'Question Predictor' : 'Capture First',
+            label: hasJd ? t('applications.workspace.steps.predict.actionPredict') : t('applications.workspace.steps.predict.actionCaptureFirst'),
             onClick: () => hasJd ? launchWorkspaceTool(SECTIONS.INTERVIEW, 'predictor') : navigateWorkspaceTab('jd'),
             variant: 'primary',
           },
@@ -1446,17 +1459,19 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
       {
         id: 'mock',
         step: '5',
-        title: 'Mock Interview',
+        title: t('applications.workspace.steps.mock.title'),
         state: mockState,
-        desc: 'Run a mock interview with the active application context and save a scored session.',
+        desc: t('applications.workspace.steps.mock.desc'),
         summary: latestInterviewSession?.date
-          ? `Latest mock ${timeAgo(latestInterviewSession.date)}${latestInterviewSession.score != null ? ` at ${Number.isInteger(latestInterviewSession.score) ? latestInterviewSession.score : latestInterviewSession.score.toFixed(1)}/10` : ''}.`
+          ? latestMockScore != null
+            ? t('applications.workspace.steps.mock.summaryReadyWithScore', { timeAgo: timeAgo(latestInterviewSession.date), score: latestMockScore })
+            : t('applications.workspace.steps.mock.summaryReady', { timeAgo: timeAgo(latestInterviewSession.date) })
           : hasJd
-            ? 'No saved mock interview for this application yet.'
-            : 'Add the JD first so the mock interview stays role-specific.',
+            ? t('applications.workspace.steps.mock.summaryMissing')
+            : t('applications.workspace.steps.mock.summaryBlocked'),
         actions: [
           {
-            label: hasJd ? 'Start Mock Interview' : 'Capture First',
+            label: hasJd ? t('applications.workspace.steps.mock.actionStart') : t('applications.workspace.steps.mock.actionCaptureFirst'),
             onClick: () => hasJd ? launchWorkspaceTool(SECTIONS.INTERVIEW, 'interview') : navigateWorkspaceTab('jd'),
             variant: 'primary',
           },
@@ -1465,15 +1480,15 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
       {
         id: 'followup',
         step: '6',
-        title: 'Follow-up',
+        title: t('applications.workspace.steps.followup.title'),
         state: followupState,
-        desc: 'Draft the post-interview follow-up while the application context and your notes are still fresh.',
+        desc: t('applications.workspace.steps.followup.desc'),
         summary: latestFollowupRun?.date
-          ? `Latest follow-up drafted ${timeAgo(latestFollowupRun.date)}.`
-          : 'No follow-up draft saved for this application yet.',
+          ? t('applications.workspace.steps.followup.summaryReady', { timeAgo: timeAgo(latestFollowupRun.date) })
+          : t('applications.workspace.steps.followup.summaryMissing'),
         actions: [
-          { label: 'Draft Follow-up', onClick: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'followup'), variant: 'primary' },
-          { label: 'Research Notes', onClick: () => navigateWorkspaceTab('research'), variant: 'ghost' },
+          { label: t('applications.workspace.steps.followup.actionDraft'), onClick: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'followup'), variant: 'primary' },
+          { label: t('applications.workspace.overview.researchNotes'), onClick: () => navigateWorkspaceTab('research'), variant: 'ghost' },
         ],
       },
     ]
@@ -1494,29 +1509,29 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
         <div className="card border-teal-500/20 bg-teal-500/5">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0 max-w-3xl">
-              <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">Application Workspace</div>
+              <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">{t('applications.workspace.overview.title')}</div>
               <h3 className="text-white text-lg font-display font-semibold mb-1">{app.company}{app.role ? ` - ${app.role}` : ''}</h3>
               <p className="text-slate-300 text-sm leading-relaxed">
-                This workspace keeps capture, research, story tailoring, question prediction, mock interviews, and follow-up centered on one application.
+                {t('applications.workspace.overview.subtitle')}
               </p>
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300">
                     {stageLabel(app.stage)}
                   </span>
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/30 bg-teal-500/10 text-teal-300">
-                    {completedSteps}/6 steps complete
+                    {t('applications.workspace.overview.stepsComplete', { count: completedSteps, total: stepCards.length })}
                   </span>
                   <span className={`px-2.5 py-1 rounded-full text-[11px] border ${hasJd ? 'border-teal-500/30 bg-teal-500/10 text-teal-300' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'}`}>
-                    {hasJd ? 'JD ready' : 'Needs JD'}
+                    {hasJd ? t('applications.workspace.overview.status.jdReady') : t('applications.workspace.overview.status.needsJd')}
                   </span>
                   {hasResearch && (
                     <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
-                    Research
+                    {t('applications.workspace.overview.status.research')}
                   </span>
                 )}
                 {hasPrep && (
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/30 bg-slate-500/10 text-slate-300">
-                    Notes
+                    {t('applications.workspace.overview.status.notes')}
                   </span>
                 )}
               </div>
@@ -1525,18 +1540,18 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
             <div className="flex gap-2 flex-wrap">
               {nextStepAction && (
                 <button onClick={nextStepAction.onClick} className="btn-primary text-xs">
-                  {completedSteps === stepCards.length ? 'Review Workspace' : `Continue ${nextStep.title}`}
+                  {completedSteps === stepCards.length ? t('applications.workspace.overview.reviewWorkspace') : t('applications.workspace.overview.continueStep', { step: nextStep.title })}
                 </button>
               )}
               <button onClick={() => navigateWorkspaceTab('research')} className="btn-ghost text-xs">
-                Research Notes
+                {t('applications.workspace.overview.researchNotes')}
               </button>
               <button onClick={() => navigateWorkspaceTab('jd')} className="btn-ghost text-xs">
-                Capture
+                {t('applications.workspace.overview.capture')}
               </button>
               {app.jdUrl && (
                 <a href={app.jdUrl} target="_blank" rel="noopener noreferrer" className="btn-ghost text-xs">
-                  View JD
+                  {t('applications.workspace.overview.viewJd')}
                 </a>
               )}
             </div>
@@ -1544,26 +1559,26 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
 
           <div className="grid sm:grid-cols-3 gap-3 mt-4">
             <div className="rounded-2xl border border-navy-600 bg-navy-950/60 px-4 py-3">
-              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Next Up</div>
-              <div className="text-white text-sm font-display font-semibold">{nextStep ? nextStep.title : 'Workflow complete'}</div>
+              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{t('applications.workspace.overview.stats.nextUp')}</div>
+              <div className="text-white text-sm font-display font-semibold">{nextStep ? nextStep.title : t('applications.workspace.overview.stats.workflowComplete')}</div>
               <div className="text-slate-400 text-xs mt-1">
-                {nextStep ? nextStep.summary : 'All core steps have saved output for this application.'}
+                {nextStep ? nextStep.summary : t('applications.workspace.overview.stats.workflowCompleteCopy')}
               </div>
             </div>
             <div className="rounded-2xl border border-navy-600 bg-navy-950/60 px-4 py-3">
-              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Latest Activity</div>
+              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{t('applications.workspace.overview.stats.latestActivity')}</div>
               <div className="text-white text-sm font-display font-semibold">
-                {latestWorkspaceActivity?.date ? timeAgo(latestWorkspaceActivity.date) : 'No saved activity yet'}
+                {latestWorkspaceActivity?.date ? timeAgo(latestWorkspaceActivity.date) : t('applications.workspace.overview.stats.noSavedActivity')}
               </div>
               <div className="text-slate-400 text-xs mt-1">
-                {latestWorkspaceActivity?.date ? `Saved on ${formatDate(latestWorkspaceActivity.date)}` : 'Run a tool to start building this workspace.'}
+                {latestWorkspaceActivity?.date ? t('applications.workspace.overview.stats.savedOn', { date: formatDate(latestWorkspaceActivity.date) }) : t('applications.workspace.overview.stats.startBuilding')}
               </div>
             </div>
             <div className="rounded-2xl border border-navy-600 bg-navy-950/60 px-4 py-3">
-              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">Research Notes</div>
-              <div className="text-white text-sm font-display font-semibold">{noteCount} saved field{noteCount === 1 ? '' : 's'}</div>
+              <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{t('applications.workspace.overview.stats.researchNotes')}</div>
+              <div className="text-white text-sm font-display font-semibold">{t('applications.workspace.overview.stats.savedFields', { count: noteCount })}</div>
               <div className="text-slate-400 text-xs mt-1">
-                {hasPrep ? 'Prep notes are already supporting your interview story.' : 'Use notes to capture people, signals, and reminders.'}
+                {hasPrep ? t('applications.workspace.overview.stats.prepReady') : t('applications.workspace.overview.stats.prepHint')}
               </div>
             </div>
           </div>
@@ -1578,7 +1593,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div className="min-w-0">
                     <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-2">
-                      Step {card.step}
+                      {t('applications.workspace.overview.stepLabel', { step: card.step })}
                     </div>
                     <h4 className="text-white text-base font-display font-semibold mb-1">{card.title}</h4>
                     <p className="text-slate-400 text-sm leading-relaxed">{card.desc}</p>
@@ -1630,11 +1645,11 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
         <div className="card">
           <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
             <div>
-              <div className="text-white text-sm font-display font-semibold">Advanced tools</div>
-              <div className="text-slate-400 text-xs">These stay available for this application, but they sit outside the main guided workflow.</div>
+              <div className="text-white text-sm font-display font-semibold">{t('applications.workspace.overview.advancedToolsTitle')}</div>
+              <div className="text-slate-400 text-xs">{t('applications.workspace.overview.advancedToolsSubtitle')}</div>
             </div>
             <button onClick={() => setShowAdvancedTools(prev => !prev)} className="btn-ghost text-xs">
-              {showAdvancedTools ? 'Hide advanced tools' : 'Show advanced tools'}
+              {showAdvancedTools ? t('applications.workspace.overview.hideAdvancedTools') : t('applications.workspace.overview.showAdvancedTools')}
             </button>
           </div>
           {showAdvancedTools && (
@@ -1653,7 +1668,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
                       </span>
                     )}
                   </div>
-                  <div className="text-slate-400 text-xs">Open with this application context.</div>
+                  <div className="text-slate-400 text-xs">{t('applications.workspace.overview.openWithContext')}</div>
                 </button>
               ))}
             </div>
@@ -1668,10 +1683,10 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
       <div className="space-y-4">
         <div className="card border-teal-500/20 bg-teal-500/5">
           <h4 className="font-display font-semibold text-white text-sm mb-3 flex items-center gap-2">
-            <Sparkles size={14} className="text-teal-400" /> AI Actions
-            <span className="text-slate-500 text-xs font-normal">
+            <Sparkles size={14} className="text-teal-400" /> {t('applications.workspace.research.aiActions')}
+            <span className="text-slate-500 text-xs font-normal">{/*
               — Research This Company
-            </span>
+            */}- {t('applications.workspace.research.researchCompany')}</span>
           </h4>
 
           <div className="grid sm:grid-cols-2 gap-2 mb-4">
@@ -1680,34 +1695,34 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
               disabled={!isConnected || workspaceSummaryLoading || noteCount === 0}
               className="btn-secondary flex-1 justify-center text-xs"
             >
-              <FileText size={13} /> {workspaceSummaryLoading ? 'Summarizing...' : 'Summarize Notes'}
+              <FileText size={13} /> {workspaceSummaryLoading ? t('applications.workspace.research.summarizing') : t('applications.workspace.research.summarize')}
             </button>
             <button
               onClick={runResearch}
               disabled={!isConnected || researching}
               className="btn-primary flex-1 justify-center text-xs"
             >
-              <Search size={13} /> {researching ? 'Researching...' : 'Research This Company'}
+              <Search size={13} /> {researching ? t('applications.workspace.research.researching') : t('applications.workspace.research.researchCompany')}
             </button>
           </div>
 
           {researchMsg && (
-            <p className={`text-xs mb-3 ${researchMsg.toLowerCase().includes('failed') || researchMsg.toLowerCase().includes('could not') ? 'text-red-400' : 'text-teal-400'}`}>
+            <p className={`text-xs mb-3 ${researchMsgTone === 'error' ? 'text-red-400' : 'text-teal-400'}`}>
               {researchMsg}
             </p>
           )}
 
           {noteCount === 0 && (
-            <p className="text-slate-500 text-xs">Add research or prep notes first, then summarize them here.</p>
+            <p className="text-slate-500 text-xs">{t('applications.workspace.research.emptySummaryHint')}</p>
           )}
 
           {workspaceSummary && (
             <div className="animate-in">
               <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                <span className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wider">Summary</span>
+                <span className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wider">{t('applications.workspace.research.summary')}</span>
                 <div className="flex gap-2">
                   <button onClick={() => navigator.clipboard?.writeText(workspaceSummary)} className="btn-ghost text-xs">
-                    <Copy size={12} /> Copy
+                    <Copy size={12} /> {t('tools.shared.copy')}
                   </button>
                   <button
                     onClick={() => downloadTextFile(workspaceSummary, `${app.company.replace(/\s+/g, '_')}_research_summary.txt`)}
@@ -1737,9 +1752,9 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
         </div>
 
         <div className="space-y-3">
-          <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide">Prep notes</div>
+          <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide">{t('applications.workspace.research.prepNotesSection')}</div>
           {prepFields.map(([key, label, placeholder]) => renderField(key, label, placeholder))}
-          <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide pt-2">Company research</div>
+          <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide pt-2">{t('applications.workspace.research.companyResearchSection')}</div>
           {researchFields.map(([key, label, placeholder]) => renderField(key, label, placeholder))}
         </div>
       </div>
@@ -1750,8 +1765,8 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     return (
       <div className="space-y-4">
         <div className="card">
-          <div className="text-white text-sm font-display font-semibold mb-1">Interview shortcuts</div>
-          <div className="text-slate-400 text-xs mb-3">Open the prep tools with your current workspace data.</div>
+          <div className="text-white text-sm font-display font-semibold mb-1">{t('applications.workspace.prep.shortcutsTitle')}</div>
+          <div className="text-slate-400 text-xs mb-3">{t('applications.workspace.prep.shortcutsSubtitle')}</div>
           {renderActionGrid(prepActions, SECTIONS.INTERVIEW)}
         </div>
 
@@ -1759,22 +1774,22 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <div className="text-white text-sm font-display font-semibold flex items-center gap-2">
-                <Sparkles size={14} className="text-indigo-400" /> Interview Cheat Sheet
+                <Sparkles size={14} className="text-indigo-400" /> {t('applications.workspace.prep.cheatSheetTitle')}
               </div>
-              <div className="text-slate-400 text-xs">Generate a cheat sheet from your saved research and prep notes.</div>
+              <div className="text-slate-400 text-xs">{t('applications.workspace.prep.cheatSheetSubtitle')}</div>
             </div>
             <button onClick={generateCheatSheet} disabled={!isConnected || cheatLoading} className="btn-primary text-xs flex-shrink-0">
-              {cheatLoading ? 'Generating...' : cheatSheet ? 'Regenerate' : 'Generate'}
+              {cheatLoading ? t('applications.workspace.prep.generating') : cheatSheet ? t('applications.workspace.prep.regenerate') : t('applications.workspace.prep.generate')}
             </button>
           </div>
 
           {cheatSheet && (
             <div className="mt-4 animate-in">
               <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                <span className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wider">Cheat Sheet</span>
+                <span className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wider">{t('applications.workspace.prep.resultTitle')}</span>
                 <div className="flex gap-2">
                   <button onClick={() => navigator.clipboard?.writeText(cheatSheet)} className="btn-ghost text-xs">
-                    <Copy size={12} /> Copy
+                    <Copy size={12} /> {t('tools.shared.copy')}
                   </button>
                   <button onClick={printCheatAsPdf} className="btn-ghost text-xs">
                     <Printer size={12} /> PDF
@@ -1809,8 +1824,8 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     return (
       <div className="space-y-4">
         <div className="card border-teal-500/20 bg-teal-500/5">
-          <div className="text-white text-sm font-display font-semibold mb-1">Prep Tools</div>
-          <div className="text-slate-400 text-xs">These tools open with your active application context and latest saved JD.</div>
+          <div className="text-white text-sm font-display font-semibold mb-1">{t('applications.workspace.tools.title')}</div>
+          <div className="text-slate-400 text-xs">{t('applications.workspace.tools.subtitle')}</div>
         </div>
         {renderActionGrid(toolActions, SECTIONS.TOOLS)}
       </div>
