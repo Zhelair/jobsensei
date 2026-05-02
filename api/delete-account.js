@@ -1,11 +1,12 @@
 import {
   authenticateSupabaseUser,
   createSupabaseAdminClient,
+  logSecureAuditEvent,
   setDefaultCorsHeaders,
 } from './_lib/authBridge.js'
 
 export default async function handler(req, res) {
-  setDefaultCorsHeaders(res)
+  setDefaultCorsHeaders(req, res)
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -23,6 +24,15 @@ export default async function handler(req, res) {
 
   try {
     const supabase = createSupabaseAdminClient()
+
+    await logSecureAuditEvent({
+      userId: user.id,
+      action: 'account_delete_requested',
+      metadata: {
+        email: user.email || '',
+      },
+    })
+
     const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id)
 
     if (deleteError) {

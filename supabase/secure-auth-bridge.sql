@@ -49,10 +49,20 @@ create table if not exists public.api_usage_events (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.account_audit_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid,
+  device_id text,
+  action text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
 alter table public.accounts enable row level security;
 alter table public.device_registrations enable row level security;
 alter table public.plan_grants enable row level security;
 alter table public.api_usage_events enable row level security;
+alter table public.account_audit_events enable row level security;
 
 create policy if not exists "accounts_select_own"
   on public.accounts
@@ -81,5 +91,10 @@ create policy if not exists "plans_select_own"
 
 create policy if not exists "usage_select_own"
   on public.api_usage_events
+  for select
+  using (auth.uid() = user_id);
+
+create policy if not exists "audit_select_own"
+  on public.account_audit_events
   for select
   using (auth.uid() = user_id);

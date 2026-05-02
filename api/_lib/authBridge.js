@@ -6,8 +6,33 @@ const LEGACY_TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000
 export const SECURE_DEVICE_LIMIT = 2
 export const ACTIVE_PLAN_STATUSES = new Set(['active', 'grace'])
 
-export function setDefaultCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+function getAllowedCorsOrigins() {
+  const configuredOrigins = [
+    process.env.ALLOWED_APP_ORIGINS,
+    process.env.APP_ORIGIN,
+    process.env.PUBLIC_APP_URL,
+  ]
+    .filter(Boolean)
+    .flatMap(value => String(value).split(','))
+    .map(value => value.trim())
+    .filter(Boolean)
+
+  return new Set([
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    ...configuredOrigins,
+  ])
+}
+
+export function setDefaultCorsHeaders(req, res) {
+  const origin = req.headers.origin || req.headers.Origin || ''
+  const allowedOrigins = getAllowedCorsOrigins()
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Vary', 'Origin')
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Device-Id')
 }
@@ -139,5 +164,21 @@ export function buildBridgeStatus() {
           anonKey: process.env.SUPABASE_ANON_KEY,
         }
       : null,
+  }
+}
+
+export async function logSecureAuditEvent({ userId, deviceId = null, action, metadata = {} }) {
+  if (!userId || !action || !isSupabaseServerConfigured()) return
+
+  try {
+    const supabase = createSupabaseAdminClient()
+    await supabase.from('account_audit_events').insert({
+      user_id: userId,
+      device_id: deviceId,
+      action,
+      metadata,
+    })
+  } catch (err) {
+    console.error('audit log failed:', err)
   }
 }

@@ -1,11 +1,12 @@
 import {
   authenticateSupabaseUser,
   createSupabaseAdminClient,
+  logSecureAuditEvent,
   setDefaultCorsHeaders,
 } from './_lib/authBridge.js'
 
 export default async function handler(req, res) {
-  setDefaultCorsHeaders(res)
+  setDefaultCorsHeaders(req, res)
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
@@ -16,7 +17,12 @@ export default async function handler(req, res) {
   try {
     const supabase = createSupabaseAdminClient()
 
-    const [{ data: account, error: accountError }, { data: devices, error: devicesError }, { data: grants, error: grantsError }] = await Promise.all([
+    const [
+      { data: account, error: accountError },
+      { data: devices, error: devicesError },
+      { data: grants, error: grantsError },
+      { data: auditEvents, error: auditError },
+    ] = await Promise.all([
       supabase
         .from('accounts')
         .select('email, plan_status, plan_source, linked_at, created_at, updated_at')
@@ -32,14 +38,19 @@ export default async function handler(req, res) {
         .select('grant_type, external_ref, status, metadata, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true }),
+      supabase
+        .from('account_audit_events')
+        .select('device_id, action, metadata, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true }),
     ])
 
-    if (accountError || devicesError || grantsError) {
-      console.error('export-account query failed:', accountError || devicesError || grantsError)
+    if (accountError || devicesError || grantsError || auditError) {
+      console.error('export-account query failed:', accountError || devicesError || grantsError || auditError)
       return res.status(500).json({ error: 'Unable to export secure account data right now.' })
     }
 
-    return res.status(200).json({
+    const payload = {
       exportedAt: new Date().toISOString(),
       user: {
         id: user.id,
@@ -48,7 +59,20 @@ export default async function handler(req, res) {
       account: account || null,
       devices: devices || [],
       planGrants: grants || [],
+      auditEvents: auditEvents || [],
+    }
+
+    await logSecureAuditEvent({
+      userId: user.id,
+      action: 'account_exported',
+      metadata: {
+        deviceCount: payload.devices.length,
+        grantCount: payload.planGrants.length,
+        auditEventCount: payload.auditEvents.length,
+      },
     })
+
+    return res.status(200).json(payload)
   } catch (err) {
     console.error('export-account failed:', err)
     return res.status(500).json({ error: 'Unable to export secure account data right now.' })
