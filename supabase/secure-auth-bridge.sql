@@ -38,9 +38,21 @@ create table if not exists public.plan_grants (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.api_usage_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade,
+  device_id text,
+  route text not null,
+  auth_mode text not null,
+  provider text,
+  model text,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
 alter table public.accounts enable row level security;
 alter table public.device_registrations enable row level security;
 alter table public.plan_grants enable row level security;
+alter table public.api_usage_events enable row level security;
 
 create policy if not exists "accounts_select_own"
   on public.accounts
@@ -64,5 +76,10 @@ create policy if not exists "devices_update_own"
 
 create policy if not exists "plans_select_own"
   on public.plan_grants
+  for select
+  using (auth.uid() = user_id);
+
+create policy if not exists "usage_select_own"
+  on public.api_usage_events
   for select
   using (auth.uid() = user_id);

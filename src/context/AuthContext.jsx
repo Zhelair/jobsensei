@@ -50,6 +50,7 @@ export function AuthProvider({ children }) {
   const [linkingAccess, setLinkingAccess] = useState(false)
   const [revokingDeviceId, setRevokingDeviceId] = useState('')
   const [deletingAccount, setDeletingAccount] = useState(false)
+  const [exportingAccountData, setExportingAccountData] = useState(false)
   const [deviceId] = useState(() => readOrCreateDeviceId())
 
   useEffect(() => {
@@ -302,6 +303,30 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function exportSecureAccountData() {
+    if (!secureSession?.access_token) {
+      throw new Error('Sign in to your secure account first.')
+    }
+
+    setExportingAccountData(true)
+    try {
+      const response = await fetch('/api/export-account', {
+        headers: {
+          Authorization: `Bearer ${secureSession.access_token}`,
+        },
+      })
+      const payload = await parseJsonSafe(response)
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Unable to export secure account data right now.')
+      }
+
+      return payload
+    } finally {
+      setExportingAccountData(false)
+    }
+  }
+
   const value = {
     bridgeStatus,
     statusError,
@@ -318,6 +343,7 @@ export function AuthProvider({ children }) {
     linkingAccess,
     revokingDeviceId,
     deletingAccount,
+    exportingAccountData,
     deviceId,
     deviceLimit: bridgeStatus.deviceLimit,
     sendMagicLink,
@@ -326,6 +352,7 @@ export function AuthProvider({ children }) {
     linkCurrentAccess,
     revokeSecureDevice,
     deleteSecureAccount,
+    exportSecureAccountData,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

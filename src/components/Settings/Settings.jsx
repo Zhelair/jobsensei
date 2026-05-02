@@ -21,7 +21,7 @@ export default function Settings() {
     deviceId, deviceLimit, statusError, accountError, sendingMagicLink,
     magicLinkSentTo, linkingAccess, loadingAccount, sendMagicLink, signOutSecure,
     refreshSecureAccount, linkCurrentAccess, revokeSecureDevice, revokingDeviceId,
-    deleteSecureAccount, deletingAccount,
+    deleteSecureAccount, deletingAccount, exportSecureAccountData, exportingAccountData,
   } = useAuth()
   const { profile, setShowOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData } = useProject()
@@ -297,6 +297,27 @@ export default function Settings() {
       await deleteSecureAccount(secureDeleteEmailInput.trim())
       setSecureDeleteEmailInput('')
       setSecureNotice(t('settings.secureAccountDeleteSuccess'))
+    } catch (err) {
+      setSecureError(err.message)
+    }
+  }
+
+  async function handleExportSecureAccount() {
+    setSecureError('')
+    setSecureNotice('')
+    try {
+      const payload = await exportSecureAccountData()
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      const stamp = new Date().toISOString().slice(0, 10)
+      link.href = url
+      link.download = `jobsensei-secure-account-${stamp}.json`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+      setSecureNotice(t('settings.secureAccountExportSuccess'))
     } catch (err) {
       setSecureError(err.message)
     }
@@ -618,6 +639,30 @@ export default function Settings() {
                   <button onClick={signOutSecure} className="btn-ghost text-xs flex-1 justify-center">
                     {t('settings.secureAccountSignOut')}
                   </button>
+                </div>
+              )}
+
+              {secureSignedIn && (
+                <div className="rounded-xl border border-navy-600 bg-navy-950/70 p-3 space-y-2">
+                  <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountExportTitle')}</div>
+                  <p className="text-slate-400 text-xs">{t('settings.secureAccountExportCopy')}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleExportSecureAccount}
+                      disabled={exportingAccountData}
+                      className="btn-secondary text-xs flex-1 justify-center"
+                    >
+                      {exportingAccountData ? t('settings.secureAccountExporting') : t('settings.secureAccountExportButton')}
+                    </button>
+                    <a
+                      href="/privacy-policy-draft.md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-ghost text-xs flex-1 justify-center"
+                    >
+                      <ExternalLink size={13} /> {t('settings.privacyPolicyDraft')}
+                    </a>
+                  </div>
                 </div>
               )}
 
