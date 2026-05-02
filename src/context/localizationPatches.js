@@ -8132,6 +8132,103 @@ Object.entries(secureAccountDeletionPatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
 
+const secureAccountExportPatches = {
+  en: {
+    settings: {
+      secureAccountExportTitle: 'Export Secure Account Data',
+      secureAccountExportCopy: 'Download the synced secure-account profile, approved devices, and plan-grant records tied to the signed-in email.',
+      secureAccountExportButton: 'Export data',
+      secureAccountExporting: 'Exporting...',
+      secureAccountExportSuccess: 'Secure account export ready.',
+      privacyPolicyDraft: 'Privacy draft',
+    },
+  },
+  ru: {
+    settings: {
+      secureAccountExportTitle: 'Экспорт данных безопасного аккаунта',
+      secureAccountExportCopy: 'Скачайте профиль безопасного аккаунта, одобренные устройства и записи о правах доступа, связанные с текущим email.',
+      secureAccountExportButton: 'Экспортировать данные',
+      secureAccountExporting: 'Экспорт...',
+      secureAccountExportSuccess: 'Экспорт безопасного аккаунта готов.',
+      privacyPolicyDraft: 'Черновик privacy',
+    },
+  },
+  bg: {
+    settings: {
+      secureAccountExportTitle: 'Експорт на данните от защитения акаунт',
+      secureAccountExportCopy: 'Свали синхронизирания профил на защитения акаунт, одобрените устройства и записите за плана, свързани с влезлия имейл.',
+      secureAccountExportButton: 'Експортирай данни',
+      secureAccountExporting: 'Експортиране...',
+      secureAccountExportSuccess: 'Експортът на защитения акаунт е готов.',
+      privacyPolicyDraft: 'Чернова privacy',
+    },
+  },
+  es: {
+    settings: {
+      secureAccountExportTitle: 'Exportar datos de cuenta segura',
+      secureAccountExportCopy: 'Descarga el perfil sincronizado de cuenta segura, los dispositivos aprobados y los registros de plan vinculados al email conectado.',
+      secureAccountExportButton: 'Exportar datos',
+      secureAccountExporting: 'Exportando...',
+      secureAccountExportSuccess: 'La exportación de la cuenta segura está lista.',
+      privacyPolicyDraft: 'Borrador privacy',
+    },
+  },
+  fr: {
+    settings: {
+      secureAccountExportTitle: 'Exporter les données du compte sécurisé',
+      secureAccountExportCopy: 'Téléchargez le profil synchronisé du compte sécurisé, les appareils approuvés et les enregistrements d’abonnement liés à l’email connecté.',
+      secureAccountExportButton: 'Exporter les données',
+      secureAccountExporting: 'Export...',
+      secureAccountExportSuccess: 'Export du compte sécurisé prêt.',
+      privacyPolicyDraft: 'Brouillon privacy',
+    },
+  },
+  it: {
+    settings: {
+      secureAccountExportTitle: 'Esporta dati account sicuro',
+      secureAccountExportCopy: 'Scarica il profilo sincronizzato dell’account sicuro, i dispositivi approvati e i record del piano collegati all’email connessa.',
+      secureAccountExportButton: 'Esporta dati',
+      secureAccountExporting: 'Esportazione...',
+      secureAccountExportSuccess: 'Esportazione dell’account sicuro pronta.',
+      privacyPolicyDraft: 'Bozza privacy',
+    },
+  },
+  pt: {
+    settings: {
+      secureAccountExportTitle: 'Exportar dados da conta segura',
+      secureAccountExportCopy: 'Transfere o perfil sincronizado da conta segura, os dispositivos aprovados e os registos de plano ligados ao email autenticado.',
+      secureAccountExportButton: 'Exportar dados',
+      secureAccountExporting: 'A exportar...',
+      secureAccountExportSuccess: 'Exportação da conta segura pronta.',
+      privacyPolicyDraft: 'Rascunho privacy',
+    },
+  },
+  pl: {
+    settings: {
+      secureAccountExportTitle: 'Eksport danych bezpiecznego konta',
+      secureAccountExportCopy: 'Pobierz zsynchronizowany profil bezpiecznego konta, zatwierdzone urządzenia i rekordy planu powiązane z zalogowanym emailem.',
+      secureAccountExportButton: 'Eksportuj dane',
+      secureAccountExporting: 'Eksportowanie...',
+      secureAccountExportSuccess: 'Eksport bezpiecznego konta jest gotowy.',
+      privacyPolicyDraft: 'Szkic privacy',
+    },
+  },
+  de: {
+    settings: {
+      secureAccountExportTitle: 'Daten des sicheren Kontos exportieren',
+      secureAccountExportCopy: 'Lade das synchronisierte sichere Kontoprofil, die freigegebenen Geräte und die Plan-Datensätze herunter, die mit der angemeldeten E-Mail verknüpft sind.',
+      secureAccountExportButton: 'Daten exportieren',
+      secureAccountExporting: 'Wird exportiert...',
+      secureAccountExportSuccess: 'Export des sicheren Kontos ist bereit.',
+      privacyPolicyDraft: 'Privacy-Entwurf',
+    },
+  },
+}
+
+Object.entries(secureAccountExportPatches).forEach(([locale, patch]) => {
+  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+})
+
 export default localizationPatches
 
 
