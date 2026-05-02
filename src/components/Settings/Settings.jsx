@@ -409,6 +409,7 @@ export default function Settings() {
               t('settings.dataBullet3'),
               t('settings.dataBullet4'),
               t('settings.dataBullet5'),
+              t('settings.dataBullet6'),
             ].map(line => (
               <p key={line} className="flex items-start gap-2">
                 <span className="text-slate-500">-</span>
