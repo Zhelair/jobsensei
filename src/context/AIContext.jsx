@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { useAuth } from './AuthContext'
 
 const AIContext = createContext(null)
 
@@ -58,7 +59,52 @@ function parseSavedJson(value, fallback = null) {
   }
 }
 
+async function readProxyResponse(res, { onChunk, onUnauthorized } = {}) {
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Proxy error' }))
+    if (res.status === 401 && onUnauthorized) onUnauthorized()
+    throw new Error(err.error || `Proxy error ${res.status}`)
+  }
+
+  if (!onChunk) {
+    const data = await res.json()
+    return data.content
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let full = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    const chunk = decoder.decode(value)
+    const lines = chunk.split('\n').filter(line => line.startsWith('data: '))
+    for (const line of lines) {
+      const data = line.slice(6)
+      if (data === '[DONE]') continue
+      try {
+        const parsed = JSON.parse(data)
+        const delta = parsed.choices?.[0]?.delta?.content || ''
+        if (delta) {
+          full += delta
+          onChunk(delta, full)
+        }
+      } catch {
+        // Ignore malformed stream chunks and keep reading.
+      }
+    }
+  }
+
+  return full
+}
+
 export function AIProvider({ children }) {
+  const {
+    secureSession,
+    secureAccount,
+    deviceId,
+  } = useAuth()
   const [provider, setProvider] = useState(PROVIDERS.DEEPSEEK)
   const [apiKey, setApiKey] = useState('')
   const [model, setModel] = useState(PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel)
@@ -69,10 +115,11 @@ export function AIProvider({ children }) {
   const [bmacEmail, setBmacEmail] = useState(null)
   const [showPaywall, setShowPaywall] = useState(false)
 
+  const hasSecurePlanAccess = Boolean(secureSession?.access_token && secureAccount?.planActive)
+
   useEffect(() => {
     const saved = localStorage.getItem('js_ai_config')
     const savedBmac = localStorage.getItem('js_bmac')
-    let loadedBmacToken = null
     const cfg = parseSavedJson(saved)
     const b = parseSavedJson(savedBmac)
 
@@ -84,12 +131,14 @@ export function AIProvider({ children }) {
       setCustomBaseUrl(cfg.customBaseUrl || '')
     }
     if (b) {
-      loadedBmacToken = b.token || null
       setBmacToken(b.token || null)
       setBmacEmail(b.email || null)
     }
-    setIsConnected(!!loadedBmacToken)
   }, [])
+
+  useEffect(() => {
+    setIsConnected(Boolean(bmacToken || hasSecurePlanAccess))
+  }, [bmacToken, hasSecurePlanAccess])
 
   function saveConfig(cfg) {
     const next = {
@@ -103,21 +152,18 @@ export function AIProvider({ children }) {
     setModel(next.model)
     setCustomBaseUrl(cfg.customBaseUrl || '')
     localStorage.setItem('js_ai_config', JSON.stringify(next))
-    setIsConnected(!!bmacToken)
   }
 
   function saveBmacToken(token, email) {
     setBmacToken(token)
     setBmacEmail(email)
     localStorage.setItem('js_bmac', JSON.stringify({ token, email }))
-    setIsConnected(true)
   }
 
   function clearBmacToken() {
     setBmacToken(null)
     setBmacEmail(null)
     localStorage.removeItem('js_bmac')
-    setIsConnected(false)
   }
 
   function restoreToProxy() {
@@ -131,7 +177,6 @@ export function AIProvider({ children }) {
       model: PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel,
       customBaseUrl: '',
     }))
-    setIsConnected(!!bmacToken)
   }
 
   async function verifyBmac(email) {
@@ -147,8 +192,9 @@ export function AIProvider({ children }) {
   }
 
   async function callAI({ systemPrompt, messages, temperature = 0.7, onChunk, signal }) {
-    // BMAC proxy mode — only when user hasn't set their own API key
-    if (!bmacToken) {
+    const hasHostedAccess = Boolean(bmacToken || hasSecurePlanAccess)
+
+    if (!hasHostedAccess) {
       setShowPaywall(true)
       throw new Error('JobSensei access required.')
     }
@@ -156,7 +202,26 @@ export function AIProvider({ children }) {
     if (!apiKey) {
       setIsThinking(true)
       try {
-        return await callProxy({ bmacToken, systemPrompt, messages, temperature, onChunk, signal })
+        if (hasSecurePlanAccess) {
+          return await callSecureProxy({
+            accessToken: secureSession.access_token,
+            deviceId,
+            systemPrompt,
+            messages,
+            temperature,
+            onChunk,
+            signal,
+          })
+        }
+
+        return await callLegacyProxy({
+          bmacToken,
+          systemPrompt,
+          messages,
+          temperature,
+          onChunk,
+          signal,
+        })
       } finally {
         setIsThinking(false)
       }
@@ -176,7 +241,7 @@ export function AIProvider({ children }) {
     }
   }
 
-  async function callProxy({ bmacToken: token, systemPrompt, messages, temperature, onChunk, signal }) {
+  async function callLegacyProxy({ bmacToken: token, systemPrompt, messages, temperature, onChunk, signal }) {
     const res = await fetch('/api/proxy', {
       method: 'POST',
       headers: {
@@ -187,38 +252,25 @@ export function AIProvider({ children }) {
       signal,
     })
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Proxy error' }))
-      // If token expired, clear it so user gets prompted to re-verify
-      if (res.status === 401) clearBmacToken()
-      throw new Error(err.error || `Proxy error ${res.status}`)
-    }
+    return readProxyResponse(res, {
+      onChunk,
+      onUnauthorized: clearBmacToken,
+    })
+  }
 
-    if (!onChunk) {
-      const data = await res.json()
-      return data.content
-    }
+  async function callSecureProxy({ accessToken, deviceId: secureDeviceId, systemPrompt, messages, temperature, onChunk, signal }) {
+    const res = await fetch('/api/proxy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'X-Device-Id': secureDeviceId,
+      },
+      body: JSON.stringify({ systemPrompt, messages, temperature, stream: !!onChunk, deviceId: secureDeviceId }),
+      signal,
+    })
 
-    // Stream SSE — same format as OpenAI/DeepSeek
-    const reader = res.body.getReader()
-    const decoder = new TextDecoder()
-    let full = ''
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n').filter(l => l.startsWith('data: '))
-      for (const line of lines) {
-        const data = line.slice(6)
-        if (data === '[DONE]') continue
-        try {
-          const parsed = JSON.parse(data)
-          const delta = parsed.choices?.[0]?.delta?.content || ''
-          if (delta) { full += delta; onChunk(delta, full) }
-        } catch {}
-      }
-    }
-    return full
+    return readProxyResponse(res, { onChunk })
   }
 
   async function callOpenAICompat({ baseUrl, systemPrompt, messages, temperature, onChunk, signal }) {
@@ -234,7 +286,7 @@ export function AIProvider({ children }) {
 
     const res = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify(body),
       signal,
     })
@@ -249,7 +301,6 @@ export function AIProvider({ children }) {
       return data.choices[0].message.content
     }
 
-    // Streaming
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
     let full = ''
@@ -257,15 +308,20 @@ export function AIProvider({ children }) {
       const { done, value } = await reader.read()
       if (done) break
       const chunk = decoder.decode(value)
-      const lines = chunk.split('\n').filter(l => l.startsWith('data: '))
+      const lines = chunk.split('\n').filter(line => line.startsWith('data: '))
       for (const line of lines) {
         const data = line.slice(6)
         if (data === '[DONE]') continue
         try {
           const parsed = JSON.parse(data)
           const delta = parsed.choices?.[0]?.delta?.content || ''
-          if (delta) { full += delta; onChunk(delta, full) }
-        } catch {}
+          if (delta) {
+            full += delta
+            onChunk(delta, full)
+          }
+        } catch {
+          // Ignore malformed stream chunks and keep reading.
+        }
       }
     }
     return full
@@ -278,7 +334,7 @@ export function AIProvider({ children }) {
       temperature,
       system: systemPrompt,
       stream: !!onChunk,
-      messages: messages.map(m => ({ role: m.role, content: m.content })),
+      messages: messages.map(message => ({ role: message.role, content: message.content })),
     }
 
     const res = await fetch(`${baseUrl}/v1/messages`, {
@@ -309,15 +365,20 @@ export function AIProvider({ children }) {
       const { done, value } = await reader.read()
       if (done) break
       const chunk = decoder.decode(value)
-      const lines = chunk.split('\n').filter(l => l.startsWith('data: '))
+      const lines = chunk.split('\n').filter(line => line.startsWith('data: '))
       for (const line of lines) {
         try {
           const parsed = JSON.parse(line.slice(6))
           if (parsed.type === 'content_block_delta') {
             const delta = parsed.delta?.text || ''
-            if (delta) { full += delta; onChunk(delta, full) }
+            if (delta) {
+              full += delta
+              onChunk(delta, full)
+            }
           }
-        } catch {}
+        } catch {
+          // Ignore malformed stream chunks and keep reading.
+        }
       }
     }
     return full
@@ -325,12 +386,26 @@ export function AIProvider({ children }) {
 
   return (
     <AIContext.Provider value={{
-      provider, model, apiKey, customBaseUrl, isConnected, isThinking,
-      bmacToken, bmacEmail,
-      showPaywall, openPaywall: () => setShowPaywall(true), closePaywall: () => setShowPaywall(false),
-      saveConfig, callAI, verifyBmac, clearBmacToken, restoreToProxy,
-      PROVIDER_CONFIGS, PROVIDERS,
-    }}>
+      provider,
+      model,
+      apiKey,
+      customBaseUrl,
+      isConnected,
+      isThinking,
+      bmacToken,
+      bmacEmail,
+      showPaywall,
+      openPaywall: () => setShowPaywall(true),
+      closePaywall: () => setShowPaywall(false),
+      saveConfig,
+      callAI,
+      verifyBmac,
+      clearBmacToken,
+      restoreToProxy,
+      PROVIDER_CONFIGS,
+      PROVIDERS,
+    }}
+    >
       {children}
     </AIContext.Provider>
   )

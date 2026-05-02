@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useAI } from '../../context/AIContext'
 import { useApp } from '../../context/AppContext'
+import { useAuth } from '../../context/AuthContext'
 import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
 import {
@@ -15,6 +16,12 @@ export default function Settings() {
     provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS,
     bmacToken, bmacEmail, verifyBmac, clearBmacToken, restoreToProxy, isConnected,
   } = useAI()
+  const {
+    secureReady, secureAccountsEnabled, secureUser, secureAccount, secureDevices,
+    deviceLimit, statusError, accountError, sendingMagicLink,
+    magicLinkSentTo, linkingAccess, loadingAccount, sendMagicLink, signOutSecure,
+    refreshSecureAccount, linkCurrentAccess,
+  } = useAuth()
   const { profile, setShowOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData } = useProject()
   const {
@@ -32,6 +39,10 @@ export default function Settings() {
   const [bmacInput, setBmacInput] = useState('')
   const [bmacLoading, setBmacLoading] = useState(false)
   const [bmacError, setBmacError] = useState('')
+  const [secureEmailInput, setSecureEmailInput] = useState('')
+  const [secureDeviceLabel, setSecureDeviceLabel] = useState('')
+  const [secureNotice, setSecureNotice] = useState('')
+  const [secureError, setSecureError] = useState('')
 
   const resume = getProjectData('resume')
   const [resumeText, setResumeText] = useState(resume || '')
@@ -188,9 +199,11 @@ export default function Settings() {
     ? `${activeVoice.name} (${activeVoice.lang})`
     : `${languageOption.nativeLabel} (${languageOption.speechLang})`
 
-  const hasPlanAccess = !!bmacToken
+  const hasSecureHostedAccess = !!secureAccount?.planActive
+  const hasPlanAccess = !!bmacToken || hasSecureHostedAccess
   const usingOwnKey = hasPlanAccess && !!apiKey
-  const usingJobsenseiAI = !!bmacToken && !apiKey
+  const usingJobsenseiAI = hasPlanAccess && !apiKey
+  const hostedPlanIdentity = bmacEmail || secureUser?.email || secureAccount?.email || ''
   const providerLabelFor = providerKey => {
     const config = PROVIDER_CONFIGS[providerKey]
     if (!config) return t('settings.customProvider')
@@ -216,6 +229,41 @@ export default function Settings() {
       : t('settings.planCopyNone')
 
   const pairedCardClass = 'card h-full flex flex-col'
+  const approvedSecureDevices = secureDevices.filter(device => !device.revokedAt)
+  const secureSignedIn = !!secureUser
+  const secureLinked = !!secureAccount?.linked
+
+  async function handleSendMagicLink() {
+    if (!secureEmailInput.trim()) return
+    setSecureError('')
+    setSecureNotice('')
+    try {
+      await sendMagicLink(secureEmailInput.trim())
+      setSecureNotice(t('settings.secureAccountMagicLinkSent', { email: secureEmailInput.trim() }))
+    } catch (err) {
+      setSecureError(err.message)
+    }
+  }
+
+  async function handleLinkCurrentAccess() {
+    if (!bmacToken) {
+      setSecureError(t('settings.secureAccountNeedsLegacy'))
+      return
+    }
+
+    setSecureError('')
+    setSecureNotice('')
+    try {
+      await linkCurrentAccess({
+        legacyToken: bmacToken,
+        deviceName: secureDeviceLabel || undefined,
+        deviceLabel: secureDeviceLabel || undefined,
+      })
+      setSecureNotice(t('settings.secureAccountStatusLinked'))
+    } catch (err) {
+      setSecureError(err.message)
+    }
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in space-y-4">
@@ -295,18 +343,20 @@ export default function Settings() {
               {t('settings.jobsenseiAccessCopy')}
             </p>
 
-            {bmacToken ? (
+            {hasPlanAccess ? (
               <div className="space-y-3">
                 <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex items-center gap-2">
                   <Check size={16} className="text-green-400 flex-shrink-0" />
                   <div>
                     <div className="text-green-400 text-sm font-display font-semibold">{t('settings.planActive')}</div>
-                    <div className="text-slate-400 text-xs">{bmacEmail}</div>
+                    <div className="text-slate-400 text-xs">{hostedPlanIdentity || t('settings.secureAccountStatusLinked')}</div>
                   </div>
                 </div>
-                <button onClick={clearBmacToken} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
-                  <LogOut size={13} /> {t('settings.signOut')}
-                </button>
+                {bmacToken && (
+                  <button onClick={clearBmacToken} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
+                    <LogOut size={13} /> {t('settings.signOut')}
+                  </button>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
@@ -349,7 +399,7 @@ export default function Settings() {
               {usingOwnKey ? currentProviderLabel : usingJobsenseiAI ? t('settings.currentModeHosted') : t('settings.currentModeNone')}
             </div>
             <div className="text-slate-400 text-xs mt-1">
-              {usingOwnKey ? form.model : usingJobsenseiAI ? (bmacEmail || t('settings.currentModeAccessActive')) : t('settings.currentModeConnect')}
+              {usingOwnKey ? form.model : usingJobsenseiAI ? (hostedPlanIdentity || t('settings.currentModeAccessActive')) : t('settings.currentModeConnect')}
             </div>
           </div>
         </div>
@@ -398,6 +448,116 @@ export default function Settings() {
             <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-sm">
               {profile ? t('settings.editProfile') : t('settings.setupProfile')}
             </button>
+        </div>
+
+        <div className={`${pairedCardClass} border-indigo-500/20`}>
+          <h3 className="font-display font-semibold text-white mb-1">{t('settings.secureAccountTitle')}</h3>
+          <p className="text-slate-400 text-xs mb-3">{t('settings.secureAccountCopy')}</p>
+
+          {!secureReady ? (
+            <p className="text-slate-500 text-sm">{t('settings.secureAccountLoading')}</p>
+          ) : !secureAccountsEnabled ? (
+            <p className="text-slate-500 text-sm">{t('settings.secureAccountUnavailable')}</p>
+          ) : (
+            <div className="space-y-3">
+              {secureSignedIn ? (
+                <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-3">
+                  <div className="text-teal-300 text-sm font-display font-semibold">
+                    {t('settings.secureAccountStatusSignedIn', { email: secureUser.email || '' })}
+                  </div>
+                  <div className="text-slate-400 text-xs mt-1">
+                    {secureLinked
+                      ? t('settings.secureAccountStatusLinked')
+                      : t('settings.secureAccountStatusPending')}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-sm text-slate-400 block">{t('settings.secureAccountMagicLinkLabel')}</label>
+                  <input
+                    className="input-field text-sm"
+                    type="email"
+                    placeholder={t('settings.secureAccountMagicLinkPlaceholder')}
+                    value={secureEmailInput}
+                    onChange={e => {
+                      setSecureEmailInput(e.target.value)
+                      setSecureError('')
+                      setSecureNotice('')
+                    }}
+                    onKeyDown={e => e.key === 'Enter' && handleSendMagicLink()}
+                  />
+                  <button
+                    onClick={handleSendMagicLink}
+                    disabled={!secureEmailInput.trim() || sendingMagicLink}
+                    className="btn-secondary text-sm justify-center"
+                  >
+                    {sendingMagicLink ? t('settings.activating') : t('settings.secureAccountMagicLinkButton')}
+                  </button>
+                </div>
+              )}
+
+              {secureSignedIn && !secureLinked && (
+                <div className="rounded-xl border border-navy-600 bg-navy-950/70 p-3 space-y-2">
+                  <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountLinkButton')}</div>
+                  <p className="text-slate-400 text-xs">{t('settings.secureAccountLinkCopy')}</p>
+                  <input
+                    className="input-field text-sm"
+                    type="text"
+                    placeholder={t('settings.secureAccountDevicePlaceholder')}
+                    value={secureDeviceLabel}
+                    onChange={e => setSecureDeviceLabel(e.target.value)}
+                  />
+                  <button
+                    onClick={handleLinkCurrentAccess}
+                    disabled={!bmacToken || linkingAccess}
+                    className="btn-primary text-sm justify-center"
+                  >
+                    {linkingAccess ? t('settings.secureAccountLinking') : t('settings.secureAccountLinkButton')}
+                  </button>
+                  {!bmacToken && <p className="text-slate-500 text-xs">{t('settings.secureAccountNeedsLegacy')}</p>}
+                </div>
+              )}
+
+              {secureSignedIn && secureLinked && (
+                <div className="rounded-xl border border-navy-600 bg-navy-950/70 p-3 space-y-2">
+                  <div className="text-slate-300 text-xs">
+                    {t('settings.secureAccountDevicesSummary', { count: approvedSecureDevices.length, limit: deviceLimit })}
+                  </div>
+                  <div className="space-y-1">
+                    {approvedSecureDevices.map(device => (
+                      <div key={device.id} className="text-slate-400 text-xs">
+                        {device.deviceLabel || device.deviceName || t('settings.secureAccountCurrentDevice')}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(secureNotice || magicLinkSentTo) && (
+                <p className="text-green-400 text-xs">
+                  {secureNotice || t('settings.secureAccountMagicLinkSent', { email: magicLinkSentTo })}
+                </p>
+              )}
+              {(secureError || statusError || accountError) && (
+                <p className="text-red-400 text-xs">{secureError || statusError || accountError}</p>
+              )}
+
+              {secureSignedIn && (
+                <div className="flex gap-2 pt-1 mt-auto">
+                  <button
+                    onClick={() => refreshSecureAccount().catch(() => {})}
+                    disabled={loadingAccount}
+                    className="btn-secondary text-xs flex-1 justify-center"
+                  >
+                    {t('settings.secureAccountRefresh')}
+                  </button>
+                  <button onClick={signOutSecure} className="btn-ghost text-xs flex-1 justify-center">
+                    {t('settings.secureAccountSignOut')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className={`${pairedCardClass} border-red-500/20`}>

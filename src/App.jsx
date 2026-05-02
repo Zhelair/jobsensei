@@ -1,6 +1,7 @@
 import React from 'react'
 import { AppProvider, useApp, SECTIONS } from './context/AppContext'
 import { AIProvider } from './context/AIContext'
+import { AuthProvider } from './context/AuthContext'
 import { ProjectProvider, useProject } from './context/ProjectContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { VisualsProvider } from './context/VisualsContext'
@@ -116,13 +117,15 @@ export default function App() {
     <ThemeProvider>
       <VisualsProvider>
         <LanguageProvider>
-          <AIProvider>
-            <AppProvider>
-              <ProjectProvider>
-                <AppContent />
-              </ProjectProvider>
-            </AppProvider>
-          </AIProvider>
+          <AuthProvider>
+            <AIProvider>
+              <AppProvider>
+                <ProjectProvider>
+                  <AppContent />
+                </ProjectProvider>
+              </AppProvider>
+            </AIProvider>
+          </AuthProvider>
         </LanguageProvider>
       </VisualsProvider>
     </ThemeProvider>
