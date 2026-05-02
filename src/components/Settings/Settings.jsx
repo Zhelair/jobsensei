@@ -191,7 +191,12 @@ export default function Settings() {
   const hasPlanAccess = !!bmacToken
   const usingOwnKey = hasPlanAccess && !!apiKey
   const usingJobsenseiAI = !!bmacToken && !apiKey
-  const currentProviderLabel = PROVIDER_CONFIGS[form.provider]?.label || t('settings.customProvider')
+  const providerLabelFor = providerKey => {
+    const config = PROVIDER_CONFIGS[providerKey]
+    if (!config) return t('settings.customProvider')
+    return config.labelKey ? t(config.labelKey) : (config.label || t('settings.customProvider'))
+  }
+  const currentProviderLabel = providerLabelFor(form.provider)
   const planBadgeClass = usingOwnKey
     ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300'
     : usingJobsenseiAI
@@ -475,7 +480,7 @@ export default function Settings() {
               <div>
                 <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokProvider')}</label>
                 <select className="input-field" value={form.provider} onChange={e => update('provider', e.target.value)}>
-                  {Object.entries(PROVIDER_CONFIGS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                  {Object.entries(PROVIDER_CONFIGS).map(([k]) => <option key={k} value={k}>{providerLabelFor(k)}</option>)}
                 </select>
               </div>
               <div>

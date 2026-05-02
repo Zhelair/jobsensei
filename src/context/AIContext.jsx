@@ -12,24 +12,28 @@ export const PROVIDERS = {
 const PROVIDER_CONFIGS = {
   [PROVIDERS.DEEPSEEK]: {
     label: 'DeepSeek',
+    labelKey: 'settings.providers.deepseek',
     baseUrl: 'https://api.deepseek.com/v1',
     defaultModel: 'deepseek-v4-flash',
     format: 'openai',
   },
   [PROVIDERS.OPENAI]: {
     label: 'OpenAI',
+    labelKey: 'settings.providers.openai',
     baseUrl: 'https://api.openai.com/v1',
     defaultModel: 'gpt-4o',
     format: 'openai',
   },
   [PROVIDERS.ANTHROPIC]: {
     label: 'Anthropic (Claude)',
+    labelKey: 'settings.providers.anthropic',
     baseUrl: 'https://api.anthropic.com',
     defaultModel: 'claude-sonnet-4-6',
     format: 'anthropic',
   },
   [PROVIDERS.CUSTOM]: {
     label: 'Custom (OpenAI-compatible)',
+    labelKey: 'settings.providers.custom',
     baseUrl: '',
     defaultModel: '',
     format: 'openai',
