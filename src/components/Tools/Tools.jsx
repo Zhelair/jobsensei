@@ -82,6 +82,25 @@ function getToolDescription(t, toolId) {
   return t(`tools.toolDescriptions.${toolId}`)
 }
 
+function humanizeKey(value) {
+  return String(value || '')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function getToneScoreLabel(t, key) {
+  const translationKey = `tools.tone.scores.${key}`
+  const translated = t(translationKey)
+  return translated && translated !== translationKey ? translated : humanizeKey(key)
+}
+
+function getLinkedInSectionLabel(t, key) {
+  const translationKey = `tools.linkedin.sections.${key}`
+  const translated = t(translationKey)
+  return translated && translated !== translationKey ? translated : humanizeKey(key)
+}
+
 function applicationLabel(app) {
   return `${app.company}${app.role ? ` - ${app.role}` : ''}`
 }
@@ -641,15 +660,15 @@ function FullHistoryResult({ item }) {
           {Object.entries(item.result.scores || {}).map(([k, v]) => (
             <div key={k} className="card text-center">
               <div className={`font-display font-bold text-2xl mb-1 ${v >= 8 ? 'text-green-400' : v >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>{v}</div>
-              <div className="text-slate-400 text-xs capitalize">{k}</div>
+              <div className="text-slate-400 text-xs">{getToneScoreLabel(t, k)}</div>
             </div>
           ))}
         </div>
         {item.result.rewrittenAnswer && (
           <div className="card border-green-500/20">
             <div className="flex items-center justify-between mb-2">
-              <h4 className="font-display font-semibold text-white text-sm">✨ Stronger Version</h4>
-              <button onClick={() => navigator.clipboard?.writeText(item.result.rewrittenAnswer)} className="btn-ghost text-xs"><Copy size={13}/> Copy</button>
+              <h4 className="font-display font-semibold text-white text-sm">{t('tools.tone.strongerVersion')}</h4>
+              <button onClick={() => navigator.clipboard?.writeText(item.result.rewrittenAnswer)} className="btn-ghost text-xs"><Copy size={13}/> {t('tools.shared.copy')}</button>
             </div>
             <p className="text-slate-200 text-sm leading-relaxed">{item.result.rewrittenAnswer}</p>
           </div>
@@ -661,8 +680,8 @@ function FullHistoryResult({ item }) {
     return (
       <div className="card">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-slate-400 text-xs">Subject: <span className="text-white">{item.result.subject}</span></span>
-          <button onClick={() => navigator.clipboard?.writeText(`Subject: ${item.result.subject}\n\n${item.result.body}`)} className="btn-ghost text-xs"><Copy size={13}/> Copy</button>
+          <span className="text-slate-400 text-xs">{t('tools.shared.subject')} <span className="text-white">{item.result.subject}</span></span>
+          <button onClick={() => navigator.clipboard?.writeText(`Subject: ${item.result.subject}\n\n${item.result.body}`)} className="btn-ghost text-xs"><Copy size={13}/> {t('tools.shared.copy')}</button>
         </div>
         <div className="divider"/>
         <p className="text-slate-200 text-sm font-body leading-relaxed whitespace-pre-wrap">{item.result.body}</p>
@@ -674,15 +693,15 @@ function FullHistoryResult({ item }) {
       <div className="space-y-4">
         <div className="card border-teal-500/20">
           <div className="flex items-center justify-between mb-2">
-            <span className="badge-teal">60 seconds</span>
-            <button onClick={() => navigator.clipboard?.writeText(item.result.fullPitch)} className="btn-ghost text-xs"><Copy size={13}/> Copy</button>
+            <span className="badge-teal">{t('tools.pitch.seconds60')}</span>
+            <button onClick={() => navigator.clipboard?.writeText(item.result.fullPitch)} className="btn-ghost text-xs"><Copy size={13}/> {t('tools.shared.copy')}</button>
           </div>
           <p className="text-white text-sm font-body leading-relaxed">{item.result.fullPitch}</p>
         </div>
         <div className="card border-indigo-500/20">
           <div className="flex items-center justify-between mb-2">
-            <span className="badge-indigo">30 seconds</span>
-            <button onClick={() => navigator.clipboard?.writeText(item.result.shortVersion)} className="btn-ghost text-xs"><Copy size={13}/> Copy</button>
+            <span className="badge-indigo">{t('tools.pitch.seconds30')}</span>
+            <button onClick={() => navigator.clipboard?.writeText(item.result.shortVersion)} className="btn-ghost text-xs"><Copy size={13}/> {t('tools.shared.copy')}</button>
           </div>
           <p className="text-white text-sm font-body leading-relaxed">{item.result.shortVersion}</p>
         </div>
@@ -701,7 +720,7 @@ function FullHistoryResult({ item }) {
           <div key={i} className="card">
             <div className="flex items-center justify-between mb-2">
               <span className="badge-teal">{l.tone}</span>
-              <button onClick={() => navigator.clipboard?.writeText(l.body)} className="btn-ghost text-xs"><Copy size={13}/> Copy</button>
+              <button onClick={() => navigator.clipboard?.writeText(l.body)} className="btn-ghost text-xs"><Copy size={13}/> {t('tools.shared.copy')}</button>
             </div>
             <p className="text-slate-300 text-sm font-body leading-relaxed whitespace-pre-wrap line-clamp-4">{l.body}</p>
           </div>
@@ -715,22 +734,22 @@ function FullHistoryResult({ item }) {
         <div className="grid grid-cols-2 gap-2">
           <div className="card text-center">
             <div className={`font-display font-bold text-2xl mb-1 ${item.result.atsScore >= 80 ? 'text-green-400' : item.result.atsScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{item.result.atsScore}</div>
-            <div className="text-slate-400 text-xs">ATS Score</div>
+            <div className="text-slate-400 text-xs">{t('tools.resumechecker.atsScore')}</div>
           </div>
           <div className="card text-center">
             <div className={`font-display font-bold text-2xl mb-1 ${item.result.recruiterScore >= 80 ? 'text-green-400' : item.result.recruiterScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{item.result.recruiterScore}</div>
-            <div className="text-slate-400 text-xs">Recruiter Score</div>
+            <div className="text-slate-400 text-xs">{t('tools.resumechecker.recruiterScore')}</div>
           </div>
         </div>
         {item.result.strengths?.length > 0 && (
           <div className="card border-green-500/20">
-            <h4 className="font-display font-semibold text-white text-sm mb-2">✅ Strengths</h4>
+            <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.resumechecker.strengths')}</h4>
             <ul className="space-y-1">{item.result.strengths.map((s, i) => <li key={i} className="text-slate-300 text-xs">• {s}</li>)}</ul>
           </div>
         )}
         {item.result.suggestions?.length > 0 && (
           <div className="card">
-            <h4 className="font-display font-semibold text-white text-sm mb-2">💡 Suggestions</h4>
+            <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.resumechecker.suggestions')}</h4>
             <ul className="space-y-1">{item.result.suggestions.map((s, i) => <li key={i} className="text-slate-400 text-xs">• {s}</li>)}</ul>
           </div>
         )}
@@ -743,15 +762,15 @@ function FullHistoryResult({ item }) {
       <div className="space-y-4">
         <div className="card text-center py-6">
           <div className={`font-display font-bold text-5xl mb-2 ${r.overallScore >= 80 ? 'text-green-400' : r.overallScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{r.overallScore}</div>
-          <div className="text-slate-400 text-sm">Overall LinkedIn Score</div>
-          {r.ctaPresent === false && <div className="text-yellow-400 text-xs mt-2">⚠ No call-to-action detected</div>}
+          <div className="text-slate-400 text-sm">{t('tools.linkedin.overallScore')}</div>
+          {r.ctaPresent === false && <div className="text-yellow-400 text-xs mt-2">{t('tools.linkedin.noCta')}</div>}
         </div>
         {r.summary && <div className="card border-indigo-500/20 bg-indigo-500/5"><p className="text-slate-200 text-sm leading-relaxed">{r.summary}</p></div>}
         {r.sections && Object.entries(r.sections).map(([key, section]) =>
           key !== 'keywords' && section.score !== undefined ? (
             <div key={key} className="card">
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-display font-semibold text-white text-sm capitalize">{key}</h4>
+                <h4 className="font-display font-semibold text-white text-sm">{getLinkedInSectionLabel(t, key)}</h4>
                 <span className={`font-display font-bold text-lg ${section.score >= 80 ? 'text-green-400' : section.score >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{section.score}/100</span>
               </div>
               <p className="text-slate-400 text-xs mb-2">{section.feedback}</p>
@@ -761,16 +780,16 @@ function FullHistoryResult({ item }) {
         )}
         {r.sections?.keywords && (
           <div className="card">
-            <h4 className="font-display font-semibold text-white text-sm mb-3">Keywords</h4>
+            <h4 className="font-display font-semibold text-white text-sm mb-3">{t('tools.linkedin.keywords')}</h4>
             {r.sections.keywords.found?.length > 0 && (
               <div className="mb-3">
-                <span className="text-green-400 text-xs font-display font-semibold">✓ Already there</span>
+                <span className="text-green-400 text-xs font-display font-semibold">{t('tools.linkedin.alreadyThere')}</span>
                 <div className="flex flex-wrap gap-1.5 mt-2">{r.sections.keywords.found.map((kw, i) => <span key={i} className="badge-green">{kw}</span>)}</div>
               </div>
             )}
             {r.sections.keywords.missing?.length > 0 && (
               <div>
-                <span className="text-yellow-400 text-xs font-display font-semibold">⚠ Add these for discoverability</span>
+                <span className="text-yellow-400 text-xs font-display font-semibold">{t('tools.linkedin.addDiscoverability')}</span>
                 <div className="flex flex-wrap gap-1.5 mt-2">{r.sections.keywords.missing.map((kw, i) => <span key={i} className="badge-yellow">{kw}</span>)}</div>
               </div>
             )}
@@ -778,13 +797,13 @@ function FullHistoryResult({ item }) {
         )}
         {r.quickWins?.length > 0 && (
           <div className="card border-teal-500/20">
-            <h4 className="font-display font-semibold text-white text-sm mb-2">⚡ Quick Wins</h4>
+            <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.linkedin.quickWins')}</h4>
             <ul className="space-y-1">{r.quickWins.map((w, i) => <li key={i} className="text-slate-300 text-xs">• {w}</li>)}</ul>
           </div>
         )}
         {r.strengths?.length > 0 && (
           <div className="card border-green-500/20">
-            <h4 className="font-display font-semibold text-white text-sm mb-2">✅ Already Strong</h4>
+            <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.linkedin.alreadyStrong')}</h4>
             <ul className="space-y-1">{r.strengths.map((s, i) => <li key={i} className="text-slate-300 text-xs">• {s}</li>)}</ul>
           </div>
         )}
@@ -833,7 +852,7 @@ function FullHistoryResult({ item }) {
   if (item.tool === 'visualreview' && item.result?.analysis)
     return (
       <div className="card border-indigo-500/20 bg-indigo-500/5">
-        <h4 className="font-display font-semibold text-white text-sm mb-3">📸 Visual Design Analysis</h4>
+        <h4 className="font-display font-semibold text-white text-sm mb-3">{t('tools.visualreview.resultTitle')}</h4>
         <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{item.result.analysis}</div>
       </div>
     )
@@ -1013,7 +1032,7 @@ function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelet
         )}
       </div>
       <h2 className="section-title mb-1">{t('tools.tone.title')}</h2>
-      <p className="section-sub mb-5">Paste any interview answer — we'll score it and rewrite it stronger.</p>
+      <p className="section-sub mb-5">{t('tools.tone.subtitle')}</p>
       <textarea className="textarea-field h-32 mb-4" placeholder={t('tools.tone.answerPlaceholder')} value={answer} onChange={e => setAnswer(e.target.value)} />
       <button onClick={analyze} disabled={loading || !isConnected || !answer.trim()} className="btn-primary mb-5">
         <Gauge size={16} /> {loading ? t('tools.tone.analyzing') : t('tools.tone.analyze')}
@@ -1024,13 +1043,13 @@ function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelet
             {Object.entries(result.scores || {}).map(([k, v]) => (
               <div key={k} className="card text-center">
                 <div className={`font-display font-bold text-2xl mb-1 ${v >= 8 ? 'text-green-400' : v >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>{v}</div>
-                <div className="text-slate-400 text-xs capitalize">{k}</div>
+                <div className="text-slate-400 text-xs">{getToneScoreLabel(t, k)}</div>
               </div>
             ))}
           </div>
           {result.topAdvice && (
             <div className="card border-teal-500/30 bg-teal-500/5">
-              <div className="text-teal-400 text-sm font-display font-semibold mb-1">🎯 Key Improvement</div>
+              <div className="text-teal-400 text-sm font-display font-semibold mb-1">{t('tools.tone.keyImprovement')}</div>
               <p className="text-slate-300 text-sm">{result.topAdvice}</p>
             </div>
           )}
@@ -1052,8 +1071,8 @@ function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelet
           {result.rewrittenAnswer && (
             <div className="card border-green-500/20">
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-display font-semibold text-white text-sm">✨ Stronger Version</h4>
-                <button onClick={() => navigator.clipboard?.writeText(result.rewrittenAnswer)} className="btn-ghost text-xs"><Copy size={13} /> Copy</button>
+                <h4 className="font-display font-semibold text-white text-sm">{t('tools.tone.strongerVersion')}</h4>
+                <button onClick={() => navigator.clipboard?.writeText(result.rewrittenAnswer)} className="btn-ghost text-xs"><Copy size={13} /> {t('tools.shared.copy')}</button>
               </div>
               <p className="text-slate-200 text-sm leading-relaxed">{result.rewrittenAnswer}</p>
             </div>
@@ -1196,7 +1215,7 @@ function ElevatorPitch({ onBack, hubLabel = 'Back', resume, saveHistory, history
           </div>
           {result.tweaks?.length > 0 && (
             <div className="card">
-              <h4 className="font-display font-semibold text-white text-sm mb-2">💡 Personalization Tips</h4>
+              <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.pitch.personalizationTips')}</h4>
               <ul className="space-y-1">{result.tweaks.map((t, i) => <li key={i} className="text-slate-400 text-xs">• {t}</li>)}</ul>
             </div>
           )}
@@ -1240,7 +1259,7 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
         )}
       </div>
       <h2 className="section-title mb-1">{toolLabel}</h2>
-      <p className="section-sub mb-5">3 punchy versions (60-120 words each) — Corporate, Creative, Casual.</p>
+      <p className="section-sub mb-5">{t('tools.coverletter.subtitle')}</p>
       <ActiveJobContextCard activeContext={activeContext} />
       <div className="space-y-3 mb-4">
         <textarea className="textarea-field h-28" placeholder={t('gapAnalysis.placeholders.jobDescription')} value={jd} onChange={e => setJd(e.target.value)} />
@@ -1253,16 +1272,16 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
         <div className="space-y-4 animate-in">
           {(result.keywordMatches?.length > 0 || result.missingKeywords?.length > 0) && (
             <div className="card">
-              <h4 className="font-display font-semibold text-white text-sm mb-3">Keyword Analysis</h4>
+              <h4 className="font-display font-semibold text-white text-sm mb-3">{t('tools.coverletter.keywordAnalysis')}</h4>
               {result.keywordMatches?.length > 0 && (
                 <div className="mb-3">
-                  <span className="text-green-400 text-xs font-display font-semibold">✓ Matched in your resume</span>
+                  <span className="text-green-400 text-xs font-display font-semibold">{t('tools.coverletter.matchedInResume')}</span>
                   <div className="flex flex-wrap gap-1.5 mt-2">{result.keywordMatches.map((kw, i) => <span key={i} className="badge-green">{kw}</span>)}</div>
                 </div>
               )}
               {result.missingKeywords?.length > 0 && (
                 <div>
-                  <span className="text-yellow-400 text-xs font-display font-semibold">⚠ Consider weaving in</span>
+                  <span className="text-yellow-400 text-xs font-display font-semibold">{t('tools.coverletter.missingKeywords')}</span>
                   <div className="flex flex-wrap gap-1.5 mt-2">{result.missingKeywords.map((kw, i) => <span key={i} className="badge-yellow">{kw}</span>)}</div>
                 </div>
               )}
@@ -1279,10 +1298,10 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
                 <div className="card border-teal-500/20">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex gap-3">
-                      <span className={`text-xs font-display font-semibold ${result.letters[activeTab].clarityScore >= 80 ? 'text-green-400' : result.letters[activeTab].clarityScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>Clarity {result.letters[activeTab].clarityScore}/100</span>
-                      <span className={`text-xs font-display font-semibold ${result.letters[activeTab].confidenceScore >= 80 ? 'text-green-400' : result.letters[activeTab].confidenceScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>Confidence {result.letters[activeTab].confidenceScore}/100</span>
+                      <span className={`text-xs font-display font-semibold ${result.letters[activeTab].clarityScore >= 80 ? 'text-green-400' : result.letters[activeTab].clarityScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{t('tools.coverletter.clarityLabel')} {result.letters[activeTab].clarityScore}/100</span>
+                      <span className={`text-xs font-display font-semibold ${result.letters[activeTab].confidenceScore >= 80 ? 'text-green-400' : result.letters[activeTab].confidenceScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{t('tools.coverletter.confidenceLabel')} {result.letters[activeTab].confidenceScore}/100</span>
                     </div>
-                    <button onClick={() => navigator.clipboard?.writeText(result.letters[activeTab].body)} className="btn-ghost text-xs"><Copy size={13} /> Copy</button>
+                    <button onClick={() => navigator.clipboard?.writeText(result.letters[activeTab].body)} className="btn-ghost text-xs"><Copy size={13} /> {t('tools.shared.copy')}</button>
                   </div>
                   <p className="text-slate-200 text-sm font-body leading-relaxed whitespace-pre-wrap">{result.letters[activeTab].body}</p>
                 </div>
@@ -1328,11 +1347,11 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
         )}
       </div>
       <h2 className="section-title mb-1">{toolLabel}</h2>
-      <p className="section-sub mb-5">ATS scanner + recruiter lens — see your resume like they do.</p>
+      <p className="section-sub mb-5">{t('tools.resumechecker.subtitle')}</p>
       <ActiveJobContextCard activeContext={activeContext} />
       <div className="space-y-3 mb-4">
         <textarea className="textarea-field h-40" placeholder={t('tools.resumechecker.resumePlaceholder')} value={resumeText} onChange={e => setResumeText(e.target.value)} />
-        <textarea className="textarea-field h-20" placeholder="Job description (optional — enables gap analysis)..." value={jd} onChange={e => setJd(e.target.value)} />
+        <textarea className="textarea-field h-20" placeholder={t('tools.resumechecker.optionalJdPlaceholder')} value={jd} onChange={e => setJd(e.target.value)} />
       </div>
       <button onClick={analyze} disabled={loading || !isConnected || !resumeText.trim()} className="btn-primary mb-5">
         <ClipboardCheck size={16} /> {loading ? t('tools.transferable.analyzing') : t('tools.resumechecker.check')}
@@ -1342,18 +1361,18 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
           <div className="grid grid-cols-2 gap-3">
             <div className="card text-center py-6">
               <div className={`font-display font-bold text-4xl mb-1 ${result.atsScore >= 80 ? 'text-green-400' : result.atsScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{result.atsScore}</div>
-              <div className="text-slate-400 text-sm">ATS Score</div>
-              <div className="text-slate-600 text-xs mt-1">Keyword matching</div>
+              <div className="text-slate-400 text-sm">{t('tools.resumechecker.atsScore')}</div>
+              <div className="text-slate-600 text-xs mt-1">{t('tools.resumechecker.keywordMatching')}</div>
             </div>
             <div className="card text-center py-6">
               <div className={`font-display font-bold text-4xl mb-1 ${result.recruiterScore >= 80 ? 'text-green-400' : result.recruiterScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{result.recruiterScore}</div>
-              <div className="text-slate-400 text-sm">Recruiter Score</div>
-              <div className="text-slate-600 text-xs mt-1">Human appeal</div>
+              <div className="text-slate-400 text-sm">{t('tools.resumechecker.recruiterScore')}</div>
+              <div className="text-slate-600 text-xs mt-1">{t('tools.resumechecker.humanAppeal')}</div>
             </div>
           </div>
           {result.redFlags?.length > 0 && (
             <div className="card border-red-500/20">
-              <h4 className="font-display font-semibold text-white text-sm mb-3">🚩 Red Flags to Fix</h4>
+              <h4 className="font-display font-semibold text-white text-sm mb-3">{t('tools.resumechecker.redFlags')}</h4>
               <div className="space-y-3">
                 {result.redFlags.map((f, i) => (
                   <div key={i} className="bg-navy-900 rounded-xl p-3">
@@ -1367,19 +1386,19 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
           )}
           {result.keywordGaps?.length > 0 && (
             <div className="card border-yellow-500/20">
-              <h4 className="font-display font-semibold text-white text-sm mb-2">⚠️ Keyword Gaps</h4>
+              <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.resumechecker.keywordGaps')}</h4>
               <div className="flex flex-wrap gap-1.5">{result.keywordGaps.map((kw, i) => <span key={i} className="badge-yellow">{kw}</span>)}</div>
             </div>
           )}
           {result.strengths?.length > 0 && (
             <div className="card border-green-500/20">
-              <h4 className="font-display font-semibold text-white text-sm mb-2">✅ Strengths</h4>
+              <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.resumechecker.strengths')}</h4>
               <ul className="space-y-1">{result.strengths.map((s, i) => <li key={i} className="text-slate-300 text-xs">• {s}</li>)}</ul>
             </div>
           )}
           {result.suggestions?.length > 0 && (
             <div className="card">
-              <h4 className="font-display font-semibold text-white text-sm mb-2">💡 Suggestions</h4>
+              <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.resumechecker.suggestions')}</h4>
               <ul className="space-y-1">{result.suggestions.map((s, i) => <li key={i} className="text-slate-400 text-xs">• {s}</li>)}</ul>
             </div>
           )}
@@ -1439,14 +1458,14 @@ function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, o
         )}
       </div>
       <h2 className="section-title mb-1">{toolLabel}</h2>
-      <p className="section-sub mb-3">Upload a screenshot or photo of your resume — AI analyzes design, layout, colors, and visual impact.</p>
+      <p className="section-sub mb-3">{t('tools.visualreview.subtitle')}</p>
       {isDeepSeekActive ? (
         <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 mb-5 text-amber-300 text-sm">
           <span className="mt-0.5">⚠️</span>
           <span>{t('tools.visualreview.visionWarning')}</span>
         </div>
       ) : (
-        <p className="text-xs text-slate-500 mb-5">Requires a vision-capable model — OpenAI gpt-4o or Anthropic Claude. Not available with DeepSeek.</p>
+        <p className="text-xs text-slate-500 mb-5">{t('tools.visualreview.requiresVision')}</p>
       )}
       <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
       {!imagePreview ? (
@@ -1469,7 +1488,7 @@ function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, o
       </button>
       {result && (
         <div className="card border-indigo-500/20 bg-indigo-500/5 animate-in">
-          <h4 className="font-display font-semibold text-white text-sm mb-3">📸 Visual Design Analysis</h4>
+          <h4 className="font-display font-semibold text-white text-sm mb-3">{t('tools.visualreview.resultTitle')}</h4>
           <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{result}</div>
         </div>
       )}
@@ -1518,15 +1537,15 @@ function LinkedInAuditor({ onBack, hubLabel = 'Back', saveHistory, history, onDe
         <div className="space-y-4 animate-in">
           <div className="card text-center py-6">
             <div className={`font-display font-bold text-5xl mb-2 ${result.overallScore >= 80 ? 'text-green-400' : result.overallScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{result.overallScore}</div>
-            <div className="text-slate-400 text-sm">Overall LinkedIn Score</div>
-            {result.ctaPresent === false && <div className="text-yellow-400 text-xs mt-2">⚠ No call-to-action detected</div>}
+            <div className="text-slate-400 text-sm">{t('tools.linkedin.overallScore')}</div>
+            {result.ctaPresent === false && <div className="text-yellow-400 text-xs mt-2">{t('tools.linkedin.noCta')}</div>}
           </div>
           {result.summary && <div className="card border-indigo-500/20 bg-indigo-500/5"><p className="text-slate-200 text-sm leading-relaxed">{result.summary}</p></div>}
           {result.sections && Object.entries(result.sections).map(([key, section]) =>
             key !== 'keywords' && section.score !== undefined ? (
               <div key={key} className="card">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-display font-semibold text-white text-sm capitalize">{key}</h4>
+                  <h4 className="font-display font-semibold text-white text-sm">{getLinkedInSectionLabel(t, key)}</h4>
                   <span className={`font-display font-bold text-lg ${section.score >= 80 ? 'text-green-400' : section.score >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{section.score}/100</span>
                 </div>
                 <p className="text-slate-400 text-xs mb-2">{section.feedback}</p>
@@ -1536,16 +1555,16 @@ function LinkedInAuditor({ onBack, hubLabel = 'Back', saveHistory, history, onDe
           )}
           {result.sections?.keywords && (
             <div className="card">
-              <h4 className="font-display font-semibold text-white text-sm mb-3">Keywords</h4>
+              <h4 className="font-display font-semibold text-white text-sm mb-3">{t('tools.linkedin.keywords')}</h4>
               {result.sections.keywords.found?.length > 0 && (
                 <div className="mb-3">
-                  <span className="text-green-400 text-xs font-display font-semibold">✓ Already there</span>
+                  <span className="text-green-400 text-xs font-display font-semibold">{t('tools.linkedin.alreadyThere')}</span>
                   <div className="flex flex-wrap gap-1.5 mt-2">{result.sections.keywords.found.map((kw, i) => <span key={i} className="badge-green">{kw}</span>)}</div>
                 </div>
               )}
               {result.sections.keywords.missing?.length > 0 && (
                 <div>
-                  <span className="text-yellow-400 text-xs font-display font-semibold">⚠ Add these for discoverability</span>
+                  <span className="text-yellow-400 text-xs font-display font-semibold">{t('tools.linkedin.addDiscoverability')}</span>
                   <div className="flex flex-wrap gap-1.5 mt-2">{result.sections.keywords.missing.map((kw, i) => <span key={i} className="badge-yellow">{kw}</span>)}</div>
                 </div>
               )}
@@ -1553,13 +1572,13 @@ function LinkedInAuditor({ onBack, hubLabel = 'Back', saveHistory, history, onDe
           )}
           {result.quickWins?.length > 0 && (
             <div className="card border-teal-500/20">
-              <h4 className="font-display font-semibold text-white text-sm mb-2">⚡ Quick Wins</h4>
+              <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.linkedin.quickWins')}</h4>
               <ul className="space-y-1">{result.quickWins.map((w, i) => <li key={i} className="text-slate-300 text-xs">• {w}</li>)}</ul>
             </div>
           )}
           {result.strengths?.length > 0 && (
             <div className="card border-green-500/20">
-              <h4 className="font-display font-semibold text-white text-sm mb-2">✅ Already Strong</h4>
+              <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.linkedin.alreadyStrong')}</h4>
               <ul className="space-y-1">{result.strengths.map((s, i) => <li key={i} className="text-slate-300 text-xs">• {s}</li>)}</ul>
             </div>
           )}
