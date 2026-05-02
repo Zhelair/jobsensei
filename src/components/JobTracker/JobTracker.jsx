@@ -994,20 +994,20 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     ['prepNotes', 'My prep notes', 'Stories to tell, reminders for yourself, and key points to emphasize.'],
   ]
   const prepActions = [
-    { id: 'interview', label: 'Interview Simulator', desc: 'Run a mock interview with this application context.', icon: Mic },
-    { id: 'predictor', label: 'Question Predictor', desc: 'Generate likely interview questions from this JD.', icon: Target },
-    { id: 'star', label: 'STAR Builder', desc: 'Shape strong stories before the interview.', icon: Star },
-    { id: 'tone', label: 'Tone Analyzer', desc: 'Check clarity and confidence in your answers.', icon: Gauge },
-    { id: 'followup', label: 'Follow-up Email', desc: 'Draft the right post-interview message.', icon: Mail },
-    { id: 'pitch', label: 'Elevator Pitch', desc: 'Sharpen your why-you answer for this role.', icon: Megaphone },
+    { id: 'interview', label: t('tools.toolLabels.interview'), desc: t('tools.toolDescriptions.interview'), icon: Mic },
+    { id: 'predictor', label: t('tools.toolLabels.predictor'), desc: t('tools.toolDescriptions.predictor'), icon: Target },
+    { id: 'star', label: t('tools.toolLabels.star'), desc: t('tools.toolDescriptions.star'), icon: Star },
+    { id: 'tone', label: t('tools.toolLabels.tone'), desc: t('tools.toolDescriptions.tone'), icon: Gauge },
+    { id: 'followup', label: t('tools.toolLabels.followup'), desc: t('tools.toolDescriptions.followup'), icon: Mail },
+    { id: 'pitch', label: t('tools.toolLabels.pitch'), desc: t('tools.toolDescriptions.pitch'), icon: Megaphone },
   ]
   const toolActions = [
-    { id: 'gap', label: 'Gap Analysis', desc: 'Check fit, score alignment, and spot red flags.', icon: Search },
-    { id: 'coverletter', label: 'Cover Letter Optimizer', desc: 'Generate cover letters tied to this job.', icon: FileText },
-    { id: 'resumechecker', label: 'Resume Checker', desc: 'Review ATS fit against this JD.', icon: ClipboardCheck },
-    { id: 'linkedin', label: 'LinkedIn Auditor', desc: 'Polish your profile before recruiters check it.', icon: Globe },
-    { id: 'visualreview', label: 'Visual Review', desc: 'Analyze the design quality of your resume.', icon: Camera },
-    { id: 'transferable', label: 'Transferable Skills Coach', desc: 'Reframe your experience for this opportunity.', icon: Zap },
+    { id: 'gap', label: t('tools.toolLabels.gap'), desc: t('tools.toolDescriptions.gap'), icon: Search },
+    { id: 'coverletter', label: t('tools.toolLabels.coverletter'), desc: t('tools.toolDescriptions.coverletter'), icon: FileText },
+    { id: 'resumechecker', label: t('tools.toolLabels.resumechecker'), desc: t('tools.toolDescriptions.resumechecker'), icon: ClipboardCheck },
+    { id: 'linkedin', label: t('tools.toolLabels.linkedin'), desc: t('tools.toolDescriptions.linkedin'), icon: Globe },
+    { id: 'visualreview', label: t('tools.toolLabels.visualreview'), desc: t('tools.toolDescriptions.visualreview'), icon: Camera },
+    { id: 'transferable', label: t('tools.toolLabels.transferable'), desc: t('tools.toolDescriptions.transferable'), icon: Zap },
   ]
 
   function saveWorkspace(showFeedback = true) {
@@ -1482,11 +1482,11 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     const nextStep = stepCards.find(card => card.state !== 'complete') || null
     const nextStepAction = nextStep?.actions?.find(action => !action.disabled && action.onClick) || nextStep?.actions?.[0] || null
     const advancedTools = [
-      { label: 'Transferable Skills Coach', section: SECTIONS.TOOLS, toolId: 'transferable', count: appTransferableRuns.length },
-      { label: 'Tone Analyzer', section: SECTIONS.INTERVIEW, toolId: 'tone', count: appToneRuns.length },
-      { label: 'Elevator Pitch', section: SECTIONS.INTERVIEW, toolId: 'pitch', count: appPitchRuns.length },
-      { label: 'LinkedIn Auditor', section: SECTIONS.TOOLS, toolId: 'linkedin' },
-      { label: 'Visual Review', section: SECTIONS.TOOLS, toolId: 'visualreview' },
+      { label: t('tools.toolLabels.transferable'), section: SECTIONS.TOOLS, toolId: 'transferable', count: appTransferableRuns.length },
+      { label: t('tools.toolLabels.tone'), section: SECTIONS.INTERVIEW, toolId: 'tone', count: appToneRuns.length },
+      { label: t('tools.toolLabels.pitch'), section: SECTIONS.INTERVIEW, toolId: 'pitch', count: appPitchRuns.length },
+      { label: t('tools.toolLabels.linkedin'), section: SECTIONS.TOOLS, toolId: 'linkedin' },
+      { label: t('tools.toolLabels.visualreview'), section: SECTIONS.TOOLS, toolId: 'visualreview' },
     ]
 
     return (

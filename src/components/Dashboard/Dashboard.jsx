@@ -216,7 +216,7 @@ export default function Dashboard() {
       <div className="card border-teal-500/20 bg-teal-500/5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-2xl">
-            <h3 className="font-display font-semibold text-white text-base mb-1">Active Application</h3>
+            <h3 className="font-display font-semibold text-white text-base mb-1">{t('tools.activeApplication.title')}</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
               {t('dashboard.active.copy')}
             </p>
