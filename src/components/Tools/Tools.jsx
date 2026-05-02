@@ -1141,14 +1141,15 @@ function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, 
 function ElevatorPitch({ onBack, hubLabel = 'Back', resume, saveHistory, history, onDelete }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
+  const toolLabel = getToolLabel(t, 'pitch')
   const [role, setRole] = useState(profile?.targetRole || '')
   const [strengths, setStrengths] = useState(resume ? resume.slice(0, 300) : '')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Elevator Pitch" onBack={() => setShowHistory(false)} onDelete={onDelete} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel={toolLabel} onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function generate() {
     setLoading(true); setResult(null)
@@ -1165,31 +1166,31 @@ function ElevatorPitch({ onBack, hubLabel = 'Back', resume, saveHistory, history
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
-          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
+          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> {t('tools.shared.historyButton', { count: history.length })}</button>
         )}
       </div>
-      <h2 className="section-title mb-1">Elevator Pitch Builder</h2>
-      <p className="section-sub mb-5">Craft a killer answer to "Why should we hire you?"</p>
+      <h2 className="section-title mb-1">{t('tools.pitch.title')}</h2>
+      <p className="section-sub mb-5">{t('tools.pitch.subtitle')}</p>
       <div className="space-y-3 mb-4">
-        <input className="input-field" placeholder="Target role" value={role} onChange={e => setRole(e.target.value)} />
-        <textarea className="textarea-field h-24" placeholder="Your top 3-5 strengths or key selling points..." value={strengths} onChange={e => setStrengths(e.target.value)} />
+        <input className="input-field" placeholder={t('tools.pitch.rolePlaceholder')} value={role} onChange={e => setRole(e.target.value)} />
+        <textarea className="textarea-field h-24" placeholder={t('tools.pitch.strengthsPlaceholder')} value={strengths} onChange={e => setStrengths(e.target.value)} />
       </div>
       <button onClick={generate} disabled={loading || !isConnected || !role.trim() || !strengths.trim()} className="btn-primary mb-5">
-        <Megaphone size={16} /> {loading ? 'Writing...' : 'Build Pitch'}
+        <Megaphone size={16} /> {loading ? t('tools.followup.writing') : t('tools.pitch.build')}
       </button>
       {result && (
         <div className="space-y-4 animate-in">
           <div className="card border-teal-500/20">
             <div className="flex items-center justify-between mb-2">
-              <span className="badge-teal">60 seconds</span>
-              <button onClick={() => navigator.clipboard?.writeText(result.fullPitch)} className="btn-ghost text-xs"><Copy size={13} /> Copy</button>
+            <span className="badge-teal">{t('tools.pitch.seconds60')}</span>
+              <button onClick={() => navigator.clipboard?.writeText(result.fullPitch)} className="btn-ghost text-xs"><Copy size={13} /> {t('tools.shared.copy')}</button>
             </div>
             <p className="text-white text-sm font-body leading-relaxed">{result.fullPitch}</p>
           </div>
           <div className="card border-indigo-500/20">
             <div className="flex items-center justify-between mb-2">
-              <span className="badge-indigo">30 seconds</span>
-              <button onClick={() => navigator.clipboard?.writeText(result.shortVersion)} className="btn-ghost text-xs"><Copy size={13} /> Copy</button>
+            <span className="badge-indigo">{t('tools.pitch.seconds30')}</span>
+              <button onClick={() => navigator.clipboard?.writeText(result.shortVersion)} className="btn-ghost text-xs"><Copy size={13} /> {t('tools.shared.copy')}</button>
             </div>
             <p className="text-white text-sm font-body leading-relaxed">{result.shortVersion}</p>
           </div>
@@ -1209,7 +1210,8 @@ function ElevatorPitch({ onBack, hubLabel = 'Back', resume, saveHistory, history
 
 function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
+  const toolLabel = getToolLabel(t, 'coverletter')
   const [jd, setJd] = useState(activeContext?.jd || '')
   const [resumeText, setResumeText] = useState(resume || '')
   const [loading, setLoading] = useState(false)
@@ -1217,7 +1219,7 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
   const [activeTab, setActiveTab] = useState(0)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Cover Letter Optimizer" onBack={() => setShowHistory(false)} onDelete={onDelete} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel={toolLabel} onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function generate() {
     setLoading(true); setResult(null)
@@ -1234,18 +1236,18 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
-          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
+          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> {t('tools.shared.historyButton', { count: history.length })}</button>
         )}
       </div>
-      <h2 className="section-title mb-1">Cover Letter Optimizer</h2>
+      <h2 className="section-title mb-1">{toolLabel}</h2>
       <p className="section-sub mb-5">3 punchy versions (60-120 words each) — Corporate, Creative, Casual.</p>
       <ActiveJobContextCard activeContext={activeContext} />
       <div className="space-y-3 mb-4">
-        <textarea className="textarea-field h-28" placeholder="Paste the job description..." value={jd} onChange={e => setJd(e.target.value)} />
-        <textarea className="textarea-field h-28" placeholder="Paste your resume or key experience..." value={resumeText} onChange={e => setResumeText(e.target.value)} />
+        <textarea className="textarea-field h-28" placeholder={t('gapAnalysis.placeholders.jobDescription')} value={jd} onChange={e => setJd(e.target.value)} />
+        <textarea className="textarea-field h-28" placeholder={t('tools.coverletter.resumePlaceholder')} value={resumeText} onChange={e => setResumeText(e.target.value)} />
       </div>
       <button onClick={generate} disabled={loading || !isConnected || !jd.trim() || !resumeText.trim()} className="btn-primary mb-5">
-        <FileText size={16} /> {loading ? 'Writing 3 versions...' : 'Generate Cover Letters'}
+        <FileText size={16} /> {loading ? t('tools.coverletter.generating') : t('tools.coverletter.generate')}
       </button>
       {result && (
         <div className="space-y-4 animate-in">
@@ -1297,14 +1299,15 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
 
 function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
+  const toolLabel = getToolLabel(t, 'resumechecker')
   const [resumeText, setResumeText] = useState(resume || '')
   const [jd, setJd] = useState(activeContext?.jd || '')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Resume Checker" onBack={() => setShowHistory(false)} onDelete={onDelete} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel={toolLabel} onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function analyze() {
     setLoading(true); setResult(null)
@@ -1321,18 +1324,18 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
-          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
+          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> {t('tools.shared.historyButton', { count: history.length })}</button>
         )}
       </div>
-      <h2 className="section-title mb-1">Resume Checker</h2>
+      <h2 className="section-title mb-1">{toolLabel}</h2>
       <p className="section-sub mb-5">ATS scanner + recruiter lens — see your resume like they do.</p>
       <ActiveJobContextCard activeContext={activeContext} />
       <div className="space-y-3 mb-4">
-        <textarea className="textarea-field h-40" placeholder="Paste your resume text here..." value={resumeText} onChange={e => setResumeText(e.target.value)} />
+        <textarea className="textarea-field h-40" placeholder={t('tools.resumechecker.resumePlaceholder')} value={resumeText} onChange={e => setResumeText(e.target.value)} />
         <textarea className="textarea-field h-20" placeholder="Job description (optional — enables gap analysis)..." value={jd} onChange={e => setJd(e.target.value)} />
       </div>
       <button onClick={analyze} disabled={loading || !isConnected || !resumeText.trim()} className="btn-primary mb-5">
-        <ClipboardCheck size={16} /> {loading ? 'Analyzing...' : 'Check Resume'}
+        <ClipboardCheck size={16} /> {loading ? t('tools.transferable.analyzing') : t('tools.resumechecker.check')}
       </button>
       {result && (
         <div className="space-y-4 animate-in">
@@ -1390,6 +1393,8 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
 
 function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, onDelete }) {
   const { callAI, isConnected, provider, PROVIDERS, bmacToken, apiKey } = useAI()
+  const { t } = useLanguage()
+  const toolLabel = getToolLabel(t, 'visualreview')
   const isDeepSeekActive = (bmacToken && !apiKey) || (apiKey && provider === PROVIDERS.DEEPSEEK)
   const imageInputRef = useRef(null)
   const [imagePreview, setImagePreview] = useState(null)
@@ -1398,7 +1403,7 @@ function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, o
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="Visual Design Review" onBack={() => setShowHistory(false)} onDelete={onDelete} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel={toolLabel} onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function handleImageFile(e) {
     const file = e.target.files[0]; if (!file) return
@@ -1430,15 +1435,15 @@ function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, o
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
-          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
+          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> {t('tools.shared.historyButton', { count: history.length })}</button>
         )}
       </div>
-      <h2 className="section-title mb-1">Visual Design Review</h2>
+      <h2 className="section-title mb-1">{toolLabel}</h2>
       <p className="section-sub mb-3">Upload a screenshot or photo of your resume — AI analyzes design, layout, colors, and visual impact.</p>
       {isDeepSeekActive ? (
         <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 mb-5 text-amber-300 text-sm">
           <span className="mt-0.5">⚠️</span>
-          <span>Visual Design Review requires a vision-capable model. <strong>DeepSeek does not support image analysis.</strong> Connect your own <strong>OpenAI</strong> (gpt-4o) or <strong>Anthropic (Claude)</strong> API key in Settings to use this feature.</span>
+          <span>{t('tools.visualreview.visionWarning')}</span>
         </div>
       ) : (
         <p className="text-xs text-slate-500 mb-5">Requires a vision-capable model — OpenAI gpt-4o or Anthropic Claude. Not available with DeepSeek.</p>
@@ -1447,20 +1452,20 @@ function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, o
       {!imagePreview ? (
         <button onClick={() => imageInputRef.current?.click()} className="w-full border-2 border-dashed border-navy-600 hover:border-teal-500/50 rounded-2xl p-12 flex flex-col items-center gap-3 text-slate-500 hover:text-slate-400 transition-all mb-4">
           <Camera size={32} />
-          <span className="text-sm font-body">Click to upload resume screenshot or photo</span>
-          <span className="text-xs">PNG, JPG, WEBP supported</span>
+          <span className="text-sm font-body">{t('tools.visualreview.uploadCta')}</span>
+          <span className="text-xs">{t('tools.visualreview.uploadFormats')}</span>
         </button>
       ) : (
         <div className="mb-4">
-          <div className="rounded-2xl overflow-hidden bg-navy-900 mb-3"><img src={imagePreview} alt="Resume preview" className="w-full max-h-72 object-contain" /></div>
+          <div className="rounded-2xl overflow-hidden bg-navy-900 mb-3"><img src={imagePreview} alt={t('tools.visualreview.previewAlt')} className="w-full max-h-72 object-contain" /></div>
           <div className="flex gap-2">
-            <button onClick={() => imageInputRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center"><Camera size={13}/> Change Image</button>
-            <button onClick={() => { setImagePreview(null); setImageData(null); setResult(null) }} className="btn-ghost text-xs text-red-400 hover:text-red-300"><X size={13}/> Remove</button>
+            <button onClick={() => imageInputRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center"><Camera size={13}/> {t('tools.visualreview.changeImage')}</button>
+            <button onClick={() => { setImagePreview(null); setImageData(null); setResult(null) }} className="btn-ghost text-xs text-red-400 hover:text-red-300"><X size={13}/> {t('tools.visualreview.remove')}</button>
           </div>
         </div>
       )}
       <button onClick={analyze} disabled={!imageData || analyzing || !isConnected || isDeepSeekActive} className="btn-primary w-full justify-center mb-5">
-        <Camera size={16} /> {analyzing ? 'Analyzing design...' : 'Analyze Visual Design'}
+        <Camera size={16} /> {analyzing ? t('tools.visualreview.analyzing') : t('tools.visualreview.analyze')}
       </button>
       {result && (
         <div className="card border-indigo-500/20 bg-indigo-500/5 animate-in">
@@ -1476,13 +1481,14 @@ function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, o
 
 function LinkedInAuditor({ onBack, hubLabel = 'Back', saveHistory, history, onDelete }) {
   const { callAI, isConnected } = useAI()
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
+  const toolLabel = getToolLabel(t, 'linkedin')
   const [profileText, setProfileText] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  if (showHistory) return <ToolHistoryView history={history} toolLabel="LinkedIn Auditor" onBack={() => setShowHistory(false)} onDelete={onDelete} />
+  if (showHistory) return <ToolHistoryView history={history} toolLabel={toolLabel} onBack={() => setShowHistory(false)} onDelete={onDelete} />
 
   async function audit() {
     setLoading(true); setResult(null)
@@ -1499,14 +1505,14 @@ function LinkedInAuditor({ onBack, hubLabel = 'Back', saveHistory, history, onDe
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
-          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> History ({history.length})</button>
+          <button onClick={() => setShowHistory(true)} className="btn-ghost text-xs"><History size={14}/> {t('tools.shared.historyButton', { count: history.length })}</button>
         )}
       </div>
-      <h2 className="section-title mb-1">LinkedIn Profile Auditor</h2>
-      <p className="section-sub mb-5">Paste your headline, About, and experience. Get a score and quick wins.</p>
-      <textarea className="textarea-field h-40 mb-4" placeholder="Paste your LinkedIn headline, About section, and key experience highlights..." value={profileText} onChange={e => setProfileText(e.target.value)} />
+      <h2 className="section-title mb-1">{t('tools.linkedin.title')}</h2>
+      <p className="section-sub mb-5">{t('tools.linkedin.subtitle')}</p>
+      <textarea className="textarea-field h-40 mb-4" placeholder={t('tools.linkedin.placeholder')} value={profileText} onChange={e => setProfileText(e.target.value)} />
       <button onClick={audit} disabled={loading || !isConnected || !profileText.trim()} className="btn-primary mb-5">
-        <Globe size={16} /> {loading ? 'Auditing...' : 'Audit Profile'}
+        <Globe size={16} /> {loading ? t('tools.linkedin.auditing') : t('tools.linkedin.audit')}
       </button>
       {result && (
         <div className="space-y-4 animate-in">
