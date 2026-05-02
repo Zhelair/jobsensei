@@ -7911,6 +7911,227 @@ Object.entries(secureAccountBridgePatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
 
+const secureAccountDeviceManagementPatches = {
+  en: {
+    settings: {
+      secureAccountCurrentBadge: 'This device',
+      secureAccountLastSeen: 'Last seen: {date}',
+      secureAccountLastSeenUnknown: 'Last seen time not available yet.',
+      secureAccountRevokeButton: 'Revoke',
+      secureAccountRevoking: 'Revoking...',
+      secureAccountRevokeConfirm: 'Revoke this approved device from your secure account?',
+      secureAccountRevokeSuccess: 'Approved device revoked.',
+    },
+  },
+  ru: {
+    settings: {
+      secureAccountCurrentBadge: 'Это устройство',
+      secureAccountLastSeen: 'Последняя активность: {date}',
+      secureAccountLastSeenUnknown: 'Время последней активности пока недоступно.',
+      secureAccountRevokeButton: 'Отозвать',
+      secureAccountRevoking: 'Отзываю...',
+      secureAccountRevokeConfirm: 'Отозвать это одобренное устройство из безопасного аккаунта?',
+      secureAccountRevokeSuccess: 'Одобренное устройство отозвано.',
+    },
+  },
+  bg: {
+    settings: {
+      secureAccountCurrentBadge: 'Това устройство',
+      secureAccountLastSeen: 'Последно използвано: {date}',
+      secureAccountLastSeenUnknown: 'Още няма време за последно използване.',
+      secureAccountRevokeButton: 'Премахни',
+      secureAccountRevoking: 'Премахване...',
+      secureAccountRevokeConfirm: 'Да премахна ли това одобрено устройство от защитения акаунт?',
+      secureAccountRevokeSuccess: 'Одобреното устройство е премахнато.',
+    },
+  },
+  es: {
+    settings: {
+      secureAccountCurrentBadge: 'Este dispositivo',
+      secureAccountLastSeen: 'Última actividad: {date}',
+      secureAccountLastSeenUnknown: 'La hora de última actividad aún no está disponible.',
+      secureAccountRevokeButton: 'Revocar',
+      secureAccountRevoking: 'Revocando...',
+      secureAccountRevokeConfirm: '¿Revocar este dispositivo aprobado de tu cuenta segura?',
+      secureAccountRevokeSuccess: 'Dispositivo aprobado revocado.',
+    },
+  },
+  fr: {
+    settings: {
+      secureAccountCurrentBadge: 'Cet appareil',
+      secureAccountLastSeen: 'Dernière activité : {date}',
+      secureAccountLastSeenUnknown: 'L’heure de dernière activité n’est pas encore disponible.',
+      secureAccountRevokeButton: 'Révoquer',
+      secureAccountRevoking: 'Révocation...',
+      secureAccountRevokeConfirm: 'Révoquer cet appareil approuvé de votre compte sécurisé ?',
+      secureAccountRevokeSuccess: 'Appareil approuvé révoqué.',
+    },
+  },
+  it: {
+    settings: {
+      secureAccountCurrentBadge: 'Questo dispositivo',
+      secureAccountLastSeen: 'Ultima attività: {date}',
+      secureAccountLastSeenUnknown: 'L’orario dell’ultima attività non è ancora disponibile.',
+      secureAccountRevokeButton: 'Revoca',
+      secureAccountRevoking: 'Revoca in corso...',
+      secureAccountRevokeConfirm: 'Revocare questo dispositivo approvato dal tuo account sicuro?',
+      secureAccountRevokeSuccess: 'Dispositivo approvato revocato.',
+    },
+  },
+  pt: {
+    settings: {
+      secureAccountCurrentBadge: 'Este dispositivo',
+      secureAccountLastSeen: 'Última atividade: {date}',
+      secureAccountLastSeenUnknown: 'A hora da última atividade ainda não está disponível.',
+      secureAccountRevokeButton: 'Revogar',
+      secureAccountRevoking: 'A revogar...',
+      secureAccountRevokeConfirm: 'Revogar este dispositivo aprovado da tua conta segura?',
+      secureAccountRevokeSuccess: 'Dispositivo aprovado revogado.',
+    },
+  },
+  pl: {
+    settings: {
+      secureAccountCurrentBadge: 'To urządzenie',
+      secureAccountLastSeen: 'Ostatnia aktywność: {date}',
+      secureAccountLastSeenUnknown: 'Czas ostatniej aktywności nie jest jeszcze dostępny.',
+      secureAccountRevokeButton: 'Unieważnij',
+      secureAccountRevoking: 'Unieważnianie...',
+      secureAccountRevokeConfirm: 'Unieważnić to zatwierdzone urządzenie z bezpiecznego konta?',
+      secureAccountRevokeSuccess: 'Zatwierdzone urządzenie unieważnione.',
+    },
+  },
+  de: {
+    settings: {
+      secureAccountCurrentBadge: 'Dieses Gerät',
+      secureAccountLastSeen: 'Zuletzt gesehen: {date}',
+      secureAccountLastSeenUnknown: 'Die Zeit der letzten Aktivität ist noch nicht verfügbar.',
+      secureAccountRevokeButton: 'Entziehen',
+      secureAccountRevoking: 'Wird entzogen...',
+      secureAccountRevokeConfirm: 'Dieses freigegebene Gerät vom sicheren Konto entziehen?',
+      secureAccountRevokeSuccess: 'Freigegebenes Gerät entzogen.',
+    },
+  },
+}
+
+Object.entries(secureAccountDeviceManagementPatches).forEach(([locale, patch]) => {
+  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+})
+
+const secureAccountDeletionPatches = {
+  en: {
+    settings: {
+      secureAccountDeleteTitle: 'Delete Secure Account',
+      secureAccountDeleteCopy: 'This removes the secure account profile, approved devices, and linked secure access for the signed-in email. Your current local browser data is managed separately below.',
+      secureAccountDeletePlaceholder: 'Type your signed-in email to confirm',
+      secureAccountDeleteButton: 'Delete secure account',
+      secureAccountDeleting: 'Deleting...',
+      secureAccountDeleteConfirm: 'Delete this secure account now? This cannot be undone.',
+      secureAccountDeleteMismatch: 'Type the signed-in email exactly before deleting the secure account.',
+      secureAccountDeleteSuccess: 'Secure account deleted.',
+    },
+  },
+  ru: {
+    settings: {
+      secureAccountDeleteTitle: 'Удалить безопасный аккаунт',
+      secureAccountDeleteCopy: 'Это удалит профиль безопасного аккаунта, одобренные устройства и привязанный безопасный доступ для текущего email. Локальные данные браузера управляются отдельно ниже.',
+      secureAccountDeletePlaceholder: 'Введите email текущего входа для подтверждения',
+      secureAccountDeleteButton: 'Удалить безопасный аккаунт',
+      secureAccountDeleting: 'Удаление...',
+      secureAccountDeleteConfirm: 'Удалить этот безопасный аккаунт сейчас? Это действие нельзя отменить.',
+      secureAccountDeleteMismatch: 'Перед удалением введите email текущего входа точно.',
+      secureAccountDeleteSuccess: 'Безопасный аккаунт удалён.',
+    },
+  },
+  bg: {
+    settings: {
+      secureAccountDeleteTitle: 'Изтрий защитения акаунт',
+      secureAccountDeleteCopy: 'Това премахва профила на защитения акаунт, одобрените устройства и свързания защитен достъп за влезлия имейл. Локалните данни в браузъра се управляват отделно по-долу.',
+      secureAccountDeletePlaceholder: 'Напиши влезлия имейл за потвърждение',
+      secureAccountDeleteButton: 'Изтрий защитения акаунт',
+      secureAccountDeleting: 'Изтриване...',
+      secureAccountDeleteConfirm: 'Да изтрия ли този защитен акаунт сега? Действието е необратимо.',
+      secureAccountDeleteMismatch: 'Напиши точно влезлия имейл преди изтриване на защитения акаунт.',
+      secureAccountDeleteSuccess: 'Защитеният акаунт е изтрит.',
+    },
+  },
+  es: {
+    settings: {
+      secureAccountDeleteTitle: 'Eliminar cuenta segura',
+      secureAccountDeleteCopy: 'Esto elimina el perfil de cuenta segura, los dispositivos aprobados y el acceso seguro vinculado al email conectado. Los datos locales del navegador se gestionan aparte más abajo.',
+      secureAccountDeletePlaceholder: 'Escribe tu email conectado para confirmar',
+      secureAccountDeleteButton: 'Eliminar cuenta segura',
+      secureAccountDeleting: 'Eliminando...',
+      secureAccountDeleteConfirm: '¿Eliminar esta cuenta segura ahora? No se puede deshacer.',
+      secureAccountDeleteMismatch: 'Escribe exactamente el email conectado antes de eliminar la cuenta segura.',
+      secureAccountDeleteSuccess: 'Cuenta segura eliminada.',
+    },
+  },
+  fr: {
+    settings: {
+      secureAccountDeleteTitle: 'Supprimer le compte sécurisé',
+      secureAccountDeleteCopy: 'Cela supprime le profil du compte sécurisé, les appareils approuvés et l’accès sécurisé lié à l’email connecté. Les données locales du navigateur sont gérées séparément ci-dessous.',
+      secureAccountDeletePlaceholder: 'Saisissez votre email connecté pour confirmer',
+      secureAccountDeleteButton: 'Supprimer le compte sécurisé',
+      secureAccountDeleting: 'Suppression...',
+      secureAccountDeleteConfirm: 'Supprimer ce compte sécurisé maintenant ? Cette action est irréversible.',
+      secureAccountDeleteMismatch: 'Saisissez exactement l’email connecté avant de supprimer le compte sécurisé.',
+      secureAccountDeleteSuccess: 'Compte sécurisé supprimé.',
+    },
+  },
+  it: {
+    settings: {
+      secureAccountDeleteTitle: 'Elimina account sicuro',
+      secureAccountDeleteCopy: 'Questo rimuove il profilo dell’account sicuro, i dispositivi approvati e l’accesso sicuro collegato all’email connessa. I dati locali del browser sono gestiti separatamente qui sotto.',
+      secureAccountDeletePlaceholder: 'Digita la tua email connessa per confermare',
+      secureAccountDeleteButton: 'Elimina account sicuro',
+      secureAccountDeleting: 'Eliminazione...',
+      secureAccountDeleteConfirm: 'Eliminare adesso questo account sicuro? L’azione non può essere annullata.',
+      secureAccountDeleteMismatch: 'Digita esattamente l’email connessa prima di eliminare l’account sicuro.',
+      secureAccountDeleteSuccess: 'Account sicuro eliminato.',
+    },
+  },
+  pt: {
+    settings: {
+      secureAccountDeleteTitle: 'Eliminar conta segura',
+      secureAccountDeleteCopy: 'Isto remove o perfil da conta segura, os dispositivos aprovados e o acesso seguro ligado ao email autenticado. Os dados locais do browser são geridos em separado abaixo.',
+      secureAccountDeletePlaceholder: 'Escreve o email autenticado para confirmar',
+      secureAccountDeleteButton: 'Eliminar conta segura',
+      secureAccountDeleting: 'A eliminar...',
+      secureAccountDeleteConfirm: 'Eliminar esta conta segura agora? Esta ação não pode ser desfeita.',
+      secureAccountDeleteMismatch: 'Escreve exatamente o email autenticado antes de eliminar a conta segura.',
+      secureAccountDeleteSuccess: 'Conta segura eliminada.',
+    },
+  },
+  pl: {
+    settings: {
+      secureAccountDeleteTitle: 'Usuń bezpieczne konto',
+      secureAccountDeleteCopy: 'To usuwa profil bezpiecznego konta, zatwierdzone urządzenia i powiązany bezpieczny dostęp dla zalogowanego emaila. Lokalne dane przeglądarki są zarządzane osobno poniżej.',
+      secureAccountDeletePlaceholder: 'Wpisz zalogowany email, aby potwierdzić',
+      secureAccountDeleteButton: 'Usuń bezpieczne konto',
+      secureAccountDeleting: 'Usuwanie...',
+      secureAccountDeleteConfirm: 'Usunąć to bezpieczne konto teraz? Tego działania nie można cofnąć.',
+      secureAccountDeleteMismatch: 'Przed usunięciem bezpiecznego konta wpisz dokładnie zalogowany email.',
+      secureAccountDeleteSuccess: 'Bezpieczne konto usunięte.',
+    },
+  },
+  de: {
+    settings: {
+      secureAccountDeleteTitle: 'Sicheres Konto löschen',
+      secureAccountDeleteCopy: 'Dadurch werden das sichere Kontoprofil, die freigegebenen Geräte und der verknüpfte sichere Zugang für die angemeldete E-Mail entfernt. Lokale Browserdaten werden weiter unten separat verwaltet.',
+      secureAccountDeletePlaceholder: 'Gib deine angemeldete E-Mail zur Bestätigung ein',
+      secureAccountDeleteButton: 'Sicheres Konto löschen',
+      secureAccountDeleting: 'Wird gelöscht...',
+      secureAccountDeleteConfirm: 'Dieses sichere Konto jetzt löschen? Das kann nicht rückgängig gemacht werden.',
+      secureAccountDeleteMismatch: 'Gib vor dem Löschen des sicheren Kontos genau die angemeldete E-Mail ein.',
+      secureAccountDeleteSuccess: 'Sicheres Konto gelöscht.',
+    },
+  },
+}
+
+Object.entries(secureAccountDeletionPatches).forEach(([locale, patch]) => {
+  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+})
+
 export default localizationPatches
 
 
