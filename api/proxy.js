@@ -1,39 +1,108 @@
-// Vercel serverless function — AI proxy for verified JobSensei supporters
+// Vercel serverless function â€” AI proxy for verified JobSensei supporters
 // Validates BMAC token, then forwards AI requests to DeepSeek using the server-side API key
 // Environment variables required: JWT_SECRET, DEEPSEEK_API_KEY
 
-import crypto from 'node:crypto'
+import {
+  ACTIVE_PLAN_STATUSES,
+  authenticateSupabaseUser,
+  createSupabaseAdminClient,
+  getRequestDeviceId,
+  looksLikeJwt,
+  readBearerToken,
+  setDefaultCorsHeaders,
+  verifyLegacyAccessToken,
+} from './_lib/authBridge.js'
 
-function verifyToken(token) {
-  try {
-    const { data, sig } = JSON.parse(Buffer.from(token, 'base64').toString())
-    const hmac = crypto.createHmac('sha256', process.env.JWT_SECRET)
-    hmac.update(data)
-    const expected = hmac.digest('hex')
-    if (expected !== sig) return null
-    const payload = JSON.parse(data)
-    if (payload.exp < Date.now()) return null
-    return payload
-  } catch {
-    return null
+async function authorizeProxyRequest(req) {
+  const token = readBearerToken(req)
+  if (!token) {
+    return { ok: false, status: 401, error: 'Authorization required' }
+  }
+
+  const legacyPayload = verifyLegacyAccessToken(token)
+  if (legacyPayload) {
+    return {
+      ok: true,
+      authMode: 'legacy',
+      legacyPayload,
+    }
+  }
+
+  if (!looksLikeJwt(token)) {
+    return {
+      ok: false,
+      status: 401,
+      error: 'Invalid or expired access token. Please re-verify your BMAC membership in Settings.',
+    }
+  }
+
+  const { user, error } = await authenticateSupabaseUser(req)
+  if (!user) {
+    return { ok: false, status: 401, error }
+  }
+
+  const deviceId = getRequestDeviceId(req)
+  if (!deviceId) {
+    return { ok: false, status: 400, error: 'A secure device id is required for account-based access.' }
+  }
+
+  const supabase = createSupabaseAdminClient()
+  const [{ data: account, error: accountError }, { data: device, error: deviceError }] = await Promise.all([
+    supabase
+      .from('accounts')
+      .select('plan_status')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('device_registrations')
+      .select('id, approved_at, revoked_at')
+      .eq('user_id', user.id)
+      .eq('device_id', deviceId)
+      .maybeSingle(),
+  ])
+
+  if (accountError || deviceError) {
+    console.error('proxy secure auth lookup failed:', accountError || deviceError)
+    return { ok: false, status: 500, error: 'Unable to validate secure account access right now.' }
+  }
+
+  if (!account || !ACTIVE_PLAN_STATUSES.has(account.plan_status)) {
+    return { ok: false, status: 403, error: 'Your secure JobSensei plan is not active on this account.' }
+  }
+
+  if (!device || !device.approved_at || device.revoked_at) {
+    return { ok: false, status: 403, error: 'This device is not approved for secure JobSensei access yet.' }
+  }
+
+  supabase
+    .from('device_registrations')
+    .update({ last_seen_at: new Date().toISOString() })
+    .eq('id', device.id)
+    .then(() => {})
+    .catch(updateError => {
+      console.error('proxy device last_seen update failed:', updateError)
+    })
+
+  return {
+    ok: true,
+    authMode: 'secure_account',
+    userId: user.id,
+    deviceId,
   }
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  setDefaultCorsHeaders(res)
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  // Validate token from Authorization header
-  const authHeader = req.headers['authorization'] || ''
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
-  if (!token) return res.status(401).json({ error: 'Authorization required' })
-
-  const payload = verifyToken(token)
-  if (!payload) return res.status(401).json({ error: 'Invalid or expired access token. Please re-verify your BMAC membership in Settings.' })
+  const auth = await authorizeProxyRequest(req)
+  if (!auth.ok) {
+    return res.status(auth.status).json({
+      error: auth.error,
+    })
+  }
 
   if (!process.env.DEEPSEEK_API_KEY || !process.env.JWT_SECRET) {
     return res.status(500).json({ error: 'Server configuration error' })
@@ -71,7 +140,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ content: data.choices[0].message.content })
     }
 
-    // Stream SSE chunks back to client
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache, no-transform')
     res.setHeader('X-Accel-Buffering', 'no')

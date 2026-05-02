@@ -1,22 +1,16 @@
-// Vercel serverless function — verify supporter access code and issue a signed token
+// Vercel serverless function â€” verify supporter access code and issue a signed token
 // Environment variables required: JWT_SECRET, ACCESS_CODES (comma-separated list of valid codes)
 
-import crypto from 'node:crypto'
-
-function signToken(payload) {
-  const data = JSON.stringify(payload)
-  const hmac = crypto.createHmac('sha256', process.env.JWT_SECRET)
-  hmac.update(data)
-  const sig = hmac.digest('hex')
-  return Buffer.from(JSON.stringify({ data, sig })).toString('base64')
-}
+import {
+  getLegacyAccessCodes,
+  setDefaultCorsHeaders,
+  signLegacyAccessToken,
+} from './_lib/authBridge.js'
 
 export default async function handler(req, res) {
-  // Always return JSON — never let Vercel return an HTML error page
+  // Always return JSON â€” never let Vercel return an HTML error page
   try {
-    res.setHeader('Access-Control-Allow-Origin', '*')
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    setDefaultCorsHeaders(res)
 
     if (req.method === 'OPTIONS') return res.status(200).end()
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -33,11 +27,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Access code is required' })
     }
 
-    const validCodes = process.env.ACCESS_CODES
-      .split(',')
-      .map(c => c.trim().toLowerCase())
-      .filter(Boolean)
-
+    const validCodes = getLegacyAccessCodes()
     const input = code.trim().toLowerCase()
 
     if (!validCodes.includes(input)) {
@@ -46,10 +36,8 @@ export default async function handler(req, res) {
       })
     }
 
-    // Issue a token valid for 365 days
-    const token = signToken({
+    const token = signLegacyAccessToken({
       code: input,
-      exp: Date.now() + 365 * 24 * 60 * 60 * 1000,
     })
 
     return res.status(200).json({ token })

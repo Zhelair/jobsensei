@@ -124,31 +124,36 @@ This should replace the current `JWT_SECRET + ACCESS_CODES` gate for primary acc
 
 ## Migration path from the current system
 
-### Phase 1. Real auth without breaking current access
+Keep the current Vercel secret flow working while the secure account layer is added next to it.
+
+### Batch 1. Bridge scaffolding with zero lockout risk
+
+- Keep `JWT_SECRET`, `ACCESS_CODES`, `/api/verify-member`, and the current `/api/proxy` path intact.
+- Add shared auth helper utilities so the legacy token logic has one source of truth.
+- Add optional Supabase bridge config alongside the existing secrets.
+- Add the initial Supabase schema for `accounts`, `device_registrations`, and `plan_grants`.
+- Expose a small server status endpoint so the frontend can detect whether secure accounts are enabled.
+
+### Batch 2. Optional account linking
 
 - Add Supabase Auth UI and session handling.
-- Keep current BMAC access temporarily as a migration bridge.
-- Link an existing BMAC code to a real user account after login.
+- Keep current BMAC access fully usable for everyone already in the app.
+- Let an existing legacy access holder link that access to a real account after sign-in.
+- Register the current browser as a named device during linking.
 
-### Phase 2. Server-side ownership
+### Batch 3. Dual-path protected access
 
-- Change `/api/proxy` to require:
-  - authenticated user
-  - active plan
-  - approved device
+- Update `/api/proxy` to accept either:
+  - the legacy BMAC token, or
+  - a Supabase session + approved `device_id`
+- Enforce active plan + approved device for the Supabase path.
+- Keep the legacy path alive temporarily so nobody is forced into a same-day migration.
 
-- Stop trusting only the locally stored BMAC token.
+### Later cutover
 
-### Phase 3. Device enforcement
-
-- Add `device_registrations`
-- enforce max 2 approved devices
-- add UI to rename or revoke devices
-
-### Phase 4. Clean retirement of legacy access
-
-- remove code-only access as the primary login path
-- keep admin/manual grant tools for support cases
+- Require secure accounts for new sessions or new devices.
+- Retire code-only access as the primary login path.
+- Keep admin/manual grant tooling for support and promo cases.
 
 ## What should stay local
 
