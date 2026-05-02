@@ -5,6 +5,7 @@ import {
   createSupabaseAdminClient,
   getRequestDeviceId,
   hashValue,
+  logSecureAuditEvent,
   setDefaultCorsHeaders,
   verifyLegacyAccessToken,
 } from './_lib/authBridge.js'
@@ -30,7 +31,7 @@ function toDeviceSummary(device) {
 }
 
 export default async function handler(req, res) {
-  setDefaultCorsHeaders(res)
+  setDefaultCorsHeaders(req, res)
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -116,6 +117,16 @@ export default async function handler(req, res) {
       console.error('link-account device upsert failed:', deviceError)
       return res.status(500).json({ error: 'Access linked, but the device could not be registered safely.' })
     }
+
+    await logSecureAuditEvent({
+      userId: user.id,
+      deviceId,
+      action: matchingDevice ? 'device_relinked' : 'account_linked',
+      metadata: {
+        planSource: 'legacy_bridge',
+        deviceLabel: device.device_label,
+      },
+    })
 
     return res.status(200).json({
       account: {

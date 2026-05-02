@@ -2,6 +2,7 @@ import {
   authenticateSupabaseUser,
   createSupabaseAdminClient,
   getRequestDeviceId,
+  logSecureAuditEvent,
   setDefaultCorsHeaders,
 } from './_lib/authBridge.js'
 
@@ -18,7 +19,7 @@ function toDeviceSummary(device) {
 }
 
 export default async function handler(req, res) {
-  setDefaultCorsHeaders(res)
+  setDefaultCorsHeaders(req, res)
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -85,6 +86,15 @@ export default async function handler(req, res) {
       console.error('revoke-device refresh failed:', devicesError)
       return res.status(500).json({ error: 'Device revoked, but the refreshed list could not be loaded.' })
     }
+
+    await logSecureAuditEvent({
+      userId: user.id,
+      deviceId: targetDeviceId,
+      action: 'device_revoked',
+      metadata: {
+        currentDeviceId,
+      },
+    })
 
     return res.status(200).json({
       devices: (devices || []).map(toDeviceSummary),
