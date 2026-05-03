@@ -5,6 +5,7 @@ import {
   createSupabaseAdminClient,
   getRequestDeviceId,
   hashValue,
+  isLegacyAccessCodeValid,
   logSecureAuditEvent,
   setDefaultCorsHeaders,
   verifyLegacyAccessToken,
@@ -55,6 +56,12 @@ export default async function handler(req, res) {
 
   if (!linkedCode) {
     return res.status(400).json({ error: 'A current JobSensei access token or access code is required before linking.' })
+  }
+
+  if (!legacyPayload && !isLegacyAccessCodeValid(linkedCode)) {
+    return res.status(403).json({
+      error: 'Your current JobSensei access code could not be verified. Re-activate access first, then link this account.',
+    })
   }
 
   try {
