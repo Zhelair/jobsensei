@@ -73,6 +73,7 @@ export function AuthProvider({ children }) {
     loading: true,
     legacyAccessEnabled: false,
     secureAccountsEnabled: false,
+    customAuthEmailsEnabled: false,
     deviceLimit: 2,
     authMode: 'legacy_only',
     supabase: null,
@@ -110,6 +111,7 @@ export function AuthProvider({ children }) {
           loading: false,
           legacyAccessEnabled: Boolean(payload.legacyAccessEnabled),
           secureAccountsEnabled: Boolean(payload.secureAccountsEnabled),
+          customAuthEmailsEnabled: Boolean(payload.customAuthEmailsEnabled),
           deviceLimit: Number(payload.deviceLimit || 2),
           authMode: payload.authMode || 'legacy_only',
           supabase: payload.supabase || null,
@@ -220,6 +222,7 @@ export function AuthProvider({ children }) {
       const response = await fetch('/api/account-status', {
         headers: {
           Authorization: `Bearer ${nextAccessToken}`,
+          'X-Device-Id': deviceId,
         },
       })
       const payload = await parseJsonSafe(response)
@@ -231,7 +234,11 @@ export function AuthProvider({ children }) {
       setSecureAccount(payload.account || null)
       setSecureDevices(payload.devices || [])
       setDeviceReplacementCooldown(payload.deviceReplacementCooldown || null)
-      setAccountError('')
+      setAccountError(
+        payload.deviceApproval && payload.deviceApproval.ok === false
+          ? payload.deviceApproval.message || 'This device is not approved for secure JobSensei access yet.'
+          : '',
+      )
       return payload
     } catch (err) {
       setAccountError(err.message || 'Unable to load secure account status.')
@@ -258,14 +265,35 @@ export function AuthProvider({ children }) {
 
     setSendingMagicLink(true)
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: getMagicLinkRedirectUrl(),
-        },
-      })
+      const redirectTo = getMagicLinkRedirectUrl()
 
-      if (error) throw error
+      if (bridgeStatus.customAuthEmailsEnabled) {
+        const response = await fetch('/api/send-magic-link', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            redirectTo,
+          }),
+        })
+        const payload = await parseJsonSafe(response)
+
+        if (!response.ok) {
+          throw new Error(payload.error || 'Unable to send a secure sign-in link right now.')
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: redirectTo,
+          },
+        })
+
+        if (error) throw error
+      }
+
       setMagicLinkSentTo(email)
       setStatusError('')
     } finally {

@@ -3,7 +3,9 @@ import {
   SECURE_DEVICE_LIMIT,
   authenticateSupabaseUser,
   createSupabaseAdminClient,
+  ensureSecureAccountAccess,
   getDeviceReplacementCooldown,
+  getRequestDeviceId,
   setDefaultCorsHeaders,
 } from './_lib/authBridge.js'
 
@@ -43,6 +45,15 @@ export default async function handler(req, res) {
 
   try {
     const supabase = createSupabaseAdminClient()
+    const deviceId = getRequestDeviceId(req)
+
+    const accessSync = await ensureSecureAccountAccess({
+      supabase,
+      user,
+      deviceId,
+      deviceName: 'Browser device',
+      deviceLabel: 'Current browser',
+    })
 
     const [{ data: account, error: accountError }, { data: devices, error: devicesError }] = await Promise.all([
       supabase
@@ -71,6 +82,8 @@ export default async function handler(req, res) {
       devices: (devices || []).map(toDeviceSummary),
       deviceLimit: SECURE_DEVICE_LIMIT,
       deviceReplacementCooldown: getDeviceReplacementCooldown(devices || []),
+      claimedGrantCount: accessSync.claimedGrantCount,
+      deviceApproval: accessSync.deviceApproval,
     })
   } catch (err) {
     console.error('account-status failed:', err)
