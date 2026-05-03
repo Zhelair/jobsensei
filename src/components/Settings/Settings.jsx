@@ -18,7 +18,7 @@ export default function Settings() {
   } = useAI()
   const {
     secureReady, secureAccountsEnabled, secureUser, secureAccount, secureDevices,
-    deviceId, deviceLimit, statusError, accountError, sendingMagicLink,
+    deviceId, deviceLimit, deviceReplacementCooldown, statusError, accountError, sendingMagicLink,
     magicLinkSentTo, linkingAccess, loadingAccount, sendMagicLink, signOutSecure,
     refreshSecureAccount, linkCurrentAccess, revokeSecureDevice, revokingDeviceId,
     deleteSecureAccount, deletingAccount, exportSecureAccountData, exportingAccountData,
@@ -581,6 +581,11 @@ export default function Settings() {
                   <div className="text-slate-300 text-xs">
                     {t('settings.secureAccountDevicesSummary', { count: approvedSecureDevices.length, limit: deviceLimit })}
                   </div>
+                  {deviceReplacementCooldown?.active && (
+                    <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-yellow-200 text-[11px] leading-relaxed">
+                      New-device approvals unlock on {new Date(deviceReplacementCooldown.endsAt).toLocaleString()}.
+                    </div>
+                  )}
                   <div className="space-y-2">
                     {approvedSecureDevices.map(device => (
                       <div key={device.id} className="rounded-xl border border-navy-700 bg-navy-900/60 px-3 py-2">

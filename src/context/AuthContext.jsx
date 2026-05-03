@@ -3,6 +3,46 @@ import { createClient } from '@supabase/supabase-js'
 
 const AuthContext = createContext(null)
 
+function normalizeRedirectUrl(value) {
+  const trimmed = String(value || '').trim()
+  if (!trimmed) return ''
+
+  try {
+    const url = new URL(trimmed, window.location.origin)
+    url.hash = ''
+    return url.toString()
+  } catch {
+    return ''
+  }
+}
+
+function getMagicLinkRedirectUrl() {
+  const configuredUrl = (
+    import.meta.env.VITE_SITE_URL ||
+    import.meta.env.VITE_PUBLIC_SITE_URL ||
+    import.meta.env.VITE_APP_URL ||
+    ''
+  )
+  const currentUrl = `${window.location.origin}${window.location.pathname}`
+  const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  const preferredUrl = isLocalhost ? currentUrl : (configuredUrl || currentUrl)
+
+  return normalizeRedirectUrl(preferredUrl) || window.location.origin
+}
+
+function readAuthRedirectParams() {
+  const hash = window.location.hash.startsWith('#')
+    ? window.location.hash.slice(1)
+    : window.location.hash
+
+  return new URLSearchParams(hash)
+}
+
+function clearAuthRedirectHash() {
+  const nextUrl = `${window.location.pathname}${window.location.search}`
+  window.history.replaceState({}, document.title, nextUrl)
+}
+
 function readOrCreateDeviceId() {
   const saved = localStorage.getItem('js_device_id')
   if (saved) return saved
@@ -43,6 +83,7 @@ export function AuthProvider({ children }) {
   const [secureUser, setSecureUser] = useState(null)
   const [secureAccount, setSecureAccount] = useState(null)
   const [secureDevices, setSecureDevices] = useState([])
+  const [deviceReplacementCooldown, setDeviceReplacementCooldown] = useState(null)
   const [loadingAccount, setLoadingAccount] = useState(false)
   const [accountError, setAccountError] = useState('')
   const [sendingMagicLink, setSendingMagicLink] = useState(false)
@@ -93,6 +134,7 @@ export function AuthProvider({ children }) {
       setSupabase(null)
       setSecureSession(null)
       setSecureUser(null)
+      setDeviceReplacementCooldown(null)
       return undefined
     }
 
@@ -106,10 +148,46 @@ export function AuthProvider({ children }) {
     })
     setSupabase(client)
 
-    client.auth.getSession().then(({ data }) => {
+    async function bootstrapSession() {
+      const redirectParams = readAuthRedirectParams()
+      const accessToken = redirectParams.get('access_token')
+      const refreshToken = redirectParams.get('refresh_token')
+      const redirectError = redirectParams.get('error_description') || redirectParams.get('error')
+
+      if (redirectError) {
+        setStatusError(redirectError)
+        clearAuthRedirectHash()
+      }
+
+      if (accessToken && refreshToken) {
+        const { data, error } = await client.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        })
+
+        if (!active) return
+
+        if (error) {
+          setStatusError(error.message || 'Unable to finish secure sign-in from that magic link.')
+        } else {
+          setSecureSession(data.session || null)
+          setSecureUser(data.session?.user || null)
+          setStatusError('')
+        }
+
+        clearAuthRedirectHash()
+        return
+      }
+
+      const { data } = await client.auth.getSession()
       if (!active) return
       setSecureSession(data.session || null)
       setSecureUser(data.session?.user || null)
+    }
+
+    bootstrapSession().catch(err => {
+      if (!active) return
+      setStatusError(err.message || 'Unable to finish secure sign-in right now.')
     })
 
     const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
@@ -119,6 +197,7 @@ export function AuthProvider({ children }) {
       if (!session) {
         setSecureAccount(null)
         setSecureDevices([])
+        setDeviceReplacementCooldown(null)
       }
     })
 
@@ -132,6 +211,7 @@ export function AuthProvider({ children }) {
     if (!nextAccessToken) {
       setSecureAccount(null)
       setSecureDevices([])
+      setDeviceReplacementCooldown(null)
       return null
     }
 
@@ -150,6 +230,7 @@ export function AuthProvider({ children }) {
 
       setSecureAccount(payload.account || null)
       setSecureDevices(payload.devices || [])
+      setDeviceReplacementCooldown(payload.deviceReplacementCooldown || null)
       setAccountError('')
       return payload
     } catch (err) {
@@ -180,7 +261,7 @@ export function AuthProvider({ children }) {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: getMagicLinkRedirectUrl(),
         },
       })
 
@@ -295,6 +376,7 @@ export function AuthProvider({ children }) {
       setSecureUser(null)
       setSecureAccount(null)
       setSecureDevices([])
+      setDeviceReplacementCooldown(null)
       setMagicLinkSentTo('')
 
       return payload
@@ -336,6 +418,7 @@ export function AuthProvider({ children }) {
     secureUser,
     secureAccount,
     secureDevices,
+    deviceReplacementCooldown,
     loadingAccount,
     accountError,
     sendingMagicLink,

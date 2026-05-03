@@ -3,6 +3,7 @@ import {
   SECURE_DEVICE_LIMIT,
   authenticateSupabaseUser,
   createSupabaseAdminClient,
+  getDeviceReplacementCooldown,
   setDefaultCorsHeaders,
 } from './_lib/authBridge.js'
 
@@ -69,6 +70,7 @@ export default async function handler(req, res) {
       account: toAccountSummary(account),
       devices: (devices || []).map(toDeviceSummary),
       deviceLimit: SECURE_DEVICE_LIMIT,
+      deviceReplacementCooldown: getDeviceReplacementCooldown(devices || []),
     })
   } catch (err) {
     console.error('account-status failed:', err)
