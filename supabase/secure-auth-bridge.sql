@@ -64,37 +64,121 @@ alter table public.plan_grants enable row level security;
 alter table public.api_usage_events enable row level security;
 alter table public.account_audit_events enable row level security;
 
-create policy if not exists "accounts_select_own"
-  on public.accounts
-  for select
-  using (auth.uid() = user_id);
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'accounts'
+      and policyname = 'accounts_select_own'
+  ) then
+    create policy "accounts_select_own"
+      on public.accounts
+      for select
+      using (auth.uid() = user_id);
+  end if;
+end
+$$;
 
-create policy if not exists "accounts_update_own"
-  on public.accounts
-  for update
-  using (auth.uid() = user_id);
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'accounts'
+      and policyname = 'accounts_update_own'
+  ) then
+    create policy "accounts_update_own"
+      on public.accounts
+      for update
+      using (auth.uid() = user_id);
+  end if;
+end
+$$;
 
-create policy if not exists "devices_select_own"
-  on public.device_registrations
-  for select
-  using (auth.uid() = user_id);
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'device_registrations'
+      and policyname = 'devices_select_own'
+  ) then
+    create policy "devices_select_own"
+      on public.device_registrations
+      for select
+      using (auth.uid() = user_id);
+  end if;
+end
+$$;
 
-create policy if not exists "devices_update_own"
-  on public.device_registrations
-  for update
-  using (auth.uid() = user_id);
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'device_registrations'
+      and policyname = 'devices_update_own'
+  ) then
+    create policy "devices_update_own"
+      on public.device_registrations
+      for update
+      using (auth.uid() = user_id);
+  end if;
+end
+$$;
 
-create policy if not exists "plans_select_own"
-  on public.plan_grants
-  for select
-  using (auth.uid() = user_id);
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'plan_grants'
+      and policyname = 'plans_select_own'
+  ) then
+    create policy "plans_select_own"
+      on public.plan_grants
+      for select
+      using (auth.uid() = user_id);
+  end if;
+end
+$$;
 
-create policy if not exists "usage_select_own"
-  on public.api_usage_events
-  for select
-  using (auth.uid() = user_id);
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'api_usage_events'
+      and policyname = 'usage_select_own'
+  ) then
+    create policy "usage_select_own"
+      on public.api_usage_events
+      for select
+      using (auth.uid() = user_id);
+  end if;
+end
+$$;
 
-create policy if not exists "audit_select_own"
-  on public.account_audit_events
-  for select
-  using (auth.uid() = user_id);
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'account_audit_events'
+      and policyname = 'audit_select_own'
+  ) then
+    create policy "audit_select_own"
+      on public.account_audit_events
+      for select
+      using (auth.uid() = user_id);
+  end if;
+end
+$$;

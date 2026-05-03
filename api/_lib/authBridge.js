@@ -67,6 +67,12 @@ export function getLegacyAccessCodes() {
     .filter(Boolean)
 }
 
+export function isLegacyAccessCodeValid(code) {
+  const normalizedCode = String(code || '').trim().toLowerCase()
+  if (!normalizedCode) return false
+  return getLegacyAccessCodes().includes(normalizedCode)
+}
+
 export function signLegacyAccessToken(payload, expiresInMs = LEGACY_TOKEN_TTL_MS) {
   if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET is required to sign legacy access tokens.')
