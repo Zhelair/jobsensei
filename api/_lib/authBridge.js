@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 const LEGACY_TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000
 
 export const SECURE_DEVICE_LIMIT = 2
+export const DEVICE_REPLACEMENT_COOLDOWN_MS = 48 * 60 * 60 * 1000
 export const ACTIVE_PLAN_STATUSES = new Set(['active', 'grace'])
 
 function getAllowedCorsOrigins() {
@@ -170,6 +171,40 @@ export function buildBridgeStatus() {
           anonKey: process.env.SUPABASE_ANON_KEY,
         }
       : null,
+  }
+}
+
+export function getDeviceReplacementCooldown(devices = [], nextDeviceId = '') {
+  const now = Date.now()
+  const recentRevocations = devices
+    .filter(device => device?.revoked_at && device?.device_id !== nextDeviceId)
+    .map(device => {
+      const revokedAtMs = new Date(device.revoked_at).getTime()
+      return Number.isFinite(revokedAtMs)
+        ? {
+            deviceId: device.device_id,
+            revokedAt: device.revoked_at,
+            cooldownEndsAt: new Date(revokedAtMs + DEVICE_REPLACEMENT_COOLDOWN_MS).toISOString(),
+            remainingMs: revokedAtMs + DEVICE_REPLACEMENT_COOLDOWN_MS - now,
+          }
+        : null
+    })
+    .filter(Boolean)
+    .filter(device => device.remainingMs > 0)
+    .sort((a, b) => b.remainingMs - a.remainingMs)
+
+  if (!recentRevocations.length) return null
+
+  const nextEligibleAt = recentRevocations
+    .map(device => device.cooldownEndsAt)
+    .sort()[0]
+  const remainingMs = new Date(nextEligibleAt).getTime() - now
+
+  return {
+    active: remainingMs > 0,
+    endsAt: nextEligibleAt,
+    remainingMs,
+    remainingHours: Math.ceil(remainingMs / (60 * 60 * 1000)),
   }
 }
 

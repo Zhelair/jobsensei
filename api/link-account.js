@@ -1,9 +1,11 @@
 import {
   ACTIVE_PLAN_STATUSES,
+  DEVICE_REPLACEMENT_COOLDOWN_MS,
   SECURE_DEVICE_LIMIT,
   authenticateSupabaseUser,
   createSupabaseAdminClient,
   getRequestDeviceId,
+  getDeviceReplacementCooldown,
   hashValue,
   isLegacyAccessCodeValid,
   logSecureAuditEvent,
@@ -80,10 +82,20 @@ export default async function handler(req, res) {
 
     const approvedDevices = (existingDevices || []).filter(device => !device.revoked_at)
     const matchingDevice = approvedDevices.find(device => device.device_id === deviceId)
+    const priorDeviceRecord = (existingDevices || []).find(device => device.device_id === deviceId)
+    const replacementCooldown = getDeviceReplacementCooldown(existingDevices || [], deviceId)
 
     if (!matchingDevice && approvedDevices.length >= SECURE_DEVICE_LIMIT) {
       return res.status(409).json({
         error: `This account already has ${SECURE_DEVICE_LIMIT} approved devices. Revoke one before linking a new browser.`,
+      })
+    }
+
+    if (!matchingDevice && !priorDeviceRecord && replacementCooldown?.active) {
+      return res.status(429).json({
+        error: `You can link a new device ${Math.max(1, replacementCooldown.remainingHours)} hour(s) after the most recent device revoke.`,
+        cooldownEndsAt: replacementCooldown.endsAt,
+        cooldownMs: DEVICE_REPLACEMENT_COOLDOWN_MS,
       })
     }
 
