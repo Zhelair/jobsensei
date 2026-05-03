@@ -6,6 +6,7 @@ import {
   ACTIVE_PLAN_STATUSES,
   authenticateSupabaseUser,
   createSupabaseAdminClient,
+  ensureSecureAccountAccess,
   getRequestDeviceId,
   looksLikeJwt,
   readBearerToken,
@@ -49,41 +50,39 @@ async function authorizeProxyRequest(req) {
   }
 
   const supabase = createSupabaseAdminClient()
-  const [{ data: account, error: accountError }, { data: device, error: deviceError }] = await Promise.all([
-    supabase
-      .from('accounts')
-      .select('plan_status')
-      .eq('user_id', user.id)
-      .maybeSingle(),
-    supabase
-      .from('device_registrations')
-      .select('id, approved_at, revoked_at')
-      .eq('user_id', user.id)
-      .eq('device_id', deviceId)
-      .maybeSingle(),
-  ])
+  let accessSync
 
-  if (accountError || deviceError) {
-    console.error('proxy secure auth lookup failed:', accountError || deviceError)
+  try {
+    accessSync = await ensureSecureAccountAccess({
+      supabase,
+      user,
+      deviceId,
+      deviceName: 'Browser device',
+      deviceLabel: 'Current browser',
+    })
+  } catch (lookupError) {
+    console.error('proxy secure auth lookup failed:', lookupError)
     return { ok: false, status: 500, error: 'Unable to validate secure account access right now.' }
   }
+
+  const account = accessSync.account
+  const device = accessSync.devices.find(candidate => candidate.device_id === deviceId)
 
   if (!account || !ACTIVE_PLAN_STATUSES.has(account.plan_status)) {
     return { ok: false, status: 403, error: 'Your secure JobSensei plan is not active on this account.' }
   }
 
+  if (accessSync.deviceApproval && !accessSync.deviceApproval.ok) {
+    return {
+      ok: false,
+      status: accessSync.deviceApproval.reason === 'cooldown' ? 429 : 403,
+      error: accessSync.deviceApproval.message,
+    }
+  }
+
   if (!device || !device.approved_at || device.revoked_at) {
     return { ok: false, status: 403, error: 'This device is not approved for secure JobSensei access yet.' }
   }
-
-  supabase
-    .from('device_registrations')
-    .update({ last_seen_at: new Date().toISOString() })
-    .eq('id', device.id)
-    .then(() => {})
-    .catch(updateError => {
-      console.error('proxy device last_seen update failed:', updateError)
-    })
 
   return {
     ok: true,

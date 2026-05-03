@@ -30,12 +30,15 @@ create table if not exists public.device_registrations (
 
 create table if not exists public.plan_grants (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
   grant_type text not null,
   external_ref text,
+  claim_email text,
   status text not null default 'active' check (status in ('active', 'expired', 'revoked')),
   metadata jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default timezone('utc', now())
+  claimed_at timestamptz,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public.api_usage_events (
@@ -57,6 +60,17 @@ create table if not exists public.account_audit_events (
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.plan_grants alter column user_id drop not null;
+alter table public.plan_grants add column if not exists claim_email text;
+alter table public.plan_grants add column if not exists claimed_at timestamptz;
+alter table public.plan_grants add column if not exists updated_at timestamptz not null default timezone('utc', now());
+
+create index if not exists plan_grants_claim_email_idx on public.plan_grants (claim_email);
+create index if not exists plan_grants_user_id_idx on public.plan_grants (user_id);
+create unique index if not exists plan_grants_external_ref_idx
+  on public.plan_grants (grant_type, external_ref)
+  where external_ref is not null;
 
 alter table public.accounts enable row level security;
 alter table public.device_registrations enable row level security;

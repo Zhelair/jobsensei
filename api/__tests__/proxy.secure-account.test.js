@@ -40,30 +40,7 @@ describe('proxy secure-account mode', () => {
   })
 
   it('does not require JWT_SECRET for secure-account traffic', async () => {
-    const maybeSingle = vi.fn()
-      .mockResolvedValueOnce({ data: { plan_status: 'active' }, error: null })
-      .mockResolvedValueOnce({ data: { id: 'device-row', approved_at: '2026-05-03T12:00:00Z', revoked_at: null }, error: null })
-
-    const update = vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue({ error: null }),
-    })
-
     const from = vi.fn(table => {
-      if (table === 'accounts' || table === 'device_registrations') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle,
-              }),
-              maybeSingle,
-            }),
-            update,
-          }),
-          update,
-        }
-      }
-
       if (table === 'api_usage_events') {
         return {
           insert: vi.fn().mockResolvedValue({ error: null }),
@@ -78,6 +55,11 @@ describe('proxy secure-account mode', () => {
       authenticateSupabaseUser: vi.fn().mockResolvedValue({
         user: { id: 'user-1', email: 'person@example.com' },
         error: null,
+      }),
+      ensureSecureAccountAccess: vi.fn().mockResolvedValue({
+        account: { plan_status: 'active' },
+        devices: [{ id: 'device-row', device_id: 'device-1', approved_at: '2026-05-03T12:00:00Z', revoked_at: null }],
+        deviceApproval: { ok: true },
       }),
       createSupabaseAdminClient: vi.fn().mockReturnValue({ from }),
       getRequestDeviceId: vi.fn().mockReturnValue('device-1'),
