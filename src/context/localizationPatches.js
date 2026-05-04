@@ -8229,6 +8229,757 @@ Object.entries(secureAccountExportPatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
 
+const localizationCompletionPatches = {
+  ru: {
+    guide: {
+      getStarted: 'С чего начать',
+      startTour: 'Запустить тур',
+      howThisPageWorks: 'Как устроена эта страница',
+      footer: {
+        sensei: 'Sensei = поддержка и направление',
+        drill: 'Drill = жёсткая, честная практика',
+      },
+      today: {
+        title: 'Сегодня',
+        desc: 'Ваш ежедневный центр управления. Выберите одну активную заявку, и JobSensei покажет следующий полезный шаг.',
+        detail: {
+          activeFocus: 'Активный фокус — это роль, которую JobSensei ведёт прямо сейчас.',
+          progress: 'Прогресс workspace показывает 6-шаговый путь: вакансия, исследование, адаптация, прогноз, mock-интервью, follow-up.',
+          workspace: 'Откройте активный workspace, чтобы работать с JD, research, заметками и подготовкой.',
+        },
+      },
+      applications: {
+        title: 'Заявки',
+        desc: 'Ваша CRM для поиска работы. У каждой роли свой workspace, где вместе живут JD, research, заметки, инструменты и follow-up.',
+        detail: {
+          kanban: 'Kanban отслеживает этапы: Researching, Applied, Interviewing, Offer и Rejected.',
+          workspace: 'Workspace хранит JD, research, заметки для подготовки и шпаргалку по одной роли.',
+          offers: 'Offers помогает сравнивать роли по зарплате, росту, культуре, work-life balance, бенефитам и гибкости.',
+        },
+      },
+      dashboard: {
+        title: 'Дашборд',
+        desc: 'Ваша главная панель. Здесь видны прогресс, ежедневные сигналы и быстрые переходы к ключевым инструментам.',
+        tip: {
+          streak: 'Здесь удобно следить за серией и количеством интервью.',
+          quickJump: 'Нижние карточки быстро переводят к нужному инструменту.',
+        },
+        detail: {
+          gated: 'Дашборд открывается после появления хотя бы одной заявки.',
+          unlocked: 'После этого здесь видны сохранённые интервью, учебный прогресс, активная роль и быстрые действия.',
+        },
+      },
+    },
+    today: {
+      subtitle: 'Одно место, где видно следующий реальный шаг в поиске работы.',
+      workspaceProgress: 'Прогресс workspace',
+      savedProject: 'Сохранено в этом проекте',
+      prepHubs: 'Центры подготовки',
+      prepHubsCopy: 'Два понятных пути: практика интервью или доработка документов и профиля.',
+      prepHubsNote: 'Эти 6 шагов — базовый workflow. Старые проверки и дополнительные инструменты подготовки останутся доступны позже, если захотите пойти глубже.',
+      hero: {
+        default: 'Используйте раздел «Сегодня», чтобы двигать нужную заявку вперёд и не метаться между инструментами.',
+        next: 'Дальше: {title}. {desc}',
+        complete: 'Базовый workflow по этой заявке завершён. Можно продолжать практику, писать follow-up или докручивать продвинутые инструменты.',
+      },
+      openWorkspace: 'Открыть рабочее пространство',
+      workspace: 'Рабочее пространство',
+      jdReady: 'JD готов',
+      needsJd: 'Нужен JD',
+      metric: {
+        coreComplete: 'Базовый workflow завершён',
+      },
+      savedForApplication: 'Сохранено для этой заявки',
+      learningReviewsDue: 'Повторы по обучению на сегодня',
+      cards: {
+        interview: {
+          title: 'Подготовка к интервью',
+          desc: 'Тренируйте интервью, прогнозируйте вопросы, собирайте STAR-истории, улучшайте подачу, пишите follow-up и оттачивайте elevator pitch.',
+          cta: 'Открыть подготовку к интервью',
+          badge: 'Подготовка',
+        },
+        tools: {
+          title: 'Инструменты подготовки',
+          desc: 'Запускайте gap analysis, проверяйте резюме, улучшайте cover letter, аудируйте LinkedIn, оценивайте визуальный дизайн и переупаковывайте transferable skills.',
+          cta: 'Открыть инструменты подготовки',
+          badge: 'Документы',
+        },
+        reviews: {
+          title: 'Повторы на сегодня',
+          desc: 'На сегодня запланировано {count} повторов. Держите подготовку в тонусе, пока движутся заявки.',
+          cta: 'Открыть обучение',
+          badge: 'Обучение',
+        },
+      },
+      recentPrepTitle: 'Последняя активность в подготовке',
+      recentPrepCopyActive: 'Здесь показаны 5 последних запусков подготовки по этой заявке. Более старые результаты остаются в Interview Prep и Prep Tools.',
+      recentPrepCopyProject: 'Здесь показаны 5 последних запусков подготовки по всему проекту. Более старые результаты остаются в Interview Prep и Prep Tools.',
+    },
+    projects: {
+      new: 'Новый проект',
+      exportAllProjects: 'Экспорт всех проектов',
+      exportCurrentProject: 'Экспорт текущего проекта',
+      importProject: 'Импорт проекта',
+      importing: 'Импорт...',
+    },
+  },
+  bg: {
+    guide: {
+      getStarted: 'Откъде да започнеш',
+      startTour: 'Стартирай обиколката',
+      howThisPageWorks: 'Как работи тази страница',
+      footer: {
+        sensei: 'Sensei = подкрепящо насочване',
+        drill: 'Drill = директна, честна практика',
+      },
+      today: {
+        title: 'Днес',
+        desc: 'Твоят ежедневен команден център. Избери една активна кандидатура и JobSensei ще покаже най-полезната следваща стъпка.',
+        detail: {
+          activeFocus: 'Активният фокус е ролята, която JobSensei води в момента.',
+          progress: 'Прогресът на workspace-а показва пътя от 6 стъпки: обява, проучване, напасване, прогноза, mock интервю и follow-up.',
+          workspace: 'Отвори активния workspace, за да работиш по JD, research, бележки и подготовка.',
+        },
+      },
+      applications: {
+        title: 'Кандидатури',
+        desc: 'Твоят CRM за търсене на работа. Всяка роля има собствен workspace, където JD, research, бележките, инструментите и follow-up-ите стоят на едно място.',
+        detail: {
+          kanban: 'Kanban проследява етапите Researching, Applied, Interviewing, Offer и Rejected.',
+          workspace: 'Workspace пази JD-то, research-а, бележките за подготовка и cheat sheet-а за една конкретна роля.',
+          offers: 'Offers сравнява ролите по заплата, растеж, култура, work-life balance, придобивки и гъвкавост.',
+        },
+      },
+      dashboard: {
+        title: 'Табло',
+        desc: 'Твоята основна начална страница. Тук виждаш напредъка си, ежедневните сигнали и бързите преки пътища към важните инструменти.',
+        tip: {
+          streak: 'Тук можеш бързо да следиш streak-а и броя интервюта.',
+          quickJump: 'Картите отдолу те прехвърлят директно към нужния инструмент.',
+        },
+        detail: {
+          gated: 'Таблото се отключва, след като имаш поне една кандидатура.',
+          unlocked: 'След това тук се виждат запазените интервюта, учебният прогрес, активната роля и бързите действия.',
+        },
+      },
+    },
+    today: {
+      subtitle: 'Едно място, където виждаш следващия реален ход в търсенето на работа.',
+      workspaceProgress: 'Прогрес на workspace-а',
+      savedProject: 'Запазено в този проект',
+      prepHubs: 'Центрове за подготовка',
+      prepHubsCopy: 'Две ясни посоки: практика за интервю или работа по документи и профил.',
+      prepHubsNote: 'Тези 6 стъпки са основният workflow. По-старите проверки и допълнителните инструменти остават достъпни по-късно, ако искаш да навлезеш по-дълбоко.',
+      hero: {
+        default: 'Използвай „Днес“, за да движиш правилната кандидатура напред, без да прескачаш между инструменти.',
+        next: 'Следва: {title}. {desc}',
+        complete: 'Основният workflow за тази кандидатура е завършен. Можеш да продължиш с практика, follow-up-и или по-напреднали инструменти.',
+      },
+      openWorkspace: 'Отвори работното пространство',
+      workspace: 'Работно пространство',
+      jdReady: 'JD е готов',
+      needsJd: 'Липсва JD',
+      metric: {
+        coreComplete: 'Основният workflow е завършен',
+      },
+      savedForApplication: 'Запазено за тази кандидатура',
+      learningReviewsDue: 'Преговори по учене за днес',
+      cards: {
+        interview: {
+          title: 'Подготовка за интервю',
+          desc: 'Тренирай интервюта, прогнозирай вероятни въпроси, оформяй STAR истории, изчиствай тона си, подготвяй follow-up-и и elevator pitch.',
+          cta: 'Отвори подготовката за интервю',
+          badge: 'Подготовка',
+        },
+        tools: {
+          title: 'Инструменти за подготовка',
+          desc: 'Пускай gap analysis, преглеждай CV-то си, подобрявай cover letter-и, одитирай LinkedIn, проверявай визуалния дизайн и преформулирай transferable skills.',
+          cta: 'Отвори инструментите за подготовка',
+          badge: 'Документи',
+        },
+        reviews: {
+          title: 'Преговори за днес',
+          desc: 'Имаш {count} преговора за днес. Дръж подготовката си остра, докато кандидатурите се движат.',
+          cta: 'Отвори ученето',
+          badge: 'Учене',
+        },
+      },
+      recentPrepTitle: 'Скорошна активност по подготовката',
+      recentPrepCopyActive: 'Тук са показани последните 5 записа за подготовка по тази кандидатура. По-старите резултати остават в Interview Prep и Prep Tools.',
+      recentPrepCopyProject: 'Тук са показани последните 5 записа за подготовка в целия проект. По-старите резултати остават в Interview Prep и Prep Tools.',
+    },
+    projects: {
+      new: 'Нов проект',
+      exportAllProjects: 'Експорт на всички проекти',
+      exportCurrentProject: 'Експорт на текущия проект',
+      importProject: 'Импорт на проект',
+      importing: 'Импорт...',
+    },
+  },
+  es: {
+    guide: {
+      getStarted: 'Primeros pasos',
+      startTour: 'Iniciar recorrido',
+      howThisPageWorks: 'Cómo funciona esta página',
+      footer: {
+        sensei: 'Sensei = acompañamiento y criterio',
+        drill: 'Drill = práctica directa y sincera',
+      },
+      today: {
+        title: 'Hoy',
+        desc: 'Tu centro diario de mando. Elige una candidatura activa y JobSensei te mostrará el siguiente paso más útil.',
+        detail: {
+          activeFocus: 'Foco activo es el puesto que JobSensei está guiando ahora mismo.',
+          progress: 'Progreso del workspace muestra la ruta de 6 pasos: vacante, investigación, adaptación, predicción, entrevista simulada y seguimiento.',
+          workspace: 'Abre el workspace activo para trabajar con el JD, la investigación, las notas y la preparación.',
+        },
+      },
+      applications: {
+        title: 'Candidaturas',
+        desc: 'Tu CRM para la búsqueda de empleo. Cada puesto tiene su propio workspace con JD, investigación, notas, herramientas y seguimiento en un solo lugar.',
+        detail: {
+          kanban: 'El kanban sigue fases como Researching, Applied, Interviewing, Offer y Rejected.',
+          workspace: 'El workspace reúne el JD, la investigación, las notas de preparación y la chuleta de un solo puesto.',
+          offers: 'Offers compara puestos por salario, crecimiento, cultura, equilibrio vida-trabajo, beneficios y flexibilidad.',
+        },
+      },
+      dashboard: {
+        title: 'Panel',
+        desc: 'Tu base principal. Aquí ves tu progreso, señales diarias y accesos rápidos a las herramientas clave.',
+        tip: {
+          streak: 'Aquí puedes revisar tu racha y el número de entrevistas.',
+          quickJump: 'Las tarjetas de abajo te llevan rápido a la herramienta adecuada.',
+        },
+        detail: {
+          gated: 'El panel se desbloquea cuando existe al menos una candidatura.',
+          unlocked: 'Después verás entrevistas guardadas, progreso de aprendizaje, contexto activo y acciones rápidas.',
+        },
+      },
+    },
+    today: {
+      subtitle: 'Un solo lugar para ver el siguiente movimiento real en tu búsqueda de empleo.',
+      workspaceProgress: 'Progreso del workspace',
+      savedProject: 'Guardado en este proyecto',
+      prepHubs: 'Centros de preparación',
+      prepHubsCopy: 'Dos caminos claros para seguir: práctica de entrevistas o preparación de documentos y perfil.',
+      prepHubsNote: 'Estos 6 pasos forman el workflow principal. Las revisiones antiguas y las herramientas extra seguirán disponibles después si quieres profundizar más.',
+      hero: {
+        default: 'Usa Hoy para mover la candidatura correcta sin ir saltando entre herramientas.',
+        next: 'Siguiente paso: {title}. {desc}',
+        complete: 'El workflow principal de esta candidatura ya está completo. Puedes seguir practicando, enviando seguimientos o afinando herramientas avanzadas.',
+      },
+      openWorkspace: 'Abrir espacio de trabajo',
+      workspace: 'Espacio de trabajo',
+      jdReady: 'JD listo',
+      needsJd: 'Falta JD',
+      metric: {
+        coreComplete: 'Workflow principal completado',
+      },
+      savedForApplication: 'Guardado para esta candidatura',
+      learningReviewsDue: 'Repasos de aprendizaje para hoy',
+      cards: {
+        interview: {
+          title: 'Preparación para entrevistas',
+          desc: 'Practica entrevistas, predice preguntas probables, estructura historias STAR, mejora tu tono, redacta seguimientos y prepara tu elevator pitch.',
+          cta: 'Abrir preparación para entrevistas',
+          badge: 'Preparación',
+        },
+        tools: {
+          title: 'Herramientas de preparación',
+          desc: 'Haz gap analysis, revisa tu currículum, mejora cartas de presentación, audita LinkedIn, revisa el diseño visual y reformula habilidades transferibles.',
+          cta: 'Abrir herramientas de preparación',
+          badge: 'Documentos',
+        },
+        reviews: {
+          title: 'Repasos pendientes',
+          desc: 'Hoy tienes {count} repasos pendientes. Mantén la preparación afilada mientras avanzan tus candidaturas.',
+          cta: 'Abrir aprendizaje',
+          badge: 'Aprendizaje',
+        },
+      },
+      recentPrepTitle: 'Actividad reciente de preparación',
+      recentPrepCopyActive: 'Aquí ves las 5 ejecuciones más recientes de preparación para esta candidatura. Las más antiguas siguen guardadas en Interview Prep y Prep Tools.',
+      recentPrepCopyProject: 'Aquí ves las 5 ejecuciones más recientes de preparación en todo este proyecto. Las más antiguas siguen guardadas en Interview Prep y Prep Tools.',
+    },
+    projects: {
+      new: 'Nuevo proyecto',
+      exportAllProjects: 'Exportar todos los proyectos',
+      exportCurrentProject: 'Exportar proyecto actual',
+      importProject: 'Importar proyecto',
+      importing: 'Importando...',
+    },
+  },
+  fr: {
+    guide: {
+      getStarted: 'Bien commencer',
+      startTour: 'Lancer la visite',
+      howThisPageWorks: 'Comment fonctionne cette page',
+      footer: {
+        sensei: 'Sensei = accompagnement et recul',
+        drill: 'Drill = pratique directe et honnête',
+      },
+      today: {
+        title: "Aujourd'hui",
+        desc: 'Votre centre de pilotage quotidien. Choisissez une candidature active et JobSensei vous montrera la prochaine étape la plus utile.',
+        detail: {
+          activeFocus: 'Le focus actif correspond au poste que JobSensei guide en ce moment.',
+          progress: 'La progression du workspace montre le parcours en 6 étapes : offre, recherche, adaptation, prédiction, entretien mock et suivi.',
+          workspace: 'Ouvrez le workspace actif pour travailler le JD, la recherche, les notes et la préparation.',
+        },
+      },
+      applications: {
+        title: 'Candidatures',
+        desc: "Votre CRM de recherche d'emploi. Chaque poste possède son propre workspace où le JD, la recherche, les notes, les outils et le suivi restent réunis.",
+        detail: {
+          kanban: 'Le kanban suit les étapes Researching, Applied, Interviewing, Offer et Rejected.',
+          workspace: 'Le workspace regroupe le JD, la recherche, les notes de préparation et la fiche mémo pour un seul poste.',
+          offers: 'Offers compare les postes selon le salaire, la progression, la culture, l’équilibre vie pro-vie perso, les avantages et la flexibilité.',
+        },
+      },
+      dashboard: {
+        title: 'Tableau de bord',
+        desc: 'Votre base principale. Vous y voyez la progression, les signaux du jour et les raccourcis vers les outils importants.',
+        tip: {
+          streak: 'Vous pouvez y suivre votre série et votre nombre d’entretiens.',
+          quickJump: 'Les cartes du dessous vous mènent rapidement au bon outil.',
+        },
+        detail: {
+          gated: 'Le tableau de bord se débloque dès qu’au moins une candidature existe.',
+          unlocked: 'Ensuite, il affiche les entretiens sauvegardés, la progression d’apprentissage, le contexte actif et les actions rapides.',
+        },
+      },
+    },
+    today: {
+      subtitle: 'Un seul endroit pour voir le prochain vrai mouvement dans votre recherche d’emploi.',
+      workspaceProgress: 'Progression du workspace',
+      savedProject: 'Enregistré dans ce projet',
+      prepHubs: 'Pôles de préparation',
+      prepHubsCopy: 'Deux voies claires pour continuer : l’entraînement aux entretiens ou la préparation des documents et du profil.',
+      prepHubsNote: 'Ces 6 étapes forment le workflow principal. Les anciens checks et les outils supplémentaires restent disponibles ensuite si vous voulez aller plus loin.',
+      hero: {
+        default: 'Utilisez Aujourd’hui pour faire avancer la bonne candidature sans sauter d’un outil à l’autre.',
+        next: 'À venir : {title}. {desc}',
+        complete: 'Le workflow principal de cette candidature est terminé. Vous pouvez continuer à vous entraîner, envoyer des suivis ou affiner les outils avancés.',
+      },
+      openWorkspace: "Ouvrir l’espace de travail",
+      workspace: 'Espace de travail',
+      jdReady: 'JD prêt',
+      needsJd: 'JD manquant',
+      metric: {
+        coreComplete: 'Workflow principal terminé',
+      },
+      savedForApplication: 'Enregistré pour cette candidature',
+      learningReviewsDue: "Révisions d'apprentissage prévues aujourd'hui",
+      cards: {
+        interview: {
+          title: 'Préparation entretien',
+          desc: 'Entraînez-vous aux entretiens, anticipez les questions probables, structurez vos histoires STAR, peaufinez votre ton, rédigez les suivis et préparez votre elevator pitch.',
+          cta: 'Ouvrir la préparation entretien',
+          badge: 'Préparation',
+        },
+        tools: {
+          title: 'Outils de préparation',
+          desc: 'Lancez une gap analysis, vérifiez votre CV, améliorez vos lettres de motivation, auditez LinkedIn, évaluez le design visuel et reformulez vos compétences transférables.',
+          cta: 'Ouvrir les outils de préparation',
+          badge: 'Documents',
+        },
+        reviews: {
+          title: 'Révisions du jour',
+          desc: 'Vous avez {count} révisions à faire aujourd’hui. Gardez votre préparation affûtée pendant que les candidatures avancent.',
+          cta: 'Ouvrir l’apprentissage',
+          badge: 'Apprentissage',
+        },
+      },
+      recentPrepTitle: 'Activité récente de préparation',
+      recentPrepCopyActive: 'Affiche les 5 préparations les plus récentes pour cette candidature. Les résultats plus anciens restent enregistrés dans Interview Prep et Prep Tools.',
+      recentPrepCopyProject: 'Affiche les 5 préparations les plus récentes pour l’ensemble de ce projet. Les résultats plus anciens restent enregistrés dans Interview Prep et Prep Tools.',
+    },
+    projects: {
+      new: 'Nouveau projet',
+      exportAllProjects: 'Exporter tous les projets',
+      exportCurrentProject: 'Exporter le projet actuel',
+      importProject: 'Importer un projet',
+      importing: 'Import en cours...',
+    },
+  },
+  it: {
+    guide: {
+      getStarted: 'Da dove iniziare',
+      startTour: 'Avvia il tour',
+      howThisPageWorks: 'Come funziona questa pagina',
+      footer: {
+        sensei: 'Sensei = supporto e orientamento',
+        drill: 'Drill = pratica diretta e sincera',
+      },
+      today: {
+        title: 'Oggi',
+        desc: 'Il tuo centro operativo quotidiano. Scegli una candidatura attiva e JobSensei ti mostrerà il prossimo passo più utile.',
+        detail: {
+          activeFocus: 'Focus attivo indica il ruolo che JobSensei sta guidando in questo momento.',
+          progress: 'Il progresso del workspace mostra il percorso in 6 passaggi: annuncio, ricerca, adattamento, previsione, mock interview e follow-up.',
+          workspace: 'Apri il workspace attivo per lavorare su JD, ricerca, note e preparazione.',
+        },
+      },
+      applications: {
+        title: 'Candidature',
+        desc: 'Il tuo CRM per la ricerca di lavoro. Ogni ruolo ha il proprio workspace dove JD, ricerca, note, strumenti e follow-up restano insieme.',
+        detail: {
+          kanban: 'La bacheca kanban segue fasi come Researching, Applied, Interviewing, Offer e Rejected.',
+          workspace: 'Il workspace raccoglie JD, ricerca, note di preparazione e cheat sheet per un solo ruolo.',
+          offers: 'Offers confronta i ruoli per stipendio, crescita, cultura, equilibrio vita-lavoro, benefit e flessibilità.',
+        },
+      },
+      dashboard: {
+        title: 'Dashboard',
+        desc: 'La tua base principale. Qui vedi progresso, segnali del giorno e collegamenti rapidi agli strumenti chiave.',
+        tip: {
+          streak: 'Qui puoi controllare la tua streak e il numero di colloqui.',
+          quickJump: 'Le card qui sotto ti portano subito allo strumento giusto.',
+        },
+        detail: {
+          gated: 'La dashboard si sblocca quando esiste almeno una candidatura.',
+          unlocked: 'Dopo mostra colloqui salvati, progresso di apprendimento, contesto attivo e azioni rapide.',
+        },
+      },
+    },
+    today: {
+      subtitle: 'Un unico posto per vedere la prossima mossa reale nella tua ricerca di lavoro.',
+      workspaceProgress: 'Progresso del workspace',
+      savedProject: 'Salvato in questo progetto',
+      prepHubs: 'Hub di preparazione',
+      prepHubsCopy: 'Due percorsi chiari per continuare: pratica dei colloqui oppure preparazione di documenti e profilo.',
+      prepHubsNote: 'Questi 6 passaggi sono il workflow principale. I controlli più vecchi e gli strumenti extra restano disponibili più avanti se vuoi approfondire.',
+      hero: {
+        default: 'Usa Oggi per far avanzare la candidatura giusta senza saltare da uno strumento all’altro.',
+        next: 'Prossimo passo: {title}. {desc}',
+        complete: 'Il workflow principale per questa candidatura è completo. Puoi continuare a esercitarti, scrivere follow-up o rifinire gli strumenti avanzati.',
+      },
+      openWorkspace: 'Apri lo spazio di lavoro',
+      workspace: 'Spazio di lavoro',
+      jdReady: 'JD pronto',
+      needsJd: 'Manca il JD',
+      metric: {
+        coreComplete: 'Workflow principale completato',
+      },
+      savedForApplication: 'Salvato per questa candidatura',
+      learningReviewsDue: 'Ripassi di apprendimento previsti oggi',
+      cards: {
+        interview: {
+          title: 'Preparazione colloqui',
+          desc: 'Esercitati nei colloqui, prevedi le domande probabili, costruisci storie STAR, affina il tono, scrivi follow-up e prepara il tuo elevator pitch.',
+          cta: 'Apri la preparazione ai colloqui',
+          badge: 'Preparazione',
+        },
+        tools: {
+          title: 'Strumenti di preparazione',
+          desc: 'Esegui gap analysis, controlla il CV, migliora le cover letter, fai audit di LinkedIn, rivedi il design visivo e riposiziona le competenze trasferibili.',
+          cta: 'Apri gli strumenti di preparazione',
+          badge: 'Documenti',
+        },
+        reviews: {
+          title: 'Ripassi in scadenza',
+          desc: 'Hai {count} ripassi previsti per oggi. Mantieni la preparazione allenata mentre le candidature avanzano.',
+          cta: 'Apri l’apprendimento',
+          badge: 'Apprendimento',
+        },
+      },
+      recentPrepTitle: 'Attività recente di preparazione',
+      recentPrepCopyActive: 'Qui vedi gli ultimi 5 cicli di preparazione per questa candidatura. I risultati più vecchi restano salvati in Interview Prep e Prep Tools.',
+      recentPrepCopyProject: 'Qui vedi gli ultimi 5 cicli di preparazione dell’intero progetto. I risultati più vecchi restano salvati in Interview Prep e Prep Tools.',
+    },
+    projects: {
+      new: 'Nuovo progetto',
+      exportAllProjects: 'Esporta tutti i progetti',
+      exportCurrentProject: 'Esporta il progetto corrente',
+      importProject: 'Importa progetto',
+      importing: 'Importazione...',
+    },
+  },
+  pt: {
+    guide: {
+      getStarted: 'Por onde começar',
+      startTour: 'Iniciar visita guiada',
+      howThisPageWorks: 'Como esta página funciona',
+      footer: {
+        sensei: 'Sensei = orientação com apoio',
+        drill: 'Drill = prática direta e honesta',
+      },
+      today: {
+        title: 'Hoje',
+        desc: 'O teu centro diário de comando. Escolhe uma candidatura ativa e o JobSensei mostra-te o próximo passo mais útil.',
+        detail: {
+          activeFocus: 'Foco ativo é a vaga que o JobSensei está a orientar neste momento.',
+          progress: 'O progresso do workspace mostra o caminho de 6 passos: vaga, pesquisa, adaptação, previsão, mock interview e follow-up.',
+          workspace: 'Abre o workspace ativo para trabalhar o JD, a pesquisa, as notas e a preparação.',
+        },
+      },
+      applications: {
+        title: 'Candidaturas',
+        desc: 'O teu CRM para a procura de emprego. Cada vaga tem o seu próprio workspace com JD, pesquisa, notas, ferramentas e follow-up no mesmo lugar.',
+        detail: {
+          kanban: 'O kanban acompanha fases como Researching, Applied, Interviewing, Offer e Rejected.',
+          workspace: 'O workspace junta o JD, a pesquisa, as notas de preparação e a cheat sheet de uma vaga.',
+          offers: 'Offers compara vagas por salário, crescimento, cultura, equilíbrio vida-trabalho, benefícios e flexibilidade.',
+        },
+      },
+      dashboard: {
+        title: 'Painel',
+        desc: 'A tua base principal. Aqui vês o teu progresso, sinais do dia e atalhos rápidos para as ferramentas essenciais.',
+        tip: {
+          streak: 'Aqui podes acompanhar a tua streak e o número de entrevistas.',
+          quickJump: 'Os cartões abaixo levam-te rapidamente à ferramenta certa.',
+        },
+        detail: {
+          gated: 'O painel desbloqueia quando existir pelo menos uma candidatura.',
+          unlocked: 'Depois disso mostra entrevistas guardadas, progresso na aprendizagem, contexto ativo e ações rápidas.',
+        },
+      },
+    },
+    today: {
+      subtitle: 'Um só lugar para veres o próximo passo real na tua procura de emprego.',
+      workspaceProgress: 'Progresso do workspace',
+      savedProject: 'Guardado neste projeto',
+      prepHubs: 'Centros de preparação',
+      prepHubsCopy: 'Dois caminhos claros para continuar: prática de entrevistas ou preparação de documentos e perfil.',
+      prepHubsNote: 'Estes 6 passos formam o workflow principal. As verificações antigas e as ferramentas extra continuam disponíveis depois, se quiseres ir mais fundo.',
+      hero: {
+        default: 'Usa Hoje para fazer avançar a candidatura certa sem andar a saltar entre ferramentas.',
+        next: 'A seguir: {title}. {desc}',
+        complete: 'O workflow principal desta candidatura está concluído. Podes continuar a praticar, escrever follow-ups ou afinar ferramentas avançadas.',
+      },
+      openWorkspace: 'Abrir espaço de trabalho',
+      workspace: 'Espaço de trabalho',
+      jdReady: 'JD pronto',
+      needsJd: 'Falta JD',
+      metric: {
+        coreComplete: 'Workflow principal concluído',
+      },
+      savedForApplication: 'Guardado para esta candidatura',
+      learningReviewsDue: 'Revisões de aprendizagem para hoje',
+      cards: {
+        interview: {
+          title: 'Preparação para entrevistas',
+          desc: 'Pratica entrevistas, prevê perguntas prováveis, estrutura histórias STAR, melhora o teu tom, escreve follow-ups e prepara o teu elevator pitch.',
+          cta: 'Abrir preparação para entrevistas',
+          badge: 'Preparação',
+        },
+        tools: {
+          title: 'Ferramentas de preparação',
+          desc: 'Faz gap analysis, revê o CV, melhora cover letters, audita o LinkedIn, analisa o design visual e reenquadra competências transferíveis.',
+          cta: 'Abrir ferramentas de preparação',
+          badge: 'Documentos',
+        },
+        reviews: {
+          title: 'Revisões em falta',
+          desc: 'Tens {count} revisões para fazer hoje. Mantém a preparação afiada enquanto as candidaturas avançam.',
+          cta: 'Abrir aprendizagem',
+          badge: 'Aprendizagem',
+        },
+      },
+      recentPrepTitle: 'Atividade recente de preparação',
+      recentPrepCopyActive: 'Aqui vês os 5 registos de preparação mais recentes desta candidatura. Os resultados mais antigos continuam guardados em Interview Prep e Prep Tools.',
+      recentPrepCopyProject: 'Aqui vês os 5 registos de preparação mais recentes deste projeto. Os resultados mais antigos continuam guardados em Interview Prep e Prep Tools.',
+    },
+    projects: {
+      new: 'Novo projeto',
+      exportAllProjects: 'Exportar todos os projetos',
+      exportCurrentProject: 'Exportar projeto atual',
+      importProject: 'Importar projeto',
+      importing: 'A importar...',
+    },
+  },
+  pl: {
+    guide: {
+      getStarted: 'Od czego zacząć',
+      startTour: 'Uruchom przewodnik',
+      howThisPageWorks: 'Jak działa ta strona',
+      footer: {
+        sensei: 'Sensei = wspierające prowadzenie',
+        drill: 'Drill = bezpośrednia, szczera praktyka',
+      },
+      today: {
+        title: 'Dziś',
+        desc: 'Twoje codzienne centrum dowodzenia. Wybierz jedną aktywną aplikację, a JobSensei pokaże najważniejszy kolejny krok.',
+        detail: {
+          activeFocus: 'Aktywny fokus to rola, którą JobSensei prowadzi właśnie teraz.',
+          progress: 'Postęp workspace pokazuje ścieżkę 6 kroków: oferta, research, dopasowanie, przewidywanie, mock interview i follow-up.',
+          workspace: 'Otwórz aktywny workspace, aby pracować nad JD, researchem, notatkami i przygotowaniem.',
+        },
+      },
+      applications: {
+        title: 'Aplikacje',
+        desc: 'Twój CRM do szukania pracy. Każda rola ma własny workspace, w którym razem są JD, research, notatki, narzędzia i follow-up.',
+        detail: {
+          kanban: 'Kanban śledzi etapy Researching, Applied, Interviewing, Offer i Rejected.',
+          workspace: 'Workspace przechowuje JD, research, notatki przygotowawcze i cheat sheet dla jednej roli.',
+          offers: 'Offers porównuje role pod kątem wynagrodzenia, rozwoju, kultury, work-life balance, benefitów i elastyczności.',
+        },
+      },
+      dashboard: {
+        title: 'Panel',
+        desc: 'Twoja główna baza. Tutaj widzisz postęp, sygnały dnia i szybkie przejścia do najważniejszych narzędzi.',
+        tip: {
+          streak: 'Tutaj sprawdzisz swoją serię i liczbę rozmów.',
+          quickJump: 'Karty poniżej szybko przenoszą do odpowiedniego narzędzia.',
+        },
+        detail: {
+          gated: 'Panel odblokowuje się, gdy pojawi się co najmniej jedna aplikacja.',
+          unlocked: 'Potem pokazuje zapisane rozmowy, postęp nauki, aktywny kontekst i szybkie akcje.',
+        },
+      },
+    },
+    today: {
+      subtitle: 'Jedno miejsce, w którym widzisz kolejny realny ruch w szukaniu pracy.',
+      workspaceProgress: 'Postęp workspace',
+      savedProject: 'Zapisane w tym projekcie',
+      prepHubs: 'Strefy przygotowania',
+      prepHubsCopy: 'Dwie jasne ścieżki dalszej pracy: praktyka rozmów albo dopracowanie dokumentów i profilu.',
+      prepHubsNote: 'Te 6 kroków tworzy główny workflow. Starsze checki i dodatkowe narzędzia pozostają dostępne później, jeśli chcesz wejść głębiej.',
+      hero: {
+        default: 'Używaj Dziś, aby przesuwać właściwą aplikację do przodu bez skakania między narzędziami.',
+        next: 'Następnie: {title}. {desc}',
+        complete: 'Główny workflow dla tej aplikacji jest ukończony. Możesz dalej ćwiczyć, pisać follow-upy albo dopracowywać zaawansowane narzędzia.',
+      },
+      openWorkspace: 'Otwórz przestrzeń roboczą',
+      workspace: 'Przestrzeń robocza',
+      jdReady: 'JD gotowe',
+      needsJd: 'Brakuje JD',
+      metric: {
+        coreComplete: 'Główny workflow ukończony',
+      },
+      savedForApplication: 'Zapisane dla tej aplikacji',
+      learningReviewsDue: 'Powtórki nauki na dziś',
+      cards: {
+        interview: {
+          title: 'Przygotowanie do rozmów',
+          desc: 'Ćwicz rozmowy, przewiduj prawdopodobne pytania, układaj historie STAR, poprawiaj ton, pisz follow-upy i przygotuj elevator pitch.',
+          cta: 'Otwórz przygotowanie do rozmów',
+          badge: 'Przygotowanie',
+        },
+        tools: {
+          title: 'Narzędzia przygotowawcze',
+          desc: 'Uruchamiaj gap analysis, sprawdzaj CV, ulepszaj listy motywacyjne, audytuj LinkedIn, oceniaj projekt wizualny i przeformułowuj kompetencje transferowalne.',
+          cta: 'Otwórz narzędzia przygotowawcze',
+          badge: 'Dokumenty',
+        },
+        reviews: {
+          title: 'Powtórki na dziś',
+          desc: 'Masz dziś {count} powtórek. Utrzymuj przygotowanie w formie, gdy aplikacje posuwają się naprzód.',
+          cta: 'Otwórz naukę',
+          badge: 'Nauka',
+        },
+      },
+      recentPrepTitle: 'Ostatnia aktywność przygotowawcza',
+      recentPrepCopyActive: 'Tutaj widać 5 najnowszych przebiegów przygotowania dla tej aplikacji. Starsze wyniki nadal są zapisane w Interview Prep i Prep Tools.',
+      recentPrepCopyProject: 'Tutaj widać 5 najnowszych przebiegów przygotowania w całym projekcie. Starsze wyniki nadal są zapisane w Interview Prep i Prep Tools.',
+    },
+    projects: {
+      new: 'Nowy projekt',
+      exportAllProjects: 'Eksportuj wszystkie projekty',
+      exportCurrentProject: 'Eksportuj bieżący projekt',
+      importProject: 'Importuj projekt',
+      importing: 'Importowanie...',
+    },
+  },
+  de: {
+    guide: {
+      getStarted: 'So startest du',
+      startTour: 'Tour starten',
+      howThisPageWorks: 'So funktioniert diese Seite',
+      footer: {
+        sensei: 'Sensei = unterstützende Führung',
+        drill: 'Drill = direkte, ehrliche Übung',
+      },
+      today: {
+        title: 'Heute',
+        desc: 'Dein tägliches Kontrollzentrum. Wähle eine aktive Bewerbung aus, und JobSensei zeigt dir den sinnvollsten nächsten Schritt.',
+        detail: {
+          activeFocus: 'Aktiver Fokus ist die Rolle, die JobSensei gerade führt.',
+          progress: 'Der Workspace-Fortschritt zeigt den 6-Schritte-Pfad: Stelle, Recherche, Anpassung, Prognose, Mock-Interview und Follow-up.',
+          workspace: 'Öffne den aktiven Workspace, um mit JD, Recherche, Notizen und Vorbereitung zu arbeiten.',
+        },
+      },
+      applications: {
+        title: 'Bewerbungen',
+        desc: 'Dein CRM für die Jobsuche. Jede Rolle hat ihren eigenen Workspace, in dem JD, Recherche, Notizen, Tools und Follow-up zusammenbleiben.',
+        detail: {
+          kanban: 'Das Kanban verfolgt Phasen wie Researching, Applied, Interviewing, Offer und Rejected.',
+          workspace: 'Der Workspace bündelt JD, Recherche, Vorbereitungsnotizen und Spickzettel für eine einzelne Rolle.',
+          offers: 'Offers vergleicht Rollen nach Gehalt, Wachstum, Kultur, Work-Life-Balance, Benefits und Flexibilität.',
+        },
+      },
+      dashboard: {
+        title: 'Dashboard',
+        desc: 'Deine Hauptzentrale. Hier siehst du Fortschritt, tägliche Signale und Schnellzugriffe auf die wichtigsten Tools.',
+        tip: {
+          streak: 'Hier kannst du deine Serie und die Anzahl deiner Interviews prüfen.',
+          quickJump: 'Die Karten darunter bringen dich schnell zum passenden Tool.',
+        },
+        detail: {
+          gated: 'Das Dashboard wird freigeschaltet, sobald mindestens eine Bewerbung existiert.',
+          unlocked: 'Danach zeigt es gespeicherte Interviews, Lernfortschritt, aktiven Kontext und schnelle Aktionen.',
+        },
+      },
+    },
+    today: {
+      subtitle: 'Ein Ort, an dem du den nächsten echten Schritt in deiner Jobsuche siehst.',
+      workspaceProgress: 'Workspace-Fortschritt',
+      savedProject: 'In diesem Projekt gespeichert',
+      prepHubs: 'Vorbereitungsbereiche',
+      prepHubsCopy: 'Zwei klare Wege zum Weitermachen: Interviewpraxis oder Dokument- und Profilvorbereitung.',
+      prepHubsNote: 'Diese 6 Schritte bilden den Haupt-Workflow. Ältere Checks und zusätzliche Tools bleiben später verfügbar, wenn du tiefer einsteigen willst.',
+      hero: {
+        default: 'Nutze Heute, um die richtige Bewerbung voranzubringen, ohne zwischen Tools zu springen.',
+        next: 'Als Nächstes: {title}. {desc}',
+        complete: 'Der Haupt-Workflow für diese Bewerbung ist abgeschlossen. Du kannst weiter üben, Follow-ups schreiben oder fortgeschrittene Tools verfeinern.',
+      },
+      openWorkspace: 'Arbeitsbereich öffnen',
+      workspace: 'Arbeitsbereich',
+      jdReady: 'JD bereit',
+      needsJd: 'JD fehlt',
+      metric: {
+        coreComplete: 'Haupt-Workflow abgeschlossen',
+      },
+      savedForApplication: 'Für diese Bewerbung gespeichert',
+      learningReviewsDue: 'Lernwiederholungen für heute',
+      cards: {
+        interview: {
+          title: 'Interviewvorbereitung',
+          desc: 'Übe Interviews, prognostiziere wahrscheinliche Fragen, forme STAR-Geschichten, schärfe deinen Ton, verfasse Follow-ups und bereite deinen Elevator Pitch vor.',
+          cta: 'Interviewvorbereitung öffnen',
+          badge: 'Vorbereitung',
+        },
+        tools: {
+          title: 'Vorbereitungstools',
+          desc: 'Führe Gap Analysis aus, prüfe deinen Lebenslauf, verbessere Anschreiben, auditiere LinkedIn, bewerte das visuelle Design und rahme übertragbare Fähigkeiten neu ein.',
+          cta: 'Vorbereitungstools öffnen',
+          badge: 'Dokumente',
+        },
+        reviews: {
+          title: 'Fällige Wiederholungen',
+          desc: 'Heute sind {count} Lernwiederholungen fällig. Halte deine Vorbereitung scharf, während deine Bewerbungen weiterlaufen.',
+          cta: 'Lernen öffnen',
+          badge: 'Lernen',
+        },
+      },
+      recentPrepTitle: 'Letzte Vorbereitungsaktivität',
+      recentPrepCopyActive: 'Hier siehst du die 5 neuesten Vorbereitungsläufe für diese Bewerbung. Ältere Ergebnisse bleiben in Interview Prep und Prep Tools gespeichert.',
+      recentPrepCopyProject: 'Hier siehst du die 5 neuesten Vorbereitungsläufe im gesamten Projekt. Ältere Ergebnisse bleiben in Interview Prep und Prep Tools gespeichert.',
+    },
+    projects: {
+      new: 'Neues Projekt',
+      exportAllProjects: 'Alle Projekte exportieren',
+      exportCurrentProject: 'Aktuelles Projekt exportieren',
+      importProject: 'Projekt importieren',
+      importing: 'Import läuft...',
+    },
+  },
+}
+
+Object.entries(localizationCompletionPatches).forEach(([locale, patch]) => {
+  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+})
+
 export default localizationPatches
 
 
