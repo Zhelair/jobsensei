@@ -385,6 +385,19 @@ export default function TodayPage() {
             <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">{t('today.activeFocus')}</div>
             <h3 className="font-display font-semibold text-white text-xl mb-2">{heroTitle}</h3>
             <p className="text-slate-300 text-sm leading-relaxed">{heroCopy}</p>
+            <div className="mt-4">
+              <button
+                onClick={primaryAction.onClick}
+                className="btn-primary text-sm md:text-base px-5 py-3 min-h-[48px] md:min-h-[52px] shadow-lg shadow-teal-500/20"
+              >
+                {primaryAction.label}
+              </button>
+            </div>
+            {focusApplication && (
+              <p className="text-slate-500 text-xs mt-3 leading-relaxed">
+                {t('today.prepHubsNote')}
+              </p>
+            )}
             {focusApplication && (
               <div className="flex flex-wrap gap-1.5 mt-3">
                 <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300">
@@ -430,9 +443,6 @@ export default function TodayPage() {
                 ))}
               </select>
             )}
-            <button onClick={primaryAction.onClick} className="btn-primary text-sm">
-              {primaryAction.label}
-            </button>
             {focusApplication ? (
               <button onClick={() => openTrackerApplication(focusApplication.id, 'overview')} className="btn-primary text-sm">
                 {t('today.workspace')}
@@ -481,7 +491,6 @@ export default function TodayPage() {
             <div>
               <h3 className="font-display font-semibold text-white text-base">{t('today.prepHubs')}</h3>
               <p className="text-slate-400 text-sm">{t('today.prepHubsCopy')}</p>
-              <p className="text-slate-500 text-xs mt-1">{t('today.prepHubsNote')}</p>
             </div>
           </div>
           <div className="grid lg:grid-cols-3 gap-4">
