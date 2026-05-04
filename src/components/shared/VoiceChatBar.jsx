@@ -99,6 +99,9 @@ export default function VoiceChatBar({
   }
 
   const inputPlaceholder = placeholder || t('voice.placeholder')
+  const voiceFallbackCopy = languageOption?.code === 'bg'
+    ? 'На това устройство в момента не е открит български voice. JobSensei ще използва fallback и е възможно звученето да не е идеално.'
+    : languageOption.voiceNote || t('settings.voiceFallback')
   const micTitle = !supported
     ? t('voice.micUnsupported')
     : isPaused
@@ -160,7 +163,7 @@ export default function VoiceChatBar({
       {voiceSupport === 'fallback' && (
         <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-3 py-2 mb-2 text-yellow-300 text-xs animate-in">
           <AlertCircle size={13} className="flex-shrink-0" />
-          <span className="flex-1">{languageOption.voiceNote || t('settings.voiceFallback')}</span>
+          <span className="flex-1">{voiceFallbackCopy}</span>
         </div>
       )}
 

@@ -195,7 +195,9 @@ export default function Settings() {
     : voiceSupport === 'related'
       ? t('settings.voiceRelated')
       : voiceSupport === 'fallback'
-        ? t('settings.voiceFallback')
+        ? language === 'bg'
+          ? 'На това устройство в момента не е открит подходящ български voice. JobSensei ще използва fallback и е възможно звученето да не е идеално.'
+          : t('settings.voiceFallback')
         : t('settings.voiceNone')
   const voiceBadgeLabel = activeVoice
     ? `${activeVoice.name} (${activeVoice.lang})`
