@@ -392,7 +392,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_240px] gap-4 mt-4 items-start">
+        <div className="grid xl:grid-cols-[minmax(0,1.15fr)_240px_240px] gap-4 mt-4 items-start">
           <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-4">
             <h4 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
               <Coffee size={15} className="text-yellow-400" /> {t('settings.jobsenseiAccessTitle')}
@@ -449,6 +449,86 @@ export default function Settings() {
                 {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
               </div>
             )}
+
+            {secureAccountsEnabled && (
+              <div className="mt-4 pt-4 border-t border-navy-700/80 space-y-3">
+                <div>
+                  <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountTitle')}</div>
+                  <p className="text-slate-400 text-xs mt-1">{t('settings.secureAccountCopy')}</p>
+                </div>
+
+                {!secureReady ? (
+                  <p className="text-slate-500 text-sm">{t('settings.secureAccountLoading')}</p>
+                ) : secureSignedIn ? (
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-3">
+                      <div className="text-teal-300 text-sm font-display font-semibold">
+                        {t('settings.secureAccountStatusSignedIn', { email: secureUser.email || '' })}
+                      </div>
+                      <div className="text-slate-400 text-xs mt-1">
+                        {secureLinked
+                          ? t('settings.secureAccountStatusLinked')
+                          : t('settings.secureAccountStatusPending')}
+                      </div>
+                    </div>
+
+                    {!secureLinked && (
+                      <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 space-y-2">
+                        <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountLinkButton')}</div>
+                        <p className="text-slate-400 text-xs">{t('settings.secureAccountLinkCopy')}</p>
+                        <input
+                          className="input-field text-sm"
+                          type="text"
+                          placeholder={t('settings.secureAccountDevicePlaceholder')}
+                          value={secureDeviceLabel}
+                          onChange={e => setSecureDeviceLabel(e.target.value)}
+                        />
+                        <button
+                          onClick={handleLinkCurrentAccess}
+                          disabled={!bmacToken || linkingAccess}
+                          className="btn-primary text-sm justify-center"
+                        >
+                          {linkingAccess ? t('settings.secureAccountLinking') : t('settings.secureAccountLinkButton')}
+                        </button>
+                        {!bmacToken && <p className="text-slate-500 text-xs">{t('settings.secureAccountNeedsLegacy')}</p>}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-sm text-slate-400 block">{t('settings.secureAccountMagicLinkLabel')}</label>
+                    <input
+                      className="input-field text-sm"
+                      type="email"
+                      placeholder={t('settings.secureAccountMagicLinkPlaceholder')}
+                      value={secureEmailInput}
+                      onChange={e => {
+                        setSecureEmailInput(e.target.value)
+                        setSecureError('')
+                        setSecureNotice('')
+                      }}
+                      onKeyDown={e => e.key === 'Enter' && handleSendMagicLink()}
+                    />
+                    <button
+                      onClick={handleSendMagicLink}
+                      disabled={!secureEmailInput.trim() || sendingMagicLink}
+                      className="btn-secondary text-sm justify-center"
+                    >
+                      {sendingMagicLink ? t('settings.activating') : t('settings.secureAccountMagicLinkButton')}
+                    </button>
+                  </div>
+                )}
+
+                {(secureNotice || magicLinkSentTo) && (
+                  <p className="text-green-400 text-xs">
+                    {secureNotice || t('settings.secureAccountMagicLinkSent', { email: magicLinkSentTo })}
+                  </p>
+                )}
+                {(secureError || statusError || accountError) && (
+                  <p className="text-red-400 text-xs">{secureError || statusError || accountError}</p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-4 min-w-[220px]">
@@ -459,6 +539,23 @@ export default function Settings() {
             <div className="text-slate-400 text-xs mt-1">
               {usingOwnKey ? form.model : usingJobsenseiAI ? (hostedPlanIdentity || t('settings.currentModeAccessActive')) : t('settings.currentModeConnect')}
             </div>
+          </div>
+
+          <div className={`${pairedCardClass} min-w-[220px]`}>
+            <h3 className="font-display font-semibold text-white mb-1">{t('settings.profile')}</h3>
+            <p className="text-slate-400 text-xs mb-3">{t('settings.profilePlanCopy')}</p>
+            {profile ? (
+              <div className="space-y-1 text-sm mb-3">
+                <div><span className="text-slate-400">{t('settings.profileName')}</span> <span className="text-white">{profile.name || '-'}</span></div>
+                <div><span className="text-slate-400">{t('settings.profileRole')}</span> <span className="text-white">{profile.currentRole || '-'}</span></div>
+                <div><span className="text-slate-400">{t('settings.profileTarget')}</span> <span className="text-white">{profile.targetRole || '-'}</span></div>
+              </div>
+            ) : (
+              <p className="text-slate-500 text-sm mb-3">{t('settings.noProfile')}</p>
+            )}
+            <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-sm mt-auto">
+              {profile ? t('settings.editProfile') : t('settings.setupProfile')}
+            </button>
           </div>
         </div>
       </div>
@@ -492,148 +589,70 @@ export default function Settings() {
           <p className="text-slate-600 text-xs mt-2">{t('settings.resumeVisualNote')}</p>
         </div>
 
-        <div className={pairedCardClass}>
-            <h3 className="font-display font-semibold text-white mb-3">{t('settings.profile')}</h3>
-            {profile ? (
-              <div className="space-y-1 text-sm mb-3">
-                <div><span className="text-slate-400">{t('settings.profileName')}</span> <span className="text-white">{profile.name || '-'}</span></div>
-                <div><span className="text-slate-400">{t('settings.profileRole')}</span> <span className="text-white">{profile.currentRole || '-'}</span></div>
-                <div><span className="text-slate-400">{t('settings.profileTarget')}</span> <span className="text-white">{profile.targetRole || '-'}</span></div>
-              </div>
+        <div className={`${pairedCardClass} border-red-500/20`}>
+          <h3 className="font-display font-semibold text-white mb-1">{t('settings.dataManagementTitle')}</h3>
+          <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
+            <div>
+              <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountTitle')}</div>
+              <p className="text-slate-400 text-xs mt-1">{t('settings.secureAccountCopy')}</p>
+            </div>
+
+            {!secureReady ? (
+              <p className="text-slate-500 text-sm">{t('settings.secureAccountLoading')}</p>
+            ) : !secureAccountsEnabled ? (
+              <p className="text-slate-500 text-sm">{t('settings.secureAccountUnavailable')}</p>
+            ) : !secureSignedIn ? (
+              <p className="text-slate-500 text-sm">{t('settings.dataManagementSecureHint')}</p>
             ) : (
-              <p className="text-slate-500 text-sm mb-3">{t('settings.noProfile')}</p>
-            )}
-            <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-sm">
-              {profile ? t('settings.editProfile') : t('settings.setupProfile')}
-            </button>
-        </div>
-
-        <div className={`${pairedCardClass} border-indigo-500/20`}>
-          <h3 className="font-display font-semibold text-white mb-1">{t('settings.secureAccountTitle')}</h3>
-          <p className="text-slate-400 text-xs mb-3">{t('settings.secureAccountCopy')}</p>
-
-          {!secureReady ? (
-            <p className="text-slate-500 text-sm">{t('settings.secureAccountLoading')}</p>
-          ) : !secureAccountsEnabled ? (
-            <p className="text-slate-500 text-sm">{t('settings.secureAccountUnavailable')}</p>
-          ) : (
-            <div className="space-y-3">
-              {secureSignedIn ? (
-                <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-3">
-                  <div className="text-teal-300 text-sm font-display font-semibold">
-                    {t('settings.secureAccountStatusSignedIn', { email: secureUser.email || '' })}
-                  </div>
-                  <div className="text-slate-400 text-xs mt-1">
-                    {secureLinked
-                      ? t('settings.secureAccountStatusLinked')
-                      : t('settings.secureAccountStatusPending')}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <label className="text-sm text-slate-400 block">{t('settings.secureAccountMagicLinkLabel')}</label>
-                  <input
-                    className="input-field text-sm"
-                    type="email"
-                    placeholder={t('settings.secureAccountMagicLinkPlaceholder')}
-                    value={secureEmailInput}
-                    onChange={e => {
-                      setSecureEmailInput(e.target.value)
-                      setSecureError('')
-                      setSecureNotice('')
-                    }}
-                    onKeyDown={e => e.key === 'Enter' && handleSendMagicLink()}
-                  />
-                  <button
-                    onClick={handleSendMagicLink}
-                    disabled={!secureEmailInput.trim() || sendingMagicLink}
-                    className="btn-secondary text-sm justify-center"
-                  >
-                    {sendingMagicLink ? t('settings.activating') : t('settings.secureAccountMagicLinkButton')}
-                  </button>
-                </div>
-              )}
-
-              {secureSignedIn && !secureLinked && (
-                <div className="rounded-xl border border-navy-600 bg-navy-950/70 p-3 space-y-2">
-                  <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountLinkButton')}</div>
-                  <p className="text-slate-400 text-xs">{t('settings.secureAccountLinkCopy')}</p>
-                  <input
-                    className="input-field text-sm"
-                    type="text"
-                    placeholder={t('settings.secureAccountDevicePlaceholder')}
-                    value={secureDeviceLabel}
-                    onChange={e => setSecureDeviceLabel(e.target.value)}
-                  />
-                  <button
-                    onClick={handleLinkCurrentAccess}
-                    disabled={!bmacToken || linkingAccess}
-                    className="btn-primary text-sm justify-center"
-                  >
-                    {linkingAccess ? t('settings.secureAccountLinking') : t('settings.secureAccountLinkButton')}
-                  </button>
-                  {!bmacToken && <p className="text-slate-500 text-xs">{t('settings.secureAccountNeedsLegacy')}</p>}
-                </div>
-              )}
-
-              {secureSignedIn && secureLinked && (
-                <div className="rounded-xl border border-navy-600 bg-navy-950/70 p-3 space-y-2">
-                  <div className="text-slate-300 text-xs">
-                    {t('settings.secureAccountDevicesSummary', { count: approvedSecureDevices.length, limit: deviceLimit })}
-                  </div>
-                  {deviceReplacementCooldown?.active && (
-                    <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-yellow-200 text-[11px] leading-relaxed">
-                      New-device approvals unlock on {new Date(deviceReplacementCooldown.endsAt).toLocaleString()}.
+              <div className="space-y-3">
+                {secureLinked && (
+                  <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 space-y-2">
+                    <div className="text-slate-300 text-xs">
+                      {t('settings.secureAccountDevicesSummary', { count: approvedSecureDevices.length, limit: deviceLimit })}
                     </div>
-                  )}
-                  <div className="space-y-2">
-                    {approvedSecureDevices.map(device => (
-                      <div key={device.id} className="rounded-xl border border-navy-700 bg-navy-900/60 px-3 py-2">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-slate-200 text-xs font-display font-semibold flex flex-wrap gap-2 items-center">
-                              <span>{device.deviceLabel || device.deviceName || t('settings.secureAccountCurrentDevice')}</span>
-                              {device.deviceId === deviceId && (
-                                <span className="px-2 py-0.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-[10px] text-teal-300">
-                                  {t('settings.secureAccountCurrentBadge')}
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-slate-500 text-[11px] mt-1">
-                              {device.lastSeenAt
-                                ? t('settings.secureAccountLastSeen', { date: new Date(device.lastSeenAt).toLocaleString() })
-                                : t('settings.secureAccountLastSeenUnknown')}
-                            </div>
-                          </div>
-                          {device.deviceId !== deviceId && (
-                            <button
-                              onClick={() => handleRevokeDevice(device.deviceId)}
-                              disabled={revokingDeviceId === device.deviceId}
-                              className="btn-ghost text-[11px] text-red-400 hover:text-red-300 px-2 py-1 min-h-0"
-                            >
-                              {revokingDeviceId === device.deviceId
-                                ? t('settings.secureAccountRevoking')
-                                : t('settings.secureAccountRevokeButton')}
-                            </button>
-                          )}
-                        </div>
+                    {deviceReplacementCooldown?.active && (
+                      <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-yellow-200 text-[11px] leading-relaxed">
+                        New-device approvals unlock on {new Date(deviceReplacementCooldown.endsAt).toLocaleString()}.
                       </div>
-                    ))}
+                    )}
+                    <div className="space-y-2">
+                      {approvedSecureDevices.map(device => (
+                        <div key={device.id} className="rounded-xl border border-navy-700 bg-navy-950/70 px-3 py-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-slate-200 text-xs font-display font-semibold flex flex-wrap gap-2 items-center">
+                                <span>{device.deviceLabel || device.deviceName || t('settings.secureAccountCurrentDevice')}</span>
+                                {device.deviceId === deviceId && (
+                                  <span className="px-2 py-0.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-[10px] text-teal-300">
+                                    {t('settings.secureAccountCurrentBadge')}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-slate-500 text-[11px] mt-1">
+                                {device.lastSeenAt
+                                  ? t('settings.secureAccountLastSeen', { date: new Date(device.lastSeenAt).toLocaleString() })
+                                  : t('settings.secureAccountLastSeenUnknown')}
+                              </div>
+                            </div>
+                            {device.deviceId !== deviceId && (
+                              <button
+                                onClick={() => handleRevokeDevice(device.deviceId)}
+                                disabled={revokingDeviceId === device.deviceId}
+                                className="btn-ghost text-[11px] text-red-400 hover:text-red-300 px-2 py-1 min-h-0"
+                              >
+                                {revokingDeviceId === device.deviceId
+                                  ? t('settings.secureAccountRevoking')
+                                  : t('settings.secureAccountRevokeButton')}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {(secureNotice || magicLinkSentTo) && (
-                <p className="text-green-400 text-xs">
-                  {secureNotice || t('settings.secureAccountMagicLinkSent', { email: magicLinkSentTo })}
-                </p>
-              )}
-              {(secureError || statusError || accountError) && (
-                <p className="text-red-400 text-xs">{secureError || statusError || accountError}</p>
-              )}
-
-              {secureSignedIn && (
-                <div className="flex gap-2 pt-1 mt-auto">
+                <div className="flex gap-2 pt-1">
                   <button
                     onClick={() => refreshSecureAccount().catch(() => {})}
                     disabled={loadingAccount}
@@ -645,10 +664,8 @@ export default function Settings() {
                     {t('settings.secureAccountSignOut')}
                   </button>
                 </div>
-              )}
 
-              {secureSignedIn && (
-                <div className="rounded-xl border border-navy-600 bg-navy-950/70 p-3 space-y-2">
+                <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 space-y-2">
                   <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountExportTitle')}</div>
                   <p className="text-slate-400 text-xs">{t('settings.secureAccountExportCopy')}</p>
                   <div className="flex gap-2">
@@ -669,9 +686,7 @@ export default function Settings() {
                     </a>
                   </div>
                 </div>
-              )}
 
-              {secureSignedIn && (
                 <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 space-y-2">
                   <div className="text-red-300 text-sm font-display font-semibold">{t('settings.secureAccountDeleteTitle')}</div>
                   <p className="text-slate-400 text-xs">{t('settings.secureAccountDeleteCopy')}</p>
@@ -694,13 +709,10 @@ export default function Settings() {
                     {deletingAccount ? t('settings.secureAccountDeleting') : t('settings.secureAccountDeleteButton')}
                   </button>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
 
-        <div className={`${pairedCardClass} border-red-500/20`}>
-          <h3 className="font-display font-semibold text-white mb-1">{t('settings.dataManagementTitle')}</h3>
           <div className="space-y-2 text-slate-400 text-xs leading-relaxed mb-3">
             {[
               t('settings.dataBullet1'),

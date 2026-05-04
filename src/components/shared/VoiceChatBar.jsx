@@ -99,6 +99,13 @@ export default function VoiceChatBar({
   }
 
   const inputPlaceholder = placeholder || t('voice.placeholder')
+  const micTitle = !supported
+    ? t('voice.micUnsupported')
+    : isPaused
+      ? t('voice.micResume')
+      : isListening
+        ? t('voice.micStopSend')
+        : t('voice.micPress')
 
   return (
     <div className="relative">
@@ -173,22 +180,30 @@ export default function VoiceChatBar({
         </div>
       )}
 
+      {!supported && (
+        <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-3 py-2 mb-2 text-indigo-200 text-xs animate-in">
+          <AlertCircle size={13} className="flex-shrink-0" />
+          <span className="flex-1">{t('voice.micUnsupportedNote')}</span>
+        </div>
+      )}
+
       <div className="flex gap-2 items-end">
-        {supported && (
-          <button
-            onClick={handleMic}
-            className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-              isListening && !isPaused
+        <button
+          onClick={handleMic}
+          disabled={!supported}
+          className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+            !supported
+              ? 'bg-navy-800 text-slate-600 border border-navy-700 cursor-not-allowed'
+              : isListening && !isPaused
                 ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse'
                 : isPaused
                   ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                   : 'bg-navy-700 text-slate-400 hover:text-teal-400 hover:bg-navy-600'
-            }`}
-            title={isPaused ? t('voice.micResume') : isListening ? t('voice.micStopSend') : t('voice.micPress')}
-          >
-            {isListening && !isPaused ? <MicOff size={16} /> : <Mic size={16} />}
-          </button>
-        )}
+          }`}
+          title={micTitle}
+        >
+          {isListening && !isPaused ? <MicOff size={16} /> : <Mic size={16} />}
+        </button>
 
         <button
           onClick={handleTts}
