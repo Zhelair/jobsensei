@@ -30,6 +30,12 @@ function applicationLabel(app) {
   return `${app.company}${app.role ? ` - ${app.role}` : ''}`
 }
 
+const INTERVIEW_TOOL_IDS = new Set(['interview', 'predictor', 'star', 'tone', 'followup', 'pitch'])
+
+function sectionForTool(toolId) {
+  return INTERVIEW_TOOL_IDS.has(toolId) ? SECTIONS.INTERVIEW : SECTIONS.TOOLS
+}
+
 function matchesApplicationEntry(app, entry) {
   if (!app || !entry) return false
   const appLabel = applicationLabel(app)
@@ -152,14 +158,38 @@ export default function TodayPage() {
   const focusHasResearch = hasResearchData(focusNotes)
   const focusHasPrep = hasPrepNotes(focusNotes)
   const focusGapResults = focusApplication ? gapResults.filter(entry => matchesApplicationEntry(focusApplication, entry)) : []
-  const focusStarStories = focusApplication ? starStories.filter(entry => matchesApplicationEntry(focusApplication, entry)) : []
   const focusInterviewSessions = focusApplication ? interviewSessions.filter(entry => matchesApplicationEntry(focusApplication, entry)) : []
   const focusPredictorRuns = focusApplication ? toolsHistory.filter(entry => entry.tool === 'predictor' && matchesApplicationEntry(focusApplication, entry)) : []
   const focusFollowupRuns = focusApplication ? toolsHistory.filter(entry => entry.tool === 'followup' && matchesApplicationEntry(focusApplication, entry)) : []
   const focusTailorRuns = focusApplication
     ? toolsHistory.filter(entry => ['coverletter', 'resumechecker', 'transferable'].includes(entry.tool) && matchesApplicationEntry(focusApplication, entry))
     : []
+  const allRecentPrepEntries = [
+    ...toolsHistory.map(entry => ({
+      ...entry,
+      toolLabel: entry.toolLabel || t(`tools.toolLabels.${entry.tool}`),
+    })),
+    ...gapResults.map(entry => ({ ...entry, tool: 'gap', toolLabel: t('tools.toolLabels.gap') })),
+    ...starStories.map(entry => ({ ...entry, tool: 'star', toolLabel: t('tools.toolLabels.star') })),
+    ...interviewSessions.map(entry => ({ ...entry, tool: 'interview', toolLabel: t('tools.toolLabels.interview') })),
+  ]
+  const focusedRecentPrepEntries = focusApplication
+    ? allRecentPrepEntries.filter(entry => matchesApplicationEntry(focusApplication, entry))
+    : []
+  const recentPrepEntries = (focusedRecentPrepEntries.length > 0 ? focusedRecentPrepEntries : allRecentPrepEntries)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 5)
+  const showingFocusedRecentPrep = focusedRecentPrepEntries.length > 0
   const dueTopics = topics.filter(topic => isDueToday(topic.nextReview) && topic.status === 'In Progress')
+  const focusHasGap = focusGapResults.length > 0
+  const focusHasTailorFollowOn = focusTailorRuns.length > 0
+  const focusTailorComplete = focusHasGap && focusHasTailorFollowOn
+  const focusTailorNeedsFollowOn = focusHasGap && !focusHasTailorFollowOn
+
+  function openRecentPrepEntry(entry) {
+    if (!entry?.tool) return
+    launchTool(sectionForTool(entry.tool), entry.tool)
+  }
 
   function changeFocusApplication(nextId) {
     const nextApp = applications.find(app => app.id === nextId)
@@ -198,18 +228,20 @@ export default function TodayPage() {
     {
       id: 'tailor',
       title: t('today.steps.tailor.title'),
-      state: focusGapResults.length > 0 || focusStarStories.length > 0 || focusTailorRuns.length > 0
+      state: focusTailorComplete
         ? 'complete'
-        : focusHasPrep
+        : focusTailorNeedsFollowOn || focusHasPrep
           ? 'in-progress'
           : focusHasJd || focusHasResearch
             ? 'ready'
             : 'blocked',
-      desc: focusGapResults.length > 0 || focusStarStories.length > 0 || focusTailorRuns.length > 0
+      desc: focusTailorComplete
         ? t('today.steps.tailor.done')
+        : focusTailorNeedsFollowOn
+          ? t('today.steps.tailor.todoAfterGap')
         : t('today.steps.tailor.todo'),
-      cta: t('today.steps.tailor.openGap'),
-      onClick: () => launchTool(SECTIONS.TOOLS, 'gap'),
+      cta: focusTailorNeedsFollowOn ? t('tools.toolLabels.resumechecker') : t('today.steps.tailor.openGap'),
+      onClick: () => launchTool(SECTIONS.TOOLS, focusTailorNeedsFollowOn ? 'resumechecker' : 'gap'),
       icon: Sparkles,
       tone: 'teal',
     },
@@ -271,7 +303,11 @@ export default function TodayPage() {
 
   const primaryAction = focusApplication
     ? {
-        label: nextFocusStep ? t('today.continueStep', { title: nextFocusStep.title }) : t('today.openWorkspace'),
+        label: nextFocusStep
+          ? nextFocusStep.id === 'tailor' && focusTailorNeedsFollowOn
+            ? t('tools.toolLabels.resumechecker')
+            : t('today.continueStep', { title: nextFocusStep.title })
+          : t('today.openWorkspace'),
         onClick: nextFocusStep ? nextFocusStep.onClick : () => openTrackerApplication(focusApplication.id, 'overview'),
       }
     : {
@@ -445,6 +481,7 @@ export default function TodayPage() {
             <div>
               <h3 className="font-display font-semibold text-white text-base">{t('today.prepHubs')}</h3>
               <p className="text-slate-400 text-sm">{t('today.prepHubsCopy')}</p>
+              <p className="text-slate-500 text-xs mt-1">{t('today.prepHubsNote')}</p>
             </div>
           </div>
           <div className="grid lg:grid-cols-3 gap-4">
@@ -463,6 +500,39 @@ export default function TodayPage() {
               </div>
             ))}
           </div>
+
+          {recentPrepEntries.length > 0 && (
+            <div className="card mt-4">
+              <h3 className="font-display font-semibold text-white text-base mb-1">{t('today.recentPrepTitle')}</h3>
+              <p className="text-slate-400 text-sm mb-3">
+                {showingFocusedRecentPrep ? t('today.recentPrepCopyActive') : t('today.recentPrepCopyProject')}
+              </p>
+
+              <div className="space-y-2">
+                {recentPrepEntries.map(entry => (
+                  <button
+                    key={`${entry.tool}-${entry.id}`}
+                    onClick={() => openRecentPrepEntry(entry)}
+                    className="w-full rounded-2xl border border-navy-600 bg-navy-950/60 px-4 py-3 text-left hover:border-teal-500/30 hover:bg-navy-900/80 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-white text-sm font-display font-semibold">
+                          {entry.toolLabel || t(`tools.toolLabels.${entry.tool}`)}
+                        </div>
+                        {!showingFocusedRecentPrep && entry.applicationLabel && (
+                          <div className="text-teal-300 text-xs mt-1">{entry.applicationLabel}</div>
+                        )}
+                      </div>
+                      <div className="text-slate-500 text-xs flex-shrink-0">
+                        {new Date(entry.date).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

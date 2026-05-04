@@ -20,6 +20,10 @@ const STAGE_LABEL_KEYS = {
 const FOLLOWUP_DAYS = { Applied: 7, Screening: 5, Interviewing: 3, Awaiting: 5 }
 const EMPTY_APPLICATION = { company: '', role: '', stage: 'Researching', jdUrl: '', jdText: '', notes: '' }
 
+function applicationLabel(app) {
+  return `${app.company}${app.role ? ` - ${app.role}` : ''}`
+}
+
 function hasResearchData(noteData = {}) {
   return ['wowFacts', 'techStack', 'culture', 'openQ'].some(key => (noteData[key] || '').trim())
 }
@@ -329,6 +333,10 @@ export default function JobTracker() {
   }
 
   function deleteApp(id) {
+    const targetApp = applications.find(app => app.id === id)
+    if (!targetApp) return
+    if (!confirm(t('applications.confirmDelete', { application: applicationLabel(targetApp) }))) return
+
     const nextApplications = applications.filter(a => a.id !== id)
     const nextActiveId = activeApplicationId === id ? nextApplications[0]?.id || null : activeApplicationId
     const nextActiveApp = nextApplications.find(app => app.id === nextActiveId)
@@ -1348,7 +1356,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     const latestPredictorRun = latestEntry(appPredictorRuns)
     const latestFollowupRun = latestEntry(appFollowupRuns)
     const latestTailorRun = latestEntry([...appTailorRuns, ...appTransferableRuns])
-    const latestTailorActivity = latestEntry([latestStarStory, latestGapResult, latestTailorRun].filter(Boolean))
+    const latestTailorActivity = latestEntry([latestGapResult, latestTailorRun].filter(Boolean))
     const latestWorkspaceActivity = latestEntry([
       ...appGapResults,
       ...appStarStories,
@@ -1363,10 +1371,12 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
 
     const captureState = hasJd ? 'complete' : 'ready'
     const researchState = hasResearch ? 'complete' : 'ready'
-    const tailorComplete = appGapResults.length > 0 || appStarStories.length > 0 || appTailorRuns.length > 0
+    const hasTailorFollowOn = appTailorRuns.length > 0 || appTransferableRuns.length > 0
+    const tailorComplete = appGapResults.length > 0 && hasTailorFollowOn
+    const tailorNeedsFollowOn = appGapResults.length > 0 && !hasTailorFollowOn
     const tailorState = tailorComplete
       ? 'complete'
-      : hasPrep || appTransferableRuns.length > 0 || noteCount > 0
+      : tailorNeedsFollowOn || hasPrep || noteCount > 0
         ? 'in-progress'
         : hasJd || hasResearch
           ? 'ready'
@@ -1374,7 +1384,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     const predictState = appPredictorRuns.length > 0 ? 'complete' : hasJd ? 'ready' : 'blocked'
     const mockState = appInterviewSessions.length > 0 ? 'complete' : hasJd ? 'ready' : 'blocked'
     const followupState = appFollowupRuns.length > 0 ? 'complete' : 'ready'
-    const tailorArtifactCount = appGapResults.length + appStarStories.length + appTailorRuns.length
+    const tailorArtifactCount = appGapResults.length + appTailorRuns.length + appTransferableRuns.length
     const latestMockScore = latestInterviewSession?.score != null
       ? (Number.isInteger(latestInterviewSession.score) ? latestInterviewSession.score : latestInterviewSession.score.toFixed(1))
       : null
@@ -1420,19 +1430,24 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
         step: '3',
         title: t('applications.workspace.steps.tailor.title'),
         state: tailorState,
-        desc: t('applications.workspace.steps.tailor.desc'),
+        desc: tailorNeedsFollowOn
+          ? t('applications.workspace.steps.tailor.descAfterGap')
+          : t('applications.workspace.steps.tailor.desc'),
         summary: tailorComplete
           ? latestTailorActivity?.date
             ? t('applications.workspace.steps.tailor.summaryReadyWithActivity', { count: tailorArtifactCount, timeAgo: timeAgo(latestTailorActivity.date) })
             : t('applications.workspace.steps.tailor.summaryReady', { count: tailorArtifactCount })
+          : tailorNeedsFollowOn
+            ? t('applications.workspace.steps.tailor.summaryAfterGap')
           : hasPrep
             ? t('applications.workspace.steps.tailor.summaryNotes', { count: noteCount })
             : t('applications.workspace.steps.tailor.summaryMissing'),
+        continueLabel: tailorNeedsFollowOn ? t('applications.workspace.steps.tailor.actionResume') : null,
         actions: [
-          { label: t('applications.workspace.steps.tailor.actionGap'), onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'gap'), variant: 'primary' },
-          { label: t('applications.workspace.steps.tailor.actionStar'), onClick: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'star'), variant: 'secondary' },
-          { label: t('applications.workspace.steps.tailor.actionResume'), onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'resumechecker'), variant: 'ghost' },
+          { label: tailorNeedsFollowOn ? t('applications.workspace.steps.tailor.actionResume') : t('applications.workspace.steps.tailor.actionGap'), onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, tailorNeedsFollowOn ? 'resumechecker' : 'gap'), variant: 'primary' },
+          { label: tailorNeedsFollowOn ? t('applications.workspace.steps.tailor.actionGap') : t('applications.workspace.steps.tailor.actionStar'), onClick: () => launchWorkspaceTool(tailorNeedsFollowOn ? SECTIONS.TOOLS : SECTIONS.INTERVIEW, tailorNeedsFollowOn ? 'gap' : 'star'), variant: 'secondary' },
           { label: t('applications.workspace.steps.tailor.actionCover'), onClick: () => launchWorkspaceTool(SECTIONS.TOOLS, 'coverletter'), variant: 'ghost' },
+          { label: t('applications.workspace.steps.tailor.actionStar'), onClick: () => launchWorkspaceTool(SECTIONS.INTERVIEW, 'star'), variant: 'ghost' },
         ],
       },
       {
@@ -1514,6 +1529,9 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
               <p className="text-slate-300 text-sm leading-relaxed">
                 {t('applications.workspace.overview.subtitle')}
               </p>
+              <p className="text-slate-500 text-xs mt-2">
+                {t('applications.workspace.overview.initialFlowNote', { count: stepCards.length })}
+              </p>
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   <span className="px-2.5 py-1 rounded-full text-[11px] border border-navy-600 bg-navy-900 text-slate-300">
                     {stageLabel(app.stage)}
@@ -1540,7 +1558,9 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
             <div className="flex gap-2 flex-wrap">
               {nextStepAction && (
                 <button onClick={nextStepAction.onClick} className="btn-primary text-xs">
-                  {completedSteps === stepCards.length ? t('applications.workspace.overview.reviewWorkspace') : t('applications.workspace.overview.continueStep', { step: nextStep.title })}
+                  {completedSteps === stepCards.length
+                    ? t('applications.workspace.overview.reviewWorkspace')
+                    : nextStep.continueLabel || t('applications.workspace.overview.continueStep', { step: nextStep.title })}
                 </button>
               )}
               <button onClick={() => navigateWorkspaceTab('research')} className="btn-ghost text-xs">
