@@ -4,7 +4,7 @@ import { useAI } from '../../context/AIContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 import { useVisuals } from '../../context/VisualsContext'
 import { useLanguage } from '../../context/LanguageContext'
-import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal, Languages, ChevronDown } from 'lucide-react'
+import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal, Languages, ChevronDown, Check } from 'lucide-react'
 import BrandMark from '../shared/BrandMark'
 
 const THEME_ICONS = {
@@ -106,36 +106,89 @@ const GUIDE_DETAILS = {
 
 function TopBarLanguageSelect({ compact = false, onChangeComplete = null }) {
   const { language, setLanguage, languages, t } = useLanguage()
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef(null)
   const selectedLanguage = languages.find(option => option.code === language) || languages[0]
 
+  useEffect(() => {
+    if (!open) return undefined
+
+    function handlePointerDown(event) {
+      if (!rootRef.current?.contains(event.target)) {
+        setOpen(false)
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setOpen(false)
+      }
+    }
+
+    window.addEventListener('mousedown', handlePointerDown)
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open])
+
+  function handleSelect(nextLanguage) {
+    setLanguage(nextLanguage)
+    setOpen(false)
+    onChangeComplete?.()
+  }
+
   return (
-    <label
-      className={`language-select-shell relative flex items-center gap-2 rounded-xl border border-navy-600 bg-navy-800/80 text-slate-300 transition-all hover:border-teal-500/40 hover:text-white ${
-        compact ? 'w-full px-3 py-2' : 'w-fit px-2.5 py-1.5'
-      }`}
+    <div
+      ref={rootRef}
+      className={`language-select-shell relative ${compact ? 'w-full' : 'w-fit'}`}
       title={t('settings.interfaceLanguage')}
     >
-      <Languages size={compact ? 14 : 15} className="text-teal-400 flex-shrink-0" />
-      <span className="text-xs font-display font-semibold whitespace-nowrap pr-4">
-        {selectedLanguage?.nativeLabel}
-      </span>
-      <ChevronDown size={13} className="absolute right-2 text-current opacity-80 pointer-events-none" />
-      <select
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
         aria-label={t('settings.interfaceLanguage')}
-        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-        value={language}
-        onChange={e => {
-          setLanguage(e.target.value)
-          onChangeComplete?.()
-        }}
+        onClick={() => setOpen(prev => !prev)}
+        className={`language-select-trigger ${compact ? 'w-full px-3 py-2.5' : 'px-3 py-2'}`}
       >
-        {languages.map(option => (
-          <option key={option.code} value={option.code} className="bg-navy-900 text-white">
-            {option.nativeLabel}
-          </option>
-        ))}
-      </select>
-    </label>
+        <Languages size={compact ? 14 : 15} className="text-teal-400 flex-shrink-0" />
+        <span className="text-xs font-display font-semibold whitespace-nowrap">
+          {selectedLanguage?.nativeLabel}
+        </span>
+        <ChevronDown size={14} className={`ml-auto text-current opacity-80 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className={`language-select-menu ${compact ? 'left-0 right-0' : 'right-0 min-w-[220px]'}`}>
+          <div className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display">
+            {t('settings.interfaceLanguage')}
+          </div>
+          <div className="max-h-80 overflow-y-auto px-1 pb-1">
+            {languages.map(option => {
+              const isSelected = option.code === language
+              return (
+                <button
+                  key={option.code}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => handleSelect(option.code)}
+                  className={`language-select-option ${isSelected ? 'is-selected' : ''}`}
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-display font-semibold text-left">{option.nativeLabel}</div>
+                    <div className="text-[11px] text-slate-500 text-left">{option.label}</div>
+                  </div>
+                  <Check size={14} className={`flex-shrink-0 transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0'}`} />
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

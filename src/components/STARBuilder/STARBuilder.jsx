@@ -80,7 +80,7 @@ export default function STARBuilder({ onBack, backLabel }) {
   ]
 
   if (view === 'detail' && viewingStory) return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <button onClick={() => { setView('bank'); setViewingStory(null) }} className="btn-ghost mb-4"><ArrowLeft size={16} /> {t('starBuilder.storyBank')}</button>
 
       <div className="flex items-start justify-between gap-3 mb-5">
@@ -132,7 +132,7 @@ export default function STARBuilder({ onBack, backLabel }) {
   )
 
   if (view === 'build') return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <button onClick={() => setView('bank')} className="btn-ghost mb-4"><ArrowLeft size={16} /> {t('starBuilder.storyBank')}</button>
       <h2 className="section-title mb-1">{t('starBuilder.builderTitle')}</h2>
       <p className="section-sub mb-5">{t('starBuilder.builderSubtitle')}</p>

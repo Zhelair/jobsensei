@@ -205,7 +205,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
   if (view === 'setup') {
     return (
       <div className="overflow-y-auto h-full">
-        <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5 animate-in">
+        <div className="interview-setup-shell p-4 md:p-6 space-y-5 animate-in">
           {onExit && (
             <button onClick={onExit} className="btn-ghost">
               <ArrowLeft size={16} /> {hubLabel}
@@ -224,17 +224,17 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
 
           <div>
             <label className="text-sm text-slate-400 mb-2 block">{t('interview.modeLabel')}</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {modes.map(entry => (
                 <button
                   key={entry.id}
                   onClick={() => setMode(entry.id)}
-                  className={`p-3 rounded-xl border text-left transition-all ${mode === entry.id
+                  className={`interview-mode-card ${mode === entry.id
                     ? 'bg-teal-500/10 border-teal-500/40 text-white'
                     : 'bg-navy-900 border-navy-700 text-slate-400 hover:border-navy-500'}`}
                 >
-                  <div className="font-body font-semibold text-sm">{entry.label}</div>
-                  <div className="text-xs mt-0.5 opacity-70">{entry.desc}</div>
+                  <div className="font-body font-semibold text-sm lg:text-base">{entry.label}</div>
+                  <div className="text-xs lg:text-sm mt-1 opacity-70 leading-relaxed">{entry.desc}</div>
                 </button>
               ))}
             </div>
@@ -259,13 +259,13 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
             </div>
           )}
 
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid md:grid-cols-2 gap-5 lg:gap-6">
             <div>
               <label className="text-sm text-slate-400 mb-1.5 block">
                 {t('applications.fields.jobDescription')} <span className="text-slate-600">({t('interview.optionalRecommended')})</span>
               </label>
               <textarea
-                className="textarea-field h-52"
+                className="textarea-field h-52 lg:h-64"
                 placeholder={t('interview.jdPlaceholder')}
                 value={jd}
                 onChange={event => setJd(event.target.value)}
@@ -278,29 +278,29 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
                   {t('interview.backgroundLabel')} {resume && <span className="text-teal-400 text-xs ml-1">{t('interview.fromResume')}</span>}
                 </label>
                 <textarea
-                  className="textarea-field h-32"
+                  className="textarea-field h-32 lg:h-40"
                   placeholder={t('interview.backgroundPlaceholder')}
                   value={background}
                   onChange={event => setBackground(event.target.value)}
                 />
               </div>
 
-              <div className="flex gap-2 items-center flex-wrap">
+              <div className="flex gap-2.5 items-center flex-wrap">
                 <label className="text-sm text-slate-400">{t('interview.questionsLabel')}</label>
                 {[5, 10, 15].map(count => (
                   <button
                     key={count}
                     onClick={() => setQuestionCount(count)}
-                    className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${questionCount === count
+                    className={`tool-choice-pill ${questionCount === count
                       ? 'bg-teal-500/20 text-teal-400 border-teal-500/30'
-                      : 'bg-navy-700 text-slate-400 border-navy-600'}`}
+                      : 'bg-navy-700 text-slate-400 border-navy-600 hover:border-slate-500'}`}
                   >
                     {count}
                   </button>
                 ))}
               </div>
 
-              <button onClick={startSession} disabled={!isConnected} className="btn-primary w-full justify-center py-3 text-base mt-auto">
+              <button onClick={startSession} disabled={!isConnected} className="btn-primary w-full justify-center py-3 lg:py-4 text-base lg:text-lg mt-auto">
                 <Play size={18} /> {t('interview.startButton')}
               </button>
               {!isConnected && (
@@ -333,7 +333,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
           )}
           <button
             onClick={() => sendMessage('DEBRIEF - Please give me the full session debrief now.')}
-            className="btn-ghost text-xs"
+            className="inline-flex items-center rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1.5 text-xs font-display font-semibold text-teal-300 transition-all hover:bg-teal-500/20 hover:text-white"
           >
             {t('interview.debrief')}
           </button>
