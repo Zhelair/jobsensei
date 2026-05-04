@@ -199,7 +199,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
   const severityClass = { low: 'badge-teal', medium: 'badge-yellow', high: 'badge-red' }
 
   if (showHistory) return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <button onClick={() => setShowHistory(false)} className="btn-ghost mb-4"><ArrowLeft size={16} /> {t('common.back')}</button>
       <h2 className="section-title mb-1">{t('gapAnalysis.history.title')}</h2>
       <p className="section-sub mb-4">{t('gapAnalysis.history.savedCount', { count: savedResults.length })}</p>

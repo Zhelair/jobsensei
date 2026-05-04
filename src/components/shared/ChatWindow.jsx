@@ -21,6 +21,17 @@ export default function ChatWindow({ messages, isLoading, emptyText }) {
   const bottomRef = useRef(null)
   const { t } = useLanguage()
 
+  function renderMessageContent(message) {
+    const content = String(message?.content || '')
+    if (message?.role !== 'assistant' || !content.includes('DEBRIEF')) return content
+
+    return content.split(/(DEBRIEF)/g).map((part, index) => (
+      part === 'DEBRIEF'
+        ? <span key={`${part}-${index}`} className="chat-inline-chip">DEBRIEF</span>
+        : <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>
+    ))
+  }
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
@@ -46,7 +57,7 @@ export default function ChatWindow({ messages, isLoading, emptyText }) {
             }
           </div>
           <div className={msg.role === 'user' ? 'chat-user' : 'chat-ai'}>
-            <div className="whitespace-pre-wrap">{msg.content}</div>
+            <div className="whitespace-pre-wrap">{renderMessageContent(msg)}</div>
           </div>
         </div>
       ))}

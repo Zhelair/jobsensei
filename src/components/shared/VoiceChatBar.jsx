@@ -47,7 +47,7 @@ export default function VoiceChatBar({
       return
     }
     if (isListening) {
-      stopListening()
+      discardRecording()
       return
     }
     clearError()
@@ -104,7 +104,7 @@ export default function VoiceChatBar({
     : isPaused
       ? t('voice.micResume')
       : isListening
-        ? t('voice.micStopSend')
+        ? t('voice.discardTitle')
         : t('voice.micPress')
 
   return (

@@ -914,7 +914,7 @@ function TransferableSkillsTool({ onBack, hubLabel = 'Back', resume, saveHistory
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
@@ -982,7 +982,7 @@ function QuestionPredictor({ onBack, hubLabel = 'Back', resume, activeContext, s
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
@@ -1048,7 +1048,7 @@ function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelet
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
@@ -1135,7 +1135,7 @@ function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, 
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
@@ -1146,19 +1146,19 @@ function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, 
       <p className="section-sub mb-5">{t('tools.followup.subtitle')}</p>
       <ActiveJobContextCard activeContext={activeContext} note={t('tools.followup.contextNote')} />
       <div className="space-y-3 mb-4">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 md:grid-cols-2">
           <input className="input-field" placeholder={t('tools.followup.companyPlaceholder')} value={company} onChange={e => setCompany(e.target.value)} />
           <input className="input-field" placeholder={t('tools.followup.interviewerPlaceholder')} value={interviewer} onChange={e => setInterviewer(e.target.value)} />
         </div>
         <input className="input-field" placeholder={t('tools.followup.rolePlaceholder')} value={role} onChange={e => setRole(e.target.value)} />
         <textarea className="textarea-field h-20" placeholder={t('tools.followup.notesPlaceholder')} value={notes} onChange={e => setNotes(e.target.value)} />
-        <div className="flex gap-2">
+        <div className="flex gap-2.5 flex-wrap md:flex-nowrap">
           {[
             { value: 'Warm', label: t('tools.followup.toneWarm') },
             { value: 'Professional', label: t('tools.followup.toneProfessional') },
             { value: 'Enthusiastic', label: t('tools.followup.toneEnthusiastic') },
           ].map(option => (
-            <button key={option.value} onClick={() => setTone(option.value)} className={`flex-1 py-2 rounded-lg text-sm font-body border transition-all ${tone === option.value ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' : 'bg-navy-700 text-slate-400 border-navy-600'}`}>{option.label}</button>
+            <button key={option.value} onClick={() => setTone(option.value)} className={`tool-choice-pill min-w-[150px] flex-1 ${tone === option.value ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' : 'bg-navy-700 text-slate-400 border-navy-600 hover:border-slate-500'}`}>{option.label}</button>
           ))}
         </div>
       </div>
@@ -1205,7 +1205,7 @@ function ElevatorPitch({ onBack, hubLabel = 'Back', resume, saveHistory, history
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
@@ -1275,7 +1275,7 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
@@ -1313,9 +1313,9 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
           )}
           {result.letters?.length > 0 && (
             <div>
-              <div className="flex gap-2 mb-3">
+              <div className="flex gap-2.5 mb-3 flex-wrap md:flex-nowrap">
                 {result.letters.map((l, i) => (
-                  <button key={i} onClick={() => setActiveTab(i)} className={`flex-1 py-2 rounded-lg text-sm font-body border transition-all ${activeTab === i ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' : 'bg-navy-700 text-slate-400 border-navy-600 hover:border-slate-500'}`}>{l.tone}</button>
+                  <button key={i} onClick={() => setActiveTab(i)} className={`tool-choice-pill min-w-[160px] flex-1 ${activeTab === i ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' : 'bg-navy-700 text-slate-400 border-navy-600 hover:border-slate-500'}`}>{l.tone}</button>
                 ))}
               </div>
               {result.letters[activeTab] && (
@@ -1363,7 +1363,7 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
@@ -1474,7 +1474,7 @@ function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, o
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
@@ -1544,7 +1544,7 @@ function LinkedInAuditor({ onBack, hubLabel = 'Back', saveHistory, history, onDe
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto animate-in">
+    <div className="tool-shell p-4 md:p-6 animate-in">
       <div className="flex items-center justify-between mb-4">
         <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /> {hubLabel}</button>
         {history.length > 0 && (
