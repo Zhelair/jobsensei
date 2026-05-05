@@ -59,6 +59,7 @@ export function useVoice() {
   const [transcript, setTranscript] = useState('')
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [error, setError] = useState(null)
+  const [isRequestingPermission, setIsRequestingPermission] = useState(false)
   const [supported] = useState(
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
@@ -84,6 +85,48 @@ export function useVoice() {
     return unsubscribe
   }, [])
 
+  const readMicrophonePermission = useCallback(async () => {
+    if (!navigator.permissions?.query) return 'unknown'
+
+    try {
+      const status = await navigator.permissions.query({ name: 'microphone' })
+      return status?.state || 'unknown'
+    } catch {
+      return 'unknown'
+    }
+  }, [])
+
+  const ensureMicrophoneAccess = useCallback(async () => {
+    if (!navigator.mediaDevices?.getUserMedia) return true
+
+    setIsRequestingPermission(true)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      stream.getTracks().forEach(track => track.stop())
+      setError(null)
+      return true
+    } catch (err) {
+      const permissionState = await readMicrophonePermission()
+      const errorName = err?.name || ''
+
+      if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError' || errorName === 'SecurityError') {
+        if (permissionState === 'denied') {
+          setError('Microphone access is blocked. Allow it from the browser site settings, then tap the mic again.')
+        } else {
+          setError('Microphone access was dismissed. Tap the mic again and choose Allow to start recording.')
+        }
+      } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
+        setError('No microphone found. Please connect a microphone and try again.')
+      } else {
+        setError('Microphone permission check failed. Please try the mic again.')
+      }
+
+      return false
+    } finally {
+      setIsRequestingPermission(false)
+    }
+  }, [readMicrophonePermission])
+
   // Internal: create and start a SpeechRecognition session.
   // resetAccumulated=true on fresh start, false when resuming after a mobile auto-pause.
   // Stored in a ref so startListening / resumeListening always call the latest version.
@@ -102,6 +145,11 @@ export function useVoice() {
     recognition.interimResults = true
     recognition.lang = recognitionLang || 'en-US'
     recognition.maxAlternatives = 1
+    recognition.onstart = () => {
+      setIsListening(true)
+      setIsPaused(false)
+      setError(null)
+    }
 
     // Per-session highest finalized index — prevents reprocessing same index twice.
     let maxFinalizedIndex = -1
@@ -153,7 +201,14 @@ export function useVoice() {
         userStoppedRef.current = true
         setIsListening(false)
         setIsPaused(false)
-        setError('Microphone access denied. Please allow microphone in your browser settings.')
+        void readMicrophonePermission().then((permissionState) => {
+          if (permissionState === 'denied') {
+            setError('Microphone access is blocked. Allow it from the browser site settings, then tap the mic again.')
+            return
+          }
+
+          setError('Microphone access was dismissed. Tap the mic again and choose Allow to start recording.')
+        })
       } else if (e.error === 'no-speech') {
         setError(null)
       } else if (e.error === 'audio-capture') {
@@ -167,19 +222,25 @@ export function useVoice() {
     }
 
     recognitionRef.current = recognition
-    recognition.start()
+    try {
+      recognition.start()
+    } catch {
+      setIsListening(false)
+      setIsPaused(false)
+      setError('Microphone could not start. Tap the mic again to retry.')
+    }
   }
 
   // Start a fresh recording session
-  const startListening = useCallback((onResult) => {
+  const startListening = useCallback(async (onResult) => {
     if (!supported) return
     setError(null)
-    setIsListening(true)
-    setIsPaused(false)
     setTranscript('')
     onResultCallbackRef.current = onResult
+    const hasAccess = await ensureMicrophoneAccess()
+    if (!hasAccess) return
     beginRecognitionRef.current(true)
-  }, [supported])
+  }, [ensureMicrophoneAccess, supported])
 
   // Resume after a mobile auto-pause (keeps previously spoken text)
   const resumeListening = useCallback(() => {
@@ -283,7 +344,7 @@ export function useVoice() {
   const clearError = useCallback(() => setError(null), [])
 
   return {
-    isListening, isPaused, transcript, isSpeaking, supported, error,
+    isListening, isPaused, transcript, isSpeaking, supported, error, isRequestingPermission,
     voiceSupport, speechLang, recognitionLang,
     startListening, resumeListening, stopListening, discardRecording,
     speak, stopSpeaking, clearError, replayLast,
