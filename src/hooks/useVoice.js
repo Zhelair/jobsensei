@@ -1,29 +1,52 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useLanguage } from '../context/LanguageContext'
+import { subscribeToVoicesChanged, useLanguage } from '../context/LanguageContext'
 
 function normalizeVoiceLang(lang = '') {
   return String(lang || '').replace(/_/g, '-').toLowerCase()
 }
 
-function getBestVoice(preferredVoice, speechLang) {
-  if (preferredVoice) return preferredVoice
-  const voices = window.speechSynthesis?.getVoices() || []
+function getVoiceSupportLevel(voice, speechLang) {
+  if (!voice) return 0
+
   const normalizedSpeechLang = normalizeVoiceLang(speechLang)
   const baseSpeechLang = normalizedSpeechLang.split('-')[0]
+  const voiceLang = normalizeVoiceLang(voice.lang)
+
+  if (voiceLang === normalizedSpeechLang) return 3
+  if (voiceLang === baseSpeechLang || voiceLang.startsWith(`${baseSpeechLang}-`)) return 2
+  if (voiceLang.startsWith('en')) return 1
+  return 0
+}
+
+function getBestVoice(preferredVoice, speechLang) {
+  const voices = window.speechSynthesis?.getVoices() || []
+  const livePreferredVoice = preferredVoice
+    ? voices.find((voice) => (
+      voice.name === preferredVoice.name
+      && normalizeVoiceLang(voice.lang) === normalizeVoiceLang(preferredVoice.lang)
+    )) || voices.find(voice => voice.name === preferredVoice.name) || preferredVoice
+    : null
+
+  if (livePreferredVoice && getVoiceSupportLevel(livePreferredVoice, speechLang) >= 2) {
+    return livePreferredVoice
+  }
+
+  const exactMatch = voices.find(voice => getVoiceSupportLevel(voice, speechLang) === 3)
+  if (exactMatch) return exactMatch
+
+  const relatedMatch = voices.find(voice => getVoiceSupportLevel(voice, speechLang) === 2)
+  if (relatedMatch) return relatedMatch
+
   const preferred = [
     'Google UK English Female', 'Google US English',
     'Microsoft Zira', 'Samantha', 'Karen', 'Moira', 'Tessa',
   ]
+  if (livePreferredVoice) return livePreferredVoice
   for (const name of preferred) {
     const v = voices.find(v => v.name === name)
     if (v) return v
   }
-  return voices.find(v => normalizeVoiceLang(v.lang) === normalizedSpeechLang)
-    || voices.find((v) => {
-      const voiceLang = normalizeVoiceLang(v.lang)
-      return voiceLang === baseSpeechLang || voiceLang.startsWith(`${baseSpeechLang}-`)
-    })
-    || voices.find(v => normalizeVoiceLang(v.lang).startsWith('en'))
+  return voices.find(v => getVoiceSupportLevel(v, speechLang) === 1)
     || voices[0]
     || null
 }
@@ -56,8 +79,9 @@ export function useVoice() {
   useEffect(() => {
     if (!window.speechSynthesis) return
     const load = () => setVoicesLoaded(true)
-    window.speechSynthesis.onvoiceschanged = load
+    const unsubscribe = subscribeToVoicesChanged(window.speechSynthesis, load)
     if (window.speechSynthesis.getVoices().length > 0) setVoicesLoaded(true)
+    return unsubscribe
   }, [])
 
   // Internal: create and start a SpeechRecognition session.

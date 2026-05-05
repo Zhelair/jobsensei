@@ -804,6 +804,29 @@ function normalizeVoiceLang(lang = '') {
   return String(lang || '').replace(/_/g, '-').toLowerCase()
 }
 
+export function subscribeToVoicesChanged(speechSynthesis, handler) {
+  if (!speechSynthesis || typeof handler !== 'function') return () => {}
+
+  if (typeof speechSynthesis.addEventListener === 'function') {
+    speechSynthesis.addEventListener('voiceschanged', handler)
+    return () => speechSynthesis.removeEventListener?.('voiceschanged', handler)
+  }
+
+  const previousHandler = speechSynthesis.onvoiceschanged
+  const wrappedHandler = (event) => {
+    previousHandler?.call(speechSynthesis, event)
+    handler(event)
+  }
+
+  speechSynthesis.onvoiceschanged = wrappedHandler
+
+  return () => {
+    if (speechSynthesis.onvoiceschanged === wrappedHandler) {
+      speechSynthesis.onvoiceschanged = previousHandler || null
+    }
+  }
+}
+
 export function findVoiceForLanguage(option, voices, preferredVoiceName = '') {
   if (!Array.isArray(voices) || voices.length === 0) return null
   if (preferredVoiceName) {
@@ -875,9 +898,7 @@ export function LanguageProvider({ children }) {
     if (!window.speechSynthesis) return
     const loadVoices = () => setVoices(window.speechSynthesis.getVoices() || [])
     loadVoices()
-    window.speechSynthesis.addEventListener?.('voiceschanged', loadVoices)
-    window.speechSynthesis.onvoiceschanged = loadVoices
-    return () => window.speechSynthesis.removeEventListener?.('voiceschanged', loadVoices)
+    return subscribeToVoicesChanged(window.speechSynthesis, loadVoices)
   }, [])
 
   const languageOption = LANGUAGE_OPTIONS.find(option => option.code === language) || LANGUAGE_OPTIONS[0]
