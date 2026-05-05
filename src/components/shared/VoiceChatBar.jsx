@@ -13,7 +13,7 @@ export default function VoiceChatBar({
   const { isMuted } = useApp()
   const { t, languageOption } = useLanguage()
   const {
-    isListening, isPaused, transcript, isSpeaking, supported, error, clearError,
+    isListening, isPaused, transcript, isSpeaking, supported, error, clearError, isRequestingPermission,
     voiceSupport,
     startListening, resumeListening, stopListening, discardRecording, speak, stopSpeaking, replayLast,
   } = useVoice()
@@ -41,7 +41,7 @@ export default function VoiceChatBar({
     if (ttsEnabledRef.current && !isMuted) speakRef.current(lastAiMessage)
   }, [lastAiMessage, isMuted])
 
-  function handleMic() {
+  async function handleMic() {
     if (isPaused) {
       resumeListening()
       return
@@ -51,7 +51,7 @@ export default function VoiceChatBar({
       return
     }
     clearError()
-    startListening((final) => { if (final.trim()) onSend(final) })
+    await startListening((final) => { if (final.trim()) onSend(final) })
   }
 
   function handleTts() {
@@ -104,6 +104,8 @@ export default function VoiceChatBar({
     : languageOption.voiceNote || t('settings.voiceFallback')
   const micTitle = !supported
     ? t('voice.micUnsupported')
+    : isRequestingPermission
+      ? 'Waiting for microphone permission...'
     : isPaused
       ? t('voice.micResume')
       : isListening
@@ -190,13 +192,22 @@ export default function VoiceChatBar({
         </div>
       )}
 
+      {isRequestingPermission && (
+        <div className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 rounded-xl px-3 py-2 mb-2 text-teal-200 text-xs animate-in">
+          <AlertCircle size={13} className="flex-shrink-0" />
+          <span className="flex-1">Waiting for microphone permission...</span>
+        </div>
+      )}
+
       <div className="flex gap-2 items-end">
         <button
           onClick={handleMic}
-          disabled={!supported}
+          disabled={!supported || isRequestingPermission}
           className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
             !supported
               ? 'bg-navy-800 text-slate-600 border border-navy-700 cursor-not-allowed'
+              : isRequestingPermission
+                ? 'bg-teal-500/15 text-teal-300 border border-teal-500/30 cursor-wait'
               : isListening && !isPaused
                 ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse'
                 : isPaused
