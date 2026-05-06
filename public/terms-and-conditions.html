@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobSensei Terms and Conditions</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --panel: rgba(14, 26, 48, 0.92);
+        --border: rgba(96, 165, 250, 0.2);
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #60a5fa;
+        --accent-soft: rgba(96, 165, 250, 0.12);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(96, 165, 250, 0.12), transparent 32%),
+          linear-gradient(180deg, #081325 0%, #0a1730 100%);
+        color: var(--text);
+        line-height: 1.6;
+      }
+      main {
+        width: min(860px, calc(100vw - 32px));
+        margin: 40px auto;
+        padding: 28px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+      }
+      h1, h2 { margin: 0 0 12px; }
+      h1 { font-size: 2rem; }
+      h2 { margin-top: 24px; font-size: 1.15rem; color: var(--accent); }
+      .muted { color: var(--muted); }
+      .pill {
+        display: inline-block;
+        margin-bottom: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        border: 1px solid var(--border);
+        color: var(--accent);
+        font-size: 0.78rem;
+        font-weight: 600;
+      }
+      ul { padding-left: 18px; margin: 0; }
+      li + li { margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="pill" id="pill"></div>
+      <h1 id="title"></h1>
+      <p class="muted" id="updated"></p>
+      <p id="intro"></p>
+      <div id="sections"></div>
+    </main>
+    <script>
+      const COPY = {
+        en: {
+          pill: 'JobSensei',
+          title: 'Terms and Conditions',
+          updated: 'Last updated: May 6, 2026',
+          intro: 'By using JobSensei, you agree to use the product responsibly. JobSensei is a preparation tool, not a guarantee of employment, legal advice, or regulated professional advice.',
+          sections: [
+            { title: 'Using the service', items: ['Use JobSensei for your own job-search preparation and approved testing.', 'Do not misuse the app to break the service, bypass access controls, or abuse third-party providers.'] },
+            { title: 'Hosted AI and personal keys', items: ['Hosted AI access depends on an active plan or grant.', 'Bring-your-own-key mode remains your responsibility, including provider costs and provider rules.', 'AI output can be imperfect and should be reviewed by you before use.'] },
+            { title: 'Accounts and device limits', items: ['Secure sign-in may be used to link access to a real email account.', 'Approved-device limits may apply to prevent account sharing.', 'Removing a device may start a cooldown before a replacement device can be approved.'] },
+            { title: 'Availability and liability', items: ['Features, providers, or pricing may change over time.', 'JobSensei is provided on a best-effort basis, and you remain responsible for your own decisions and final materials.'] },
+          ],
+        },
+        bg: {
+          pill: 'JobSensei',
+          title: 'Общи условия',
+          updated: 'Последна промяна: 6 май 2026',
+          intro: 'С използването на JobSensei се съгласяваш да ползваш продукта отговорно. JobSensei е инструмент за подготовка, а не гаранция за работа, правен съвет или регулиран професионален съвет.',
+          sections: [
+            { title: 'Използване на услугата', items: ['Ползвай JobSensei за собствената си подготовка и одобрено тестване.', 'Не използвай приложението за заобикаляне на контроли, злоупотреба с доставчици или нарушаване на услугата.'] },
+            { title: 'Hosted AI и лични ключове', items: ['Hosted AI достъпът зависи от активен план или grant.', 'BYOK режимът остава твоя отговорност, включително цените и правилата на доставчика.', 'AI резултатите може да не са идеални и трябва да бъдат прегледани от теб.'] },
+            { title: 'Акаунти и лимит на устройства', items: ['Защитеният вход може да свърже достъпа с реален имейл акаунт.', 'Лимитът на одобрени устройства помага срещу споделяне на акаунта.', 'Премахването на устройство може да стартира cooldown преди ново устройство да бъде одобрено.'] },
+            { title: 'Наличност и отговорност', items: ['Функции, доставчици и цени може да се променят с времето.', 'JobSensei се предоставя на best-effort принцип и ти носиш отговорност за собствените си решения и финални материали.'] },
+          ],
+        },
+        ru: {
+          pill: 'JobSensei',
+          title: 'Условия использования',
+          updated: 'Последнее обновление: 6 мая 2026',
+          intro: 'Используя JobSensei, вы соглашаетесь пользоваться продуктом ответственно. JobSensei — это инструмент подготовки, а не гарантия трудоустройства, юридическая консультация или регулируемая профессиональная рекомендация.',
+          sections: [
+            { title: 'Использование сервиса', items: ['Используйте JobSensei для собственной подготовки к поиску работы и одобренного тестирования.', 'Не используйте приложение для обхода ограничений, злоупотребления провайдерами или нарушения работы сервиса.'] },
+            { title: 'Hosted AI и личные ключи', items: ['Доступ к hosted AI зависит от активного плана или grant.', 'Режим BYOK остаётся вашей ответственностью, включая стоимость и правила провайдера.', 'AI-результаты могут быть неточными и должны проверяться вами.'] },
+            { title: 'Аккаунты и лимит устройств', items: ['Безопасный вход может привязать доступ к реальному email-аккаунту.', 'Лимит одобренных устройств может применяться для защиты от шаринга аккаунта.', 'Удаление устройства может запускать cooldown перед одобрением нового устройства.'] },
+            { title: 'Доступность и ответственность', items: ['Функции, провайдеры и цены могут меняться со временем.', 'JobSensei предоставляется по best-effort модели, а ответственность за ваши решения и финальные материалы остаётся на вас.'] },
+          ],
+        },
+        'es-ES': {
+          pill: 'JobSensei',
+          title: 'Términos y condiciones',
+          updated: 'Última actualización: 6 de mayo de 2026',
+          intro: 'Al usar JobSensei aceptas usar el producto de forma responsable. JobSensei es una herramienta de preparación, no una garantía de empleo ni asesoramiento legal o profesional regulado.',
+          sections: [
+            { title: 'Uso del servicio', items: ['Usa JobSensei para tu propia preparación y pruebas aprobadas.', 'No uses la app para saltarte controles de acceso, abusar de terceros o romper el servicio.'] },
+            { title: 'Hosted AI y claves propias', items: ['El acceso a hosted AI depende de un plan o grant activo.', 'El modo BYOK sigue siendo tu responsabilidad, incluidos los costes y las reglas del proveedor.', 'Las salidas de AI pueden ser imperfectas y debes revisarlas antes de usarlas.'] },
+            { title: 'Cuentas y límite de dispositivos', items: ['El inicio de sesión seguro puede vincular el acceso a una cuenta de email real.', 'Puede aplicarse un límite de dispositivos aprobados para evitar compartir cuentas.', 'Quitar un dispositivo puede iniciar un cooldown antes de aprobar otro de reemplazo.'] },
+            { title: 'Disponibilidad y responsabilidad', items: ['Las funciones, los proveedores y los precios pueden cambiar con el tiempo.', 'JobSensei se ofrece sobre una base best-effort y sigues siendo responsable de tus decisiones y materiales finales.'] },
+          ],
+        },
+        fr: {
+          pill: 'JobSensei',
+          title: 'Conditions générales',
+          updated: 'Dernière mise à jour : 6 mai 2026',
+          intro: 'En utilisant JobSensei, vous acceptez d’utiliser le produit de manière responsable. JobSensei est un outil de préparation, pas une garantie d’emploi ni un conseil juridique ou professionnel réglementé.',
+          sections: [
+            { title: 'Utilisation du service', items: ['Utilisez JobSensei pour votre propre préparation et les tests approuvés.', 'N’utilisez pas l’application pour contourner les contrôles d’accès, abuser des fournisseurs tiers ou casser le service.'] },
+            { title: 'Hosted AI et clés personnelles', items: ['L’accès à hosted AI dépend d’un plan ou grant actif.', 'Le mode BYOK reste sous votre responsabilité, y compris les coûts et règles du fournisseur.', 'Les sorties AI peuvent être imparfaites et doivent être relues par vous.'] },
+            { title: 'Comptes et limite d’appareils', items: ['La connexion sécurisée peut lier l’accès à un vrai compte email.', 'Une limite d’appareils approuvés peut s’appliquer pour éviter le partage de compte.', 'Retirer un appareil peut lancer un cooldown avant qu’un appareil de remplacement soit approuvé.'] },
+            { title: 'Disponibilité et responsabilité', items: ['Les fonctionnalités, fournisseurs et tarifs peuvent évoluer avec le temps.', 'JobSensei est fourni sur une base best-effort et vous restez responsable de vos décisions et contenus finaux.'] },
+          ],
+        },
+        it: {
+          pill: 'JobSensei',
+          title: 'Termini e condizioni',
+          updated: 'Ultimo aggiornamento: 6 maggio 2026',
+          intro: 'Usando JobSensei accetti di usare il prodotto in modo responsabile. JobSensei è uno strumento di preparazione, non una garanzia di assunzione né consulenza legale o professionale regolata.',
+          sections: [
+            { title: 'Uso del servizio', items: ['Usa JobSensei per la tua preparazione e per test approvati.', 'Non usare l’app per aggirare controlli di accesso, abusare di provider terzi o compromettere il servizio.'] },
+            { title: 'Hosted AI e chiavi personali', items: ['L’accesso a hosted AI dipende da un piano o grant attivo.', 'La modalità BYOK resta sotto la tua responsabilità, inclusi costi e regole del provider.', 'Gli output AI possono essere imperfetti e devono essere controllati da te.'] },
+            { title: 'Account e limite dispositivi', items: ['Il login sicuro può collegare l’accesso a un vero account email.', 'Può essere applicato un limite di dispositivi approvati per evitare la condivisione dell’account.', 'Rimuovere un dispositivo può avviare un cooldown prima di approvare un dispositivo sostitutivo.'] },
+            { title: 'Disponibilità e responsabilità', items: ['Funzioni, provider e prezzi possono cambiare nel tempo.', 'JobSensei è fornito su base best-effort e resti responsabile delle tue decisioni e dei materiali finali.'] },
+          ],
+        },
+        'pt-BR': {
+          pill: 'JobSensei',
+          title: 'Termos e condições',
+          updated: 'Última atualização: 6 de maio de 2026',
+          intro: 'Ao usar o JobSensei, concordas em usar o produto de forma responsável. O JobSensei é uma ferramenta de preparação, não uma garantia de emprego nem aconselhamento legal ou profissional regulado.',
+          sections: [
+            { title: 'Utilização do serviço', items: ['Usa o JobSensei para a tua preparação e para testes aprovados.', 'Não uses a app para contornar controlos de acesso, abusar de fornecedores terceiros ou quebrar o serviço.'] },
+            { title: 'Hosted AI e chaves pessoais', items: ['O acesso a hosted AI depende de um plano ou grant ativo.', 'O modo BYOK continua a ser tua responsabilidade, incluindo custos e regras do fornecedor.', 'Os resultados de AI podem ser imperfeitos e devem ser revistos por ti.'] },
+            { title: 'Contas e limite de dispositivos', items: ['O início de sessão seguro pode ligar o acesso a uma conta de email real.', 'Pode existir um limite de dispositivos aprovados para evitar partilha de conta.', 'Remover um dispositivo pode iniciar um cooldown antes de aprovar um dispositivo de substituição.'] },
+            { title: 'Disponibilidade e responsabilidade', items: ['Funcionalidades, fornecedores e preços podem mudar com o tempo.', 'O JobSensei é fornecido em base best-effort e continuas responsável pelas tuas decisões e materiais finais.'] },
+          ],
+        },
+        pl: {
+          pill: 'JobSensei',
+          title: 'Warunki korzystania',
+          updated: 'Ostatnia aktualizacja: 6 maja 2026',
+          intro: 'Korzystając z JobSensei, zgadzasz się używać produktu odpowiedzialnie. JobSensei to narzędzie przygotowawcze, a nie gwarancja zatrudnienia ani porada prawna lub regulowana porada zawodowa.',
+          sections: [
+            { title: 'Korzystanie z usługi', items: ['Używaj JobSensei do własnych przygotowań i zatwierdzonych testów.', 'Nie używaj aplikacji do omijania kontroli dostępu, nadużywania dostawców zewnętrznych ani psucia usługi.'] },
+            { title: 'Hosted AI i własne klucze', items: ['Dostęp do hosted AI zależy od aktywnego planu lub grantu.', 'Tryb BYOK pozostaje twoją odpowiedzialnością, w tym koszty i zasady dostawcy.', 'Wyniki AI mogą być niedoskonałe i powinny być przez ciebie sprawdzane.'] },
+            { title: 'Konta i limit urządzeń', items: ['Bezpieczne logowanie może powiązać dostęp z prawdziwym kontem email.', 'Może obowiązywać limit zatwierdzonych urządzeń, aby zapobiec współdzieleniu konta.', 'Usunięcie urządzenia może uruchomić cooldown przed zatwierdzeniem urządzenia zastępczego.'] },
+            { title: 'Dostępność i odpowiedzialność', items: ['Funkcje, dostawcy i ceny mogą się zmieniać z czasem.', 'JobSensei jest dostarczany na zasadzie best-effort, a odpowiedzialność za decyzje i końcowe materiały pozostaje po twojej stronie.'] },
+          ],
+        },
+        de: {
+          pill: 'JobSensei',
+          title: 'Nutzungsbedingungen',
+          updated: 'Zuletzt aktualisiert: 6. Mai 2026',
+          intro: 'Mit der Nutzung von JobSensei erklärst du dich damit einverstanden, das Produkt verantwortungsvoll zu verwenden. JobSensei ist ein Vorbereitungstool, keine Jobgarantie und keine Rechts- oder sonstige regulierte Fachberatung.',
+          sections: [
+            { title: 'Nutzung des Dienstes', items: ['Nutze JobSensei für deine eigene Vorbereitung und genehmigte Tests.', 'Missbrauche die App nicht, um Zugriffskontrollen zu umgehen, Drittanbieter zu belasten oder den Dienst zu stören.'] },
+            { title: 'Hosted AI und eigene Schlüssel', items: ['Der Zugang zu hosted AI hängt von einem aktiven Plan oder Grant ab.', 'Der BYOK-Modus bleibt deine Verantwortung, einschließlich Kosten und Regeln des Anbieters.', 'AI-Ausgaben können fehlerhaft sein und sollten vor der Nutzung von dir geprüft werden.'] },
+            { title: 'Konten und Gerätelimit', items: ['Die sichere Anmeldung kann den Zugriff mit einem echten E-Mail-Konto verknüpfen.', 'Ein Limit für freigegebene Geräte kann gelten, um Account-Sharing zu verhindern.', 'Das Entfernen eines Geräts kann eine Sperrfrist auslösen, bevor ein Ersatzgerät freigegeben werden kann.'] },
+            { title: 'Verfügbarkeit und Haftung', items: ['Funktionen, Anbieter und Preise können sich mit der Zeit ändern.', 'JobSensei wird auf Best-Effort-Basis bereitgestellt; für deine Entscheidungen und finalen Unterlagen bleibst du selbst verantwortlich.'] },
+          ],
+        },
+      };
+
+      const param = new URLSearchParams(window.location.search).get('lang');
+      const browserLang = (param || navigator.language || 'en').trim();
+      const copy = COPY[browserLang] || COPY[browserLang.split('-')[0]] || COPY.en;
+
+      document.documentElement.lang = browserLang;
+      document.getElementById('pill').textContent = copy.pill;
+      document.getElementById('title').textContent = copy.title;
+      document.getElementById('updated').textContent = copy.updated;
+      document.getElementById('intro').textContent = copy.intro;
+
+      const sections = document.getElementById('sections');
+      copy.sections.forEach(section => {
+        const wrap = document.createElement('section');
+        const h2 = document.createElement('h2');
+        h2.textContent = section.title;
+        wrap.appendChild(h2);
+        const list = document.createElement('ul');
+        section.items.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          list.appendChild(li);
+        });
+        wrap.appendChild(list);
+        sections.appendChild(wrap);
+      });
+    </script>
+  </body>
+</html>

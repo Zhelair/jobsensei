@@ -104,6 +104,8 @@ export function AIProvider({ children }) {
     secureSession,
     secureAccount,
     deviceId,
+    secureAccountsEnabled,
+    sendMagicLink,
   } = useAuth()
   const [provider, setProvider] = useState(PROVIDERS.DEEPSEEK)
   const [apiKey, setApiKey] = useState('')
@@ -187,8 +189,24 @@ export function AIProvider({ children }) {
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error || 'Verification failed')
+
+    if (data.next === 'magic_link') {
+      if (!secureAccountsEnabled) {
+        throw new Error('Email-based unlock is not enabled on this deployment yet.')
+      }
+
+      await sendMagicLink(data.email || String(email).trim().toLowerCase())
+      return {
+        mode: 'magic_link',
+        email: data.email || String(email).trim().toLowerCase(),
+      }
+    }
+
     saveBmacToken(data.token, email)
-    return true
+    return {
+      mode: 'legacy_code',
+      email,
+    }
   }
 
   async function callAI({ systemPrompt, messages, temperature = 0.7, onChunk, signal }) {

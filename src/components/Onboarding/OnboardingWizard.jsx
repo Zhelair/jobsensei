@@ -35,9 +35,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     supporter: 'Buy Me a Coffee supporter',
     verified: 'Verified. AI is powered by JobSensei.',
     buy: 'Buy Me a Coffee',
-    already: 'Already a supporter? Enter your access code below.',
-    accessPlaceholder: 'Enter your access code...',
-    activateAccess: 'Activate access',
+    already: 'Already have access? Enter your email or tester code below.',
+    accessPlaceholder: 'Enter your email or tester code...',
+    activateAccess: 'Unlock app',
     verifying: 'Verifying...',
     accessManage: 'Once active, you can manage access in Settings.',
     skip: 'Skip for now',
@@ -74,9 +74,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     supporter: 'Поддержка через Buy Me a Coffee',
     verified: 'Проверено. AI работает через JobSensei.',
     buy: 'Buy Me a Coffee',
-    already: 'Уже есть доступ? Введите код ниже.',
-    accessPlaceholder: 'Введите код доступа...',
-    activateAccess: 'Активировать доступ',
+    already: 'Уже есть доступ? Введите email или тестовый код ниже.',
+    accessPlaceholder: 'Введите email или тестовый код...',
+    activateAccess: 'Открыть доступ',
     verifying: 'Проверяю...',
     accessManage: 'После активации вы сможете управлять доступом в Settings.',
     skip: 'Пропустить',
@@ -113,9 +113,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     supporter: 'Поддръжник през Buy Me a Coffee',
     verified: 'Потвърдено. AI работи чрез JobSensei.',
     buy: 'Buy Me a Coffee',
-    already: 'Вече имаш достъп? Въведи кода по-долу.',
-    accessPlaceholder: 'Въведи кода за достъп...',
-    activateAccess: 'Активирай достъп',
+    already: 'Вече имаш достъп? Въведи имейл или тестов код по-долу.',
+    accessPlaceholder: 'Въведи имейл или тестов код...',
+    activateAccess: 'Отключи приложението',
     verifying: 'Проверявам...',
     accessManage: 'След активиране можеш да управляваш достъпа от Settings.',
     skip: 'Пропусни засега',
@@ -152,9 +152,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     supporter: 'Soporte por Buy Me a Coffee',
     verified: 'Verificado. La AI funciona con JobSensei.',
     buy: 'Buy Me a Coffee',
-    already: '¿Ya tienes acceso? Introduce tu código abajo.',
-    accessPlaceholder: 'Introduce tu código de acceso...',
-    activateAccess: 'Activar acceso',
+    already: '¿Ya tienes acceso? Introduce tu email o código de prueba abajo.',
+    accessPlaceholder: 'Introduce tu email o código de prueba...',
+    activateAccess: 'Desbloquear app',
     verifying: 'Verificando...',
     accessManage: 'Cuando esté activo, podrás gestionar el acceso en Settings.',
     skip: 'Omitir por ahora',
@@ -191,9 +191,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     supporter: 'Soutien via Buy Me a Coffee',
     verified: 'Vérifié. L’AI fonctionne avec JobSensei.',
     buy: 'Buy Me a Coffee',
-    already: 'Vous avez déjà un accès ? Saisissez votre code ci-dessous.',
-    accessPlaceholder: 'Saisissez votre code d’accès...',
-    activateAccess: 'Activer l’accès',
+    already: 'Vous avez déjà un accès ? Saisissez votre email ou code test ci-dessous.',
+    accessPlaceholder: 'Saisissez votre email ou code test...',
+    activateAccess: 'Déverrouiller l’app',
     verifying: 'Vérification...',
     accessManage: 'Une fois activé, vous pourrez gérer l’accès dans Settings.',
     skip: 'Passer pour le moment',
@@ -230,9 +230,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     supporter: 'Supporto tramite Buy Me a Coffee',
     verified: 'Verificato. L’AI funziona con JobSensei.',
     buy: 'Buy Me a Coffee',
-    already: 'Hai già accesso? Inserisci il codice qui sotto.',
-    accessPlaceholder: 'Inserisci il codice di accesso...',
-    activateAccess: 'Attiva accesso',
+    already: 'Hai già accesso? Inserisci qui sotto la tua email o il codice tester.',
+    accessPlaceholder: 'Inserisci email o codice tester...',
+    activateAccess: 'Sblocca app',
     verifying: 'Verifica in corso...',
     accessManage: 'Una volta attivo, potrai gestire l’accesso in Settings.',
     skip: 'Salta per ora',
@@ -269,9 +269,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     supporter: 'Apoio via Buy Me a Coffee',
     verified: 'Verificado. A AI funciona com o JobSensei.',
     buy: 'Buy Me a Coffee',
-    already: 'Já tem acesso? Introduza o código abaixo.',
-    accessPlaceholder: 'Introduza o código de acesso...',
-    activateAccess: 'Ativar acesso',
+    already: 'Já tens acesso? Introduz abaixo o email ou código de teste.',
+    accessPlaceholder: 'Introduz o email ou código de teste...',
+    activateAccess: 'Desbloquear app',
     verifying: 'A verificar...',
     accessManage: 'Depois de ativado, poderá gerir o acesso em Settings.',
     skip: 'Saltar por agora',
@@ -308,9 +308,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     supporter: 'Wsparcie przez Buy Me a Coffee',
     verified: 'Zweryfikowano. AI działa przez JobSensei.',
     buy: 'Buy Me a Coffee',
-    already: 'Masz już dostęp? Wpisz kod poniżej.',
-    accessPlaceholder: 'Wpisz kod dostępu...',
-    activateAccess: 'Aktywuj dostęp',
+    already: 'Masz już dostęp? Wpisz poniżej email lub kod testowy.',
+    accessPlaceholder: 'Wpisz email lub kod testowy...',
+    activateAccess: 'Odblokuj aplikację',
     verifying: 'Weryfikuję...',
     accessManage: 'Po aktywacji dostępem możesz zarządzać w Settings.',
     skip: 'Pomiń na razie',
@@ -347,9 +347,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     supporter: 'Unterstützung über Buy Me a Coffee',
     verified: 'Verifiziert. Die AI läuft über JobSensei.',
     buy: 'Buy Me a Coffee',
-    already: 'Sie haben bereits Zugriff? Geben Sie unten Ihren Code ein.',
-    accessPlaceholder: 'Zugangscode eingeben...',
-    activateAccess: 'Zugang aktivieren',
+    already: 'Haben Sie bereits Zugriff? Geben Sie unten Ihre E-Mail oder einen Testcode ein.',
+    accessPlaceholder: 'E-Mail oder Testcode eingeben...',
+    activateAccess: 'App entsperren',
     verifying: 'Wird geprüft...',
     accessManage: 'Nach der Aktivierung können Sie den Zugriff in Settings verwalten.',
     skip: 'Vorerst überspringen',
@@ -725,7 +725,7 @@ export default function OnboardingWizard() {
   const { saveProfile } = useApp()
   const { saveConfig, PROVIDERS, PROVIDER_CONFIGS, verifyBmac } = useAI()
   const { updateProjectData } = useProject()
-  const { language, setLanguage, languages } = useLanguage()
+  const { language, setLanguage, languages, t } = useLanguage()
   const copy = getCopy(language)
   const tt = (key, vars) => interpolate(copy[key] || ONBOARDING_COPY.en[key] || key, vars)
 
@@ -746,13 +746,18 @@ export default function OnboardingWizard() {
   const [bmacLoading, setBmacLoading] = useState(false)
   const [bmacError, setBmacError] = useState('')
   const [bmacVerified, setBmacVerified] = useState(false)
+  const [unlockNotice, setUnlockNotice] = useState('')
 
   async function handleBmacVerify() {
     if (!bmacInput.trim()) return
-    setBmacLoading(true); setBmacError('')
+    setBmacLoading(true); setBmacError(''); setUnlockNotice('')
     try {
-      await verifyBmac(bmacInput.trim())
-      setBmacVerified(true)
+      const result = await verifyBmac(bmacInput.trim())
+      if (result?.mode === 'magic_link') {
+        setUnlockNotice(t('settings.secureAccountMagicLinkSent', { email: result.email }))
+      } else {
+        setBmacVerified(true)
+      }
     } catch (e) {
       setBmacError(e.message)
     }
@@ -904,7 +909,7 @@ export default function OnboardingWizard() {
                   type="text"
                   placeholder={tt('accessPlaceholder')}
                   value={bmacInput}
-                  onChange={e => { setBmacInput(e.target.value); setBmacError('') }}
+                  onChange={e => { setBmacInput(e.target.value); setBmacError(''); setUnlockNotice('') }}
                 />
                 <button
                   onClick={handleBmacVerify}
@@ -913,6 +918,7 @@ export default function OnboardingWizard() {
                 >
                   <Coffee size={14}/> {bmacLoading ? tt('verifying') : tt('activateAccess')}
                 </button>
+                {unlockNotice && <p className="text-green-400 text-xs">{unlockNotice}</p>}
                 {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
               </>
             )}

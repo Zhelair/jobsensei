@@ -40,12 +40,15 @@ export default function Settings() {
   const [bmacInput, setBmacInput] = useState('')
   const [bmacLoading, setBmacLoading] = useState(false)
   const [bmacError, setBmacError] = useState('')
+  const [bmacNotice, setBmacNotice] = useState('')
   const [secureEmailInput, setSecureEmailInput] = useState('')
   const [secureLinkCodeInput, setSecureLinkCodeInput] = useState('')
   const [secureDeviceLabel, setSecureDeviceLabel] = useState('')
   const [secureDeleteEmailInput, setSecureDeleteEmailInput] = useState('')
   const [secureNotice, setSecureNotice] = useState('')
   const [secureError, setSecureError] = useState('')
+  const [legalExpanded, setLegalExpanded] = useState(false)
+  const [pendingRevokeDevice, setPendingRevokeDevice] = useState(null)
 
   const resume = getProjectData('resume')
   const [resumeText, setResumeText] = useState(resume || '')
@@ -115,9 +118,15 @@ export default function Settings() {
     if (!bmacInput.trim()) return
     setBmacLoading(true)
     setBmacError('')
+    setBmacNotice('')
     try {
-      await verifyBmac(bmacInput.trim())
-      setBmacInput('')
+      const result = await verifyBmac(bmacInput.trim())
+      if (result?.mode === 'magic_link') {
+        setBmacNotice(t('settings.unlockMagicLinkSent', { email: result.email }))
+      } else {
+        setBmacInput('')
+        setBmacNotice(t('settings.unlockCodeAccepted'))
+      }
     } catch (e) {
       setBmacError(e.message)
     }
@@ -280,15 +289,19 @@ export default function Settings() {
     }
   }
 
-  async function handleRevokeDevice(targetDeviceId) {
-    if (!targetDeviceId) return
-    if (!confirm(t('settings.secureAccountRevokeConfirm'))) return
+  function requestRevokeDevice(device) {
+    setPendingRevokeDevice(device || null)
+  }
 
+  async function handleRevokeDevice() {
+    const targetDeviceId = pendingRevokeDevice?.deviceId
+    if (!targetDeviceId) return
     setSecureError('')
     setSecureNotice('')
     try {
       await revokeSecureDevice(targetDeviceId)
       setSecureNotice(t('settings.secureAccountRevokeSuccess'))
+      setPendingRevokeDevice(null)
     } catch (err) {
       setSecureError(err.message)
     }
@@ -335,6 +348,11 @@ export default function Settings() {
       setSecureError(err.message)
     }
   }
+
+  const deviceCountSummary = t('settings.secureAccountDevicesSummary', { count: approvedSecureDevices.length, limit: deviceLimit })
+  const revokeCooldownDate = deviceReplacementCooldown?.endsAt
+    ? new Date(deviceReplacementCooldown.endsAt).toLocaleString()
+    : ''
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in space-y-4">
@@ -405,7 +423,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="grid xl:grid-cols-[minmax(0,1.15fr)_240px_240px] gap-4 mt-4 items-start">
+        <div className="grid xl:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.9fr)_200px] gap-4 mt-4 items-start">
           <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-4">
             <h4 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
               <Coffee size={15} className="text-yellow-400" /> {t('settings.jobsenseiAccessTitle')}
@@ -449,7 +467,11 @@ export default function Settings() {
                   type="text"
                   placeholder={t('settings.accessCodePlaceholder')}
                   value={bmacInput}
-                  onChange={e => { setBmacInput(e.target.value); setBmacError('') }}
+                  onChange={e => {
+                    setBmacInput(e.target.value)
+                    setBmacError('')
+                    setBmacNotice('')
+                  }}
                   onKeyDown={e => e.key === 'Enter' && handleBmacVerify()}
                 />
                 <button
@@ -459,6 +481,8 @@ export default function Settings() {
                 >
                   <Coffee size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
                 </button>
+                <p className="text-slate-500 text-xs">{t('settings.unlockInputHint')}</p>
+                {bmacNotice && <p className="text-green-400 text-xs">{bmacNotice}</p>}
                 {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
               </div>
             )}
@@ -521,28 +545,7 @@ export default function Settings() {
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <label className="text-sm text-slate-400 block">{t('settings.secureAccountMagicLinkLabel')}</label>
-                    <input
-                      className="input-field text-sm"
-                      type="email"
-                      placeholder={t('settings.secureAccountMagicLinkPlaceholder')}
-                      value={secureEmailInput}
-                      onChange={e => {
-                        setSecureEmailInput(e.target.value)
-                        setSecureError('')
-                        setSecureNotice('')
-                      }}
-                      onKeyDown={e => e.key === 'Enter' && handleSendMagicLink()}
-                    />
-                    <button
-                      onClick={handleSendMagicLink}
-                      disabled={!secureEmailInput.trim() || sendingMagicLink}
-                      className="btn-secondary text-sm justify-center"
-                    >
-                      {sendingMagicLink ? t('settings.activating') : t('settings.secureAccountMagicLinkButton')}
-                    </button>
-                  </div>
+                  <p className="text-slate-500 text-xs leading-relaxed">{t('settings.unlockMagicLinkHint')}</p>
                 )}
 
                 {(secureNotice || magicLinkSentTo) && (
@@ -557,17 +560,92 @@ export default function Settings() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-4 min-w-[220px]">
-            <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{t('settings.currentMode')}</div>
-            <div className="text-white text-sm font-display font-semibold">
-              {usingOwnKey ? currentProviderLabel : usingJobsenseiAI ? t('settings.currentModeHosted') : t('settings.currentModeNone')}
+          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-4 min-w-[220px] space-y-3">
+            <div>
+              <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountTitle')}</div>
+              <p className="text-slate-400 text-xs mt-1">{t('settings.secureAccountDevicesCopy')}</p>
             </div>
-            <div className="text-slate-400 text-xs mt-1">
-              {usingOwnKey ? form.model : usingJobsenseiAI ? (hostedPlanIdentity || t('settings.currentModeAccessActive')) : t('settings.currentModeConnect')}
-            </div>
+
+            {!secureAccountsEnabled ? (
+              <p className="text-slate-500 text-sm">{t('settings.secureAccountUnavailable')}</p>
+            ) : !secureReady ? (
+              <p className="text-slate-500 text-sm">{t('settings.secureAccountLoading')}</p>
+            ) : !secureSignedIn ? (
+              <p className="text-slate-500 text-sm">{t('settings.unlockMagicLinkHint')}</p>
+            ) : (
+              <>
+                <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-3">
+                  <div className="text-teal-300 text-sm font-display font-semibold">
+                    {secureUser?.email || secureAccount?.email || t('settings.secureAccountCurrentDevice')}
+                  </div>
+                  <div className="text-slate-400 text-xs mt-1">{deviceCountSummary}</div>
+                </div>
+
+                {deviceReplacementCooldown?.active && (
+                  <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-yellow-200 text-[11px] leading-relaxed">
+                    {t('settings.secureAccountCooldownNotice', { date: revokeCooldownDate })}
+                  </div>
+                )}
+
+                {secureLinked ? (
+                  <div className="space-y-2">
+                    {approvedSecureDevices.map(device => (
+                      <div key={device.id} className="rounded-xl border border-navy-700 bg-navy-900/60 px-3 py-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-slate-200 text-xs font-display font-semibold flex flex-wrap gap-2 items-center">
+                              <span>{device.deviceLabel || device.deviceName || t('settings.secureAccountCurrentDevice')}</span>
+                              {device.deviceId === deviceId && (
+                                <span className="px-2 py-0.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-[10px] text-teal-300">
+                                  {t('settings.secureAccountCurrentBadge')}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-slate-500 text-[11px] mt-1">
+                              {device.lastSeenAt
+                                ? t('settings.secureAccountLastSeen', { date: new Date(device.lastSeenAt).toLocaleString() })
+                                : t('settings.secureAccountLastSeenUnknown')}
+                            </div>
+                          </div>
+                          {device.deviceId !== deviceId && (
+                            <button
+                              onClick={() => requestRevokeDevice(device)}
+                              disabled={revokingDeviceId === device.deviceId}
+                              className="btn-ghost text-[11px] text-red-400 hover:text-red-300 px-2 py-1 min-h-0"
+                            >
+                              {revokingDeviceId === device.deviceId
+                                ? t('settings.secureAccountRevoking')
+                                : t('settings.secureAccountRevokeButton')}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-navy-700 bg-navy-900/60 px-3 py-3 space-y-2">
+                    <p className="text-slate-400 text-xs">{t('settings.secureAccountStatusPending')}</p>
+                    <div className="text-slate-500 text-xs">{t('settings.secureAccountLinkCopy')}</div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => refreshSecureAccount().catch(() => {})}
+                    disabled={loadingAccount}
+                    className="btn-secondary text-xs flex-1 justify-center"
+                  >
+                    {t('settings.secureAccountRefresh')}
+                  </button>
+                  <button onClick={signOutSecure} className="btn-ghost text-xs flex-1 justify-center">
+                    {t('settings.secureAccountSignOut')}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
-          <div className={`${pairedCardClass} min-w-[220px]`}>
+          <div className={`${pairedCardClass} min-w-[180px]`}>
             <h3 className="font-display font-semibold text-white mb-1">{t('settings.profile')}</h3>
             <p className="text-slate-400 text-xs mb-3">{t('settings.profilePlanCopy')}</p>
             {profile ? (
@@ -618,123 +696,40 @@ export default function Settings() {
         <div className={`${pairedCardClass} border-red-500/20`}>
           <h3 className="font-display font-semibold text-white mb-1">{t('settings.dataManagementTitle')}</h3>
           <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
-            <div>
-              <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountTitle')}</div>
-              <p className="text-slate-400 text-xs mt-1">{t('settings.secureAccountCopy')}</p>
-            </div>
+            <button
+              onClick={() => setLegalExpanded(current => !current)}
+              className="w-full flex items-center justify-between gap-3 text-left"
+              aria-expanded={legalExpanded}
+            >
+              <div>
+                <div className="text-white text-sm font-display font-semibold">{t('settings.privacyTermsTitle')}</div>
+                <p className="text-slate-400 text-xs mt-1">{t('settings.privacyTermsSummary')}</p>
+              </div>
+              {legalExpanded ? <ChevronUp size={15} className="text-slate-400" /> : <ChevronDown size={15} className="text-slate-400" />}
+            </button>
 
-            {!secureReady ? (
-              <p className="text-slate-500 text-sm">{t('settings.secureAccountLoading')}</p>
-            ) : !secureAccountsEnabled ? (
-              <p className="text-slate-500 text-sm">{t('settings.secureAccountUnavailable')}</p>
-            ) : !secureSignedIn ? (
-              <p className="text-slate-500 text-sm">{t('settings.dataManagementSecureHint')}</p>
-            ) : (
-              <div className="space-y-3">
-                {secureLinked && (
-                  <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 space-y-2">
-                    <div className="text-slate-300 text-xs">
-                      {t('settings.secureAccountDevicesSummary', { count: approvedSecureDevices.length, limit: deviceLimit })}
-                    </div>
-                    {deviceReplacementCooldown?.active && (
-                      <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-yellow-200 text-[11px] leading-relaxed">
-                        New-device approvals unlock on {new Date(deviceReplacementCooldown.endsAt).toLocaleString()}.
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      {approvedSecureDevices.map(device => (
-                        <div key={device.id} className="rounded-xl border border-navy-700 bg-navy-950/70 px-3 py-2">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-slate-200 text-xs font-display font-semibold flex flex-wrap gap-2 items-center">
-                                <span>{device.deviceLabel || device.deviceName || t('settings.secureAccountCurrentDevice')}</span>
-                                {device.deviceId === deviceId && (
-                                  <span className="px-2 py-0.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-[10px] text-teal-300">
-                                    {t('settings.secureAccountCurrentBadge')}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-slate-500 text-[11px] mt-1">
-                                {device.lastSeenAt
-                                  ? t('settings.secureAccountLastSeen', { date: new Date(device.lastSeenAt).toLocaleString() })
-                                  : t('settings.secureAccountLastSeenUnknown')}
-                              </div>
-                            </div>
-                            {device.deviceId !== deviceId && (
-                              <button
-                                onClick={() => handleRevokeDevice(device.deviceId)}
-                                disabled={revokingDeviceId === device.deviceId}
-                                className="btn-ghost text-[11px] text-red-400 hover:text-red-300 px-2 py-1 min-h-0"
-                              >
-                                {revokingDeviceId === device.deviceId
-                                  ? t('settings.secureAccountRevoking')
-                                  : t('settings.secureAccountRevokeButton')}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-2 pt-1">
-                  <button
-                    onClick={() => refreshSecureAccount().catch(() => {})}
-                    disabled={loadingAccount}
-                    className="btn-secondary text-xs flex-1 justify-center"
-                  >
-                    {t('settings.secureAccountRefresh')}
-                  </button>
-                  <button onClick={signOutSecure} className="btn-ghost text-xs flex-1 justify-center">
-                    {t('settings.secureAccountSignOut')}
-                  </button>
+            {legalExpanded && (
+              <div className="space-y-3 pt-1">
+                <div className="space-y-2 text-slate-300 text-xs leading-relaxed">
+                  {[t('settings.privacyTermsBullet1'), t('settings.privacyTermsBullet2'), t('settings.privacyTermsBullet3')].map(line => (
+                    <p key={line} className="flex items-start gap-2">
+                      <span className="text-slate-500">-</span>
+                      <span>{line}</span>
+                    </p>
+                  ))}
                 </div>
-
-                <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 space-y-2">
-                  <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountExportTitle')}</div>
-                  <p className="text-slate-400 text-xs">{t('settings.secureAccountExportCopy')}</p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleExportSecureAccount}
-                      disabled={exportingAccountData}
-                      className="btn-secondary text-xs flex-1 justify-center"
-                    >
-                      {exportingAccountData ? t('settings.secureAccountExporting') : t('settings.secureAccountExportButton')}
-                    </button>
-                    <a
-                      href="/privacy-policy-draft.md"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-ghost text-xs flex-1 justify-center"
-                    >
-                      <ExternalLink size={13} /> {t('settings.privacyPolicyDraft')}
-                    </a>
-                  </div>
+                <div className="flex flex-wrap gap-2">
+                  <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                    <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
+                  </a>
+                  <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                    <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
+                  </a>
+                  <a href={`/cookie-storage-notice.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                    <ExternalLink size={13} /> {t('settings.cookieNoticeLink')}
+                  </a>
                 </div>
-
-                <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 space-y-2">
-                  <div className="text-red-300 text-sm font-display font-semibold">{t('settings.secureAccountDeleteTitle')}</div>
-                  <p className="text-slate-400 text-xs">{t('settings.secureAccountDeleteCopy')}</p>
-                  <input
-                    className="input-field text-sm"
-                    type="email"
-                    placeholder={t('settings.secureAccountDeletePlaceholder')}
-                    value={secureDeleteEmailInput}
-                    onChange={e => {
-                      setSecureDeleteEmailInput(e.target.value)
-                      setSecureError('')
-                      setSecureNotice('')
-                    }}
-                  />
-                  <button
-                    onClick={handleDeleteSecureAccount}
-                    disabled={!secureDeleteEmailInput.trim() || deletingAccount}
-                    className="btn-ghost text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 justify-center"
-                  >
-                    {deletingAccount ? t('settings.secureAccountDeleting') : t('settings.secureAccountDeleteButton')}
-                  </button>
-                </div>
+                <p className="text-slate-500 text-[11px] leading-relaxed">{t('settings.privacyTermsAgreement')}</p>
               </div>
             )}
           </div>
@@ -746,7 +741,6 @@ export default function Settings() {
               t('settings.dataBullet3'),
               t('settings.dataBullet4'),
               t('settings.dataBullet5'),
-              t('settings.dataBullet6'),
             ].map(line => (
               <p key={line} className="flex items-start gap-2">
                 <span className="text-slate-500">-</span>
@@ -754,6 +748,46 @@ export default function Settings() {
               </p>
             ))}
           </div>
+
+          {secureSignedIn && (
+            <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
+              <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountExportTitle')}</div>
+              <p className="text-slate-400 text-xs">{t('settings.secureAccountExportCopy')}</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExportSecureAccount}
+                  disabled={exportingAccountData}
+                  className="btn-secondary text-xs flex-1 justify-center"
+                >
+                  {exportingAccountData ? t('settings.secureAccountExporting') : t('settings.secureAccountExportButton')}
+                </button>
+              </div>
+
+              <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 space-y-2">
+                <div className="text-red-300 text-sm font-display font-semibold">{t('settings.secureAccountDeleteTitle')}</div>
+                <p className="text-slate-400 text-xs">{t('settings.secureAccountDeleteCopy')}</p>
+                <input
+                  className="input-field text-sm"
+                  type="email"
+                  placeholder={t('settings.secureAccountDeletePlaceholder')}
+                  value={secureDeleteEmailInput}
+                  onChange={e => {
+                    setSecureDeleteEmailInput(e.target.value)
+                    setSecureError('')
+                    setSecureNotice('')
+                  }}
+                />
+                <button
+                  onClick={handleDeleteSecureAccount}
+                  disabled={!secureDeleteEmailInput.trim() || deletingAccount}
+                  className="btn-ghost text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 justify-center"
+                >
+                  {deletingAccount ? t('settings.secureAccountDeleting') : t('settings.secureAccountDeleteButton')}
+                </button>
+              </div>
+            </div>
+          )}
+
           <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm mt-auto">
             <Trash2 size={14} /> {t('settings.clearAllData')}
           </button>
@@ -788,7 +822,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className={pairedCardClass}>
+      <div className={pairedCardClass}>
           <button
             onClick={() => hasPlanAccess && setShowOwnKey(o => !o)}
             className="w-full flex items-center justify-between gap-3"
@@ -897,6 +931,43 @@ export default function Settings() {
           )}
         </div>
       </div>
+
+      {pendingRevokeDevice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in">
+          <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-navy-800 shadow-2xl p-6 space-y-4">
+            <button
+              onClick={() => setPendingRevokeDevice(null)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              <X size={18} />
+            </button>
+            <div>
+              <div className="text-white text-lg font-display font-semibold">{t('settings.secureAccountRevokeTitle')}</div>
+              <p className="text-slate-400 text-sm mt-2">{t('settings.secureAccountRevokeBody', { device: pendingRevokeDevice.deviceLabel || pendingRevokeDevice.deviceName || t('settings.secureAccountCurrentDevice') })}</p>
+            </div>
+            <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-3 py-3 text-yellow-100 text-xs leading-relaxed">
+              {t('settings.secureAccountRevokeCooldownWarning')}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPendingRevokeDevice(null)}
+                className="btn-secondary text-sm flex-1 justify-center"
+              >
+                {t('settings.secureAccountRevokeCancel')}
+              </button>
+              <button
+                onClick={handleRevokeDevice}
+                disabled={revokingDeviceId === pendingRevokeDevice.deviceId}
+                className="btn-ghost text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 flex-1 justify-center"
+              >
+                {revokingDeviceId === pendingRevokeDevice.deviceId
+                  ? t('settings.secureAccountRevoking')
+                  : t('settings.secureAccountConfirmRevoke')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
