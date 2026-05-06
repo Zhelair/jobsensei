@@ -181,11 +181,12 @@ export function AIProvider({ children }) {
     }))
   }
 
-  async function verifyBmac(email) {
+  async function unlockAccess(accessInput) {
+    const normalizedInput = String(accessInput || '').trim()
     const res = await fetch('/api/verify-member', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email: normalizedInput }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error || 'Verification failed')
@@ -195,18 +196,22 @@ export function AIProvider({ children }) {
         throw new Error('Email-based unlock is not enabled on this deployment yet.')
       }
 
-      await sendMagicLink(data.email || String(email).trim().toLowerCase())
+      await sendMagicLink(data.email || normalizedInput.toLowerCase())
       return {
         mode: 'magic_link',
-        email: data.email || String(email).trim().toLowerCase(),
+        email: data.email || normalizedInput.toLowerCase(),
       }
     }
 
-    saveBmacToken(data.token, email)
+    saveBmacToken(data.token, data.email || null)
     return {
       mode: 'legacy_code',
-      email,
+      accessInput: normalizedInput,
     }
+  }
+
+  async function verifyBmac(email) {
+    return unlockAccess(email)
   }
 
   async function callAI({ systemPrompt, messages, temperature = 0.7, onChunk, signal }) {
@@ -417,6 +422,7 @@ export function AIProvider({ children }) {
       closePaywall: () => setShowPaywall(false),
       saveConfig,
       callAI,
+      unlockAccess,
       verifyBmac,
       clearBmacToken,
       restoreToProxy,

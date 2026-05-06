@@ -723,7 +723,7 @@ function getCopy(language) {
 
 export default function OnboardingWizard() {
   const { saveProfile } = useApp()
-  const { saveConfig, PROVIDERS, PROVIDER_CONFIGS, verifyBmac } = useAI()
+  const { saveConfig, PROVIDERS, PROVIDER_CONFIGS, unlockAccess } = useAI()
   const { updateProjectData } = useProject()
   const { language, setLanguage, languages, t } = useLanguage()
   const copy = getCopy(language)
@@ -752,11 +752,12 @@ export default function OnboardingWizard() {
     if (!bmacInput.trim()) return
     setBmacLoading(true); setBmacError(''); setUnlockNotice('')
     try {
-      const result = await verifyBmac(bmacInput.trim())
+      const result = await unlockAccess(bmacInput.trim())
       if (result?.mode === 'magic_link') {
-        setUnlockNotice(t('settings.secureAccountMagicLinkSent', { email: result.email }))
+        setUnlockNotice(t('settings.unlockMagicLinkSent', { email: result.email }))
       } else {
         setBmacVerified(true)
+        setBmacInput('')
       }
     } catch (e) {
       setBmacError(e.message)

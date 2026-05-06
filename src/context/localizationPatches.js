@@ -9853,6 +9853,81 @@ const unifiedUnlockAndLegalPatches = {
   },
 }
 
+const authFlowAlignmentPatches = {
+  en: {
+    settings: {
+      dataBullet3: 'Your secure JobSensei account can approve up to 2 devices at a time.',
+      secureAccountNoAccess: 'Signed in, but this email does not have active JobSensei access yet.',
+      secureAccountFallbackTitle: 'Tester/admin fallback',
+      secureAccountFallbackCopy: 'Normal customer unlock should happen through the Unlock app input above with the email that has access. Use this fallback only if you need to link a tester or admin code to this signed-in account.',
+    },
+  },
+  ru: {
+    settings: {
+      dataBullet3: 'Ваш защищённый аккаунт JobSensei может одновременно одобрить до 2 устройств.',
+      secureAccountNoAccess: 'Вход выполнен, но у этого email пока нет активного доступа JobSensei.',
+      secureAccountFallbackTitle: 'Резерв для тестера / администратора',
+      secureAccountFallbackCopy: 'Обычный доступ клиента должен открываться через поле Unlock app выше с email, на который выдан доступ. Этот резервный вариант используйте только если нужно привязать тестовый или админский код к этому аккаунту.',
+    },
+  },
+  bg: {
+    settings: {
+      dataBullet3: 'Твоят защитен JobSensei акаунт може да одобри до 2 устройства едновременно.',
+      secureAccountNoAccess: 'Влязъл си, но този имейл още няма активен JobSensei достъп.',
+      secureAccountFallbackTitle: 'Резервен вариант за тестер / админ',
+      secureAccountFallbackCopy: 'Нормалното клиентско отключване трябва да става през полето Unlock app по-горе с имейла, който има достъп. Ползвай този резервен вариант само ако трябва да свържеш тестов или админски код към този акаунт.',
+    },
+  },
+  'es-ES': {
+    settings: {
+      dataBullet3: 'Tu cuenta segura de JobSensei puede aprobar hasta 2 dispositivos al mismo tiempo.',
+      secureAccountNoAccess: 'Has iniciado sesión, pero este email todavía no tiene acceso activo a JobSensei.',
+      secureAccountFallbackTitle: 'Respaldo para tester/admin',
+      secureAccountFallbackCopy: 'El desbloqueo normal de clientes debe hacerse con el campo Unlock app de arriba usando el email que tiene acceso. Usa este respaldo solo si necesitas vincular un código de tester o admin a esta cuenta.',
+    },
+  },
+  fr: {
+    settings: {
+      dataBullet3: 'Votre compte sécurisé JobSensei peut approuver jusqu’à 2 appareils en même temps.',
+      secureAccountNoAccess: 'Vous êtes connecté, mais cet email n’a pas encore d’accès JobSensei actif.',
+      secureAccountFallbackTitle: 'Solution de secours testeur/admin',
+      secureAccountFallbackCopy: 'Le déverrouillage normal pour les clients doit passer par le champ Unlock app ci-dessus avec l’email qui possède l’accès. Utilisez ce secours uniquement si vous devez lier un code testeur ou admin à ce compte connecté.',
+    },
+  },
+  it: {
+    settings: {
+      dataBullet3: 'Il tuo account sicuro JobSensei può approvare fino a 2 dispositivi alla volta.',
+      secureAccountNoAccess: 'Hai effettuato l’accesso, ma questa email non ha ancora un accesso JobSensei attivo.',
+      secureAccountFallbackTitle: 'Fallback tester/admin',
+      secureAccountFallbackCopy: 'Lo sblocco normale per i clienti dovrebbe avvenire tramite il campo Unlock app qui sopra usando l’email che ha accesso. Usa questo fallback solo se devi collegare un codice tester o admin a questo account già connesso.',
+    },
+  },
+  'pt-BR': {
+    settings: {
+      dataBullet3: 'A tua conta segura JobSensei pode aprovar até 2 dispositivos ao mesmo tempo.',
+      secureAccountNoAccess: 'Tens sessão iniciada, mas este email ainda não tem acesso ativo ao JobSensei.',
+      secureAccountFallbackTitle: 'Fallback para tester/admin',
+      secureAccountFallbackCopy: 'O desbloqueio normal do cliente deve acontecer pelo campo Unlock app acima com o email que tem acesso. Usa este fallback apenas se precisares de ligar um código de tester ou admin a esta conta já autenticada.',
+    },
+  },
+  pl: {
+    settings: {
+      dataBullet3: 'Twoje bezpieczne konto JobSensei może mieć jednocześnie zatwierdzone maksymalnie 2 urządzenia.',
+      secureAccountNoAccess: 'Jesteś zalogowany, ale ten email nie ma jeszcze aktywnego dostępu do JobSensei.',
+      secureAccountFallbackTitle: 'Awaryjna opcja tester/admin',
+      secureAccountFallbackCopy: 'Zwykłe odblokowanie dla klienta powinno odbywać się przez pole Unlock app powyżej przy użyciu emaila, który ma dostęp. Tej opcji awaryjnej używaj tylko wtedy, gdy musisz podpiąć kod testera lub admina do tego zalogowanego konta.',
+    },
+  },
+  de: {
+    settings: {
+      dataBullet3: 'Dein sicheres JobSensei-Konto kann gleichzeitig bis zu 2 Geräte freigeben.',
+      secureAccountNoAccess: 'Du bist angemeldet, aber diese E-Mail hat noch keinen aktiven JobSensei-Zugang.',
+      secureAccountFallbackTitle: 'Tester/Admin-Fallback',
+      secureAccountFallbackCopy: 'Der normale Kundenzugang sollte über das Unlock-app-Feld oben mit der E-Mail erfolgen, die Zugriff hat. Nutze dieses Fallback nur, wenn du einen Tester- oder Admin-Code mit diesem angemeldeten Konto verknüpfen musst.',
+    },
+  },
+}
+
 Object.entries(localizationCompletionPatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
@@ -9870,6 +9945,10 @@ Object.entries(secureAccountLinkFlowPatches).forEach(([locale, patch]) => {
 })
 
 Object.entries(unifiedUnlockAndLegalPatches).forEach(([locale, patch]) => {
+  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+})
+
+Object.entries(authFlowAlignmentPatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
 
