@@ -25,6 +25,7 @@ export const LANGUAGE_OPTIONS = [
     speechLang: 'bg-BG',
     recognitionLang: 'bg-BG',
     voiceSearch: ['Bulgarian', 'bg-BG', 'Daria'],
+    fallbackVoiceLangs: ['mk-MK', 'sr-RS', 'hr-HR', 'bs-BA', 'ru-RU', 'uk-UA'],
     voiceNote: 'Bulgarian browser voices са често липсващи. Ако браузърът няма BG voice, JobSensei ще използва fallback и може да звучи странно.',
   },
   {
@@ -838,6 +839,7 @@ export function findVoiceForLanguage(option, voices, preferredVoiceName = '') {
   const normalizedLang = normalizeVoiceLang(lang)
   const baseLang = normalizedLang.split('-')[0]
   const searchNames = option?.voiceSearch || []
+  const fallbackVoiceLangs = option?.fallbackVoiceLangs || []
   const excludedVoiceLangs = option?.excludedVoiceLangs || []
   const excludedVoiceNames = option?.excludedVoiceNames || []
 
@@ -867,10 +869,19 @@ export function findVoiceForLanguage(option, voices, preferredVoiceName = '') {
     const voiceLang = normalizeVoiceLang(voice.lang)
     return voiceLang === baseLang || voiceLang.startsWith(`${baseLang}-`)
   })
+  const configuredFallbacks = voices.filter((voice) => {
+    const voiceLang = normalizeVoiceLang(voice.lang)
+    return fallbackVoiceLangs.some((fallbackLang) => {
+      const normalizedFallback = normalizeVoiceLang(fallbackLang)
+      const fallbackBase = normalizedFallback.split('-')[0]
+      return voiceLang === normalizedFallback || voiceLang === fallbackBase || voiceLang.startsWith(`${fallbackBase}-`)
+    })
+  })
   const englishFallback = voices.filter(voice => normalizeVoiceLang(voice.lang).startsWith('en'))
 
   return pickBest(exactLang)
     || pickBest(relatedLang)
+    || pickBest(configuredFallbacks, false)
     || pickBest(englishFallback, false)
     || pickBest(voices, false)
 }

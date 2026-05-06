@@ -8976,7 +8976,222 @@ const localizationCompletionPatches = {
   },
 }
 
+const guidePopoverPatches = {
+  ru: {
+    guide: {
+      helpTitle: 'Помощь: {section}',
+      learning: {
+        title: 'Обучение',
+        desc: 'Изучайте темы с AI-наставником, а затем проверяйте себя квизами. Интервальные повторения помогают повторять с умом.',
+        saveLastResponseLabel: 'Сохранить последний ответ в Notes',
+        detail: {
+          topics: 'Создавайте свои темы под навыки, которые нужны целевой роли.',
+          saveNotes: 'Save last response to Notes сохраняет полезные ответы наставника в Learning Notes.',
+          quiz: 'Нажмите Quiz, чтобы пройти тест из 6 вопросов по этой теме и истории чата.',
+          reviews: 'Повторы на сегодня появляются сверху - не пропускайте их!',
+        },
+      },
+      settings: {
+        title: 'Настройки',
+        desc: 'Разблокируйте JobSensei, выберите hosted AI или BYOK, сохраните резюме и сделайте резервную копию данных проекта.',
+        detail: {
+          connect: 'Сначала подключите AI, если инструменты пока заблокированы.',
+          resume: 'Сохраните резюме здесь, чтобы Resume Checker, Cover Letter и prep-инструменты могли использовать его повторно.',
+          backups: 'Экспортируйте резервную копию проекта перед сменой устройства или браузера.',
+          byok: 'BYOK по-прежнему требует активной разблокировки JobSensei.',
+        },
+      },
+    },
+  },
+  bg: {
+    guide: {
+      helpTitle: 'Помощ: {section}',
+      learning: {
+        title: 'Обучение',
+        desc: 'Учи теми с AI наставник, после се тествай с куизове. Разредените повторения държат преговорите умни.',
+        saveLastResponseLabel: 'Запази последния отговор в Notes',
+        detail: {
+          topics: 'Създай свои теми за уменията, които целевата роля изисква.',
+          saveNotes: 'Save last response to Notes пази полезните отговори на наставника в Learning Notes.',
+          quiz: 'Натисни Quiz за тест от 6 въпроса по темата и историята на чата.',
+          reviews: 'Преговорите за днес излизат най-отгоре - не ги пропускай!',
+        },
+      },
+      settings: {
+        title: 'Настройки',
+        desc: 'Отключи JobSensei, избери hosted AI или BYOK, запази CV-то си и направи backup на данните по проекта.',
+        detail: {
+          connect: 'Свържи AI първо, ако инструментите са заключени.',
+          resume: 'Запази CV-то си тук, за да могат Resume Checker, Cover Letter и prep инструментите да го ползват отново.',
+          backups: 'Експортирай backup на проекта, преди да сменяш устройство или браузър.',
+          byok: 'BYOK все още изисква активен unlock за JobSensei.',
+        },
+      },
+    },
+  },
+  es: {
+    guide: {
+      helpTitle: 'Ayuda: {section}',
+      learning: {
+        title: 'Learning',
+        desc: 'Estudia temas con un tutor de AI y luego ponte a prueba con quizzes. La repetición espaciada mantiene los repasos inteligentes.',
+        saveLastResponseLabel: 'Guardar la última respuesta en Notes',
+        detail: {
+          topics: 'Crea tus propios temas para las habilidades que exige el rol objetivo.',
+          saveNotes: 'Save last response to Notes guarda respuestas útiles del tutor en Learning Notes.',
+          quiz: 'Haz clic en Quiz para una prueba de 6 preguntas sobre ese tema y el historial del chat.',
+          reviews: 'Los repasos pendientes aparecen arriba; no los saltes.',
+        },
+      },
+      settings: {
+        title: 'Settings',
+        desc: 'Desbloquea JobSensei, elige hosted AI o BYOK, guarda tu CV y haz copia de seguridad de los datos del proyecto.',
+        detail: {
+          connect: 'Conecta AI primero si las herramientas están bloqueadas.',
+          resume: 'Guarda tu CV aquí para que Resume Checker, Cover Letter y las herramientas de prep puedan reutilizarlo.',
+          backups: 'Exporta copias del proyecto antes de cambiar de dispositivo o navegador.',
+          byok: 'BYOK sigue requiriendo un desbloqueo activo de JobSensei.',
+        },
+      },
+    },
+  },
+  fr: {
+    guide: {
+      helpTitle: 'Aide : {section}',
+      learning: {
+        title: 'Learning',
+        desc: 'Étudiez des sujets avec un tuteur AI, puis testez-vous avec des quiz. La répétition espacée rend les révisions plus intelligentes.',
+        saveLastResponseLabel: 'Enregistrer la dernière réponse dans Notes',
+        detail: {
+          topics: 'Créez vos propres sujets pour les compétences attendues par le poste visé.',
+          saveNotes: 'Save last response to Notes enregistre les réponses utiles du tuteur dans Learning Notes.',
+          quiz: 'Cliquez sur Quiz pour un test de 6 questions sur ce sujet et l\'historique du chat.',
+          reviews: 'Les révisions du jour apparaissent en haut - ne les sautez pas.',
+        },
+      },
+      settings: {
+        title: 'Settings',
+        desc: 'Déverrouillez JobSensei, choisissez hosted AI ou BYOK, enregistrez votre CV et sauvegardez les données du projet.',
+        detail: {
+          connect: 'Connectez d\'abord AI si les outils sont verrouillés.',
+          resume: 'Enregistrez votre CV ici pour que Resume Checker, Cover Letter et les outils de prep puissent le réutiliser.',
+          backups: 'Exportez une sauvegarde du projet avant de changer d\'appareil ou de navigateur.',
+          byok: 'BYOK nécessite toujours un déverrouillage JobSensei actif.',
+        },
+      },
+    },
+  },
+  it: {
+    guide: {
+      helpTitle: 'Aiuto: {section}',
+      learning: {
+        title: 'Learning',
+        desc: 'Studia argomenti con un tutor AI, poi mettiti alla prova con i quiz. La spaced repetition rende i ripassi più intelligenti.',
+        saveLastResponseLabel: 'Salva l\'ultima risposta in Notes',
+        detail: {
+          topics: 'Crea i tuoi argomenti per le competenze richieste dal ruolo target.',
+          saveNotes: 'Save last response to Notes salva le risposte utili del tutor in Learning Notes.',
+          quiz: 'Fai clic su Quiz per un test di 6 domande su quell\'argomento e sulla cronologia chat.',
+          reviews: 'I ripassi dovuti compaiono in alto: non saltarli.',
+        },
+      },
+      settings: {
+        title: 'Settings',
+        desc: 'Sblocca JobSensei, scegli hosted AI o BYOK, salva il tuo CV e fai il backup dei dati del progetto.',
+        detail: {
+          connect: 'Collega prima AI se gli strumenti sono bloccati.',
+          resume: 'Salva qui il tuo CV così Resume Checker, Cover Letter e gli strumenti di prep potranno riutilizzarlo.',
+          backups: 'Esporta un backup del progetto prima di cambiare dispositivo o browser.',
+          byok: 'BYOK richiede ancora uno sblocco JobSensei attivo.',
+        },
+      },
+    },
+  },
+  pt: {
+    guide: {
+      helpTitle: 'Ajuda: {section}',
+      learning: {
+        title: 'Learning',
+        desc: 'Estuda tópicos com um tutor de AI e depois testa-te com quizzes. A repetição espaçada torna as revisões mais inteligentes.',
+        saveLastResponseLabel: 'Guardar a última resposta em Notes',
+        detail: {
+          topics: 'Cria os teus próprios tópicos para as competências que a função-alvo exige.',
+          saveNotes: 'Save last response to Notes guarda respostas úteis do tutor em Learning Notes.',
+          quiz: 'Clica em Quiz para um teste de 6 perguntas sobre esse tópico e o histórico do chat.',
+          reviews: 'As revisões pendentes aparecem no topo - não as saltes.',
+        },
+      },
+      settings: {
+        title: 'Settings',
+        desc: 'Desbloqueia o JobSensei, escolhe hosted AI ou BYOK, guarda o teu CV e faz backup dos dados do projeto.',
+        detail: {
+          connect: 'Liga primeiro o AI se as ferramentas estiverem bloqueadas.',
+          resume: 'Guarda aqui o teu CV para que Resume Checker, Cover Letter e as ferramentas de prep o possam reutilizar.',
+          backups: 'Exporta um backup do projeto antes de mudares de dispositivo ou de browser.',
+          byok: 'BYOK continua a exigir um desbloqueio JobSensei ativo.',
+        },
+      },
+    },
+  },
+  pl: {
+    guide: {
+      helpTitle: 'Pomoc: {section}',
+      learning: {
+        title: 'Learning',
+        desc: 'Ucz się tematów z tutorem AI, a potem sprawdzaj się quizami. Spaced repetition pomaga powtarzać mądrzej.',
+        saveLastResponseLabel: 'Zapisz ostatnią odpowiedź w Notes',
+        detail: {
+          topics: 'Twórz własne tematy pod umiejętności wymagane przez docelową rolę.',
+          saveNotes: 'Save last response to Notes zapisuje przydatne odpowiedzi tutora w Learning Notes.',
+          quiz: 'Kliknij Quiz, aby uruchomić test z 6 pytaniami o ten temat i historię czatu.',
+          reviews: 'Powtórki na dziś pojawiają się u góry - nie pomijaj ich.',
+        },
+      },
+      settings: {
+        title: 'Settings',
+        desc: 'Odblokuj JobSensei, wybierz hosted AI albo BYOK, zapisz CV i zrób kopie zapasowe danych projektu.',
+        detail: {
+          connect: 'Najpierw podłącz AI, jeśli narzędzia są zablokowane.',
+          resume: 'Zapisz tutaj swoje CV, aby Resume Checker, Cover Letter i narzędzia prep mogły używać go ponownie.',
+          backups: 'Eksportuj backup projektu przed zmianą urządzenia albo przeglądarki.',
+          byok: 'BYOK nadal wymaga aktywnego odblokowania JobSensei.',
+        },
+      },
+    },
+  },
+  de: {
+    guide: {
+      helpTitle: 'Hilfe: {section}',
+      learning: {
+        title: 'Learning',
+        desc: 'Lerne Themen mit einem AI-Tutor und teste dich danach mit Quizzen. Spaced Repetition hält deine Wiederholungen sinnvoll.',
+        saveLastResponseLabel: 'Letzte Antwort in Notes speichern',
+        detail: {
+          topics: 'Erstelle eigene Themen für die Fähigkeiten, die deine Zielrolle verlangt.',
+          saveNotes: 'Save last response to Notes speichert hilfreiche Tutor-Antworten in Learning Notes.',
+          quiz: 'Klicke auf Quiz für einen Test mit 6 Fragen zu diesem Thema und zum Chatverlauf.',
+          reviews: 'Fällige Wiederholungen stehen oben - überspringe sie nicht.',
+        },
+      },
+      settings: {
+        title: 'Settings',
+        desc: 'Schalte JobSensei frei, wähle hosted AI oder BYOK, speichere deinen Lebenslauf und sichere deine Projektdaten.',
+        detail: {
+          connect: 'Verbinde zuerst AI, wenn die Tools gesperrt sind.',
+          resume: 'Speichere hier deinen Lebenslauf, damit Resume Checker, Cover Letter und die Prep-Tools ihn wiederverwenden können.',
+          backups: 'Exportiere ein Projekt-Backup, bevor du das Gerät oder den Browser wechselst.',
+          byok: 'BYOK erfordert weiterhin eine aktive JobSensei-Freischaltung.',
+        },
+      },
+    },
+  },
+}
+
 Object.entries(localizationCompletionPatches).forEach(([locale, patch]) => {
+  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+})
+
+Object.entries(guidePopoverPatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
 
