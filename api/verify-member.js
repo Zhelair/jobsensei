@@ -2,10 +2,18 @@
 // Environment variables required: JWT_SECRET, ACCESS_CODES (comma-separated list of valid codes)
 
 import {
+  ACTIVE_PLAN_STATUSES,
+  createSupabaseAdminClient,
   getLegacyAccessCodes,
+  isSupabaseServerConfigured,
+  normalizeEmail,
   setDefaultCorsHeaders,
   signLegacyAccessToken,
 } from './_lib/authBridge.js'
+
+function looksLikeEmail(value = '') {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim())
+}
 
 export default async function handler(req, res) {
   // Always return JSON â€” never let Vercel return an HTML error page
@@ -15,35 +23,81 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end()
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-    if (!process.env.JWT_SECRET || !process.env.ACCESS_CODES) {
-      console.error('verify-member: missing env vars JWT_SECRET or ACCESS_CODES')
-      return res.status(500).json({ error: 'Server not configured yet. Contact support.' })
-    }
-
     const body = req.body || {}
     const code = (body.email || body.code || '').toString()
+    const input = code.trim()
 
-    if (!code.trim()) {
+    if (!input) {
       return res.status(400).json({ error: 'Access code is required' })
     }
 
-    const validCodes = getLegacyAccessCodes()
-    const input = code.trim().toLowerCase()
+    if (looksLikeEmail(input)) {
+      if (!isSupabaseServerConfigured()) {
+        return res.status(503).json({ error: 'Email-based unlock is not configured on this deployment yet.' })
+      }
 
-    if (!validCodes.includes(input)) {
-      const looksLikeEmail = input.includes('@')
+      const normalizedEmail = normalizeEmail(input)
+
+      try {
+        const supabase = createSupabaseAdminClient()
+        const [{ data: activeAccount, error: accountError }, { data: activeGrant, error: grantError }] = await Promise.all([
+          supabase
+            .from('accounts')
+            .select('email, plan_status')
+            .eq('email', normalizedEmail)
+            .in('plan_status', [...ACTIVE_PLAN_STATUSES])
+            .maybeSingle(),
+          supabase
+            .from('plan_grants')
+            .select('id')
+            .eq('claim_email', normalizedEmail)
+            .eq('status', 'active')
+            .limit(1)
+            .maybeSingle(),
+        ])
+
+        if (accountError || grantError) {
+          console.error('verify-member email lookup failed:', accountError || grantError)
+          return res.status(500).json({ error: 'Unable to check email-based access right now.' })
+        }
+
+        if (!activeAccount && !activeGrant) {
+          return res.status(404).json({
+            error: 'No JobSensei access was found for this email yet. Support the app first or use a tester code.',
+          })
+        }
+
+        return res.status(200).json({
+          next: 'magic_link',
+          email: normalizedEmail,
+        })
+      } catch (err) {
+        console.error('verify-member email unlock failed:', err)
+        return res.status(500).json({ error: 'Unable to start email unlock right now.' })
+      }
+    }
+
+    const validCodes = getLegacyAccessCodes()
+    if (!process.env.JWT_SECRET || !validCodes.length) {
+      console.error('verify-member: missing legacy tester configuration')
+      return res.status(500).json({ error: 'Tester-code unlock is not configured on this deployment yet.' })
+    }
+    const normalizedCode = input.toLowerCase()
+
+    if (!validCodes.includes(normalizedCode)) {
       return res.status(403).json({
-        error: looksLikeEmail
-          ? 'That field only accepts a legacy access code. Email-based unlock happens through secure sign-in after a matching purchase grant exists.'
-          : 'Invalid access code. Check the code you received after supporting on Buy Me a Coffee.',
+        error: 'Invalid access code. Check the code you received after supporting on Buy Me a Coffee.',
       })
     }
 
     const token = signLegacyAccessToken({
-      code: input,
+      code: normalizedCode,
     })
 
-    return res.status(200).json({ token })
+    return res.status(200).json({
+      next: 'legacy_code',
+      token,
+    })
   } catch (err) {
     console.error('verify-member unhandled error:', err)
     return res.status(500).json({ error: 'Server error. Please try again.' })

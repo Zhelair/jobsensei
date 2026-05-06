@@ -12,6 +12,7 @@ export default function PaywallModal() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
+  const [notice, setNotice] = useState('')
 
   if (!showPaywall) return null
 
@@ -19,14 +20,19 @@ export default function PaywallModal() {
     if (!email.trim()) return
     setLoading(true)
     setError('')
+    setNotice('')
     try {
-      await verifyBmac(email.trim())
-      setDone(true)
-      setTimeout(() => {
-        closePaywall()
-        setDone(false)
-        setEmail('')
-      }, 1500)
+      const result = await verifyBmac(email.trim())
+      if (result?.mode === 'magic_link') {
+        setNotice(t('settings.secureAccountMagicLinkSent', { email: result.email }))
+      } else {
+        setDone(true)
+        setTimeout(() => {
+          closePaywall()
+          setDone(false)
+          setEmail('')
+        }, 1500)
+      }
     } catch (e) {
       setError(e.message)
     }
@@ -79,7 +85,7 @@ export default function PaywallModal() {
               type="text"
               placeholder={t('paywall.codePlaceholder')}
               value={email}
-              onChange={e => { setEmail(e.target.value); setError('') }}
+              onChange={e => { setEmail(e.target.value); setError(''); setNotice('') }}
               onKeyDown={e => e.key === 'Enter' && handleVerify()}
             />
             <p className="text-slate-600 text-xs">{t('paywall.codeHint')}</p>
@@ -91,6 +97,7 @@ export default function PaywallModal() {
               <Coffee size={14} />
               {loading ? t('paywall.verifying') : t('paywall.activate')}
             </button>
+            {notice && <p className="text-green-400 text-xs text-center">{notice}</p>}
             {error && <p className="text-red-400 text-xs text-center">{error}</p>}
           </div>
         )}

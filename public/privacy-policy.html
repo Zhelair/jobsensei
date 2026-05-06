@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobSensei Privacy Policy</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --panel: rgba(14, 26, 48, 0.92);
+        --border: rgba(45, 212, 191, 0.2);
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #2dd4bf;
+        --accent-soft: rgba(45, 212, 191, 0.12);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(34, 211, 238, 0.12), transparent 32%),
+          linear-gradient(180deg, #081325 0%, #0a1730 100%);
+        color: var(--text);
+        line-height: 1.6;
+      }
+      main {
+        width: min(860px, calc(100vw - 32px));
+        margin: 40px auto;
+        padding: 28px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+      }
+      h1, h2 { margin: 0 0 12px; }
+      h1 { font-size: 2rem; }
+      h2 { margin-top: 24px; font-size: 1.15rem; color: var(--accent); }
+      p, li { color: var(--text); }
+      .muted { color: var(--muted); }
+      .pill {
+        display: inline-block;
+        margin-bottom: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        border: 1px solid var(--border);
+        color: var(--accent);
+        font-size: 0.78rem;
+        font-weight: 600;
+      }
+      ul { padding-left: 18px; margin: 0; }
+      li + li { margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="pill" id="pill"></div>
+      <h1 id="title"></h1>
+      <p class="muted" id="updated"></p>
+      <p id="intro"></p>
+      <div id="sections"></div>
+    </main>
+    <script>
+      const COPY = {
+        en: {
+          pill: 'JobSensei',
+          title: 'Privacy Policy',
+          updated: 'Last updated: May 6, 2026',
+          intro: 'JobSensei is designed to keep most workspace data local in your browser. This page explains what stays local, what may be stored server-side to run the product, and which providers help operate the service.',
+          sections: [
+            { title: 'What stays local', items: ['Most profile, project, resume, notes, applications, and workspace data stays in your browser on this device.', 'You can clear local data from Settings at any time.'] },
+            { title: 'What may be stored server-side', items: ['Account email used for secure sign-in.', 'Approved-device records used for the 2-device rule.', 'Plan or purchase-grant records used to decide whether hosted AI access is active.'] },
+            { title: 'Providers used to run JobSensei', items: ['Vercel for hosting and serverless functions.', 'Supabase for authentication and approved-device / plan-access records.', 'Buy Me a Coffee for payment and purchase confirmation.', 'Resend for sign-in email delivery when enabled.', 'AI providers that process the prompts you choose to send.'] },
+            { title: 'Your choices', items: ['You can clear local app data from Settings.', 'You can avoid hosted AI and use your own provider key where supported.', 'You can contact the JobSensei operator for privacy or deletion requests.'] },
+          ],
+        },
+        bg: {
+          pill: 'JobSensei',
+          title: 'Политика за поверителност',
+          updated: 'Последна промяна: 6 май 2026',
+          intro: 'JobSensei е проектиран така, че повечето workspace данни да остават локално в твоя браузър. Тази страница обяснява какво остава локално, какво може да се пази сървърно и кои доставчици помагат на услугата да работи.',
+          sections: [
+            { title: 'Какво остава локално', items: ['Повечето данни за профил, проекти, CV, бележки, кандидатури и workspace остават в този браузър на това устройство.', 'Можеш да изчистиш локалните данни от Settings по всяко време.'] },
+            { title: 'Какво може да се пази сървърно', items: ['Имейлът за защитен вход.', 'Одобрените устройства за правилото с 2 устройства.', 'План или purchase-grant записи за hosted AI достъп.'] },
+            { title: 'Доставчици, които помагат на JobSensei', items: ['Vercel за хостинг и serverless функции.', 'Supabase за authentication и одобрени устройства / достъп до план.', 'Buy Me a Coffee за плащане и потвърждение на покупка.', 'Resend за sign-in имейли, ако е включен.', 'AI доставчици за prompt заявки, които решиш да изпратиш.'] },
+            { title: 'Твоите избори', items: ['Можеш да изчистиш локалните данни от Settings.', 'Можеш да ползваш свой AI ключ, ако е поддържан.', 'Можеш да се свържеш с оператора на JobSensei за поверителност или изтриване.'] },
+          ],
+        },
+        ru: {
+          pill: 'JobSensei',
+          title: 'Политика конфиденциальности',
+          updated: 'Последнее обновление: 6 мая 2026',
+          intro: 'JobSensei спроектирован так, чтобы большая часть данных workspace оставалась локально в браузере. На этой странице объясняется, что остаётся локально, что может храниться на сервере и какие провайдеры помогают сервису работать.',
+          sections: [
+            { title: 'Что остаётся локально', items: ['Большая часть профиля, проектов, резюме, заметок, откликов и данных workspace остаётся в браузере на этом устройстве.', 'Локальные данные можно очистить в Settings в любой момент.'] },
+            { title: 'Что может храниться на сервере', items: ['Email для безопасного входа.', 'Одобренные устройства для правила 2 устройств.', 'Записи о плане или покупке для hosted AI доступа.'] },
+            { title: 'Провайдеры, которые помогают JobSensei', items: ['Vercel для хостинга и serverless-функций.', 'Supabase для authentication и доступа / устройств.', 'Buy Me a Coffee для оплаты и подтверждения покупки.', 'Resend для sign-in email, если он включён.', 'AI-провайдеры для обработки отправленных вами prompt-запросов.'] },
+            { title: 'Ваш выбор', items: ['Вы можете очистить локальные данные в Settings.', 'Вы можете использовать свой AI key, если это поддерживается.', 'Вы можете связаться с оператором JobSensei по вопросам конфиденциальности или удаления данных.'] },
+          ],
+        },
+        'es-ES': {
+          pill: 'JobSensei',
+          title: 'Política de privacidad',
+          updated: 'Última actualización: 6 de mayo de 2026',
+          intro: 'JobSensei está pensado para que la mayor parte de los datos del workspace se queden localmente en tu navegador. Esta página explica qué se queda local, qué puede guardarse del lado del servidor y qué proveedores ayudan a operar el servicio.',
+          sections: [
+            { title: 'Qué se queda local', items: ['La mayor parte del perfil, proyectos, CV, notas, candidaturas y datos del workspace se queda en este navegador.', 'Puedes borrar los datos locales desde Settings en cualquier momento.'] },
+            { title: 'Qué puede almacenarse del lado del servidor', items: ['El email usado para el inicio de sesión seguro.', 'Los dispositivos aprobados usados para la regla de 2 dispositivos.', 'Los registros de plan o compra usados para decidir si hosted AI está activa.'] },
+            { title: 'Proveedores que ayudan a JobSensei', items: ['Vercel para hosting y funciones serverless.', 'Supabase para authentication y acceso / dispositivos aprobados.', 'Buy Me a Coffee para pagos y confirmación de compra.', 'Resend para emails de inicio de sesión cuando esté activado.', 'Proveedores de AI que procesan los prompts que decidas enviar.'] },
+            { title: 'Tus opciones', items: ['Puedes borrar los datos locales desde Settings.', 'Puedes evitar hosted AI y usar tu propia clave cuando sea compatible.', 'Puedes contactar al operador de JobSensei para solicitudes de privacidad o eliminación.'] },
+          ],
+        },
+        fr: {
+          pill: 'JobSensei',
+          title: 'Politique de confidentialité',
+          updated: 'Dernière mise à jour : 6 mai 2026',
+          intro: 'JobSensei est conçu pour garder la plupart des données workspace localement dans votre navigateur. Cette page explique ce qui reste local, ce qui peut être stocké côté serveur et quels fournisseurs aident le service à fonctionner.',
+          sections: [
+            { title: 'Ce qui reste local', items: ['La plupart des données de profil, projets, CV, notes, candidatures et workspace restent dans ce navigateur.', 'Vous pouvez effacer les données locales depuis Settings à tout moment.'] },
+            { title: 'Ce qui peut être stocké côté serveur', items: ['L’email utilisé pour la connexion sécurisée.', 'Les appareils approuvés utilisés pour la règle des 2 appareils.', 'Les enregistrements de plan ou d’achat utilisés pour activer hosted AI.'] },
+            { title: 'Fournisseurs utilisés pour JobSensei', items: ['Vercel pour l’hébergement et les fonctions serverless.', 'Supabase pour authentication et l’accès / les appareils approuvés.', 'Buy Me a Coffee pour les paiements et confirmations d’achat.', 'Resend pour les emails de connexion quand il est activé.', 'Les fournisseurs AI qui traitent les prompts que vous choisissez d’envoyer.'] },
+            { title: 'Vos choix', items: ['Vous pouvez effacer les données locales depuis Settings.', 'Vous pouvez utiliser votre propre clé AI lorsque c’est pris en charge.', 'Vous pouvez contacter l’opérateur de JobSensei pour une demande de confidentialité ou de suppression.'] },
+          ],
+        },
+        it: {
+          pill: 'JobSensei',
+          title: 'Informativa sulla privacy',
+          updated: 'Ultimo aggiornamento: 6 maggio 2026',
+          intro: 'JobSensei è progettato per lasciare la maggior parte dei dati del workspace localmente nel browser. Questa pagina spiega cosa resta locale, cosa può essere memorizzato lato server e quali provider aiutano il servizio a funzionare.',
+          sections: [
+            { title: 'Cosa resta locale', items: ['La maggior parte di profilo, progetti, CV, note, candidature e dati del workspace resta in questo browser.', 'Puoi cancellare i dati locali da Settings in qualsiasi momento.'] },
+            { title: 'Cosa può essere memorizzato lato server', items: ['L’email usata per il login sicuro.', 'I dispositivi approvati usati per la regola dei 2 dispositivi.', 'I record di piano o acquisto usati per attivare hosted AI.'] },
+            { title: 'Provider che aiutano JobSensei', items: ['Vercel per hosting e funzioni serverless.', 'Supabase per authentication e accesso / dispositivi approvati.', 'Buy Me a Coffee per pagamento e conferma acquisto.', 'Resend per le email di accesso quando attivo.', 'I provider AI che elaborano i prompt che scegli di inviare.'] },
+            { title: 'Le tue scelte', items: ['Puoi cancellare i dati locali da Settings.', 'Puoi usare la tua chiave AI dove supportato.', 'Puoi contattare l’operatore di JobSensei per privacy o cancellazione.'] },
+          ],
+        },
+        'pt-BR': {
+          pill: 'JobSensei',
+          title: 'Política de privacidade',
+          updated: 'Última atualização: 6 de maio de 2026',
+          intro: 'O JobSensei foi desenhado para manter a maior parte dos dados do workspace localmente no teu browser. Esta página explica o que fica local, o que pode ser guardado no servidor e que fornecedores ajudam a operar o serviço.',
+          sections: [
+            { title: 'O que fica local', items: ['A maior parte do perfil, projetos, CV, notas, candidaturas e dados do workspace fica neste browser.', 'Podes limpar os dados locais em Settings a qualquer momento.'] },
+            { title: 'O que pode ser guardado no servidor', items: ['O email usado para o início de sessão seguro.', 'Os dispositivos aprovados usados para a regra dos 2 dispositivos.', 'Os registos de plano ou compra usados para ativar hosted AI.'] },
+            { title: 'Fornecedores que ajudam o JobSensei', items: ['Vercel para alojamento e funções serverless.', 'Supabase para authentication e acesso / dispositivos aprovados.', 'Buy Me a Coffee para pagamento e confirmação de compra.', 'Resend para emails de início de sessão quando ativo.', 'Fornecedores de AI que processam os prompts que decides enviar.'] },
+            { title: 'As tuas escolhas', items: ['Podes limpar os dados locais em Settings.', 'Podes usar a tua própria chave AI quando suportado.', 'Podes contactar o operador do JobSensei para privacidade ou eliminação.'] },
+          ],
+        },
+        pl: {
+          pill: 'JobSensei',
+          title: 'Polityka prywatności',
+          updated: 'Ostatnia aktualizacja: 6 maja 2026',
+          intro: 'JobSensei został zaprojektowany tak, aby większość danych workspace pozostawała lokalnie w przeglądarce. Ta strona wyjaśnia, co zostaje lokalnie, co może być zapisane po stronie serwera i jacy dostawcy pomagają uruchamiać usługę.',
+          sections: [
+            { title: 'Co zostaje lokalnie', items: ['Większość danych profilu, projektów, CV, notatek, aplikacji i workspace pozostaje w tej przeglądarce.', 'Dane lokalne możesz wyczyścić w Settings w dowolnym momencie.'] },
+            { title: 'Co może być przechowywane po stronie serwera', items: ['Email używany do bezpiecznego logowania.', 'Zatwierdzone urządzenia używane do zasady 2 urządzeń.', 'Rekordy planu lub zakupu używane do aktywacji hosted AI.'] },
+            { title: 'Dostawcy pomagający JobSensei', items: ['Vercel do hostingu i funkcji serverless.', 'Supabase do authentication oraz dostępu / zatwierdzonych urządzeń.', 'Buy Me a Coffee do płatności i potwierdzeń zakupu.', 'Resend do maili logowania, gdy jest włączony.', 'Dostawcy AI, którzy przetwarzają prompty, które zdecydujesz się wysłać.'] },
+            { title: 'Twoje wybory', items: ['Możesz wyczyścić dane lokalne w Settings.', 'Możesz używać własnego klucza AI tam, gdzie jest wspierany.', 'Możesz skontaktować się z operatorem JobSensei w sprawie prywatności lub usunięcia danych.'] },
+          ],
+        },
+        de: {
+          pill: 'JobSensei',
+          title: 'Datenschutzerklärung',
+          updated: 'Zuletzt aktualisiert: 6. Mai 2026',
+          intro: 'JobSensei ist darauf ausgelegt, den größten Teil der Workspace-Daten lokal im Browser zu behalten. Diese Seite erklärt, was lokal bleibt, was serverseitig gespeichert werden kann und welche Anbieter beim Betrieb des Dienstes helfen.',
+          sections: [
+            { title: 'Was lokal bleibt', items: ['Die meisten Profil-, Projekt-, Lebenslauf-, Notiz-, Bewerbungs- und Workspace-Daten bleiben in diesem Browser.', 'Du kannst lokale Daten jederzeit in Settings löschen.'] },
+            { title: 'Was serverseitig gespeichert werden kann', items: ['Die E-Mail für die sichere Anmeldung.', 'Freigegebene Geräte für die 2-Geräte-Regel.', 'Plan- oder Kaufdatensätze zur Aktivierung von hosted AI.'] },
+            { title: 'Anbieter, die JobSensei unterstützen', items: ['Vercel für Hosting und serverlose Funktionen.', 'Supabase für Authentication sowie Zugriff / freigegebene Geräte.', 'Buy Me a Coffee für Zahlung und Kaufbestätigung.', 'Resend für Anmelde-E-Mails, wenn aktiviert.', 'AI-Anbieter, die die von dir gesendeten Prompts verarbeiten.'] },
+            { title: 'Deine Wahlmöglichkeiten', items: ['Du kannst lokale Daten in Settings löschen.', 'Du kannst deinen eigenen AI-Schlüssel nutzen, wo dies unterstützt wird.', 'Du kannst den JobSensei-Betreiber für Datenschutz- oder Löschanfragen kontaktieren.'] },
+          ],
+        },
+      };
+
+      const param = new URLSearchParams(window.location.search).get('lang');
+      const browserLang = (param || navigator.language || 'en').trim();
+      const exact = COPY[browserLang];
+      const base = COPY[browserLang.split('-')[0]];
+      const copy = exact || base || COPY.en;
+
+      document.documentElement.lang = browserLang;
+      document.getElementById('pill').textContent = copy.pill;
+      document.getElementById('title').textContent = copy.title;
+      document.getElementById('updated').textContent = copy.updated;
+      document.getElementById('intro').textContent = copy.intro;
+
+      const sections = document.getElementById('sections');
+      copy.sections.forEach(section => {
+        const wrap = document.createElement('section');
+        const h2 = document.createElement('h2');
+        h2.textContent = section.title;
+        wrap.appendChild(h2);
+
+        const list = document.createElement('ul');
+        section.items.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          list.appendChild(li);
+        });
+        wrap.appendChild(list);
+        sections.appendChild(wrap);
+      });
+    </script>
+  </body>
+</html>
