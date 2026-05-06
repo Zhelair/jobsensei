@@ -439,27 +439,31 @@ export default function Settings() {
                 >
                   <Coffee size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
                 </a>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-white/10" />
-                  <span className="text-slate-600 text-xs">{t('settings.alreadyHaveAccess')}</span>
-                  <div className="flex-1 h-px bg-white/10" />
-                </div>
-                <input
-                  className="input-field text-sm"
-                  type="text"
-                  placeholder={t('settings.accessCodePlaceholder')}
-                  value={bmacInput}
-                  onChange={e => { setBmacInput(e.target.value); setBmacError('') }}
-                  onKeyDown={e => e.key === 'Enter' && handleBmacVerify()}
-                />
-                <button
-                  onClick={handleBmacVerify}
-                  disabled={!bmacInput.trim() || bmacLoading}
-                  className="btn-primary w-full justify-center"
-                >
-                  <Coffee size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
-                </button>
-                {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
+                {!secureAccountsEnabled && (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-px bg-white/10" />
+                      <span className="text-slate-600 text-xs">{t('settings.alreadyHaveAccess')}</span>
+                      <div className="flex-1 h-px bg-white/10" />
+                    </div>
+                    <input
+                      className="input-field text-sm"
+                      type="text"
+                      placeholder={t('settings.accessCodePlaceholder')}
+                      value={bmacInput}
+                      onChange={e => { setBmacInput(e.target.value); setBmacError('') }}
+                      onKeyDown={e => e.key === 'Enter' && handleBmacVerify()}
+                    />
+                    <button
+                      onClick={handleBmacVerify}
+                      disabled={!bmacInput.trim() || bmacLoading}
+                      className="btn-primary w-full justify-center"
+                    >
+                      <Coffee size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
+                    </button>
+                    {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
+                  </>
+                )}
               </div>
             )}
 
