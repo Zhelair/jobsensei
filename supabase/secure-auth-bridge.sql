@@ -41,26 +41,6 @@ create table if not exists public.plan_grants (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
-create table if not exists public.api_usage_events (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete cascade,
-  device_id text,
-  route text not null,
-  auth_mode text not null,
-  provider text,
-  model text,
-  created_at timestamptz not null default timezone('utc', now())
-);
-
-create table if not exists public.account_audit_events (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid,
-  device_id text,
-  action text not null,
-  metadata jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default timezone('utc', now())
-);
-
 alter table public.plan_grants alter column user_id drop not null;
 alter table public.plan_grants add column if not exists claim_email text;
 alter table public.plan_grants add column if not exists claimed_at timestamptz;
@@ -75,8 +55,6 @@ create unique index if not exists plan_grants_external_ref_idx
 alter table public.accounts enable row level security;
 alter table public.device_registrations enable row level security;
 alter table public.plan_grants enable row level security;
-alter table public.api_usage_events enable row level security;
-alter table public.account_audit_events enable row level security;
 
 do $$
 begin
@@ -157,40 +135,6 @@ begin
   ) then
     create policy "plans_select_own"
       on public.plan_grants
-      for select
-      using (auth.uid() = user_id);
-  end if;
-end
-$$;
-
-do $$
-begin
-  if not exists (
-    select 1
-    from pg_policies
-    where schemaname = 'public'
-      and tablename = 'api_usage_events'
-      and policyname = 'usage_select_own'
-  ) then
-    create policy "usage_select_own"
-      on public.api_usage_events
-      for select
-      using (auth.uid() = user_id);
-  end if;
-end
-$$;
-
-do $$
-begin
-  if not exists (
-    select 1
-    from pg_policies
-    where schemaname = 'public'
-      and tablename = 'account_audit_events'
-      and policyname = 'audit_select_own'
-  ) then
-    create policy "audit_select_own"
-      on public.account_audit_events
       for select
       using (auth.uid() = user_id);
   end if;

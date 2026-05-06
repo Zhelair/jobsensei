@@ -838,17 +838,8 @@ export async function upsertBmacPlanGrant({
 }
 
 export async function logSecureAuditEvent({ userId, deviceId = null, action, metadata = {} }) {
-  if (!userId || !action || !isSupabaseServerConfigured()) return
-
-  try {
-    const supabase = createSupabaseAdminClient()
-    await supabase.from('account_audit_events').insert({
-      user_id: userId,
-      device_id: deviceId,
-      action,
-      metadata,
-    })
-  } catch (err) {
-    console.error('audit log failed:', err)
-  }
+  void userId
+  void deviceId
+  void action
+  void metadata
 }
