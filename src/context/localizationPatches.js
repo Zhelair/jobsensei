@@ -5041,6 +5041,21 @@ function flattenLocalizationPatch(node, prefix = '') {
   }, {})
 }
 
+function resolvePatchLocaleKey(locale) {
+  if (localizationPatches[locale]) return locale
+
+  const baseLocale = String(locale || '').split('-')[0]
+  if (localizationPatches[baseLocale]) return baseLocale
+
+  return null
+}
+
+function mergeFlattenedLocalizationPatch(locale, patch) {
+  const targetLocale = resolvePatchLocaleKey(locale)
+  if (!targetLocale) return
+  Object.assign(localizationPatches[targetLocale], flattenLocalizationPatch(patch))
+}
+
 const toolsBatch3ResultPatches = {
   en: {
     tools: {
@@ -9929,27 +9944,27 @@ const authFlowAlignmentPatches = {
 }
 
 Object.entries(localizationCompletionPatches).forEach(([locale, patch]) => {
-  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+  mergeFlattenedLocalizationPatch(locale, patch)
 })
 
 Object.entries(guidePopoverPatches).forEach(([locale, patch]) => {
-  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+  mergeFlattenedLocalizationPatch(locale, patch)
 })
 
 Object.entries(guidedTourPatches).forEach(([locale, patch]) => {
-  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+  mergeFlattenedLocalizationPatch(locale, patch)
 })
 
 Object.entries(secureAccountLinkFlowPatches).forEach(([locale, patch]) => {
-  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+  mergeFlattenedLocalizationPatch(locale, patch)
 })
 
 Object.entries(unifiedUnlockAndLegalPatches).forEach(([locale, patch]) => {
-  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+  mergeFlattenedLocalizationPatch(locale, patch)
 })
 
 Object.entries(authFlowAlignmentPatches).forEach(([locale, patch]) => {
-  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+  mergeFlattenedLocalizationPatch(locale, patch)
 })
 
 export default localizationPatches
