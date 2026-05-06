@@ -41,6 +41,7 @@ export default function Settings() {
   const [bmacLoading, setBmacLoading] = useState(false)
   const [bmacError, setBmacError] = useState('')
   const [secureEmailInput, setSecureEmailInput] = useState('')
+  const [secureLinkCodeInput, setSecureLinkCodeInput] = useState('')
   const [secureDeviceLabel, setSecureDeviceLabel] = useState('')
   const [secureDeleteEmailInput, setSecureDeleteEmailInput] = useState('')
   const [secureNotice, setSecureNotice] = useState('')
@@ -55,6 +56,12 @@ export default function Settings() {
   useEffect(() => {
     setForm({ provider, model, apiKey, customBaseUrl: customBaseUrl || '' })
   }, [provider, model, apiKey, customBaseUrl])
+
+  useEffect(() => {
+    if (!secureUser?.email) return
+    setSecureEmailInput(current => current || secureUser.email)
+    setSecureLinkCodeInput(current => current || secureUser.email)
+  }, [secureUser?.email])
 
   function update(k, v) {
     if (k === 'provider') {
@@ -250,7 +257,9 @@ export default function Settings() {
   }
 
   async function handleLinkCurrentAccess() {
-    if (!bmacToken) {
+    const legacyCode = secureLinkCodeInput.trim()
+
+    if (!bmacToken && !legacyCode) {
       setSecureError(t('settings.secureAccountNeedsLegacy'))
       return
     }
@@ -259,10 +268,12 @@ export default function Settings() {
     setSecureNotice('')
     try {
       await linkCurrentAccess({
-        legacyToken: bmacToken,
+        legacyToken: bmacToken || undefined,
+        legacyCode,
         deviceName: secureDeviceLabel || undefined,
         deviceLabel: secureDeviceLabel || undefined,
       })
+      setSecureLinkCodeInput('')
       setSecureNotice(t('settings.secureAccountStatusLinked'))
     } catch (err) {
       setSecureError(err.message)
@@ -478,6 +489,19 @@ export default function Settings() {
                       <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 space-y-2">
                         <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountLinkButton')}</div>
                         <p className="text-slate-400 text-xs">{t('settings.secureAccountLinkCopy')}</p>
+                        <label className="text-xs text-slate-400 block">{t('settings.secureAccountLinkInputLabel')}</label>
+                        <input
+                          className="input-field text-sm"
+                          type="text"
+                          placeholder={t('settings.accessCodePlaceholder')}
+                          value={secureLinkCodeInput}
+                          onChange={e => {
+                            setSecureLinkCodeInput(e.target.value)
+                            setSecureError('')
+                            setSecureNotice('')
+                          }}
+                          onKeyDown={e => e.key === 'Enter' && handleLinkCurrentAccess()}
+                        />
                         <input
                           className="input-field text-sm"
                           type="text"
@@ -487,7 +511,7 @@ export default function Settings() {
                         />
                         <button
                           onClick={handleLinkCurrentAccess}
-                          disabled={!bmacToken || linkingAccess}
+                          disabled={(!bmacToken && !secureLinkCodeInput.trim()) || linkingAccess}
                           className="btn-primary text-sm justify-center"
                         >
                           {linkingAccess ? t('settings.secureAccountLinking') : t('settings.secureAccountLinkButton')}
