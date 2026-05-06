@@ -9187,11 +9187,306 @@ const guidePopoverPatches = {
   },
 }
 
+const guidedTourPatches = {
+  ru: {
+    tour: {
+      stepCounter: 'Шаг {current} из {total}',
+      back: 'Назад',
+      next: 'Далее',
+      finish: 'Готово',
+      guide: {
+        title: 'Начни с Guide',
+        body: 'Открывай Guide каждый раз, когда теряешься. Он объясняет текущую страницу и может заново запустить эту экскурсию.',
+      },
+      today: {
+        title: 'Today показывает следующий шаг',
+        body: 'Это ваш ежедневный командный центр. Пока нет ни одной заявки, он ведёт к первому шагу по созданию заявки.',
+      },
+      addApplication: {
+        title: 'Добавь первую заявку',
+        body: 'Нажми Add, чтобы создать workspace. Добавь компанию, роль и JD, чтобы все инструменты работали с одним и тем же контекстом.',
+      },
+      workspace: {
+        title: 'Workspace держит роль в одном месте',
+        body: 'Workspace нужен для JD, исследования компании, заметок и генерации материалов для подготовки по одной роли.',
+      },
+      offers: {
+        title: 'Offers сравнивает финальные варианты',
+        body: 'Когда заявка доходит до Offer, эта вкладка помогает сравнить зарплату, рост, культуру, work-life balance, бенефиты и гибкость.',
+      },
+      learning: {
+        title: 'Learning работает в долгую',
+        body: 'Добавляй темы под навыки каждой роли. Учись, проходи quiz и сохраняй notes, чтобы подготовка усиливалась со временем.',
+      },
+      projects: {
+        title: 'Создавай свои Projects',
+        body: 'Projects разделяют разные поиски работы: заявки, резюме, заметки, подготовка к интервью, учебные темы и сохранённые AI-результаты остаются внутри выбранного проекта. Для нового пространства используй New Project.',
+      },
+    },
+  },
+  bg: {
+    tour: {
+      stepCounter: 'Стъпка {current} от {total}',
+      back: 'Назад',
+      next: 'Напред',
+      finish: 'Готово',
+      guide: {
+        title: 'Започни с Guide',
+        body: 'Ползвай Guide всеки път, когато се изгубиш. Той обяснява текущата страница и може да рестартира тази обиколка.',
+      },
+      today: {
+        title: 'Today показва следващия ход',
+        body: 'Това е ежедневният ти команден център. Докато още няма кандидатура, те насочва към първата стъпка за създаването й.',
+      },
+      addApplication: {
+        title: 'Добави първата кандидатура',
+        body: 'Натисни Add, за да създадеш workspace. Добави компания, роля и JD, за да ползват всички инструменти един и същ контекст.',
+      },
+      workspace: {
+        title: 'Workspace държи ролята на едно място',
+        body: 'Workspace е мястото за JD, проучване на компанията, бележки и генериране на материали за подготовка за една роля.',
+      },
+      offers: {
+        title: 'Offers сравнява финалните избори',
+        body: 'Когато кандидатура стигне до Offer, този таб помага да сравниш заплата, растеж, култура, work-life balance, придобивки и гъвкавост.',
+      },
+      learning: {
+        title: 'Learning е играта в дългосрочен план',
+        body: 'Добавяй теми за уменията, които всяка роля изисква. Учи, прави quiz и пази notes, за да се натрупва подготовката ти с времето.',
+      },
+      projects: {
+        title: 'Създай свои Projects',
+        body: 'Projects държат отделните търсения на работа разделени: кандидатури, CV, бележки, подготовка за интервю, учебни теми и запазени AI резултати остават в избрания проект. Ползвай New Project за ново workspace пространство.',
+      },
+    },
+  },
+  es: {
+    tour: {
+      stepCounter: 'Paso {current} de {total}',
+      back: 'Atrás',
+      next: 'Siguiente',
+      finish: 'Finalizar',
+      guide: {
+        title: 'Empieza con Guide',
+        body: 'Usa Guide cada vez que te pierdas. Explica la página actual y puede reiniciar este recorrido.',
+      },
+      today: {
+        title: 'Today muestra el siguiente paso',
+        body: 'Esta zona es tu centro diario de mando. Mientras no exista una candidatura, te lleva al primer paso para crearla.',
+      },
+      addApplication: {
+        title: 'Añade la primera candidatura',
+        body: 'Pulsa Add para crear el workspace. Añade empresa, rol y JD para que todas las herramientas usen el mismo contexto.',
+      },
+      workspace: {
+        title: 'Workspace mantiene el rol unido',
+        body: 'Workspace es donde revisas el JD, investigas la empresa, guardas notas y generas material de preparación para un solo rol.',
+      },
+      offers: {
+        title: 'Offers compara las decisiones finales',
+        body: 'Cuando una candidatura llega a Offer, esta pestaña ayuda a comparar salario, crecimiento, cultura, work-life, beneficios y flexibilidad.',
+      },
+      learning: {
+        title: 'Learning es la apuesta a largo plazo',
+        body: 'Añade temas para las habilidades que exige cada rol. Estudia, haz quiz y guarda notes para que la preparación se acumule con el tiempo.',
+      },
+      projects: {
+        title: 'Crea tus propios Projects',
+        body: 'Projects mantiene separada cada búsqueda de empleo: candidaturas, CV, notas, preparación de entrevistas, temas de aprendizaje y resultados guardados de AI permanecen dentro del proyecto elegido. Usa New Project para un workspace nuevo.',
+      },
+    },
+  },
+  fr: {
+    tour: {
+      stepCounter: 'Étape {current} sur {total}',
+      back: 'Retour',
+      next: 'Suivant',
+      finish: 'Terminer',
+      guide: {
+        title: 'Commence par Guide',
+        body: 'Utilise Guide dès que tu te sens perdu. Il explique la page actuelle et peut relancer cette visite guidée.',
+      },
+      today: {
+        title: 'Today montre le prochain mouvement',
+        body: 'Cette zone est ton centre de commande quotidien. Tant qu’aucune candidature n’existe, elle te renvoie vers la première étape.',
+      },
+      addApplication: {
+        title: 'Ajoute la première candidature',
+        body: 'Appuie sur Add pour créer le workspace. Ajoute l’entreprise, le rôle et la JD pour que tous les outils utilisent le même contexte.',
+      },
+      workspace: {
+        title: 'Workspace garde le rôle au même endroit',
+        body: 'Workspace est l’endroit où tu relis la JD, recherches l’entreprise, sauvegardes des notes et génères du matériel de préparation pour un seul rôle.',
+      },
+      offers: {
+        title: 'Offers compare les choix finaux',
+        body: 'Quand une candidature atteint Offer, cet onglet aide à comparer salaire, progression, culture, équilibre vie pro-vie perso, avantages et flexibilité.',
+      },
+      learning: {
+        title: 'Learning joue sur le long terme',
+        body: 'Ajoute des sujets liés aux compétences attendues pour chaque rôle. Étudie, lance des quiz et garde des notes pour que la préparation s’accumule avec le temps.',
+      },
+      projects: {
+        title: 'Crée tes propres Projects',
+        body: 'Projects sépare chaque recherche d’emploi : candidatures, CV, notes, préparation aux entretiens, sujets d’apprentissage et résultats AI sauvegardés restent dans le projet choisi. Utilise New Project pour un nouveau workspace.',
+      },
+    },
+  },
+  it: {
+    tour: {
+      stepCounter: 'Passo {current} di {total}',
+      back: 'Indietro',
+      next: 'Avanti',
+      finish: 'Fine',
+      guide: {
+        title: 'Inizia con Guide',
+        body: 'Usa Guide ogni volta che ti senti perso. Spiega la pagina corrente e può riavviare questo percorso.',
+      },
+      today: {
+        title: 'Today mostra la prossima mossa',
+        body: 'Questa area è il tuo centro di comando quotidiano. Finché non esiste una candidatura, ti indirizza al primo passo.',
+      },
+      addApplication: {
+        title: 'Aggiungi la prima candidatura',
+        body: 'Premi Add per creare il workspace. Aggiungi azienda, ruolo e JD così tutti gli strumenti useranno lo stesso contesto.',
+      },
+      workspace: {
+        title: 'Workspace tiene tutto il ruolo insieme',
+        body: 'Workspace è il posto in cui rivedi la JD, fai ricerca sull’azienda, salvi note e generi materiale di preparazione per un solo ruolo.',
+      },
+      offers: {
+        title: 'Offers confronta le scelte finali',
+        body: 'Quando una candidatura arriva a Offer, questa scheda aiuta a confrontare stipendio, crescita, cultura, work-life balance, benefit e flessibilità.',
+      },
+      learning: {
+        title: 'Learning è il gioco sul lungo periodo',
+        body: 'Aggiungi argomenti per le competenze richieste da ogni ruolo. Studia, fai quiz e salva notes così la preparazione cresce nel tempo.',
+      },
+      projects: {
+        title: 'Crea i tuoi Projects',
+        body: 'Projects tiene separata ogni ricerca di lavoro: candidature, CV, note, preparazione ai colloqui, argomenti di studio e risultati AI salvati restano nel progetto selezionato. Usa New Project per un workspace nuovo.',
+      },
+    },
+  },
+  pt: {
+    tour: {
+      stepCounter: 'Passo {current} de {total}',
+      back: 'Voltar',
+      next: 'Seguinte',
+      finish: 'Concluir',
+      guide: {
+        title: 'Começa com Guide',
+        body: 'Usa Guide sempre que te sentires perdido. Explica a página atual e pode reiniciar esta visita guiada.',
+      },
+      today: {
+        title: 'Today mostra o próximo passo',
+        body: 'Esta área é o teu centro diário de comando. Enquanto ainda não existir uma candidatura, aponta-te para o primeiro passo.',
+      },
+      addApplication: {
+        title: 'Adiciona a primeira candidatura',
+        body: 'Carrega em Add para criar o workspace. Adiciona empresa, função e JD para que todas as ferramentas usem o mesmo contexto.',
+      },
+      workspace: {
+        title: 'Workspace mantém a função junta',
+        body: 'Workspace é onde revês a JD, pesquisas a empresa, guardas notas e geras material de preparação para uma única função.',
+      },
+      offers: {
+        title: 'Offers compara as escolhas finais',
+        body: 'Quando uma candidatura chega a Offer, este separador ajuda a comparar salário, crescimento, cultura, equilíbrio vida-trabalho, benefícios e flexibilidade.',
+      },
+      learning: {
+        title: 'Learning é o jogo a longo prazo',
+        body: 'Adiciona tópicos para as competências que cada função exige. Estuda, faz quiz e guarda notes para que a tua preparação acumule ao longo do tempo.',
+      },
+      projects: {
+        title: 'Cria os teus próprios Projects',
+        body: 'Projects mantém cada procura de emprego separada: candidaturas, CV, notas, preparação para entrevistas, tópicos de aprendizagem e resultados de AI guardados ficam dentro do projeto selecionado. Usa New Project para um novo workspace.',
+      },
+    },
+  },
+  pl: {
+    tour: {
+      stepCounter: 'Krok {current} z {total}',
+      back: 'Wstecz',
+      next: 'Dalej',
+      finish: 'Zakończ',
+      guide: {
+        title: 'Zacznij od Guide',
+        body: 'Używaj Guide zawsze, gdy się zgubisz. Wyjaśnia bieżącą stronę i może ponownie uruchomić tę wycieczkę.',
+      },
+      today: {
+        title: 'Today pokazuje następny ruch',
+        body: 'To twoje codzienne centrum dowodzenia. Dopóki nie istnieje żadna aplikacja, prowadzi cię do pierwszego kroku.',
+      },
+      addApplication: {
+        title: 'Dodaj pierwszą aplikację',
+        body: 'Kliknij Add, aby utworzyć workspace. Dodaj firmę, rolę i JD, aby wszystkie narzędzia korzystały z tego samego kontekstu.',
+      },
+      workspace: {
+        title: 'Workspace trzyma rolę w jednym miejscu',
+        body: 'Workspace to miejsce, w którym przeglądasz JD, robisz research firmy, zapisujesz notatki i generujesz materiały przygotowawcze dla jednej roli.',
+      },
+      offers: {
+        title: 'Offers porównuje końcowe wybory',
+        body: 'Gdy aplikacja dotrze do etapu Offer, ta karta pomaga porównać wynagrodzenie, rozwój, kulturę, work-life balance, benefity i elastyczność.',
+      },
+      learning: {
+        title: 'Learning działa długofalowo',
+        body: 'Dodawaj tematy dla umiejętności wymaganych przez każdą rolę. Ucz się, rób quiz i zapisuj notes, aby przygotowanie rosło z czasem.',
+      },
+      projects: {
+        title: 'Twórz własne Projects',
+        body: 'Projects rozdziela każde szukanie pracy: aplikacje, CV, notatki, przygotowanie do rozmów, tematy do nauki i zapisane wyniki AI zostają wewnątrz wybranego projektu. Użyj New Project, aby stworzyć nowy workspace.',
+      },
+    },
+  },
+  de: {
+    tour: {
+      stepCounter: 'Schritt {current} von {total}',
+      back: 'Zurück',
+      next: 'Weiter',
+      finish: 'Fertig',
+      guide: {
+        title: 'Starte mit Guide',
+        body: 'Nutze Guide immer dann, wenn du dich verloren fühlst. Er erklärt die aktuelle Seite und kann diese Tour neu starten.',
+      },
+      today: {
+        title: 'Today zeigt den nächsten Schritt',
+        body: 'Dieser Bereich ist dein tägliches Kontrollzentrum. Solange noch keine Bewerbung existiert, zeigt er dir den ersten Bewerbungsschritt.',
+      },
+      addApplication: {
+        title: 'Füge die erste Bewerbung hinzu',
+        body: 'Klicke auf Add, um den Workspace zu erstellen. Ergänze Unternehmen, Rolle und JD, damit alle Tools denselben Kontext nutzen.',
+      },
+      workspace: {
+        title: 'Workspace hält die Rolle zusammen',
+        body: 'Workspace ist der Ort, an dem du die JD prüfst, das Unternehmen recherchierst, Notizen speicherst und Vorbereitungsmaterial für eine einzelne Rolle erzeugst.',
+      },
+      offers: {
+        title: 'Offers vergleicht die finalen Optionen',
+        body: 'Sobald eine Bewerbung die Phase Offer erreicht, hilft dir dieser Tab beim Vergleich von Gehalt, Wachstum, Kultur, Work-Life-Balance, Benefits und Flexibilität.',
+      },
+      learning: {
+        title: 'Learning ist das Langzeitspiel',
+        body: 'Füge Themen für die Fähigkeiten hinzu, die jede Rolle verlangt. Lerne, mache Quiz und speichere Notes, damit deine Vorbereitung mit der Zeit stärker wird.',
+      },
+      projects: {
+        title: 'Erstelle deine eigenen Projects',
+        body: 'Projects trennt jede Jobsuche sauber: Bewerbungen, Lebenslauf, Notizen, Interviewvorbereitung, Lernthemen und gespeicherte AI-Ergebnisse bleiben im ausgewählten Projekt. Nutze New Project für einen frischen Workspace.',
+      },
+    },
+  },
+}
+
 Object.entries(localizationCompletionPatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
 
 Object.entries(guidePopoverPatches).forEach(([locale, patch]) => {
+  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+})
+
+Object.entries(guidedTourPatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
 

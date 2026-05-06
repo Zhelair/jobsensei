@@ -30,7 +30,7 @@ function getMagicLinkRedirectUrl() {
   return normalizeRedirectUrl(preferredUrl) || window.location.origin
 }
 
-function readAuthRedirectParams() {
+function readAuthHashParams() {
   const hash = window.location.hash.startsWith('#')
     ? window.location.hash.slice(1)
     : window.location.hash
@@ -38,8 +38,29 @@ function readAuthRedirectParams() {
   return new URLSearchParams(hash)
 }
 
-function clearAuthRedirectHash() {
-  const nextUrl = `${window.location.pathname}${window.location.search}`
+function readAuthQueryParams() {
+  return new URLSearchParams(window.location.search)
+}
+
+function clearAuthRedirectState({ clearHash = true, clearQuery = true } = {}) {
+  const url = new URL(window.location.href)
+
+  if (clearHash) {
+    url.hash = ''
+  }
+
+  if (clearQuery) {
+    [
+      'code',
+      'type',
+      'token_hash',
+      'error',
+      'error_code',
+      'error_description',
+    ].forEach(key => url.searchParams.delete(key))
+  }
+
+  const nextUrl = `${url.pathname}${url.search}${url.hash}`
   window.history.replaceState({}, document.title, nextUrl)
 }
 
@@ -151,14 +172,23 @@ export function AuthProvider({ children }) {
     setSupabase(client)
 
     async function bootstrapSession() {
-      const redirectParams = readAuthRedirectParams()
-      const accessToken = redirectParams.get('access_token')
-      const refreshToken = redirectParams.get('refresh_token')
-      const redirectError = redirectParams.get('error_description') || redirectParams.get('error')
+      const hashParams = readAuthHashParams()
+      const queryParams = readAuthQueryParams()
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+      const authCode = queryParams.get('code')
+      const tokenHash = queryParams.get('token_hash')
+      const authType = queryParams.get('type')
+      const redirectError = (
+        hashParams.get('error_description')
+        || hashParams.get('error')
+        || queryParams.get('error_description')
+        || queryParams.get('error')
+      )
 
       if (redirectError) {
         setStatusError(redirectError)
-        clearAuthRedirectHash()
+        clearAuthRedirectState()
       }
 
       if (accessToken && refreshToken) {
@@ -177,7 +207,44 @@ export function AuthProvider({ children }) {
           setStatusError('')
         }
 
-        clearAuthRedirectHash()
+        clearAuthRedirectState()
+        return
+      }
+
+      if (authCode) {
+        const { data, error } = await client.auth.exchangeCodeForSession(authCode)
+
+        if (!active) return
+
+        if (error) {
+          setStatusError(error.message || 'Unable to finish secure sign-in from that magic link.')
+        } else {
+          setSecureSession(data.session || null)
+          setSecureUser(data.session?.user || null)
+          setStatusError('')
+        }
+
+        clearAuthRedirectState()
+        return
+      }
+
+      if (tokenHash && authType) {
+        const { data, error } = await client.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: authType,
+        })
+
+        if (!active) return
+
+        if (error) {
+          setStatusError(error.message || 'Unable to finish secure sign-in from that magic link.')
+        } else {
+          setSecureSession(data.session || null)
+          setSecureUser(data.session?.user || null)
+          setStatusError('')
+        }
+
+        clearAuthRedirectState()
         return
       }
 
