@@ -9478,6 +9478,72 @@ const guidedTourPatches = {
   },
 }
 
+const secureAccountLinkFlowPatches = {
+  en: {
+    settings: {
+      secureAccountLinkInputLabel: 'Current access email or code',
+      secureAccountLinkCopy: 'Link your current JobSensei access and register this browser as an approved device. If access is not active here yet, enter the same access email or code below.',
+      secureAccountNeedsLegacy: 'Current JobSensei access must already be active on this device, or you can enter your access email/code below before linking.',
+    },
+  },
+  ru: {
+    settings: {
+      secureAccountLinkInputLabel: 'Email или код текущего доступа',
+      secureAccountLinkCopy: 'Привяжите текущий доступ JobSensei и одновременно зарегистрируйте этот браузер как одобренное устройство. Если доступ ещё не активирован на этом устройстве, введите ниже тот же email или код доступа.',
+      secureAccountNeedsLegacy: 'Текущий доступ JobSensei должен уже быть активирован на этом устройстве, либо введите ниже ваш email/код доступа перед привязкой.',
+    },
+  },
+  bg: {
+    settings: {
+      secureAccountLinkInputLabel: 'Имейл или код на текущия достъп',
+      secureAccountLinkCopy: 'Свържи текущия JobSensei достъп и едновременно регистрирай този браузър като одобрено устройство. Ако достъпът още не е активен на това устройство, въведи по-долу същия имейл или код за достъп.',
+      secureAccountNeedsLegacy: 'Текущият JobSensei достъп трябва вече да е активен на това устройство, или въведи по-долу своя имейл/код за достъп преди свързване.',
+    },
+  },
+  es: {
+    settings: {
+      secureAccountLinkInputLabel: 'Email o código del acceso actual',
+      secureAccountLinkCopy: 'Vincula tu acceso actual de JobSensei y registra este navegador como dispositivo aprobado. Si el acceso todavía no está activo en este dispositivo, introduce abajo el mismo email o código de acceso.',
+      secureAccountNeedsLegacy: 'El acceso actual de JobSensei ya debe estar activo en este dispositivo, o puedes introducir abajo tu email/código de acceso antes de vincularlo.',
+    },
+  },
+  fr: {
+    settings: {
+      secureAccountLinkInputLabel: 'Email ou code d’accès actuel',
+      secureAccountLinkCopy: 'Liez votre accès JobSensei actuel et enregistrez ce navigateur comme appareil approuvé. Si l’accès n’est pas encore actif sur cet appareil, saisissez ci-dessous le même email ou code d’accès.',
+      secureAccountNeedsLegacy: 'L’accès JobSensei actuel doit déjà être actif sur cet appareil, ou vous pouvez saisir ci-dessous votre email/code d’accès avant la liaison.',
+    },
+  },
+  it: {
+    settings: {
+      secureAccountLinkInputLabel: 'Email o codice dell’accesso attuale',
+      secureAccountLinkCopy: 'Collega l’accesso attuale di JobSensei e registra questo browser come dispositivo approvato. Se l’accesso non è ancora attivo su questo dispositivo, inserisci qui sotto lo stesso email o codice di accesso.',
+      secureAccountNeedsLegacy: 'L’accesso attuale di JobSensei deve già essere attivo su questo dispositivo, oppure puoi inserire qui sotto email/codice di accesso prima del collegamento.',
+    },
+  },
+  pt: {
+    settings: {
+      secureAccountLinkInputLabel: 'Email ou código do acesso atual',
+      secureAccountLinkCopy: 'Liga o teu acesso atual do JobSensei e regista este browser como dispositivo aprovado. Se o acesso ainda não estiver ativo neste dispositivo, introduz abaixo o mesmo email ou código de acesso.',
+      secureAccountNeedsLegacy: 'O acesso atual do JobSensei já deve estar ativo neste dispositivo, ou podes introduzir abaixo o teu email/código de acesso antes de ligar.',
+    },
+  },
+  pl: {
+    settings: {
+      secureAccountLinkInputLabel: 'Email lub kod obecnego dostępu',
+      secureAccountLinkCopy: 'Połącz obecny dostęp JobSensei i jednocześnie zarejestruj tę przeglądarkę jako zatwierdzone urządzenie. Jeśli dostęp nie jest jeszcze aktywny na tym urządzeniu, wpisz poniżej ten sam email lub kod dostępu.',
+      secureAccountNeedsLegacy: 'Obecny dostęp do JobSensei musi już być aktywny na tym urządzeniu, albo możesz poniżej wpisać email/kod dostępu przed połączeniem.',
+    },
+  },
+  de: {
+    settings: {
+      secureAccountLinkInputLabel: 'E-Mail oder Code des aktuellen Zugangs',
+      secureAccountLinkCopy: 'Verknüpfe deinen aktuellen JobSensei-Zugang und registriere diesen Browser als freigegebenes Gerät. Falls der Zugang auf diesem Gerät noch nicht aktiv ist, gib unten dieselbe E-Mail oder denselben Zugangscode ein.',
+      secureAccountNeedsLegacy: 'Der aktuelle JobSensei-Zugang muss auf diesem Gerät bereits aktiv sein, oder du kannst unten deine E-Mail/deinen Zugangscode eingeben, bevor du verknüpfst.',
+    },
+  },
+}
+
 Object.entries(localizationCompletionPatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
@@ -9487,6 +9553,10 @@ Object.entries(guidePopoverPatches).forEach(([locale, patch]) => {
 })
 
 Object.entries(guidedTourPatches).forEach(([locale, patch]) => {
+  Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
+})
+
+Object.entries(secureAccountLinkFlowPatches).forEach(([locale, patch]) => {
   Object.assign(localizationPatches[locale], flattenLocalizationPatch(patch))
 })
 
