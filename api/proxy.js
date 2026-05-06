@@ -26,8 +26,6 @@ async function authorizeProxyRequest(req) {
       ok: true,
       authMode: 'legacy',
       legacyPayload,
-      auditUserId: null,
-      auditDeviceId: null,
     }
   }
 
@@ -89,26 +87,6 @@ async function authorizeProxyRequest(req) {
     authMode: 'secure_account',
     userId: user.id,
     deviceId,
-    auditUserId: user.id,
-    auditDeviceId: deviceId,
-  }
-}
-
-async function logUsageEvent({ authMode, userId, deviceId, route, provider, model }) {
-  if (!userId) return
-
-  try {
-    const supabase = createSupabaseAdminClient()
-    await supabase.from('api_usage_events').insert({
-      user_id: userId,
-      device_id: deviceId,
-      route,
-      auth_mode: authMode,
-      provider,
-      model,
-    })
-  } catch (err) {
-    console.error('proxy usage log failed:', err)
   }
 }
 
@@ -158,14 +136,6 @@ export default async function handler(req, res) {
 
     if (!stream) {
       const data = await deepseekRes.json()
-      await logUsageEvent({
-        authMode: auth.authMode,
-        userId: auth.auditUserId,
-        deviceId: auth.auditDeviceId,
-        route: '/api/proxy',
-        provider: 'deepseek',
-        model: 'deepseek-v4-flash',
-      })
       return res.status(200).json({ content: data.choices[0].message.content })
     }
 
@@ -181,14 +151,6 @@ export default async function handler(req, res) {
       if (done) break
       res.write(decoder.decode(value, { stream: true }))
     }
-    await logUsageEvent({
-      authMode: auth.authMode,
-      userId: auth.auditUserId,
-      deviceId: auth.auditDeviceId,
-      route: '/api/proxy',
-      provider: 'deepseek',
-      model: 'deepseek-v4-flash',
-    })
     res.end()
   } catch (err) {
     console.error('proxy error:', err)
