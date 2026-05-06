@@ -31,8 +31,11 @@ export default async function handler(req, res) {
     const input = code.trim().toLowerCase()
 
     if (!validCodes.includes(input)) {
+      const looksLikeEmail = input.includes('@')
       return res.status(403).json({
-        error: 'Invalid access code. Check the code you received after supporting on Buy Me a Coffee.',
+        error: looksLikeEmail
+          ? 'That field only accepts a legacy access code. Email-based unlock happens through secure sign-in after a matching purchase grant exists.'
+          : 'Invalid access code. Check the code you received after supporting on Buy Me a Coffee.',
       })
     }
 
