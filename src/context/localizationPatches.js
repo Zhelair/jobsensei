@@ -9871,6 +9871,7 @@ const unifiedUnlockAndLegalPatches = {
 const authFlowAlignmentPatches = {
   en: {
     settings: {
+      secureAccountCopy: 'Sign in with the email that has JobSensei access to see approved devices here. Tester/admin linking is only a fallback for legacy access.',
       dataBullet3: 'Your secure JobSensei account can approve up to 2 devices at a time.',
       secureAccountNoAccess: 'Signed in, but this email does not have active JobSensei access yet.',
       secureAccountFallbackTitle: 'Tester/admin fallback',
@@ -9879,6 +9880,7 @@ const authFlowAlignmentPatches = {
   },
   ru: {
     settings: {
+      secureAccountCopy: 'Войдите через email, на котором есть доступ JobSensei, и здесь появятся одобренные устройства. Привязка tester/admin нужна только как резерв для старого доступа.',
       dataBullet3: 'Ваш защищённый аккаунт JobSensei может одновременно одобрить до 2 устройств.',
       secureAccountNoAccess: 'Вход выполнен, но у этого email пока нет активного доступа JobSensei.',
       secureAccountFallbackTitle: 'Резерв для тестера / администратора',
@@ -9887,6 +9889,7 @@ const authFlowAlignmentPatches = {
   },
   bg: {
     settings: {
+      secureAccountCopy: 'Влез с имейла, който има JobSensei достъп, и тук ще се покажат одобрените устройства. Свързването на tester/admin е само резервен вариант за legacy достъп.',
       dataBullet3: 'Твоят защитен JobSensei акаунт може да одобри до 2 устройства едновременно.',
       secureAccountNoAccess: 'Влязъл си, но този имейл още няма активен JobSensei достъп.',
       secureAccountFallbackTitle: 'Резервен вариант за тестер / админ',
@@ -9895,6 +9898,7 @@ const authFlowAlignmentPatches = {
   },
   'es-ES': {
     settings: {
+      secureAccountCopy: 'Inicia sesión con el email que tiene acceso a JobSensei para ver aquí los dispositivos aprobados. La vinculación tester/admin es solo un respaldo para el acceso heredado.',
       dataBullet3: 'Tu cuenta segura de JobSensei puede aprobar hasta 2 dispositivos al mismo tiempo.',
       secureAccountNoAccess: 'Has iniciado sesión, pero este email todavía no tiene acceso activo a JobSensei.',
       secureAccountFallbackTitle: 'Respaldo para tester/admin',
@@ -9903,6 +9907,7 @@ const authFlowAlignmentPatches = {
   },
   fr: {
     settings: {
+      secureAccountCopy: 'Connectez-vous avec l’email qui possède l’accès JobSensei pour voir ici les appareils approuvés. La liaison testeur/admin n’est qu’un secours pour l’ancien accès.',
       dataBullet3: 'Votre compte sécurisé JobSensei peut approuver jusqu’à 2 appareils en même temps.',
       secureAccountNoAccess: 'Vous êtes connecté, mais cet email n’a pas encore d’accès JobSensei actif.',
       secureAccountFallbackTitle: 'Solution de secours testeur/admin',
@@ -9911,6 +9916,7 @@ const authFlowAlignmentPatches = {
   },
   it: {
     settings: {
+      secureAccountCopy: 'Accedi con l’email che ha accesso a JobSensei per vedere qui i dispositivi approvati. Il collegamento tester/admin è solo un fallback per l’accesso legacy.',
       dataBullet3: 'Il tuo account sicuro JobSensei può approvare fino a 2 dispositivi alla volta.',
       secureAccountNoAccess: 'Hai effettuato l’accesso, ma questa email non ha ancora un accesso JobSensei attivo.',
       secureAccountFallbackTitle: 'Fallback tester/admin',
@@ -9919,6 +9925,7 @@ const authFlowAlignmentPatches = {
   },
   'pt-BR': {
     settings: {
+      secureAccountCopy: 'Inicia sessão com o email que tem acesso ao JobSensei para veres aqui os dispositivos aprovados. A ligação tester/admin é só um fallback para o acesso legacy.',
       dataBullet3: 'A tua conta segura JobSensei pode aprovar até 2 dispositivos ao mesmo tempo.',
       secureAccountNoAccess: 'Tens sessão iniciada, mas este email ainda não tem acesso ativo ao JobSensei.',
       secureAccountFallbackTitle: 'Fallback para tester/admin',
@@ -9927,6 +9934,7 @@ const authFlowAlignmentPatches = {
   },
   pl: {
     settings: {
+      secureAccountCopy: 'Zaloguj się emailem, który ma dostęp do JobSensei, a tutaj zobaczysz zatwierdzone urządzenia. Podpinanie tester/admin to tylko awaryjny fallback dla starego dostępu.',
       dataBullet3: 'Twoje bezpieczne konto JobSensei może mieć jednocześnie zatwierdzone maksymalnie 2 urządzenia.',
       secureAccountNoAccess: 'Jesteś zalogowany, ale ten email nie ma jeszcze aktywnego dostępu do JobSensei.',
       secureAccountFallbackTitle: 'Awaryjna opcja tester/admin',
@@ -9935,6 +9943,7 @@ const authFlowAlignmentPatches = {
   },
   de: {
     settings: {
+      secureAccountCopy: 'Melde dich mit der E-Mail an, die JobSensei-Zugriff hat, dann siehst du hier die freigegebenen Geräte. Tester/Admin-Verknüpfung ist nur ein Fallback für alten Zugriff.',
       dataBullet3: 'Dein sicheres JobSensei-Konto kann gleichzeitig bis zu 2 Geräte freigeben.',
       secureAccountNoAccess: 'Du bist angemeldet, aber diese E-Mail hat noch keinen aktiven JobSensei-Zugang.',
       secureAccountFallbackTitle: 'Tester/Admin-Fallback',
