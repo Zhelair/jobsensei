@@ -6,7 +6,7 @@ import { Coffee, X, Check, ExternalLink } from 'lucide-react'
 const BMAC_URL = 'https://buymeacoffee.com/niksales73l/e/515014'
 
 export default function PaywallModal() {
-  const { showPaywall, closePaywall, verifyBmac } = useAI()
+  const { showPaywall, closePaywall, unlockAccess } = useAI()
   const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,9 +22,9 @@ export default function PaywallModal() {
     setError('')
     setNotice('')
     try {
-      const result = await verifyBmac(email.trim())
+      const result = await unlockAccess(email.trim())
       if (result?.mode === 'magic_link') {
-        setNotice(t('settings.secureAccountMagicLinkSent', { email: result.email }))
+        setNotice(t('settings.unlockMagicLinkSent', { email: result.email }))
       } else {
         setDone(true)
         setTimeout(() => {

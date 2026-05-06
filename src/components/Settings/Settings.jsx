@@ -14,12 +14,12 @@ import DeepSeekGuide from './DeepSeekGuide'
 export default function Settings() {
   const {
     provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS,
-    bmacToken, bmacEmail, verifyBmac, clearBmacToken, restoreToProxy, isConnected,
+    bmacToken, bmacEmail, unlockAccess, clearBmacToken, restoreToProxy, isConnected,
   } = useAI()
   const {
     secureReady, secureAccountsEnabled, secureUser, secureAccount, secureDevices,
-    deviceId, deviceLimit, deviceReplacementCooldown, statusError, accountError, sendingMagicLink,
-    magicLinkSentTo, linkingAccess, loadingAccount, sendMagicLink, signOutSecure,
+    deviceId, deviceLimit, deviceReplacementCooldown, statusError, accountError,
+    magicLinkSentTo, linkingAccess, loadingAccount, signOutSecure,
     refreshSecureAccount, linkCurrentAccess, revokeSecureDevice, revokingDeviceId,
     deleteSecureAccount, deletingAccount, exportSecureAccountData, exportingAccountData,
   } = useAuth()
@@ -41,7 +41,6 @@ export default function Settings() {
   const [bmacLoading, setBmacLoading] = useState(false)
   const [bmacError, setBmacError] = useState('')
   const [bmacNotice, setBmacNotice] = useState('')
-  const [secureEmailInput, setSecureEmailInput] = useState('')
   const [secureLinkCodeInput, setSecureLinkCodeInput] = useState('')
   const [secureDeviceLabel, setSecureDeviceLabel] = useState('')
   const [secureDeleteEmailInput, setSecureDeleteEmailInput] = useState('')
@@ -62,8 +61,7 @@ export default function Settings() {
 
   useEffect(() => {
     if (!secureUser?.email) return
-    setSecureEmailInput(current => current || secureUser.email)
-    setSecureLinkCodeInput(current => current || secureUser.email)
+    setSecureDeleteEmailInput(current => current || secureUser.email)
   }, [secureUser?.email])
 
   function update(k, v) {
@@ -114,13 +112,15 @@ export default function Settings() {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  async function handleBmacVerify() {
+  async function handleUnlockAccess() {
     if (!bmacInput.trim()) return
     setBmacLoading(true)
     setBmacError('')
     setBmacNotice('')
+    setSecureError('')
+    setSecureNotice('')
     try {
-      const result = await verifyBmac(bmacInput.trim())
+      const result = await unlockAccess(bmacInput.trim())
       if (result?.mode === 'magic_link') {
         setBmacNotice(t('settings.unlockMagicLinkSent', { email: result.email }))
       } else {
@@ -253,18 +253,6 @@ export default function Settings() {
   const secureSignedIn = !!secureUser
   const secureLinked = !!secureAccount?.linked
 
-  async function handleSendMagicLink() {
-    if (!secureEmailInput.trim()) return
-    setSecureError('')
-    setSecureNotice('')
-    try {
-      await sendMagicLink(secureEmailInput.trim())
-      setSecureNotice(t('settings.secureAccountMagicLinkSent', { email: secureEmailInput.trim() }))
-    } catch (err) {
-      setSecureError(err.message)
-    }
-  }
-
   async function handleLinkCurrentAccess() {
     const legacyCode = secureLinkCodeInput.trim()
 
@@ -353,6 +341,9 @@ export default function Settings() {
   const revokeCooldownDate = deviceReplacementCooldown?.endsAt
     ? new Date(deviceReplacementCooldown.endsAt).toLocaleString()
     : ''
+  const secureAccountStatusCopy = secureLinked
+    ? t('settings.secureAccountStatusLinked')
+    : t('settings.secureAccountNoAccess')
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in space-y-4">
@@ -472,10 +463,10 @@ export default function Settings() {
                     setBmacError('')
                     setBmacNotice('')
                   }}
-                  onKeyDown={e => e.key === 'Enter' && handleBmacVerify()}
+                  onKeyDown={e => e.key === 'Enter' && handleUnlockAccess()}
                 />
                 <button
-                  onClick={handleBmacVerify}
+                  onClick={handleUnlockAccess}
                   disabled={!bmacInput.trim() || bmacLoading}
                   className="btn-primary w-full justify-center"
                 >
@@ -502,17 +493,15 @@ export default function Settings() {
                       <div className="text-teal-300 text-sm font-display font-semibold">
                         {t('settings.secureAccountStatusSignedIn', { email: secureUser.email || '' })}
                       </div>
-                      <div className="text-slate-400 text-xs mt-1">
-                        {secureLinked
-                          ? t('settings.secureAccountStatusLinked')
-                          : t('settings.secureAccountStatusPending')}
-                      </div>
+                      <div className="text-slate-400 text-xs mt-1">{secureAccountStatusCopy}</div>
                     </div>
 
                     {!secureLinked && (
-                      <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 space-y-2">
-                        <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountLinkButton')}</div>
-                        <p className="text-slate-400 text-xs">{t('settings.secureAccountLinkCopy')}</p>
+                      <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 space-y-3">
+                        <div>
+                          <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountFallbackTitle')}</div>
+                          <p className="text-slate-400 text-xs mt-1">{t('settings.secureAccountFallbackCopy')}</p>
+                        </div>
                         <label className="text-xs text-slate-400 block">{t('settings.secureAccountLinkInputLabel')}</label>
                         <input
                           className="input-field text-sm"
@@ -540,7 +529,6 @@ export default function Settings() {
                         >
                           {linkingAccess ? t('settings.secureAccountLinking') : t('settings.secureAccountLinkButton')}
                         </button>
-                        {!bmacToken && <p className="text-slate-500 text-xs">{t('settings.secureAccountNeedsLegacy')}</p>}
                       </div>
                     )}
                   </div>
@@ -624,8 +612,8 @@ export default function Settings() {
                   </div>
                 ) : (
                   <div className="rounded-xl border border-navy-700 bg-navy-900/60 px-3 py-3 space-y-2">
-                    <p className="text-slate-400 text-xs">{t('settings.secureAccountStatusPending')}</p>
-                    <div className="text-slate-500 text-xs">{t('settings.secureAccountLinkCopy')}</div>
+                    <p className="text-slate-400 text-xs">{t('settings.secureAccountNoAccess')}</p>
+                    <div className="text-slate-500 text-xs">{t('settings.secureAccountFallbackCopy')}</div>
                   </div>
                 )}
 
