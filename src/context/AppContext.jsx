@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
+import { hasAuthCallbackParams } from '../lib/authFlow'
 
 const AppContext = createContext(null)
 
@@ -31,6 +32,10 @@ function getSectionFromLocation() {
 
   const hashSection = window.location.hash.replace(/^#\/?/, '')
   if (SECTION_VALUES.includes(hashSection)) return hashSection
+
+  if (hasAuthCallbackParams(window.location.hash)) {
+    return SECTIONS.SETTINGS
+  }
 
   return SECTIONS.TODAY
 }
@@ -96,6 +101,14 @@ export function AppProvider({ children }) {
   const replaceAppHistory = useCallback((section = activeSectionRef.current, detail = {}) => {
     if (!SECTION_VALUES.includes(section)) return
     const state = makeHistoryState(section, detail)
+    if (hasAuthCallbackParams(window.location.hash)) {
+      window.history.replaceState(
+        state,
+        '',
+        `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      )
+      return
+    }
     window.history.replaceState(state, '', `#${section}`)
   }, [makeHistoryState])
 
