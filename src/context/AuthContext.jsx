@@ -1,20 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import {
+  POST_AUTH_SECTION_STORAGE_KEY,
+  hasAuthCallbackParams,
+  normalizeRedirectUrl,
+  pickMagicLinkRedirectUrl,
+} from '../lib/authFlow'
 
 const AuthContext = createContext(null)
-
-function normalizeRedirectUrl(value) {
-  const trimmed = String(value || '').trim()
-  if (!trimmed) return ''
-
-  try {
-    const url = new URL(trimmed, window.location.origin)
-    url.hash = ''
-    return url.toString()
-  } catch {
-    return ''
-  }
-}
 
 function getMagicLinkRedirectUrl() {
   const configuredUrl = (
@@ -23,11 +16,16 @@ function getMagicLinkRedirectUrl() {
     import.meta.env.VITE_APP_URL ||
     ''
   )
-  const currentUrl = `${window.location.origin}${window.location.pathname}`
-  const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
-  const preferredUrl = isLocalhost ? currentUrl : (configuredUrl || currentUrl)
+  const currentUrl = `${window.location.origin}${window.location.pathname}${window.location.search}`
 
-  return normalizeRedirectUrl(preferredUrl) || window.location.origin
+  return (
+    pickMagicLinkRedirectUrl({
+      configuredUrl,
+      currentUrl,
+      baseOrigin: window.location.origin,
+    }) ||
+    window.location.origin
+  )
 }
 
 function readAuthHashParams() {
@@ -62,6 +60,20 @@ function clearAuthRedirectState({ clearHash = true, clearQuery = true } = {}) {
 
   const nextUrl = `${url.pathname}${url.search}${url.hash}`
   window.history.replaceState({}, document.title, nextUrl)
+}
+
+function rememberPostAuthSection(section = 'settings') {
+  localStorage.setItem(POST_AUTH_SECTION_STORAGE_KEY, section)
+}
+
+function completePostAuthNavigation() {
+  const savedSection = localStorage.getItem(POST_AUTH_SECTION_STORAGE_KEY)
+  const hasPendingAuthCallback = hasAuthCallbackParams(window.location.hash)
+  if (!savedSection && !hasPendingAuthCallback) return
+
+  const nextSection = savedSection || 'settings'
+  localStorage.removeItem(POST_AUTH_SECTION_STORAGE_KEY)
+  window.history.replaceState(window.history.state, document.title, `#${nextSection}`)
 }
 
 function readOrCreateDeviceId() {
@@ -204,10 +216,14 @@ export function AuthProvider({ children }) {
         } else {
           setSecureSession(data.session || null)
           setSecureUser(data.session?.user || null)
+          setMagicLinkSentTo('')
           setStatusError('')
         }
 
         clearAuthRedirectState()
+        if (!error && data.session) {
+          completePostAuthNavigation()
+        }
         return
       }
 
@@ -221,10 +237,14 @@ export function AuthProvider({ children }) {
         } else {
           setSecureSession(data.session || null)
           setSecureUser(data.session?.user || null)
+          setMagicLinkSentTo('')
           setStatusError('')
         }
 
         clearAuthRedirectState()
+        if (!error && data.session) {
+          completePostAuthNavigation()
+        }
         return
       }
 
@@ -241,10 +261,14 @@ export function AuthProvider({ children }) {
         } else {
           setSecureSession(data.session || null)
           setSecureUser(data.session?.user || null)
+          setMagicLinkSentTo('')
           setStatusError('')
         }
 
         clearAuthRedirectState()
+        if (!error && data.session) {
+          completePostAuthNavigation()
+        }
         return
       }
 
@@ -263,6 +287,10 @@ export function AuthProvider({ children }) {
       if (!active) return
       setSecureSession(session || null)
       setSecureUser(session?.user || null)
+      if (session) {
+        setMagicLinkSentTo('')
+        completePostAuthNavigation()
+      }
       if (!session) {
         setSecureAccount(null)
         setSecureDevices([])
@@ -333,6 +361,7 @@ export function AuthProvider({ children }) {
     setSendingMagicLink(true)
     try {
       const redirectTo = getMagicLinkRedirectUrl()
+      rememberPostAuthSection('settings')
 
       if (bridgeStatus.customAuthEmailsEnabled) {
         const response = await fetch('/api/send-magic-link', {
