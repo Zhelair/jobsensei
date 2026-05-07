@@ -342,23 +342,27 @@ export async function sendMagicLinkEmail({ email, magicLink, redirectTo, source 
   const safeRedirectTo = escapeHtml(redirectTo)
   const headline = source === 'purchase_claim'
     ? 'Your JobSensei access is ready'
-    : 'Your JobSensei magic link'
+    : 'Sign in to JobSensei'
   const intro = source === 'purchase_claim'
     ? 'Thanks for supporting JobSensei. Open the secure link below to claim your access on this email address.'
     : 'Use the secure link below to sign in to JobSensei without a password.'
-  const text = `${headline}\n\n${intro}\n\nOpen JobSensei: ${magicLink}\n\nIf the button does not work, copy this link into your browser:\n${magicLink}\n\nRedirect: ${redirectTo}`
+  const text = `${headline}\n\n${intro}\n\nOpen JobSensei: ${magicLink}\n\nThis link is one-time and will stop working after it is used or expires.\n\nIf the button does not work, copy this link into your browser:\n${magicLink}\n\nRedirect: ${redirectTo}`
 
   const html = `
-    <div style="font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;padding:24px;">
-      <div style="max-width:560px;margin:0 auto;background:#111827;border:1px solid #334155;border-radius:16px;padding:24px;">
-        <div style="font-size:24px;font-weight:700;color:#f8fafc;margin-bottom:12px;">${headline}</div>
-        <p style="font-size:14px;line-height:1.6;color:#cbd5e1;margin:0 0 20px;">${intro}</p>
+    <div style="font-family:Arial,sans-serif;background:#0b1020;color:#e2e8f0;padding:24px;">
+      <div style="max-width:560px;margin:0 auto;background:linear-gradient(180deg,#12122a 0%,#0f172a 100%);border:1px solid #334155;border-radius:20px;padding:28px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#67e8f9;margin-bottom:12px;">JobSensei</div>
+        <div style="font-size:28px;font-weight:700;color:#f8fafc;margin-bottom:12px;">${headline}</div>
+        <p style="font-size:14px;line-height:1.7;color:#cbd5e1;margin:0 0 20px;">${intro}</p>
         <p style="margin:0 0 20px;">
-          <a href="${safeMagicLink}" style="display:inline-block;background:#14b8a6;color:#082f49;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:10px;">Open JobSensei</a>
+          <a href="${safeMagicLink}" style="display:inline-block;background:linear-gradient(90deg,#f72585 0%,#b5179e 100%);color:#ffffff;text-decoration:none;font-weight:700;padding:14px 20px;border-radius:12px;">Open JobSensei</a>
         </p>
+        <div style="border:1px solid rgba(103,232,249,0.18);background:rgba(15,23,42,0.6);border-radius:14px;padding:14px 16px;margin:0 0 18px;">
+          <p style="font-size:12px;line-height:1.7;color:#cbd5e1;margin:0;">This link is one-time and will stop working after it is used or expires. If that happens, request a new sign-in link from the app.</p>
+        </div>
         <p style="font-size:12px;line-height:1.6;color:#94a3b8;margin:0 0 12px;">If the button does not work, paste this link into your browser:</p>
-        <p style="font-size:12px;line-height:1.6;word-break:break-all;color:#67e8f9;margin:0 0 16px;">${safeMagicLink}</p>
-        <p style="font-size:12px;line-height:1.6;color:#64748b;margin:0;">This email was sent to ${safeEmail}. After sign-in, JobSensei will return you to ${safeRedirectTo}.</p>
+        <p style="font-size:12px;line-height:1.7;word-break:break-all;color:#67e8f9;margin:0 0 16px;">${safeMagicLink}</p>
+        <p style="font-size:12px;line-height:1.7;color:#64748b;margin:0;">This email was sent to ${safeEmail}. After sign-in, JobSensei will return you to ${safeRedirectTo}.</p>
       </div>
     </div>
   `

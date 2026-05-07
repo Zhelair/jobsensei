@@ -18,7 +18,7 @@ export default function Settings() {
   } = useAI()
   const {
     secureUser, secureAccount, statusError, accountError, signOutSecure,
-    deleteSecureAccount, deletingAccount, exportSecureAccountData, exportingAccountData,
+    deleteSecureAccount, deletingAccount, exportSecureAccountData, exportingAccountData, magicLinkSentTo,
   } = useAuth()
   const { profile, setShowOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData } = useProject()
@@ -38,6 +38,7 @@ export default function Settings() {
   const [bmacLoading, setBmacLoading] = useState(false)
   const [bmacError, setBmacError] = useState('')
   const [bmacNotice, setBmacNotice] = useState('')
+  const [magicLinkCooldownUntil, setMagicLinkCooldownUntil] = useState(0)
   const [secureDeleteEmailInput, setSecureDeleteEmailInput] = useState('')
   const [secureError, setSecureError] = useState('')
   const [legalExpanded, setLegalExpanded] = useState(false)
@@ -56,6 +57,21 @@ export default function Settings() {
     if (!secureUser?.email) return
     setSecureDeleteEmailInput(current => current || secureUser.email)
   }, [secureUser?.email])
+
+  useEffect(() => {
+    if (!magicLinkCooldownUntil) return undefined
+    const remainingMs = magicLinkCooldownUntil - Date.now()
+    if (remainingMs <= 0) {
+      setMagicLinkCooldownUntil(0)
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => {
+      setMagicLinkCooldownUntil(0)
+    }, remainingMs)
+
+    return () => window.clearTimeout(timer)
+  }, [magicLinkCooldownUntil])
 
   function update(k, v) {
     if (k === 'provider') {
@@ -107,6 +123,35 @@ export default function Settings() {
 
   async function handleUnlockAccess() {
     if (!bmacInput.trim()) return
+    const normalizedInput = bmacInput.trim().toLowerCase()
+    const signedInEmail = String(secureUser?.email || secureAccount?.email || '').trim().toLowerCase()
+    const isSameSignedInAccount = Boolean(
+      normalizedInput
+      && secureAccount?.planActive
+      && signedInEmail
+      && normalizedInput === signedInEmail,
+    )
+    const magicLinkCooldownActive = Boolean(
+      normalizedInput
+      && magicLinkSentTo
+      && normalizedInput === magicLinkSentTo.toLowerCase()
+      && magicLinkCooldownUntil > Date.now(),
+    )
+
+    if (isSameSignedInAccount) {
+      setBmacError('')
+      setBmacNotice(t('settings.secureAccountStatusSignedIn', {
+        email: secureUser?.email || secureAccount?.email || '',
+      }))
+      return
+    }
+
+    if (magicLinkCooldownActive) {
+      setBmacError('')
+      setBmacNotice(t('settings.unlockMagicLinkSent', { email: normalizedInput }))
+      return
+    }
+
     setBmacLoading(true)
     setBmacError('')
     setBmacNotice('')
@@ -115,6 +160,7 @@ export default function Settings() {
       const result = await unlockAccess(bmacInput.trim())
       if (result?.mode === 'magic_link') {
         setBmacNotice(t('settings.unlockMagicLinkSent', { email: result.email }))
+        setMagicLinkCooldownUntil(Date.now() + 45_000)
       } else {
         setBmacInput('')
         setBmacNotice(t('settings.unlockCodeAccepted'))
@@ -242,6 +288,20 @@ export default function Settings() {
 
   const pairedCardClass = 'card h-full flex flex-col'
   const secureSignedIn = !!secureUser
+  const normalizedUnlockInput = bmacInput.trim().toLowerCase()
+  const signedInEmail = String(secureUser?.email || secureAccount?.email || '').trim().toLowerCase()
+  const unlockMatchesSignedIn = Boolean(
+    normalizedUnlockInput
+    && secureAccount?.planActive
+    && signedInEmail
+    && normalizedUnlockInput === signedInEmail,
+  )
+  const magicLinkCooldownActive = Boolean(
+    normalizedUnlockInput
+    && magicLinkSentTo
+    && normalizedUnlockInput === magicLinkSentTo.toLowerCase()
+    && magicLinkCooldownUntil > Date.now(),
+  )
 
   async function handleDeleteSecureAccount() {
     if (!secureUser?.email) return
@@ -407,7 +467,7 @@ export default function Settings() {
                 />
                 <button
                   onClick={handleUnlockAccess}
-                  disabled={!bmacInput.trim() || bmacLoading}
+                  disabled={!bmacInput.trim() || bmacLoading || unlockMatchesSignedIn || magicLinkCooldownActive}
                   className="btn-primary w-full justify-center"
                 >
                   <Coffee size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
