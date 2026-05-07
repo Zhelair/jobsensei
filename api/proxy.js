@@ -7,7 +7,6 @@ import {
   authenticateSupabaseUser,
   createSupabaseAdminClient,
   ensureSecureAccountAccess,
-  getRequestDeviceId,
   looksLikeJwt,
   readBearerToken,
   setDefaultCorsHeaders,
@@ -42,11 +41,6 @@ async function authorizeProxyRequest(req) {
     return { ok: false, status: 401, error }
   }
 
-  const deviceId = getRequestDeviceId(req)
-  if (!deviceId) {
-    return { ok: false, status: 400, error: 'A secure device id is required for account-based access.' }
-  }
-
   const supabase = createSupabaseAdminClient()
   let accessSync
 
@@ -54,9 +48,6 @@ async function authorizeProxyRequest(req) {
     accessSync = await ensureSecureAccountAccess({
       supabase,
       user,
-      deviceId,
-      deviceName: 'Browser device',
-      deviceLabel: 'Current browser',
     })
   } catch (lookupError) {
     console.error('proxy secure auth lookup failed:', lookupError)
@@ -64,29 +55,14 @@ async function authorizeProxyRequest(req) {
   }
 
   const account = accessSync.account
-  const device = accessSync.devices.find(candidate => candidate.device_id === deviceId)
-
   if (!account || !ACTIVE_PLAN_STATUSES.has(account.plan_status)) {
     return { ok: false, status: 403, error: 'Your secure JobSensei plan is not active on this account.' }
-  }
-
-  if (accessSync.deviceApproval && !accessSync.deviceApproval.ok) {
-    return {
-      ok: false,
-      status: accessSync.deviceApproval.reason === 'cooldown' ? 429 : 403,
-      error: accessSync.deviceApproval.message,
-    }
-  }
-
-  if (!device || !device.approved_at || device.revoked_at) {
-    return { ok: false, status: 403, error: 'This device is not approved for secure JobSensei access yet.' }
   }
 
   return {
     ok: true,
     authMode: 'secure_account',
     userId: user.id,
-    deviceId,
   }
 }
 

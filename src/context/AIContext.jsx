@@ -103,7 +103,6 @@ export function AIProvider({ children }) {
   const {
     secureSession,
     secureAccount,
-    deviceId,
     secureAccountsEnabled,
     sendMagicLink,
   } = useAuth()
@@ -228,7 +227,6 @@ export function AIProvider({ children }) {
         if (hasSecurePlanAccess) {
           return await callSecureProxy({
             accessToken: secureSession.access_token,
-            deviceId,
             systemPrompt,
             messages,
             temperature,
@@ -281,15 +279,14 @@ export function AIProvider({ children }) {
     })
   }
 
-  async function callSecureProxy({ accessToken, deviceId: secureDeviceId, systemPrompt, messages, temperature, onChunk, signal }) {
+  async function callSecureProxy({ accessToken, systemPrompt, messages, temperature, onChunk, signal }) {
     const res = await fetch('/api/proxy', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`,
-        'X-Device-Id': secureDeviceId,
       },
-      body: JSON.stringify({ systemPrompt, messages, temperature, stream: !!onChunk, deviceId: secureDeviceId }),
+      body: JSON.stringify({ systemPrompt, messages, temperature, stream: !!onChunk }),
       signal,
     })
 

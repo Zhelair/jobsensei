@@ -1,11 +1,8 @@
 import {
   ACTIVE_PLAN_STATUSES,
-  SECURE_DEVICE_LIMIT,
   authenticateSupabaseUser,
   createSupabaseAdminClient,
   ensureSecureAccountAccess,
-  getDeviceReplacementCooldown,
-  getRequestDeviceId,
   setDefaultCorsHeaders,
 } from './_lib/authBridge.js'
 
@@ -22,18 +19,6 @@ function toAccountSummary(account) {
   }
 }
 
-function toDeviceSummary(device) {
-  return {
-    id: device.id,
-    deviceId: device.device_id,
-    deviceName: device.device_name,
-    deviceLabel: device.device_label,
-    approvedAt: device.approved_at,
-    revokedAt: device.revoked_at,
-    lastSeenAt: device.last_seen_at,
-  }
-}
-
 export default async function handler(req, res) {
   setDefaultCorsHeaders(req, res)
 
@@ -45,31 +30,20 @@ export default async function handler(req, res) {
 
   try {
     const supabase = createSupabaseAdminClient()
-    const deviceId = getRequestDeviceId(req)
 
     const accessSync = await ensureSecureAccountAccess({
       supabase,
       user,
-      deviceId,
-      deviceName: 'Browser device',
-      deviceLabel: 'Current browser',
     })
 
-    const [{ data: account, error: accountError }, { data: devices, error: devicesError }] = await Promise.all([
-      supabase
-        .from('accounts')
-        .select('email, plan_status, plan_source, linked_at')
-        .eq('user_id', user.id)
-        .maybeSingle(),
-      supabase
-        .from('device_registrations')
-        .select('id, device_id, device_name, device_label, approved_at, revoked_at, last_seen_at')
-        .eq('user_id', user.id)
-        .order('last_seen_at', { ascending: false }),
-    ])
+    const { data: account, error: accountError } = await supabase
+      .from('accounts')
+      .select('email, plan_status, plan_source, linked_at')
+      .eq('user_id', user.id)
+      .maybeSingle()
 
-    if (accountError || devicesError) {
-      console.error('account-status query failed:', accountError || devicesError)
+    if (accountError) {
+      console.error('account-status query failed:', accountError)
       return res.status(500).json({ error: 'Unable to load secure account status right now.' })
     }
 
@@ -79,11 +53,7 @@ export default async function handler(req, res) {
         email: user.email || '',
       },
       account: toAccountSummary(account),
-      devices: (devices || []).map(toDeviceSummary),
-      deviceLimit: SECURE_DEVICE_LIMIT,
-      deviceReplacementCooldown: getDeviceReplacementCooldown(devices || []),
       claimedGrantCount: accessSync.claimedGrantCount,
-      deviceApproval: accessSync.deviceApproval,
     })
   } catch (err) {
     console.error('account-status failed:', err)

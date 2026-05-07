@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 import {
   POST_AUTH_SECTION_STORAGE_KEY,
   hasAuthCallbackParams,
-  normalizeRedirectUrl,
   pickMagicLinkRedirectUrl,
 } from '../lib/authFlow'
 
@@ -76,23 +75,6 @@ function completePostAuthNavigation() {
   window.history.replaceState(window.history.state, document.title, `#${nextSection}`)
 }
 
-function readOrCreateDeviceId() {
-  const saved = localStorage.getItem('js_device_id')
-  if (saved) return saved
-
-  const next = typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `js-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`
-
-  localStorage.setItem('js_device_id', next)
-  return next
-}
-
-function defaultDeviceName() {
-  const platform = window.navigator.userAgentData?.platform || window.navigator.platform || 'Browser'
-  return `${platform} browser`
-}
-
 async function parseJsonSafe(response) {
   try {
     return await response.json()
@@ -107,7 +89,6 @@ export function AuthProvider({ children }) {
     legacyAccessEnabled: false,
     secureAccountsEnabled: false,
     customAuthEmailsEnabled: false,
-    deviceLimit: 2,
     authMode: 'legacy_only',
     supabase: null,
   })
@@ -116,17 +97,12 @@ export function AuthProvider({ children }) {
   const [secureSession, setSecureSession] = useState(null)
   const [secureUser, setSecureUser] = useState(null)
   const [secureAccount, setSecureAccount] = useState(null)
-  const [secureDevices, setSecureDevices] = useState([])
-  const [deviceReplacementCooldown, setDeviceReplacementCooldown] = useState(null)
   const [loadingAccount, setLoadingAccount] = useState(false)
   const [accountError, setAccountError] = useState('')
   const [sendingMagicLink, setSendingMagicLink] = useState(false)
   const [magicLinkSentTo, setMagicLinkSentTo] = useState('')
-  const [linkingAccess, setLinkingAccess] = useState(false)
-  const [revokingDeviceId, setRevokingDeviceId] = useState('')
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [exportingAccountData, setExportingAccountData] = useState(false)
-  const [deviceId] = useState(() => readOrCreateDeviceId())
 
   useEffect(() => {
     let active = true
@@ -136,7 +112,7 @@ export function AuthProvider({ children }) {
         const response = await fetch('/api/auth-status')
         const payload = await parseJsonSafe(response)
         if (!response.ok) {
-          throw new Error(payload.error || 'Unable to load secure account status.')
+          throw new Error(payload.error || 'Unable to load account access status.')
         }
 
         if (!active) return
@@ -145,14 +121,13 @@ export function AuthProvider({ children }) {
           legacyAccessEnabled: Boolean(payload.legacyAccessEnabled),
           secureAccountsEnabled: Boolean(payload.secureAccountsEnabled),
           customAuthEmailsEnabled: Boolean(payload.customAuthEmailsEnabled),
-          deviceLimit: Number(payload.deviceLimit || 2),
           authMode: payload.authMode || 'legacy_only',
           supabase: payload.supabase || null,
         })
         setStatusError('')
       } catch (err) {
         if (!active) return
-        setStatusError(err.message || 'Unable to load secure account status.')
+        setStatusError(err.message || 'Unable to load account access status.')
         setBridgeStatus(prev => ({ ...prev, loading: false }))
       }
     }
@@ -169,7 +144,6 @@ export function AuthProvider({ children }) {
       setSupabase(null)
       setSecureSession(null)
       setSecureUser(null)
-      setDeviceReplacementCooldown(null)
       return undefined
     }
 
@@ -280,7 +254,7 @@ export function AuthProvider({ children }) {
 
     bootstrapSession().catch(err => {
       if (!active) return
-      setStatusError(err.message || 'Unable to finish secure sign-in right now.')
+      setStatusError(err.message || 'Unable to finish sign-in right now.')
     })
 
     const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
@@ -293,8 +267,6 @@ export function AuthProvider({ children }) {
       }
       if (!session) {
         setSecureAccount(null)
-        setSecureDevices([])
-        setDeviceReplacementCooldown(null)
       }
     })
 
@@ -307,8 +279,6 @@ export function AuthProvider({ children }) {
   async function refreshSecureAccount(nextAccessToken = secureSession?.access_token) {
     if (!nextAccessToken) {
       setSecureAccount(null)
-      setSecureDevices([])
-      setDeviceReplacementCooldown(null)
       return null
     }
 
@@ -317,26 +287,19 @@ export function AuthProvider({ children }) {
       const response = await fetch('/api/account-status', {
         headers: {
           Authorization: `Bearer ${nextAccessToken}`,
-          'X-Device-Id': deviceId,
         },
       })
       const payload = await parseJsonSafe(response)
 
       if (!response.ok) {
-        throw new Error(payload.error || 'Unable to load secure account status.')
+        throw new Error(payload.error || 'Unable to load account access status.')
       }
 
       setSecureAccount(payload.account || null)
-      setSecureDevices(payload.devices || [])
-      setDeviceReplacementCooldown(payload.deviceReplacementCooldown || null)
-      setAccountError(
-        payload.deviceApproval && payload.deviceApproval.ok === false
-          ? payload.deviceApproval.message || 'This device is not approved for secure JobSensei access yet.'
-          : '',
-      )
+      setAccountError('')
       return payload
     } catch (err) {
-      setAccountError(err.message || 'Unable to load secure account status.')
+      setAccountError(err.message || 'Unable to load account access status.')
       throw err
     } finally {
       setLoadingAccount(false)
@@ -346,7 +309,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!secureSession?.access_token) {
       setSecureAccount(null)
-      setSecureDevices([])
       return
     }
 
@@ -355,7 +317,7 @@ export function AuthProvider({ children }) {
 
   async function sendMagicLink(email) {
     if (!supabase) {
-      throw new Error('Secure account sync is not enabled yet.')
+      throw new Error('Email sign-in is not enabled yet.')
     }
 
     setSendingMagicLink(true)
@@ -377,7 +339,7 @@ export function AuthProvider({ children }) {
         const payload = await parseJsonSafe(response)
 
         if (!response.ok) {
-          throw new Error(payload.error || 'Unable to send a secure sign-in link right now.')
+          throw new Error(payload.error || 'Unable to send a sign-in link right now.')
         }
       } else {
         const { error } = await supabase.auth.signInWithOtp({
@@ -403,75 +365,9 @@ export function AuthProvider({ children }) {
     setMagicLinkSentTo('')
   }
 
-  async function linkCurrentAccess({ legacyToken, legacyCode = '', deviceName = '', deviceLabel = '' }) {
-    if (!secureSession?.access_token) {
-      throw new Error('Sign in to your secure account first.')
-    }
-
-    setLinkingAccess(true)
-    try {
-      const response = await fetch('/api/link-account', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${secureSession.access_token}`,
-          'X-Device-Id': deviceId,
-        },
-        body: JSON.stringify({
-          legacyToken,
-          legacyCode,
-          deviceId,
-          deviceName: deviceName || defaultDeviceName(),
-          deviceLabel: deviceLabel || defaultDeviceName(),
-        }),
-      })
-      const payload = await parseJsonSafe(response)
-
-      if (!response.ok) {
-        throw new Error(payload.error || 'Unable to link this access right now.')
-      }
-
-      await refreshSecureAccount(secureSession.access_token)
-      return payload
-    } finally {
-      setLinkingAccess(false)
-    }
-  }
-
-  async function revokeSecureDevice(targetDeviceId) {
-    if (!secureSession?.access_token) {
-      throw new Error('Sign in to your secure account first.')
-    }
-
-    setRevokingDeviceId(targetDeviceId)
-    try {
-      const response = await fetch('/api/revoke-device', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${secureSession.access_token}`,
-          'X-Device-Id': deviceId,
-        },
-        body: JSON.stringify({
-          deviceId: targetDeviceId,
-        }),
-      })
-      const payload = await parseJsonSafe(response)
-
-      if (!response.ok) {
-        throw new Error(payload.error || 'Unable to revoke that device right now.')
-      }
-
-      setSecureDevices(payload.devices || [])
-      return payload
-    } finally {
-      setRevokingDeviceId('')
-    }
-  }
-
   async function deleteSecureAccount(confirmEmail) {
     if (!secureSession?.access_token) {
-      throw new Error('Sign in to your secure account first.')
+      throw new Error('Sign in to your account first.')
     }
 
     setDeletingAccount(true)
@@ -489,7 +385,7 @@ export function AuthProvider({ children }) {
       const payload = await parseJsonSafe(response)
 
       if (!response.ok) {
-        throw new Error(payload.error || 'Unable to delete this secure account right now.')
+        throw new Error(payload.error || 'Unable to delete this account right now.')
       }
 
       try {
@@ -499,8 +395,6 @@ export function AuthProvider({ children }) {
       setSecureSession(null)
       setSecureUser(null)
       setSecureAccount(null)
-      setSecureDevices([])
-      setDeviceReplacementCooldown(null)
       setMagicLinkSentTo('')
 
       return payload
@@ -511,7 +405,7 @@ export function AuthProvider({ children }) {
 
   async function exportSecureAccountData() {
     if (!secureSession?.access_token) {
-      throw new Error('Sign in to your secure account first.')
+      throw new Error('Sign in to your account first.')
     }
 
     setExportingAccountData(true)
@@ -524,7 +418,7 @@ export function AuthProvider({ children }) {
       const payload = await parseJsonSafe(response)
 
       if (!response.ok) {
-        throw new Error(payload.error || 'Unable to export secure account data right now.')
+        throw new Error(payload.error || 'Unable to export account data right now.')
       }
 
       return payload
@@ -541,23 +435,15 @@ export function AuthProvider({ children }) {
     secureSession,
     secureUser,
     secureAccount,
-    secureDevices,
-    deviceReplacementCooldown,
     loadingAccount,
     accountError,
     sendingMagicLink,
     magicLinkSentTo,
-    linkingAccess,
-    revokingDeviceId,
     deletingAccount,
     exportingAccountData,
-    deviceId,
-    deviceLimit: bridgeStatus.deviceLimit,
     sendMagicLink,
     signOutSecure,
     refreshSecureAccount,
-    linkCurrentAccess,
-    revokeSecureDevice,
     deleteSecureAccount,
     exportSecureAccountData,
   }

@@ -4,8 +4,6 @@ import { createClient } from '@supabase/supabase-js'
 const LEGACY_TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000
 const RESEND_API_URL = 'https://api.resend.com/emails'
 
-export const SECURE_DEVICE_LIMIT = 2
-export const DEVICE_REPLACEMENT_COOLDOWN_MS = 48 * 60 * 60 * 1000
 export const ACTIVE_PLAN_STATUSES = new Set(['active', 'grace'])
 
 function getAllowedCorsOrigins() {
@@ -55,27 +53,6 @@ function escapeHtml(value = '') {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;')
-}
-
-function normalizeDeviceName(value) {
-  return String(value || '').trim().slice(0, 80)
-}
-
-function normalizeDeviceLabel(value) {
-  return String(value || '').trim().slice(0, 120)
-}
-
-function getDeviceSummarySelect() {
-  return 'id, device_id, device_name, device_label, approved_at, revoked_at, last_seen_at'
-}
-
-function mergeDeviceRecord(devices = [], nextDevice) {
-  const filtered = devices.filter(device => device.id !== nextDevice.id)
-  return [nextDevice, ...filtered].sort((a, b) => {
-    const left = new Date(b.last_seen_at || 0).getTime()
-    const right = new Date(a.last_seen_at || 0).getTime()
-    return left - right
-  })
 }
 
 function getPrimaryGrant(activeGrants = []) {
@@ -130,7 +107,7 @@ export function setDefaultCorsHeaders(req, res) {
     res.setHeader('Vary', 'Origin')
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Device-Id')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 }
 
 export function readBearerToken(req) {
@@ -144,12 +121,6 @@ export function looksLikeJwt(token = '') {
 
 export function hashValue(value = '') {
   return crypto.createHash('sha256').update(String(value)).digest('hex')
-}
-
-export function getRequestDeviceId(req) {
-  const headerValue = req.headers['x-device-id'] || req.headers['X-Device-Id']
-  const bodyValue = req.body?.deviceId
-  return String(headerValue || bodyValue || '').trim()
 }
 
 export function isLegacyAccessConfigured() {
@@ -268,7 +239,6 @@ export function buildBridgeStatus() {
     secureAccountsEnabled,
     customAuthEmailsEnabled: canSendCustomAuthEmails(),
     bmacWebhookEnabled: isBmacWebhookConfigured(),
-    deviceLimit: SECURE_DEVICE_LIMIT,
     authMode: secureAccountsEnabled ? 'magic_link_optional' : 'legacy_only',
     supabase: secureAccountsEnabled
       ? {
@@ -276,40 +246,6 @@ export function buildBridgeStatus() {
           anonKey: process.env.SUPABASE_ANON_KEY,
         }
       : null,
-  }
-}
-
-export function getDeviceReplacementCooldown(devices = [], nextDeviceId = '') {
-  const now = Date.now()
-  const recentRevocations = devices
-    .filter(device => device?.revoked_at && device?.device_id !== nextDeviceId)
-    .map(device => {
-      const revokedAtMs = new Date(device.revoked_at).getTime()
-      return Number.isFinite(revokedAtMs)
-        ? {
-            deviceId: device.device_id,
-            revokedAt: device.revoked_at,
-            cooldownEndsAt: new Date(revokedAtMs + DEVICE_REPLACEMENT_COOLDOWN_MS).toISOString(),
-            remainingMs: revokedAtMs + DEVICE_REPLACEMENT_COOLDOWN_MS - now,
-          }
-        : null
-    })
-    .filter(Boolean)
-    .filter(device => device.remainingMs > 0)
-    .sort((a, b) => b.remainingMs - a.remainingMs)
-
-  if (!recentRevocations.length) return null
-
-  const nextEligibleAt = recentRevocations
-    .map(device => device.cooldownEndsAt)
-    .sort()[0]
-  const remainingMs = new Date(nextEligibleAt).getTime() - now
-
-  return {
-    active: remainingMs > 0,
-    endsAt: nextEligibleAt,
-    remainingMs,
-    remainingHours: Math.ceil(remainingMs / (60 * 60 * 1000)),
   }
 }
 
@@ -552,82 +488,15 @@ export function extractBmacGrantDetails(payload = {}, rawBody = '') {
   }
 }
 
-export async function ensureApprovedDeviceRegistration({
-  supabase,
-  userId,
-  deviceId,
-  deviceName = 'Browser device',
-  deviceLabel = '',
-  devices = [],
-  now = new Date().toISOString(),
-}) {
-  if (!userId || !deviceId) {
-    return { ok: false, reason: 'missing_device', message: 'A secure device id is required for account-based access.' }
-  }
-
-  const approvedDevices = devices.filter(device => !device.revoked_at)
-  const matchingDevice = approvedDevices.find(device => device.device_id === deviceId)
-  const priorDeviceRecord = devices.find(device => device.device_id === deviceId)
-  const replacementCooldown = getDeviceReplacementCooldown(devices, deviceId)
-
-  if (!matchingDevice && approvedDevices.length >= SECURE_DEVICE_LIMIT) {
-    return {
-      ok: false,
-      reason: 'device_limit',
-      message: `This account already has ${SECURE_DEVICE_LIMIT} approved devices. Revoke one from an approved device before adding this browser.`,
-      limit: SECURE_DEVICE_LIMIT,
-    }
-  }
-
-  if (!matchingDevice && !priorDeviceRecord && replacementCooldown?.active) {
-    return {
-      ok: false,
-      reason: 'cooldown',
-      message: `New-device approvals unlock on ${new Date(replacementCooldown.endsAt).toLocaleString()}.`,
-      cooldown: replacementCooldown,
-    }
-  }
-
-  const { data: device, error } = await supabase
-    .from('device_registrations')
-    .upsert({
-      user_id: userId,
-      device_id: deviceId,
-      device_name: normalizeDeviceName(deviceName) || 'Browser device',
-      device_label: normalizeDeviceLabel(deviceLabel) || normalizeDeviceName(deviceName) || 'Current browser',
-      approved_at: matchingDevice?.approved_at || priorDeviceRecord?.approved_at || now,
-      revoked_at: null,
-      last_seen_at: now,
-    }, { onConflict: 'user_id,device_id' })
-    .select(getDeviceSummarySelect())
-    .single()
-
-  if (error) {
-    throw error
-  }
-
-  return {
-    ok: true,
-    reason: matchingDevice ? 'existing_device' : 'approved_device',
-    newlyApproved: !matchingDevice,
-    device,
-  }
-}
-
 export async function ensureSecureAccountAccess({
   supabase,
   user,
-  deviceId = '',
-  deviceName = 'Browser device',
-  deviceLabel = '',
 }) {
   if (!supabase || !user?.id) {
     return {
       account: null,
-      devices: [],
       activeGrants: [],
       claimedGrantCount: 0,
-      deviceApproval: null,
     }
   }
 
@@ -725,49 +594,10 @@ export async function ensureSecureAccountAccess({
     account = revokedAccount
   }
 
-  let devices = []
-  let deviceApproval = null
-
-  if (deviceId && account && ACTIVE_PLAN_STATUSES.has(account.plan_status)) {
-    const { data: existingDevices, error: devicesError } = await supabase
-      .from('device_registrations')
-      .select(getDeviceSummarySelect())
-      .eq('user_id', user.id)
-
-    if (devicesError) throw devicesError
-
-    devices = existingDevices || []
-    deviceApproval = await ensureApprovedDeviceRegistration({
-      supabase,
-      userId: user.id,
-      deviceId,
-      deviceName,
-      deviceLabel,
-      devices,
-      now,
-    })
-
-    if (deviceApproval.ok && deviceApproval.device) {
-      devices = mergeDeviceRecord(devices, deviceApproval.device)
-      if (deviceApproval.newlyApproved) {
-        await logSecureAuditEvent({
-          userId: user.id,
-          deviceId,
-          action: claimedGrantCount ? 'device_auto_approved_after_claim' : 'device_auto_approved',
-          metadata: {
-            deviceLabel: deviceApproval.device.device_label,
-          },
-        })
-      }
-    }
-  }
-
   return {
     account,
-    devices,
     activeGrants,
     claimedGrantCount,
-    deviceApproval,
   }
 }
 
