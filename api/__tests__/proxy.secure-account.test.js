@@ -58,11 +58,8 @@ describe('proxy secure-account mode', () => {
       }),
       ensureSecureAccountAccess: vi.fn().mockResolvedValue({
         account: { plan_status: 'active' },
-        devices: [{ id: 'device-row', device_id: 'device-1', approved_at: '2026-05-03T12:00:00Z', revoked_at: null }],
-        deviceApproval: { ok: true },
       }),
       createSupabaseAdminClient: vi.fn().mockReturnValue({ from }),
-      getRequestDeviceId: vi.fn().mockReturnValue('device-1'),
       looksLikeJwt: vi.fn().mockReturnValue(true),
       readBearerToken: vi.fn().mockReturnValue('jwt-token'),
       setDefaultCorsHeaders: vi.fn(),
@@ -72,7 +69,7 @@ describe('proxy secure-account mode', () => {
     const { default: handler } = await import('../proxy.js')
     const { req, res } = makeReqRes(
       { messages: [{ role: 'user', content: 'hello' }] },
-      { authorization: 'Bearer jwt-token', 'x-device-id': 'device-1' },
+      { authorization: 'Bearer jwt-token' },
     )
 
     await handler(req, res)

@@ -438,7 +438,7 @@ const TRANSLATIONS = {
     'settings.projectData': 'Project Data',
     'settings.profile': 'Your Profile',
     'settings.profilePlanCopy': 'This summary is reused across guided prep and onboarding.',
-    'settings.dataManagementSecureHint': 'Verify your email in Plan And AI Access to unlock secure account controls on this device.',
+    'settings.dataManagementSecureHint': 'Verify your email in Plan And AI Access to unlock account controls.',
     'voice.placeholder': 'Type your message...',
     'voice.listening': 'Listening...',
     'voice.paused': 'Paused - tap mic to continue',
