@@ -9952,6 +9952,153 @@ const authFlowAlignmentPatches = {
   },
 }
 
+const simplifiedHostedAccessPatches = {
+  en: {
+    settings: {
+      unlockMagicLinkHint: 'Enter the email that has JobSensei access. JobSensei will send a magic link to finish sign-in here.',
+      secureAccountTitle: 'Account access',
+      secureAccountCopy: 'Sign in with the email that has JobSensei access. JobSensei will use that account email for hosted AI access.',
+      secureAccountDevicesCopy: 'After sign-in, this panel shows the email linked to your JobSensei access.',
+      secureAccountStatusLinked: 'Account linked and ready.',
+      secureAccountNoAccess: 'Signed in, but this email does not have active JobSensei access yet.',
+      secureAccountFallbackTitle: 'Access help',
+      secureAccountFallbackCopy: 'Use the email with active JobSensei access in the Unlock app above.',
+      secureAccountDeleteCopy: 'This removes the linked account profile and JobSensei access records for the signed-in email. Local browser data is managed separately below.',
+      secureAccountExportCopy: 'Download the synced account profile and JobSensei access records tied to the signed-in email.',
+      dataBullet3: 'Hosted AI access is tied to the signed-in email with an active JobSensei grant.',
+      privacyTermsBullet2: 'Authentication and plan access may use Supabase, Vercel, Buy Me a Coffee, Resend, and your chosen AI provider only to operate JobSensei.',
+    },
+  },
+  ru: {
+    settings: {
+      unlockMagicLinkHint: 'Введите email, на котором есть доступ JobSensei. JobSensei отправит magic link и завершит вход здесь.',
+      secureAccountTitle: 'Доступ к аккаунту',
+      secureAccountCopy: 'Войдите через email, на котором есть доступ JobSensei. Именно этот email будет использоваться для hosted AI доступа.',
+      secureAccountDevicesCopy: 'После входа здесь будет показан email, привязанный к вашему доступу JobSensei.',
+      secureAccountStatusLinked: 'Аккаунт привязан и готов.',
+      secureAccountNoAccess: 'Вход выполнен, но у этого email пока нет активного доступа JobSensei.',
+      secureAccountFallbackTitle: 'Помощь с доступом',
+      secureAccountFallbackCopy: 'Используйте в поле Unlock app выше email, на который уже выдан доступ JobSensei.',
+      secureAccountDeleteCopy: 'Это удалит привязанный профиль аккаунта и записи доступа JobSensei для email, под которым выполнен вход. Локальные данные браузера управляются отдельно ниже.',
+      secureAccountExportCopy: 'Скачать синхронизированный профиль аккаунта и записи доступа JobSensei, привязанные к email, под которым выполнен вход.',
+      dataBullet3: 'Доступ к hosted AI привязан к email, под которым выполнен вход и на который выдан активный grant JobSensei.',
+      privacyTermsBullet2: 'Аутентификация и доступ к плану могут использовать Supabase, Vercel, Buy Me a Coffee, Resend и выбранного AI-провайдера только для работы JobSensei.',
+    },
+  },
+  bg: {
+    settings: {
+      unlockMagicLinkHint: 'Въведи имейла, който има JobSensei достъп. JobSensei ще изпрати magic link и ще завърши входа тук.',
+      secureAccountTitle: 'Достъп до акаунта',
+      secureAccountCopy: 'Влез с имейла, който има JobSensei достъп. Точно този имейл ще се използва за hosted AI достъпа.',
+      secureAccountDevicesCopy: 'След вход тук ще виждаш имейла, свързан с твоя JobSensei достъп.',
+      secureAccountStatusLinked: 'Акаунтът е свързан и готов.',
+      secureAccountNoAccess: 'Влязъл си, но този имейл още няма активен JobSensei достъп.',
+      secureAccountFallbackTitle: 'Помощ за достъпа',
+      secureAccountFallbackCopy: 'Ползвай в полето Unlock app по-горе имейла, който вече има JobSensei достъп.',
+      secureAccountDeleteCopy: 'Това ще изтрие свързания профил на акаунта и записите за JobSensei достъп за влезлия имейл. Локалните данни в браузъра се управляват отделно по-долу.',
+      secureAccountExportCopy: 'Изтегли синхронизирания профил на акаунта и записите за JobSensei достъп, свързани с влезлия имейл.',
+      dataBullet3: 'Hosted AI достъпът е вързан към влезлия имейл с активен JobSensei grant.',
+      privacyTermsBullet2: 'Автентикацията и достъпът до плана може да използват Supabase, Vercel, Buy Me a Coffee, Resend и избрания AI доставчик само за да работи JobSensei.',
+    },
+  },
+  'es-ES': {
+    settings: {
+      unlockMagicLinkHint: 'Introduce el email que tiene acceso a JobSensei. JobSensei enviará un magic link y terminará aquí el inicio de sesión.',
+      secureAccountTitle: 'Acceso a la cuenta',
+      secureAccountCopy: 'Inicia sesión con el email que tiene acceso a JobSensei. Ese email se usará para el acceso hosted AI.',
+      secureAccountDevicesCopy: 'Después de iniciar sesión, aquí verás el email vinculado a tu acceso de JobSensei.',
+      secureAccountStatusLinked: 'Cuenta vinculada y lista.',
+      secureAccountNoAccess: 'Has iniciado sesión, pero este email todavía no tiene acceso activo a JobSensei.',
+      secureAccountFallbackTitle: 'Ayuda con el acceso',
+      secureAccountFallbackCopy: 'Usa en el campo Unlock app de arriba el email que ya tiene acceso a JobSensei.',
+      secureAccountDeleteCopy: 'Esto elimina el perfil de cuenta vinculado y los registros de acceso de JobSensei del email con sesión iniciada. Los datos locales del navegador se gestionan aparte abajo.',
+      secureAccountExportCopy: 'Descarga el perfil sincronizado de la cuenta y los registros de acceso de JobSensei vinculados al email con sesión iniciada.',
+      dataBullet3: 'El acceso a hosted AI está vinculado al email con sesión iniciada que tiene un grant activo de JobSensei.',
+      privacyTermsBullet2: 'La autenticación y el acceso al plan pueden usar Supabase, Vercel, Buy Me a Coffee, Resend y tu proveedor de AI elegido solo para hacer funcionar JobSensei.',
+    },
+  },
+  fr: {
+    settings: {
+      unlockMagicLinkHint: 'Entrez l’email qui possède l’accès JobSensei. JobSensei enverra un magic link et terminera la connexion ici.',
+      secureAccountTitle: 'Accès au compte',
+      secureAccountCopy: 'Connectez-vous avec l’email qui possède l’accès JobSensei. Cet email sera utilisé pour l’accès hosted AI.',
+      secureAccountDevicesCopy: 'Après connexion, ce panneau affiche l’email lié à votre accès JobSensei.',
+      secureAccountStatusLinked: 'Compte lié et prêt.',
+      secureAccountNoAccess: 'Vous êtes connecté, mais cet email n’a pas encore d’accès JobSensei actif.',
+      secureAccountFallbackTitle: 'Aide pour l’accès',
+      secureAccountFallbackCopy: 'Utilisez dans le champ Unlock app ci-dessus l’email qui possède déjà l’accès JobSensei.',
+      secureAccountDeleteCopy: 'Cela supprime le profil de compte lié et les enregistrements d’accès JobSensei pour l’email connecté. Les données locales du navigateur sont gérées séparément ci-dessous.',
+      secureAccountExportCopy: 'Téléchargez le profil synchronisé du compte et les enregistrements d’accès JobSensei liés à l’email connecté.',
+      dataBullet3: 'L’accès hosted AI est lié à l’email connecté qui possède un grant JobSensei actif.',
+      privacyTermsBullet2: 'L’authentification et l’accès au plan peuvent utiliser Supabase, Vercel, Buy Me a Coffee, Resend et le fournisseur AI choisi uniquement pour faire fonctionner JobSensei.',
+    },
+  },
+  it: {
+    settings: {
+      unlockMagicLinkHint: 'Inserisci l’email che ha accesso a JobSensei. JobSensei invierà un magic link e completerà qui il login.',
+      secureAccountTitle: 'Accesso all’account',
+      secureAccountCopy: 'Accedi con l’email che ha accesso a JobSensei. Quella email verrà usata per l’accesso hosted AI.',
+      secureAccountDevicesCopy: 'Dopo il login, qui vedrai l’email collegata al tuo accesso JobSensei.',
+      secureAccountStatusLinked: 'Account collegato e pronto.',
+      secureAccountNoAccess: 'Hai effettuato l’accesso, ma questa email non ha ancora un accesso JobSensei attivo.',
+      secureAccountFallbackTitle: 'Aiuto per l’accesso',
+      secureAccountFallbackCopy: 'Usa nel campo Unlock app qui sopra l’email che ha già accesso a JobSensei.',
+      secureAccountDeleteCopy: 'Questo rimuove il profilo account collegato e i record di accesso JobSensei per l’email con cui hai effettuato l’accesso. I dati locali del browser sono gestiti separatamente qui sotto.',
+      secureAccountExportCopy: 'Scarica il profilo sincronizzato dell’account e i record di accesso JobSensei collegati all’email con cui hai effettuato l’accesso.',
+      dataBullet3: 'L’accesso hosted AI è collegato all’email con accesso effettuato che possiede un grant JobSensei attivo.',
+      privacyTermsBullet2: 'Autenticazione e accesso al piano possono usare Supabase, Vercel, Buy Me a Coffee, Resend e il provider AI scelto solo per far funzionare JobSensei.',
+    },
+  },
+  'pt-BR': {
+    settings: {
+      unlockMagicLinkHint: 'Introduz o email que tem acesso ao JobSensei. O JobSensei vai enviar um magic link e concluir aqui o início de sessão.',
+      secureAccountTitle: 'Acesso à conta',
+      secureAccountCopy: 'Inicia sessão com o email que tem acesso ao JobSensei. Esse email será usado para o acesso hosted AI.',
+      secureAccountDevicesCopy: 'Depois do início de sessão, este painel mostra o email ligado ao teu acesso JobSensei.',
+      secureAccountStatusLinked: 'Conta ligada e pronta.',
+      secureAccountNoAccess: 'Tens sessão iniciada, mas este email ainda não tem acesso ativo ao JobSensei.',
+      secureAccountFallbackTitle: 'Ajuda com o acesso',
+      secureAccountFallbackCopy: 'Usa no campo Unlock app acima o email que já tem acesso ao JobSensei.',
+      secureAccountDeleteCopy: 'Isto remove o perfil de conta ligado e os registos de acesso JobSensei do email com sessão iniciada. Os dados locais do browser são geridos separadamente abaixo.',
+      secureAccountExportCopy: 'Descarrega o perfil sincronizado da conta e os registos de acesso JobSensei ligados ao email com sessão iniciada.',
+      dataBullet3: 'O acesso hosted AI está ligado ao email autenticado que tem um grant JobSensei ativo.',
+      privacyTermsBullet2: 'A autenticação e o acesso ao plano podem usar Supabase, Vercel, Buy Me a Coffee, Resend e o fornecedor de AI escolhido apenas para operar o JobSensei.',
+    },
+  },
+  pl: {
+    settings: {
+      unlockMagicLinkHint: 'Wpisz email, który ma dostęp do JobSensei. JobSensei wyśle magic link i dokończy logowanie tutaj.',
+      secureAccountTitle: 'Dostęp do konta',
+      secureAccountCopy: 'Zaloguj się emailem, który ma dostęp do JobSensei. Ten email będzie używany do dostępu hosted AI.',
+      secureAccountDevicesCopy: 'Po zalogowaniu zobaczysz tu email powiązany z Twoim dostępem do JobSensei.',
+      secureAccountStatusLinked: 'Konto połączone i gotowe.',
+      secureAccountNoAccess: 'Jesteś zalogowany, ale ten email nie ma jeszcze aktywnego dostępu do JobSensei.',
+      secureAccountFallbackTitle: 'Pomoc z dostępem',
+      secureAccountFallbackCopy: 'Użyj w polu Unlock app powyżej emaila, który ma już dostęp do JobSensei.',
+      secureAccountDeleteCopy: 'To usunie powiązany profil konta i rekordy dostępu JobSensei dla zalogowanego emaila. Lokalne dane przeglądarki są zarządzane osobno poniżej.',
+      secureAccountExportCopy: 'Pobierz zsynchronizowany profil konta i rekordy dostępu JobSensei powiązane z zalogowanym emailem.',
+      dataBullet3: 'Dostęp hosted AI jest powiązany z zalogowanym emailem, który ma aktywny grant JobSensei.',
+      privacyTermsBullet2: 'Uwierzytelnianie i dostęp do planu mogą używać Supabase, Vercel, Buy Me a Coffee, Resend oraz wybranego dostawcy AI wyłącznie do działania JobSensei.',
+    },
+  },
+  de: {
+    settings: {
+      unlockMagicLinkHint: 'Gib die E-Mail ein, die JobSensei-Zugriff hat. JobSensei sendet einen Magic Link und schließt die Anmeldung hier ab.',
+      secureAccountTitle: 'Kontozugang',
+      secureAccountCopy: 'Melde dich mit der E-Mail an, die JobSensei-Zugriff hat. Diese E-Mail wird für den hosted-AI-Zugang verwendet.',
+      secureAccountDevicesCopy: 'Nach der Anmeldung zeigt dieses Feld die E-Mail, die mit deinem JobSensei-Zugang verknüpft ist.',
+      secureAccountStatusLinked: 'Konto verknüpft und bereit.',
+      secureAccountNoAccess: 'Du bist angemeldet, aber diese E-Mail hat noch keinen aktiven JobSensei-Zugang.',
+      secureAccountFallbackTitle: 'Hilfe beim Zugriff',
+      secureAccountFallbackCopy: 'Nutze im Unlock-app-Feld oben die E-Mail, die bereits JobSensei-Zugriff hat.',
+      secureAccountDeleteCopy: 'Dadurch werden das verknüpfte Kontoprofil und die JobSensei-Zugriffsdatensätze für die angemeldete E-Mail entfernt. Lokale Browserdaten werden unten separat verwaltet.',
+      secureAccountExportCopy: 'Lade das synchronisierte Kontoprofil und die JobSensei-Zugriffsdatensätze herunter, die mit der angemeldeten E-Mail verknüpft sind.',
+      dataBullet3: 'Hosted-AI-Zugang ist an die angemeldete E-Mail mit aktivem JobSensei-Grant gebunden.',
+      privacyTermsBullet2: 'Authentifizierung und Plan-Zugriff können Supabase, Vercel, Buy Me a Coffee, Resend und deinen gewählten AI-Anbieter nur für den Betrieb von JobSensei verwenden.',
+    },
+  },
+}
+
 Object.entries(localizationCompletionPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
@@ -9973,6 +10120,10 @@ Object.entries(unifiedUnlockAndLegalPatches).forEach(([locale, patch]) => {
 })
 
 Object.entries(authFlowAlignmentPatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
+Object.entries(simplifiedHostedAccessPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 
