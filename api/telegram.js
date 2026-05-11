@@ -8,16 +8,24 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SECRET_KEY
-)
+function getSupabaseServerKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || ''
+}
+
+const supabaseKey = getSupabaseServerKey()
+const supabase = process.env.SUPABASE_URL && supabaseKey
+  ? createClient(process.env.SUPABASE_URL, supabaseKey)
+  : null
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
 const ADMIN_IDS = (process.env.TELEGRAM_ADMIN_IDS || '').split(',').map(Number).filter(Boolean)
 const CHANNEL_LINK = process.env.TELEGRAM_CHANNEL_LINK || 'https://t.me/your_channel'
 const APP_LINK = 'https://jobsensei.app'
+
+function isTelegramRouteConfigured() {
+  return Boolean(BOT_TOKEN && process.env.SUPABASE_URL && supabaseKey)
+}
 
 // Plain text — no parse_mode so Telegram can never reject it
 const DAILY_LIMIT_MSG = `⏰ You've used your free tool for today!
@@ -673,6 +681,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(200).json({ ok: true })
+  if (!isTelegramRouteConfigured()) return res.status(200).json({ ok: true, disabled: true })
 
   // Verify Telegram webhook secret (set TELEGRAM_WEBHOOK_SECRET in Vercel env vars)
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
