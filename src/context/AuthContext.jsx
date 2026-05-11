@@ -83,6 +83,23 @@ async function parseJsonSafe(response) {
   }
 }
 
+function normalizeAuthMessage(message, { customAuthEmailsEnabled = false } = {}) {
+  const text = String(message || '').trim()
+  if (!text) return ''
+
+  if (/email rate limit exceeded/i.test(text)) {
+    return customAuthEmailsEnabled
+      ? 'Too many email requests were sent. Please wait a minute and try again.'
+      : 'Supabase email rate limit exceeded. Add Resend to use branded emails without this dev limit.'
+  }
+
+  if (/invalid.*expired|expired.*invalid|otp_expired|token has expired/i.test(text)) {
+    return 'This sign-in link was already used or expired. Request a new magic link and open the newest email.'
+  }
+
+  return text
+}
+
 export function AuthProvider({ children }) {
   const [bridgeStatus, setBridgeStatus] = useState({
     loading: true,
@@ -173,7 +190,9 @@ export function AuthProvider({ children }) {
       )
 
       if (redirectError) {
-        setStatusError(redirectError)
+        setStatusError(normalizeAuthMessage(redirectError, {
+          customAuthEmailsEnabled: bridgeStatus.customAuthEmailsEnabled,
+        }))
         clearAuthRedirectState()
       }
 
@@ -186,7 +205,10 @@ export function AuthProvider({ children }) {
         if (!active) return
 
         if (error) {
-          setStatusError(error.message || 'Unable to finish secure sign-in from that magic link.')
+          setStatusError(normalizeAuthMessage(
+            error.message || 'Unable to finish secure sign-in from that magic link.',
+            { customAuthEmailsEnabled: bridgeStatus.customAuthEmailsEnabled },
+          ))
         } else {
           setSecureSession(data.session || null)
           setSecureUser(data.session?.user || null)
@@ -207,7 +229,10 @@ export function AuthProvider({ children }) {
         if (!active) return
 
         if (error) {
-          setStatusError(error.message || 'Unable to finish secure sign-in from that magic link.')
+          setStatusError(normalizeAuthMessage(
+            error.message || 'Unable to finish secure sign-in from that magic link.',
+            { customAuthEmailsEnabled: bridgeStatus.customAuthEmailsEnabled },
+          ))
         } else {
           setSecureSession(data.session || null)
           setSecureUser(data.session?.user || null)
@@ -231,7 +256,10 @@ export function AuthProvider({ children }) {
         if (!active) return
 
         if (error) {
-          setStatusError(error.message || 'Unable to finish secure sign-in from that magic link.')
+          setStatusError(normalizeAuthMessage(
+            error.message || 'Unable to finish secure sign-in from that magic link.',
+            { customAuthEmailsEnabled: bridgeStatus.customAuthEmailsEnabled },
+          ))
         } else {
           setSecureSession(data.session || null)
           setSecureUser(data.session?.user || null)
@@ -274,7 +302,12 @@ export function AuthProvider({ children }) {
       active = false
       listener?.subscription?.unsubscribe?.()
     }
-  }, [bridgeStatus.secureAccountsEnabled, bridgeStatus.supabase?.anonKey, bridgeStatus.supabase?.url])
+  }, [
+    bridgeStatus.customAuthEmailsEnabled,
+    bridgeStatus.secureAccountsEnabled,
+    bridgeStatus.supabase?.anonKey,
+    bridgeStatus.supabase?.url,
+  ])
 
   async function refreshSecureAccount(nextAccessToken = secureSession?.access_token) {
     if (!nextAccessToken) {
@@ -321,6 +354,8 @@ export function AuthProvider({ children }) {
     }
 
     setSendingMagicLink(true)
+    setStatusError('')
+    setAccountError('')
     try {
       const redirectTo = getMagicLinkRedirectUrl()
       rememberPostAuthSection('settings')
@@ -349,11 +384,16 @@ export function AuthProvider({ children }) {
           },
         })
 
-        if (error) throw error
+        if (error) {
+          throw new Error(normalizeAuthMessage(error.message, {
+            customAuthEmailsEnabled: bridgeStatus.customAuthEmailsEnabled,
+          }))
+        }
       }
 
       setMagicLinkSentTo(email)
       setStatusError('')
+      return { ok: true, email }
     } finally {
       setSendingMagicLink(false)
     }
@@ -363,6 +403,8 @@ export function AuthProvider({ children }) {
     if (!supabase) return
     await supabase.auth.signOut()
     setMagicLinkSentTo('')
+    setStatusError('')
+    setAccountError('')
   }
 
   async function deleteSecureAccount(confirmEmail) {
