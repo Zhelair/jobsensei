@@ -7,7 +7,9 @@ import {
   authenticateSupabaseUser,
   createSupabaseAdminClient,
   ensureSecureAccountAccess,
+  ensureSecureDeviceAccess,
   looksLikeJwt,
+  readSecureDeviceContext,
   readBearerToken,
   setDefaultCorsHeaders,
   verifyLegacyAccessToken,
@@ -43,6 +45,7 @@ async function authorizeProxyRequest(req) {
 
   const supabase = createSupabaseAdminClient()
   let accessSync
+  let deviceAccess
 
   try {
     accessSync = await ensureSecureAccountAccess({
@@ -57,6 +60,38 @@ async function authorizeProxyRequest(req) {
   const account = accessSync.account
   if (!account || !ACTIVE_PLAN_STATUSES.has(account.plan_status)) {
     return { ok: false, status: 403, error: 'Your secure JobSensei plan is not active on this account.' }
+  }
+
+  try {
+    deviceAccess = await ensureSecureDeviceAccess({
+      supabase,
+      user,
+      ...readSecureDeviceContext(req),
+      autoApprove: false,
+    })
+  } catch (lookupError) {
+    console.error('proxy secure device lookup failed:', lookupError)
+    return { ok: false, status: 500, error: 'Unable to validate approved device access right now.' }
+  }
+
+  if (deviceAccess.currentDeviceMissing) {
+    return {
+      ok: false,
+      status: 403,
+      error: 'This browser is missing its secure device id. Refresh Settings to re-register this device.',
+    }
+  }
+
+  if (!deviceAccess.currentDeviceApproved) {
+    return {
+      ok: false,
+      status: 403,
+      error: deviceAccess.blockedReason === 'limit_reached'
+        ? 'This browser is not approved for your secure JobSensei account because your 2-device limit is already full.'
+        : deviceAccess.blockedReason === 'cooldown_active'
+          ? 'A recently unlinked device started the 48-hour replacement cooldown. Try approving this browser again after the cooldown ends.'
+          : 'This browser is not approved for your secure JobSensei account. Open Settings and refresh account access on this device.',
+    }
   }
 
   return {

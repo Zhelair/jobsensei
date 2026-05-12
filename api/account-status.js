@@ -3,10 +3,12 @@ import {
   authenticateSupabaseUser,
   createSupabaseAdminClient,
   ensureSecureAccountAccess,
+  ensureSecureDeviceAccess,
+  readSecureDeviceContext,
   setDefaultCorsHeaders,
 } from './_lib/authBridge.js'
 
-function toAccountSummary(account) {
+function toAccountSummary(account, deviceAccess) {
   if (!account) return null
 
   return {
@@ -16,6 +18,14 @@ function toAccountSummary(account) {
     linkedAt: account.linked_at,
     linked: Boolean(account.linked_at),
     planActive: ACTIVE_PLAN_STATUSES.has(account.plan_status),
+    devices: deviceAccess?.devices || [],
+    approvedDeviceCount: deviceAccess?.approvedCount || 0,
+    deviceLimit: deviceAccess?.deviceLimit || 0,
+    currentDevice: deviceAccess?.currentDevice || null,
+    currentDeviceApproved: Boolean(deviceAccess?.currentDeviceApproved),
+    currentDeviceMissing: Boolean(deviceAccess?.currentDeviceMissing),
+    deviceBlockedReason: deviceAccess?.blockedReason || null,
+    replacementCooldownUntil: deviceAccess?.replacementCooldownUntil || null,
   }
 }
 
@@ -30,6 +40,7 @@ export default async function handler(req, res) {
 
   try {
     const supabase = createSupabaseAdminClient()
+    const deviceContext = readSecureDeviceContext(req)
 
     const accessSync = await ensureSecureAccountAccess({
       supabase,
@@ -47,12 +58,19 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Unable to load secure account status right now.' })
     }
 
+    const deviceAccess = await ensureSecureDeviceAccess({
+      supabase,
+      user,
+      ...deviceContext,
+      autoApprove: ACTIVE_PLAN_STATUSES.has(account?.plan_status),
+    })
+
     return res.status(200).json({
       user: {
         id: user.id,
         email: user.email || '',
       },
-      account: toAccountSummary(account),
+      account: toAccountSummary(account, deviceAccess),
       claimedGrantCount: accessSync.claimedGrantCount,
     })
   } catch (err) {

@@ -19,6 +19,7 @@ export default async function handler(req, res) {
     const [
       { data: account, error: accountError },
       { data: grants, error: grantsError },
+      { data: devices, error: devicesError },
     ] = await Promise.all([
       supabase
         .from('accounts')
@@ -30,10 +31,15 @@ export default async function handler(req, res) {
         .select('grant_type, external_ref, status, metadata, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true }),
+      supabase
+        .from('device_registrations')
+        .select('device_id, device_name, device_label, approved_at, revoked_at, last_seen_at, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true }),
     ])
 
-    if (accountError || grantsError) {
-      console.error('export-account query failed:', accountError || grantsError)
+    if (accountError || grantsError || devicesError) {
+      console.error('export-account query failed:', accountError || grantsError || devicesError)
       return res.status(500).json({ error: 'Unable to export secure account data right now.' })
     }
 
@@ -44,6 +50,7 @@ export default async function handler(req, res) {
         email: user.email || '',
       },
       account: account || null,
+      devices: devices || [],
       planGrants: grants || [],
     })
 

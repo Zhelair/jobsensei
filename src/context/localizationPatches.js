@@ -10127,6 +10127,94 @@ Object.entries(simplifiedHostedAccessPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 
+const liveSecureDevicePanelPatches = {
+  en: {
+    settings: {
+      secureAccountTitle: 'Devices and secure access',
+      secureAccountCopy: 'Sign in with the email that has JobSensei access to see approved devices here. Tester/admin linking is only a fallback for legacy access.',
+      secureAccountDevicesCopy: 'After sign-in, this panel shows your linked email, approved devices, and revoke controls for the 2-device limit.',
+      secureAccountDeleteCopy: 'This removes the linked account profile, approved devices, and JobSensei access records for the signed-in email. Local browser data is managed separately below.',
+      secureAccountExportCopy: 'Download the synced account profile, approved devices, and JobSensei access records tied to the signed-in email.',
+    },
+  },
+  ru: {
+    settings: {
+      secureAccountTitle: 'Устройства и безопасный доступ',
+      secureAccountCopy: 'Войдите через email, на котором есть доступ JobSensei, и здесь появятся одобренные устройства. Привязка tester/admin нужна только как резерв для старого доступа.',
+      secureAccountDevicesCopy: 'После входа здесь будут показаны привязанный email, одобренные устройства и управление лимитом в 2 устройства.',
+      secureAccountDeleteCopy: 'Это удалит привязанный профиль аккаунта, одобренные устройства и записи доступа JobSensei для email, под которым выполнен вход. Локальные данные браузера управляются отдельно ниже.',
+      secureAccountExportCopy: 'Скачать синхронизированный профиль аккаунта, одобренные устройства и записи доступа JobSensei, привязанные к email, под которым выполнен вход.',
+    },
+  },
+  bg: {
+    settings: {
+      secureAccountTitle: 'Устройства и защитен достъп',
+      secureAccountCopy: 'Влез с имейла, който има JobSensei достъп, и тук ще се покажат одобрените устройства. Свързването на tester/admin е само резервен вариант за legacy достъп.',
+      secureAccountDevicesCopy: 'След вход тук ще виждаш свързания имейл, одобрените устройства и контролите за лимита от 2 устройства.',
+      secureAccountDeleteCopy: 'Това ще изтрие свързания профил на акаунта, одобрените устройства и записите за JobSensei достъп за влезлия имейл. Локалните данни в браузъра се управляват отделно по-долу.',
+      secureAccountExportCopy: 'Изтегли синхронизирания профил на акаунта, одобрените устройства и записите за JobSensei достъп, свързани с влезлия имейл.',
+    },
+  },
+  'es-ES': {
+    settings: {
+      secureAccountTitle: 'Dispositivos y acceso seguro',
+      secureAccountCopy: 'Inicia sesión con el email que tiene acceso a JobSensei para ver aquí los dispositivos aprobados. La vinculación tester/admin es solo un respaldo para el acceso heredado.',
+      secureAccountDevicesCopy: 'Después de iniciar sesión, aquí verás el email vinculado, los dispositivos aprobados y los controles del límite de 2 dispositivos.',
+      secureAccountDeleteCopy: 'Esto elimina el perfil de cuenta vinculado, los dispositivos aprobados y los registros de acceso de JobSensei del email con sesión iniciada. Los datos locales del navegador se gestionan aparte abajo.',
+      secureAccountExportCopy: 'Descarga el perfil sincronizado de la cuenta, los dispositivos aprobados y los registros de acceso de JobSensei vinculados al email con sesión iniciada.',
+    },
+  },
+  fr: {
+    settings: {
+      secureAccountTitle: 'Appareils et accès sécurisé',
+      secureAccountCopy: 'Connectez-vous avec l’email qui possède l’accès JobSensei pour voir ici les appareils approuvés. La liaison testeur/admin n’est qu’un secours pour l’ancien accès.',
+      secureAccountDevicesCopy: 'Après connexion, ce panneau affiche l’email lié, les appareils approuvés et les contrôles de la limite de 2 appareils.',
+      secureAccountDeleteCopy: 'Cela supprime le profil de compte lié, les appareils approuvés et les enregistrements d’accès JobSensei pour l’email connecté. Les données locales du navigateur sont gérées séparément ci-dessous.',
+      secureAccountExportCopy: 'Téléchargez le profil synchronisé du compte, les appareils approuvés et les enregistrements d’accès JobSensei liés à l’email connecté.',
+    },
+  },
+  it: {
+    settings: {
+      secureAccountTitle: 'Dispositivi e accesso sicuro',
+      secureAccountCopy: 'Accedi con l’email che ha accesso a JobSensei per vedere qui i dispositivi approvati. Il collegamento tester/admin è solo un fallback per l’accesso legacy.',
+      secureAccountDevicesCopy: 'Dopo il login, qui vedrai email collegata, dispositivi approvati e controlli per il limite di 2 dispositivi.',
+      secureAccountDeleteCopy: 'Questo rimuove il profilo account collegato, i dispositivi approvati e i record di accesso JobSensei per l’email con cui hai effettuato l’accesso. I dati locali del browser sono gestiti separatamente qui sotto.',
+      secureAccountExportCopy: 'Scarica il profilo sincronizzato dell’account, i dispositivi approvati e i record di accesso JobSensei collegati all’email con cui hai effettuato l’accesso.',
+    },
+  },
+  'pt-BR': {
+    settings: {
+      secureAccountTitle: 'Dispositivos e acesso seguro',
+      secureAccountCopy: 'Inicia sessão com o email que tem acesso ao JobSensei para veres aqui os dispositivos aprovados. A ligação tester/admin é só um fallback para o acesso legacy.',
+      secureAccountDevicesCopy: 'Depois do início de sessão, este painel mostra o email ligado, os dispositivos aprovados e os controlos do limite de 2 dispositivos.',
+      secureAccountDeleteCopy: 'Isto remove o perfil de conta ligado, os dispositivos aprovados e os registos de acesso JobSensei do email com sessão iniciada. Os dados locais do browser são geridos separadamente abaixo.',
+      secureAccountExportCopy: 'Descarrega o perfil sincronizado da conta, os dispositivos aprovados e os registos de acesso JobSensei ligados ao email com sessão iniciada.',
+    },
+  },
+  pl: {
+    settings: {
+      secureAccountTitle: 'Urządzenia i bezpieczny dostęp',
+      secureAccountCopy: 'Zaloguj się emailem, który ma dostęp do JobSensei, a tutaj zobaczysz zatwierdzone urządzenia. Podpinanie tester/admin to tylko awaryjny fallback dla starego dostępu.',
+      secureAccountDevicesCopy: 'Po zalogowaniu zobaczysz tu podpięty email, zatwierdzone urządzenia i kontrolę limitu 2 urządzeń.',
+      secureAccountDeleteCopy: 'To usunie powiązany profil konta, zatwierdzone urządzenia i rekordy dostępu JobSensei dla zalogowanego emaila. Lokalne dane przeglądarki są zarządzane osobno poniżej.',
+      secureAccountExportCopy: 'Pobierz zsynchronizowany profil konta, zatwierdzone urządzenia i rekordy dostępu JobSensei powiązane z zalogowanym emailem.',
+    },
+  },
+  de: {
+    settings: {
+      secureAccountTitle: 'Geräte und sicherer Zugriff',
+      secureAccountCopy: 'Melde dich mit der E-Mail an, die JobSensei-Zugriff hat, dann siehst du hier die freigegebenen Geräte. Tester/Admin-Verknüpfung ist nur ein Fallback für alten Zugriff.',
+      secureAccountDevicesCopy: 'Nach der Anmeldung zeigt dieses Feld deine verknüpfte E-Mail, freigegebene Geräte und die Steuerung für das 2-Geräte-Limit.',
+      secureAccountDeleteCopy: 'Dadurch werden das verknüpfte Kontoprofil, die freigegebenen Geräte und die JobSensei-Zugriffsdatensätze für die angemeldete E-Mail entfernt. Lokale Browserdaten werden unten separat verwaltet.',
+      secureAccountExportCopy: 'Lade das synchronisierte Kontoprofil, die freigegebenen Geräte und die JobSensei-Zugriffsdatensätze herunter, die mit der angemeldeten E-Mail verknüpft sind.',
+    },
+  },
+}
+
+Object.entries(liveSecureDevicePanelPatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
 export default localizationPatches
 
 

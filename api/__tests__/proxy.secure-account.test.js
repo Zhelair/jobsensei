@@ -59,8 +59,17 @@ describe('proxy secure-account mode', () => {
       ensureSecureAccountAccess: vi.fn().mockResolvedValue({
         account: { plan_status: 'active' },
       }),
+      ensureSecureDeviceAccess: vi.fn().mockResolvedValue({
+        currentDeviceApproved: true,
+        currentDeviceMissing: false,
+        blockedReason: null,
+      }),
       createSupabaseAdminClient: vi.fn().mockReturnValue({ from }),
       looksLikeJwt: vi.fn().mockReturnValue(true),
+      readSecureDeviceContext: vi.fn().mockReturnValue({
+        deviceId: 'js-device-1',
+        deviceName: 'Windows - Chrome',
+      }),
       readBearerToken: vi.fn().mockReturnValue('jwt-token'),
       setDefaultCorsHeaders: vi.fn(),
       verifyLegacyAccessToken: vi.fn().mockReturnValue(null),

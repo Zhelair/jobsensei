@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 
 const LEGACY_TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000
 const RESEND_API_URL = 'https://api.resend.com/emails'
+export const MAX_APPROVED_DEVICES = 2
+export const DEVICE_REPLACEMENT_COOLDOWN_MS = 48 * 60 * 60 * 1000
 
 export const ACTIVE_PLAN_STATUSES = new Set(['active', 'grace'])
 
@@ -99,6 +101,110 @@ export function normalizeEmail(value = '') {
   return String(value || '').trim().toLowerCase()
 }
 
+function sanitizeDeviceValue(value = '', { maxLength = 120 } = {}) {
+  const normalized = String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, maxLength)
+
+  return normalized
+}
+
+function isLikelyDeviceId(value = '') {
+  return /^[a-z0-9._:-]{12,128}$/i.test(String(value || '').trim())
+}
+
+function deviceRowIsApproved(row) {
+  return Boolean(row?.approved_at && !row?.revoked_at)
+}
+
+function toIsoOrNull(value) {
+  if (!value) return null
+  const timestamp = new Date(value).getTime()
+  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null
+}
+
+function getLatestReplacementCooldownUntil(rows = []) {
+  return rows.reduce((latest, row) => {
+    if (!row?.revoked_at) return latest
+    const revokedAt = new Date(row.revoked_at).getTime()
+    if (!Number.isFinite(revokedAt)) return latest
+    const nextTimestamp = revokedAt + DEVICE_REPLACEMENT_COOLDOWN_MS
+    if (nextTimestamp <= Date.now()) return latest
+    return !latest || nextTimestamp > latest ? nextTimestamp : latest
+  }, 0)
+}
+
+function compareDeviceRows(left, right, currentDeviceId = '') {
+  const leftCurrent = left?.device_id === currentDeviceId ? 1 : 0
+  const rightCurrent = right?.device_id === currentDeviceId ? 1 : 0
+  if (leftCurrent !== rightCurrent) return rightCurrent - leftCurrent
+
+  const leftApproved = deviceRowIsApproved(left) ? 1 : 0
+  const rightApproved = deviceRowIsApproved(right) ? 1 : 0
+  if (leftApproved !== rightApproved) return rightApproved - leftApproved
+
+  const leftTime = new Date(
+    left?.last_seen_at || left?.approved_at || left?.created_at || 0,
+  ).getTime()
+  const rightTime = new Date(
+    right?.last_seen_at || right?.approved_at || right?.created_at || 0,
+  ).getTime()
+
+  return rightTime - leftTime
+}
+
+function formatSecureDeviceRow(row, currentDeviceId = '') {
+  if (!row) return null
+
+  const label = sanitizeDeviceValue(row.device_label, { maxLength: 80 })
+  const fallbackName = sanitizeDeviceValue(row.device_name, { maxLength: 120 })
+
+  return {
+    id: row.id,
+    deviceId: row.device_id,
+    deviceName: fallbackName,
+    deviceLabel: label,
+    displayName: label || fallbackName || 'Unnamed device',
+    approvedAt: toIsoOrNull(row.approved_at),
+    revokedAt: toIsoOrNull(row.revoked_at),
+    lastSeenAt: toIsoOrNull(row.last_seen_at),
+    createdAt: toIsoOrNull(row.created_at),
+    isApproved: deviceRowIsApproved(row),
+    isCurrent: row.device_id === currentDeviceId,
+  }
+}
+
+export function readSecureDeviceContext(req) {
+  const deviceId = sanitizeDeviceValue(
+    req?.headers?.['x-jobsensei-device-id']
+      || req?.headers?.['X-JobSensei-Device-Id']
+      || req?.body?.deviceId
+      || '',
+    { maxLength: 128 },
+  ).toLowerCase()
+  const deviceName = sanitizeDeviceValue(
+    req?.headers?.['x-jobsensei-device-name']
+      || req?.headers?.['X-JobSensei-Device-Name']
+      || req?.body?.deviceName
+      || '',
+    { maxLength: 120 },
+  )
+  const deviceLabel = sanitizeDeviceValue(
+    req?.headers?.['x-jobsensei-device-label']
+      || req?.headers?.['X-JobSensei-Device-Label']
+      || req?.body?.deviceLabel
+      || '',
+    { maxLength: 80 },
+  )
+
+  return {
+    deviceId: isLikelyDeviceId(deviceId) ? deviceId : '',
+    deviceName,
+    deviceLabel,
+  }
+}
+
 export function setDefaultCorsHeaders(req, res) {
   const origin = req.headers.origin || req.headers.Origin || ''
   const allowedOrigins = getAllowedCorsOrigins()
@@ -107,7 +213,10 @@ export function setDefaultCorsHeaders(req, res) {
     res.setHeader('Vary', 'Origin')
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, X-JobSensei-Device-Id, X-JobSensei-Device-Name, X-JobSensei-Device-Label',
+  )
 }
 
 export function readBearerToken(req) {
@@ -615,6 +724,133 @@ export async function ensureSecureAccountAccess({
     account,
     activeGrants,
     claimedGrantCount,
+  }
+}
+
+export async function ensureSecureDeviceAccess({
+  supabase,
+  user,
+  deviceId = '',
+  deviceName = '',
+  deviceLabel = '',
+  autoApprove = false,
+} = {}) {
+  const normalizedDeviceId = sanitizeDeviceValue(deviceId, { maxLength: 128 }).toLowerCase()
+  const normalizedDeviceName = sanitizeDeviceValue(deviceName, { maxLength: 120 })
+  const normalizedDeviceLabel = sanitizeDeviceValue(deviceLabel, { maxLength: 80 })
+
+  if (!supabase || !user?.id) {
+    return {
+      devices: [],
+      approvedCount: 0,
+      deviceLimit: MAX_APPROVED_DEVICES,
+      currentDevice: null,
+      currentDeviceApproved: false,
+      currentDeviceMissing: !normalizedDeviceId,
+      blockedReason: !normalizedDeviceId ? 'missing_device' : null,
+      replacementCooldownUntil: null,
+    }
+  }
+
+  const { data: rows, error } = await supabase
+    .from('device_registrations')
+    .select('id, device_id, device_name, device_label, approved_at, revoked_at, last_seen_at, created_at')
+    .eq('user_id', user.id)
+
+  if (error) throw error
+
+  const now = new Date().toISOString()
+  let devices = [...(rows || [])]
+  let currentRow = normalizedDeviceId
+    ? devices.find(row => row.device_id === normalizedDeviceId) || null
+    : null
+
+  const refreshCurrentRow = nextRow => {
+    currentRow = nextRow
+    devices = devices
+      .filter(row => row.device_id !== nextRow.device_id)
+      .concat(nextRow)
+  }
+
+  const approvedDevices = devices.filter(deviceRowIsApproved)
+  const replacementCooldownUntilMs = getLatestReplacementCooldownUntil(devices)
+  const replacementCooldownUntil = replacementCooldownUntilMs
+    ? new Date(replacementCooldownUntilMs).toISOString()
+    : null
+
+  let blockedReason = null
+
+  if (normalizedDeviceId && currentRow && deviceRowIsApproved(currentRow)) {
+    const shouldRefreshMetadata = (
+      currentRow.device_name !== normalizedDeviceName
+      || currentRow.device_label !== normalizedDeviceLabel
+    )
+
+    const { data: updatedRow, error: updateError } = await supabase
+      .from('device_registrations')
+      .update({
+        device_name: shouldRefreshMetadata ? (normalizedDeviceName || currentRow.device_name || null) : currentRow.device_name || null,
+        device_label: shouldRefreshMetadata ? (normalizedDeviceLabel || currentRow.device_label || null) : currentRow.device_label || null,
+        last_seen_at: now,
+      })
+      .eq('id', currentRow.id)
+      .select('id, device_id, device_name, device_label, approved_at, revoked_at, last_seen_at, created_at')
+      .single()
+
+    if (updateError) throw updateError
+    refreshCurrentRow(updatedRow)
+  } else if (normalizedDeviceId && autoApprove) {
+    const deviceSlotsOpen = approvedDevices.length < MAX_APPROVED_DEVICES
+    const cooldownActive = Boolean(replacementCooldownUntilMs && replacementCooldownUntilMs > Date.now())
+
+    if (currentRow?.revoked_at) {
+      blockedReason = 'device_revoked'
+    } else if (currentRow && !deviceRowIsApproved(currentRow)) {
+      blockedReason = 'device_not_approved'
+    } else if (!deviceSlotsOpen) {
+      blockedReason = 'limit_reached'
+    } else if (cooldownActive) {
+      blockedReason = 'cooldown_active'
+    } else {
+      const { data: upsertedRow, error: upsertError } = await supabase
+        .from('device_registrations')
+        .upsert({
+          user_id: user.id,
+          device_id: normalizedDeviceId,
+          device_name: normalizedDeviceName || null,
+          device_label: normalizedDeviceLabel || null,
+          approved_at: now,
+          revoked_at: null,
+          last_seen_at: now,
+        }, { onConflict: 'user_id,device_id' })
+        .select('id, device_id, device_name, device_label, approved_at, revoked_at, last_seen_at, created_at')
+        .single()
+
+      if (upsertError) throw upsertError
+      refreshCurrentRow(upsertedRow)
+    }
+  } else if (!normalizedDeviceId) {
+    blockedReason = 'missing_device'
+  } else if (!currentRow || !deviceRowIsApproved(currentRow)) {
+    blockedReason = currentRow?.revoked_at ? 'device_revoked' : 'device_not_approved'
+  }
+
+  const sortedDevices = [...devices]
+    .sort((left, right) => compareDeviceRows(left, right, normalizedDeviceId))
+    .map(row => formatSecureDeviceRow(row, normalizedDeviceId))
+
+  const formattedCurrentDevice = sortedDevices.find(row => row.isCurrent) || null
+  const nextApprovedCount = sortedDevices.filter(row => row.isApproved).length
+
+  return {
+    devices: sortedDevices,
+    approvedCount: nextApprovedCount,
+    deviceLimit: MAX_APPROVED_DEVICES,
+    currentDevice: formattedCurrentDevice,
+    currentDeviceApproved: Boolean(formattedCurrentDevice?.isApproved),
+    currentDeviceMissing: !normalizedDeviceId,
+    blockedReason,
+    replacementCooldownUntil,
   }
 }
 
