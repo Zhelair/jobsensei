@@ -349,20 +349,33 @@ export async function sendMagicLinkEmail({ email, magicLink, redirectTo, source 
   const text = `${headline}\n\n${intro}\n\nOpen JobSensei: ${magicLink}\n\nThis link is one-time and will stop working after it is used or expires.\n\nIf the button does not work, copy this link into your browser:\n${magicLink}\n\nRedirect: ${redirectTo}`
 
   const html = `
-    <div style="font-family:Arial,sans-serif;background:#0b1020;color:#e2e8f0;padding:24px;">
-      <div style="max-width:560px;margin:0 auto;background:linear-gradient(180deg,#12122a 0%,#0f172a 100%);border:1px solid #334155;border-radius:20px;padding:28px;">
-        <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#67e8f9;margin-bottom:12px;">JobSensei</div>
-        <div style="font-size:28px;font-weight:700;color:#f8fafc;margin-bottom:12px;">${headline}</div>
-        <p style="font-size:14px;line-height:1.7;color:#cbd5e1;margin:0 0 20px;">${intro}</p>
-        <p style="margin:0 0 20px;">
-          <a href="${safeMagicLink}" style="display:inline-block;background:linear-gradient(90deg,#f72585 0%,#b5179e 100%);color:#ffffff;text-decoration:none;font-weight:700;padding:14px 20px;border-radius:12px;">Open JobSensei</a>
-        </p>
-        <div style="border:1px solid rgba(103,232,249,0.18);background:rgba(15,23,42,0.6);border-radius:14px;padding:14px 16px;margin:0 0 18px;">
-          <p style="font-size:12px;line-height:1.7;color:#cbd5e1;margin:0;">This link is one-time and will stop working after it is used or expires. If that happens, request a new sign-in link from the app.</p>
+    <div style="margin:0;padding:32px 18px;background:#0f172a;color:#e2e8f0;font-family:'DM Sans',Arial,sans-serif;">
+      <div style="max-width:580px;margin:0 auto;border-radius:24px;overflow:hidden;background:
+        radial-gradient(circle at top left, rgba(45,212,191,0.14), transparent 34%),
+        radial-gradient(circle at top right, rgba(99,102,241,0.12), transparent 32%),
+        linear-gradient(180deg,#111827 0%,#0f172a 100%);
+        border:1px solid #334155;
+        box-shadow:0 24px 60px rgba(2,6,23,0.45);">
+        <div style="height:4px;background:linear-gradient(90deg,#14b8a6 0%,#2dd4bf 55%,#6366f1 100%);"></div>
+        <div style="padding:30px 30px 26px;">
+          <div style="display:inline-block;margin-bottom:14px;padding:7px 11px;border-radius:999px;border:1px solid rgba(45,212,191,0.24);background:rgba(20,184,166,0.10);color:#5eead4;font-family:'Syne','Trebuchet MS',Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">JobSensei</div>
+          <div style="font-family:'Syne','Trebuchet MS',Arial,sans-serif;font-size:31px;line-height:1.12;font-weight:700;color:#f8fafc;margin:0 0 12px;">${headline}</div>
+          <p style="font-size:15px;line-height:1.75;color:#cbd5e1;margin:0 0 24px;">${intro}</p>
+          <p style="margin:0 0 22px;">
+            <a href="${safeMagicLink}" style="display:inline-block;padding:14px 22px;border-radius:14px;background:#14b8a6;color:#082f49;text-decoration:none;font-family:'Syne','Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:700;box-shadow:0 12px 28px rgba(20,184,166,0.28);">Open JobSensei</a>
+          </p>
+          <div style="margin:0 0 20px;padding:15px 16px;border-radius:16px;border:1px solid rgba(45,212,191,0.18);background:rgba(15,23,42,0.72);">
+            <p style="margin:0;font-size:12px;line-height:1.7;color:#dbeafe;">This link is one-time and will stop working after it is used or expires. If that happens, request a new sign-in link from the app.</p>
+          </div>
+          <p style="font-size:12px;line-height:1.6;color:#94a3b8;margin:0 0 10px;">If the button does not work, paste this link into your browser:</p>
+          <p style="font-size:12px;line-height:1.8;word-break:break-all;margin:0 0 18px;">
+            <a href="${safeMagicLink}" style="color:#5eead4;text-decoration:underline;">${safeMagicLink}</a>
+          </p>
+          <div style="padding-top:18px;border-top:1px solid rgba(51,65,85,0.9);font-size:12px;line-height:1.75;color:#64748b;">
+            This email was sent to <span style="color:#cbd5e1;">${safeEmail}</span>.<br />
+            After sign-in, JobSensei will return you to <span style="color:#cbd5e1;">${safeRedirectTo}</span>.
+          </div>
         </div>
-        <p style="font-size:12px;line-height:1.6;color:#94a3b8;margin:0 0 12px;">If the button does not work, paste this link into your browser:</p>
-        <p style="font-size:12px;line-height:1.7;word-break:break-all;color:#67e8f9;margin:0 0 16px;">${safeMagicLink}</p>
-        <p style="font-size:12px;line-height:1.7;color:#64748b;margin:0;">This email was sent to ${safeEmail}. After sign-in, JobSensei will return you to ${safeRedirectTo}.</p>
       </div>
     </div>
   `
