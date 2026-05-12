@@ -105,6 +105,7 @@ export function AIProvider({ children }) {
     secureAccount,
     secureAccountsEnabled,
     sendMagicLink,
+    secureDevice,
   } = useAuth()
   const [provider, setProvider] = useState(PROVIDERS.DEEPSEEK)
   const [apiKey, setApiKey] = useState('')
@@ -285,6 +286,8 @@ export function AIProvider({ children }) {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`,
+        'X-JobSensei-Device-Id': secureDevice?.deviceId || '',
+        'X-JobSensei-Device-Name': secureDevice?.deviceName || '',
       },
       body: JSON.stringify({ systemPrompt, messages, temperature, stream: !!onChunk }),
       signal,

@@ -7,6 +7,60 @@ import {
 } from '../lib/authFlow'
 
 const AuthContext = createContext(null)
+const SECURE_DEVICE_ID_STORAGE_KEY = 'js_secure_device_id'
+
+function createSecureDeviceId() {
+  if (window.crypto?.randomUUID) {
+    return `js-${window.crypto.randomUUID()}`
+  }
+
+  return `js-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
+}
+
+function detectBrowserLabel() {
+  const userAgent = navigator.userAgent || ''
+  if (/edg/i.test(userAgent)) return 'Edge'
+  if (/chrome|crios/i.test(userAgent)) return 'Chrome'
+  if (/firefox|fxios/i.test(userAgent)) return 'Firefox'
+  if (/safari/i.test(userAgent) && !/chrome|crios|android/i.test(userAgent)) return 'Safari'
+  return 'Browser'
+}
+
+function detectPlatformLabel() {
+  const userAgentDataPlatform = navigator.userAgentData?.platform || ''
+  const platform = navigator.platform || userAgentDataPlatform || ''
+  const source = `${platform} ${navigator.userAgent || ''}`.toLowerCase()
+
+  if (source.includes('iphone')) return 'iPhone'
+  if (source.includes('ipad')) return 'iPad'
+  if (source.includes('android')) return 'Android'
+  if (source.includes('mac')) return 'Mac'
+  if (source.includes('win')) return 'Windows'
+  if (source.includes('linux')) return 'Linux'
+  return 'Device'
+}
+
+function getOrCreateSecureDevice() {
+  const savedId = localStorage.getItem(SECURE_DEVICE_ID_STORAGE_KEY)
+  const deviceId = savedId || createSecureDeviceId()
+  if (!savedId) {
+    localStorage.setItem(SECURE_DEVICE_ID_STORAGE_KEY, deviceId)
+  }
+
+  return {
+    deviceId,
+    deviceName: `${detectPlatformLabel()} - ${detectBrowserLabel()}`,
+  }
+}
+
+function buildSecureDeviceHeaders(secureDevice) {
+  if (!secureDevice?.deviceId) return {}
+
+  return {
+    'X-JobSensei-Device-Id': secureDevice.deviceId,
+    'X-JobSensei-Device-Name': secureDevice.deviceName || '',
+  }
+}
 
 function getMagicLinkRedirectUrl() {
   const configuredUrl = (
@@ -101,6 +155,7 @@ function normalizeAuthMessage(message, { customAuthEmailsEnabled = false } = {})
 }
 
 export function AuthProvider({ children }) {
+  const [secureDevice] = useState(() => getOrCreateSecureDevice())
   const [bridgeStatus, setBridgeStatus] = useState({
     loading: true,
     legacyAccessEnabled: false,
@@ -120,6 +175,7 @@ export function AuthProvider({ children }) {
   const [magicLinkSentTo, setMagicLinkSentTo] = useState('')
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [exportingAccountData, setExportingAccountData] = useState(false)
+  const [revokingDeviceId, setRevokingDeviceId] = useState('')
 
   useEffect(() => {
     let active = true
@@ -320,6 +376,7 @@ export function AuthProvider({ children }) {
       const response = await fetch('/api/account-status', {
         headers: {
           Authorization: `Bearer ${nextAccessToken}`,
+          ...buildSecureDeviceHeaders(secureDevice),
         },
       })
       const payload = await parseJsonSafe(response)
@@ -346,7 +403,7 @@ export function AuthProvider({ children }) {
     }
 
     refreshSecureAccount(secureSession.access_token).catch(() => {})
-  }, [secureSession?.access_token])
+  }, [secureDevice, secureSession?.access_token])
 
   async function sendMagicLink(email) {
     if (!supabase) {
@@ -416,10 +473,11 @@ export function AuthProvider({ children }) {
     try {
       const response = await fetch('/api/delete-account', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${secureSession.access_token}`,
-        },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${secureSession.access_token}`,
+            ...buildSecureDeviceHeaders(secureDevice),
+          },
         body: JSON.stringify({
           confirmEmail,
         }),
@@ -455,6 +513,7 @@ export function AuthProvider({ children }) {
       const response = await fetch('/api/export-account', {
         headers: {
           Authorization: `Bearer ${secureSession.access_token}`,
+          ...buildSecureDeviceHeaders(secureDevice),
         },
       })
       const payload = await parseJsonSafe(response)
@@ -466,6 +525,37 @@ export function AuthProvider({ children }) {
       return payload
     } finally {
       setExportingAccountData(false)
+    }
+  }
+
+  async function revokeSecureDevice(deviceId) {
+    if (!secureSession?.access_token) {
+      throw new Error('Sign in to your account first.')
+    }
+
+    setRevokingDeviceId(deviceId)
+    try {
+      const response = await fetch('/api/revoke-device', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${secureSession.access_token}`,
+          ...buildSecureDeviceHeaders(secureDevice),
+        },
+        body: JSON.stringify({
+          deviceId,
+        }),
+      })
+      const payload = await parseJsonSafe(response)
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Unable to unlink this device right now.')
+      }
+
+      await refreshSecureAccount(secureSession.access_token)
+      return payload
+    } finally {
+      setRevokingDeviceId('')
     }
   }
 
@@ -483,11 +573,14 @@ export function AuthProvider({ children }) {
     magicLinkSentTo,
     deletingAccount,
     exportingAccountData,
+    revokingDeviceId,
+    secureDevice,
     sendMagicLink,
     signOutSecure,
     refreshSecureAccount,
     deleteSecureAccount,
     exportSecureAccountData,
+    revokeSecureDevice,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

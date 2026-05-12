@@ -7,7 +7,7 @@ import { useLanguage } from '../../context/LanguageContext'
 import {
   Zap, Check, Trash2, Eye, EyeOff, FileText, Upload, Download, X,
   Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink, Puzzle,
-  Globe, Volume2,
+  Globe, Volume2, Shield, MonitorSmartphone,
 } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
 
@@ -19,6 +19,7 @@ export default function Settings() {
   const {
     secureUser, secureAccount, statusError, accountError, signOutSecure,
     deleteSecureAccount, deletingAccount, exportSecureAccountData, exportingAccountData, magicLinkSentTo,
+    revokeSecureDevice, revokingDeviceId,
   } = useAuth()
   const { profile, setShowOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData } = useProject()
@@ -288,6 +289,8 @@ export default function Settings() {
 
   const pairedCardClass = 'card h-full flex flex-col'
   const secureSignedIn = !!secureUser
+  const approvedDevices = (secureAccount?.devices || []).filter(device => device.isApproved)
+  const replacementCooldownUntil = secureAccount?.replacementCooldownUntil || ''
   const normalizedUnlockInput = bmacInput.trim().toLowerCase()
   const signedInEmail = String(secureUser?.email || secureAccount?.email || '').trim().toLowerCase()
   const unlockMatchesSignedIn = Boolean(
@@ -302,6 +305,63 @@ export default function Settings() {
     && normalizedUnlockInput === magicLinkSentTo.toLowerCase()
     && magicLinkCooldownUntil > Date.now(),
   )
+  const deviceStatusMessages = {
+    en: {
+      approved: 'This browser is approved for hosted AI access.',
+      limit_reached: 'This browser is signed in, but your 2 approved device slots are already full. Unlink one below to free a slot.',
+      cooldown_active: 'This browser is signed in, but a recent unlink started the 48-hour replacement cooldown.',
+      device_revoked: 'This browser was unlinked from your secure account. You can keep browsing Settings, but hosted AI stays blocked here until a device slot opens again.',
+      missing_device: 'This browser is missing its secure device id. Refresh the page to register it again.',
+      fallback: 'This browser is signed in, but it is not approved for hosted AI access yet.',
+      no_devices: 'No approved devices yet.',
+      last_seen: 'Last seen {date}',
+      unlinked: 'Unlinked',
+    },
+    ru: {
+      approved: 'Этот браузер одобрен для hosted AI доступа.',
+      limit_reached: 'В этом браузере вход выполнен, но лимит в 2 одобренных устройства уже занят. Отвяжите одно устройство ниже, чтобы освободить слот.',
+      cooldown_active: 'В этом браузере вход выполнен, но после недавней отвязки уже запущен 48-часовой cooldown.',
+      device_revoked: 'Этот браузер был отвязан от безопасного аккаунта. Настройки останутся доступны, но hosted AI здесь будет заблокирован, пока снова не освободится слот устройства.',
+      missing_device: 'У этого браузера нет secure device id. Обновите страницу, чтобы зарегистрировать его заново.',
+      fallback: 'В этом браузере вход выполнен, но он ещё не одобрен для hosted AI доступа.',
+      no_devices: 'Одобренных устройств пока нет.',
+      last_seen: 'Последняя активность {date}',
+      unlinked: 'Отвязано',
+    },
+    bg: {
+      approved: 'Този браузър е одобрен за hosted AI достъп.',
+      limit_reached: 'В този браузър има вход, но лимитът от 2 одобрени устройства вече е запълнен. Откачи едно устройство отдолу, за да освободиш слот.',
+      cooldown_active: 'В този браузър има вход, но след скорошно откачане вече тече 48-часов cooldown.',
+      device_revoked: 'Този браузър беше откачен от защитения акаунт. Настройките остават достъпни, но hosted AI тук ще е блокиран, докато отново се освободи слот за устройство.',
+      missing_device: 'На този браузър му липсва secure device id. Опресни страницата, за да го регистрираш отново.',
+      fallback: 'В този браузър има вход, но още не е одобрен за hosted AI достъп.',
+      no_devices: 'Все още няма одобрени устройства.',
+      last_seen: 'Последно активен {date}',
+      unlinked: 'Откачено',
+    },
+  }
+  const localizedDeviceStatus = deviceStatusMessages[language] || deviceStatusMessages.en
+  const deviceBlockedReason = secureAccount?.deviceBlockedReason || ''
+  const currentDeviceStatusCopy = secureAccount?.currentDeviceApproved
+    ? localizedDeviceStatus.approved
+    : deviceBlockedReason && localizedDeviceStatus[deviceBlockedReason]
+      ? localizedDeviceStatus[deviceBlockedReason]
+      : localizedDeviceStatus.fallback
+  const currentDeviceStatusClass = secureAccount?.currentDeviceApproved
+    ? 'border-teal-500/20 bg-teal-500/10 text-teal-300'
+    : deviceBlockedReason === 'limit_reached' || deviceBlockedReason === 'device_revoked'
+      ? 'border-red-500/20 bg-red-500/10 text-red-300'
+      : 'border-yellow-500/20 bg-yellow-500/10 text-yellow-300'
+
+  function formatDeviceTimestamp(value) {
+    if (!value) return ''
+
+    try {
+      return new Date(value).toLocaleString()
+    } catch {
+      return ''
+    }
+  }
 
   async function handleDeleteSecureAccount() {
     if (!secureUser?.email) return
@@ -335,6 +395,26 @@ export default function Settings() {
       link.click()
       link.remove()
       URL.revokeObjectURL(url)
+    } catch (err) {
+      setSecureError(err.message)
+    }
+  }
+
+  async function handleRevokeDevice(device) {
+    const deviceName = device.displayName || device.deviceName || 'device'
+    const confirmBody = [
+      t('settings.secureAccountRevokeBody', { device: deviceName }),
+      '',
+      t('settings.secureAccountRevokeCooldownWarning'),
+    ].join('\n')
+
+    if (!confirm(confirmBody)) return
+
+    setSecureError('')
+    setBmacNotice('')
+    try {
+      await revokeSecureDevice(device.deviceId)
+      setBmacNotice(t('settings.secureAccountRevokeSuccess'))
     } catch (err) {
       setSecureError(err.message)
     }
@@ -494,21 +574,101 @@ export default function Settings() {
             )}
           </div>
 
-          <div className={`${pairedCardClass} min-w-[180px]`}>
-            <h3 className="font-display font-semibold text-white mb-1">{t('settings.profile')}</h3>
-            <p className="text-slate-400 text-xs mb-3">{t('settings.profilePlanCopy')}</p>
-            {profile ? (
-              <div className="space-y-1 text-sm mb-3">
-                <div><span className="text-slate-400">{t('settings.profileName')}</span> <span className="text-white">{profile.name || '-'}</span></div>
-                <div><span className="text-slate-400">{t('settings.profileRole')}</span> <span className="text-white">{profile.currentRole || '-'}</span></div>
-                <div><span className="text-slate-400">{t('settings.profileTarget')}</span> <span className="text-white">{profile.targetRole || '-'}</span></div>
-              </div>
-            ) : (
-              <p className="text-slate-500 text-sm mb-3">{t('settings.noProfile')}</p>
-            )}
-            <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-sm mt-auto">
-              {profile ? t('settings.editProfile') : t('settings.setupProfile')}
-            </button>
+          <div className="space-y-4 min-w-[220px]">
+            <div className={pairedCardClass}>
+              <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+                <Shield size={16} className="text-indigo-300" /> {t('settings.secureAccountTitle')}
+              </h3>
+              <p className="text-slate-400 text-xs mb-3">{t('settings.secureAccountDevicesCopy')}</p>
+
+              {secureSignedIn ? (
+                <div className="space-y-3">
+                  <div className={`rounded-xl border p-3 ${currentDeviceStatusClass}`}>
+                    <div className="text-sm font-display font-semibold">
+                      {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
+                    </div>
+                    <div className="text-xs mt-1 opacity-90">{currentDeviceStatusCopy}</div>
+                  </div>
+
+                  <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-white text-sm font-display font-semibold">
+                        {t('settings.secureAccountDevicesSummary', {
+                          count: secureAccount?.approvedDeviceCount || 0,
+                          limit: secureAccount?.deviceLimit || 2,
+                        })}
+                      </div>
+                      <MonitorSmartphone size={15} className="text-slate-400 flex-shrink-0" />
+                    </div>
+
+                    <div className="text-slate-300 text-xs break-all">
+                      {secureUser?.email || secureAccount?.email || '-'}
+                    </div>
+
+                    {replacementCooldownUntil && (
+                      <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-yellow-300 text-xs leading-relaxed">
+                        {t('settings.secureAccountCooldownNotice', { date: formatDeviceTimestamp(replacementCooldownUntil) })}
+                      </div>
+                    )}
+
+                    {approvedDevices.length ? (
+                      <div className="space-y-2">
+                        {approvedDevices.map(device => (
+                          <div key={device.deviceId} className="rounded-xl border border-navy-600 bg-navy-900/60 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-white text-sm font-display font-semibold truncate">
+                                  {device.displayName}
+                                </div>
+                                <div className="text-slate-500 text-[11px] mt-1">
+                                  {localizedDeviceStatus.last_seen.replace('{date}', formatDeviceTimestamp(device.lastSeenAt || device.createdAt) || '-')}
+                                </div>
+                              </div>
+                              {device.isCurrent && (
+                                <span className="px-2 py-1 rounded-full text-[10px] border border-teal-500/20 bg-teal-500/10 text-teal-300 flex-shrink-0">
+                                  {t('settings.secureAccountCurrentBadge')}
+                                </span>
+                              )}
+                            </div>
+
+                            <button
+                              onClick={() => handleRevokeDevice(device)}
+                              disabled={revokingDeviceId === device.deviceId}
+                              className="btn-ghost text-xs text-red-300 hover:text-red-200 hover:bg-red-500/10 mt-3 px-0"
+                            >
+                              {revokingDeviceId === device.deviceId ? t('settings.activating') : t('settings.secureAccountRevokeButton')}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-slate-500 text-xs">{localizedDeviceStatus.no_devices}</div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-3 text-slate-500 text-xs leading-relaxed">
+                  {t('settings.secureAccountCopy')}
+                </div>
+              )}
+            </div>
+
+            <div className={pairedCardClass}>
+              <h3 className="font-display font-semibold text-white mb-1">{t('settings.profile')}</h3>
+              <p className="text-slate-400 text-xs mb-3">{t('settings.profilePlanCopy')}</p>
+              {profile ? (
+                <div className="space-y-1 text-sm mb-3">
+                  <div><span className="text-slate-400">{t('settings.profileName')}</span> <span className="text-white">{profile.name || '-'}</span></div>
+                  <div><span className="text-slate-400">{t('settings.profileRole')}</span> <span className="text-white">{profile.currentRole || '-'}</span></div>
+                  <div><span className="text-slate-400">{t('settings.profileTarget')}</span> <span className="text-white">{profile.targetRole || '-'}</span></div>
+                </div>
+              ) : (
+                <p className="text-slate-500 text-sm mb-3">{t('settings.noProfile')}</p>
+              )}
+              <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-sm mt-auto">
+                {profile ? t('settings.editProfile') : t('settings.setupProfile')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
