@@ -288,6 +288,7 @@ export default function Settings() {
       : t('settings.planCopyNone')
 
   const pairedCardClass = 'card h-full flex flex-col'
+  const railCardClass = 'card h-full flex flex-col border-indigo-500/10 bg-navy-800/90'
   const secureSignedIn = !!secureUser
   const approvedDevices = (secureAccount?.devices || []).filter(device => device.isApproved)
   const replacementCooldownUntil = secureAccount?.replacementCooldownUntil || ''
@@ -309,7 +310,7 @@ export default function Settings() {
     en: {
       approved: 'This browser is approved for hosted AI access.',
       limit_reached: 'This browser is signed in, but your 2 approved device slots are already full. Unlink one below to free a slot.',
-      cooldown_active: 'This browser is signed in, but a recent unlink started the 48-hour replacement cooldown.',
+      cooldown_active: 'This browser is signed in, but a recent unlink started the 8-hour replacement cooldown.',
       device_revoked: 'This browser was unlinked from your secure account. You can keep browsing Settings, but hosted AI stays blocked here until a device slot opens again.',
       missing_device: 'This browser is missing its secure device id. Refresh the page to register it again.',
       fallback: 'This browser is signed in, but it is not approved for hosted AI access yet.',
@@ -341,9 +342,27 @@ export default function Settings() {
     },
   }
   const localizedDeviceStatus = deviceStatusMessages[language] || deviceStatusMessages.en
+  const cooldownStatusCopy = {
+    en: 'This browser is signed in, but a recent unlink started the 8-hour replacement cooldown.',
+    ru: '\u0412 \u044d\u0442\u043e\u043c \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0435 \u0432\u0445\u043e\u0434 \u0432\u044b\u043f\u043e\u043b\u043d\u0435\u043d, \u043d\u043e \u043f\u043e\u0441\u043b\u0435 \u043d\u0435\u0434\u0430\u0432\u043d\u0435\u0439 \u043e\u0442\u0432\u044f\u0437\u043a\u0438 \u0443\u0436\u0435 \u0437\u0430\u043f\u0443\u0449\u0435\u043d 8-\u0447\u0430\u0441\u043e\u0432\u043e\u0439 cooldown.',
+    bg: '\u0412 \u0442\u043e\u0437\u0438 \u0431\u0440\u0430\u0443\u0437\u044a\u0440 \u0438\u043c\u0430 \u0432\u0445\u043e\u0434, \u043d\u043e \u0441\u043b\u0435\u0434 \u0441\u043a\u043e\u0440\u043e\u0448\u043d\u043e \u043e\u0442\u043a\u0430\u0447\u0430\u043d\u0435 \u0432\u0435\u0447\u0435 \u0442\u0435\u0447\u0435 8-\u0447\u0430\u0441\u043e\u0432 cooldown.',
+  }
+  const revokeCooldownWarningCopy = {
+    en: 'Unlinking a device starts an 8-hour cooldown before a replacement device can be approved.',
+    ru: '\u041f\u043e\u0441\u043b\u0435 \u043e\u0442\u0432\u044f\u0437\u043a\u0438 \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0430 \u0437\u0430\u043f\u0443\u0441\u043a\u0430\u0435\u0442\u0441\u044f 8-\u0447\u0430\u0441\u043e\u0432\u043e\u0439 cooldown \u043f\u0435\u0440\u0435\u0434 \u043e\u0434\u043e\u0431\u0440\u0435\u043d\u0438\u0435\u043c \u043d\u043e\u0432\u043e\u0433\u043e \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0430.',
+    bg: '\u041e\u0442\u043a\u0430\u0447\u0430\u043d\u0435\u0442\u043e \u043d\u0430 \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u043e \u0441\u0442\u0430\u0440\u0442\u0438\u0440\u0430 8-\u0447\u0430\u0441\u043e\u0432 cooldown, \u043f\u0440\u0435\u0434\u0438 \u0434\u0430 \u043c\u043e\u0436\u0435 \u0434\u0430 \u0441\u0435 \u043e\u0434\u043e\u0431\u0440\u0438 \u0437\u0430\u043c\u0435\u0441\u0442\u0432\u0430\u0449\u043e \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u043e.',
+    'es-ES': 'Desvincular un dispositivo inicia una espera de 8 horas antes de aprobar un dispositivo de reemplazo.',
+    fr: 'La dissociation d’un appareil lance un délai de 8 heures avant l’approbation d’un appareil de remplacement.',
+    it: 'Scollegare un dispositivo avvia un cooldown di 8 ore prima di poter approvare un dispositivo sostitutivo.',
+    'pt-BR': 'Desligar um dispositivo inicia um cooldown de 8 horas antes de aprovar um dispositivo de substituição.',
+    pl: 'Odpięcie urządzenia uruchamia 8-godzinny cooldown, zanim będzie można zatwierdzić urządzenie zastępcze.',
+    de: 'Das Entfernen eines Geräts startet eine 8-Stunden-Sperre, bevor ein Ersatzgerät freigegeben werden kann.',
+  }
   const deviceBlockedReason = secureAccount?.deviceBlockedReason || ''
   const currentDeviceStatusCopy = secureAccount?.currentDeviceApproved
     ? localizedDeviceStatus.approved
+    : deviceBlockedReason === 'cooldown_active' && cooldownStatusCopy[language]
+      ? cooldownStatusCopy[language]
     : deviceBlockedReason && localizedDeviceStatus[deviceBlockedReason]
       ? localizedDeviceStatus[deviceBlockedReason]
       : localizedDeviceStatus.fallback
@@ -402,10 +421,12 @@ export default function Settings() {
 
   async function handleRevokeDevice(device) {
     const deviceName = device.displayName || device.deviceName || 'device'
+    const localizedRevokeCooldownWarning = revokeCooldownWarningCopy[language]
+      || t('settings.secureAccountRevokeCooldownWarning')
     const confirmBody = [
       t('settings.secureAccountRevokeBody', { device: deviceName }),
       '',
-      t('settings.secureAccountRevokeCooldownWarning'),
+      localizedRevokeCooldownWarning,
     ].join('\n')
 
     if (!confirm(confirmBody)) return
@@ -489,8 +510,8 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="grid xl:grid-cols-[minmax(0,1.15fr)_200px] gap-4 mt-4 items-start">
-          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-4">
+        <div className="grid xl:grid-cols-[minmax(0,1fr)_minmax(290px,340px)] gap-5 mt-4 items-start">
+          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-5 py-5">
             <h4 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
               <Coffee size={15} className="text-yellow-400" /> {t('settings.jobsenseiAccessTitle')}
             </h4>
@@ -574,35 +595,46 @@ export default function Settings() {
             )}
           </div>
 
-          <div className="space-y-4 min-w-[220px]">
-            <div className={pairedCardClass}>
-              <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-                <Shield size={16} className="text-indigo-300" /> {t('settings.secureAccountTitle')}
-              </h3>
-              <p className="text-slate-400 text-xs mb-3">{t('settings.secureAccountDevicesCopy')}</p>
+          <div className="space-y-4 min-w-0">
+            <div className={railCardClass}>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0">
+                  <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+                    <Shield size={16} className="text-indigo-300 flex-shrink-0" /> {t('settings.secureAccountTitle')}
+                  </h3>
+                  <p className="text-slate-400 text-xs leading-relaxed">{t('settings.secureAccountDevicesCopy')}</p>
+                </div>
+                <MonitorSmartphone size={16} className="text-slate-500 flex-shrink-0 mt-0.5" />
+              </div>
 
               {secureSignedIn ? (
                 <div className="space-y-3">
-                  <div className={`rounded-xl border p-3 ${currentDeviceStatusClass}`}>
-                    <div className="text-sm font-display font-semibold">
+                  <div className={`rounded-2xl border p-3.5 ${currentDeviceStatusClass}`}>
+                    <div className="text-sm font-display font-semibold break-all">
                       {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
                     </div>
-                    <div className="text-xs mt-1 opacity-90">{currentDeviceStatusCopy}</div>
+                    <div className="text-xs mt-1.5 leading-relaxed opacity-90">{currentDeviceStatusCopy}</div>
                   </div>
 
-                  <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 space-y-3">
+                  <div className="rounded-2xl border border-navy-600 bg-navy-950/70 p-3.5 space-y-3.5">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="text-white text-sm font-display font-semibold">
-                        {t('settings.secureAccountDevicesSummary', {
-                          count: secureAccount?.approvedDeviceCount || 0,
-                          limit: secureAccount?.deviceLimit || 2,
-                        })}
+                      <div className="min-w-0">
+                        <div className="text-white text-sm font-display font-semibold">
+                          {t('settings.secureAccountDevicesSummary', {
+                            count: secureAccount?.approvedDeviceCount || 0,
+                            limit: secureAccount?.deviceLimit || 2,
+                          })}
+                        </div>
                       </div>
-                      <MonitorSmartphone size={15} className="text-slate-400 flex-shrink-0" />
+                      <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/20 bg-indigo-500/10 text-indigo-200 flex-shrink-0">
+                        {secureAccount?.approvedDeviceCount || 0}/{secureAccount?.deviceLimit || 2}
+                      </span>
                     </div>
 
-                    <div className="text-slate-300 text-xs break-all">
-                      {secureUser?.email || secureAccount?.email || '-'}
+                    <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+                      <div className="text-slate-200 text-xs break-all leading-relaxed">
+                        {secureUser?.email || secureAccount?.email || '-'}
+                      </div>
                     </div>
 
                     {replacementCooldownUntil && (
@@ -614,13 +646,13 @@ export default function Settings() {
                     {approvedDevices.length ? (
                       <div className="space-y-2">
                         {approvedDevices.map(device => (
-                          <div key={device.deviceId} className="rounded-xl border border-navy-600 bg-navy-900/60 p-3">
+                          <div key={device.deviceId} className="rounded-2xl border border-navy-600 bg-navy-900/70 p-3.5">
                             <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="text-white text-sm font-display font-semibold truncate">
+                              <div className="min-w-0 flex-1">
+                                <div className="text-white text-sm font-display font-semibold leading-snug break-words">
                                   {device.displayName}
                                 </div>
-                                <div className="text-slate-500 text-[11px] mt-1">
+                                <div className="text-slate-300 text-xs mt-1 leading-relaxed break-words">
                                   {localizedDeviceStatus.last_seen.replace('{date}', formatDeviceTimestamp(device.lastSeenAt || device.createdAt) || '-')}
                                 </div>
                               </div>
@@ -653,19 +685,31 @@ export default function Settings() {
               )}
             </div>
 
-            <div className={pairedCardClass}>
+            <div className={railCardClass}>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 font-display mb-2">{t('settings.profile')}</div>
               <h3 className="font-display font-semibold text-white mb-1">{t('settings.profile')}</h3>
-              <p className="text-slate-400 text-xs mb-3">{t('settings.profilePlanCopy')}</p>
+              <p className="text-slate-400 text-xs mb-4 leading-relaxed">{t('settings.profilePlanCopy')}</p>
               {profile ? (
-                <div className="space-y-1 text-sm mb-3">
-                  <div><span className="text-slate-400">{t('settings.profileName')}</span> <span className="text-white">{profile.name || '-'}</span></div>
-                  <div><span className="text-slate-400">{t('settings.profileRole')}</span> <span className="text-white">{profile.currentRole || '-'}</span></div>
-                  <div><span className="text-slate-400">{t('settings.profileTarget')}</span> <span className="text-white">{profile.targetRole || '-'}</span></div>
+                <div className="rounded-2xl border border-navy-600 bg-navy-950/60 p-3.5 space-y-3 text-sm mb-4">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">{t('settings.profileName')}</div>
+                    <div className="text-white break-words">{profile.name || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">{t('settings.profileRole')}</div>
+                    <div className="text-white break-words">{profile.currentRole || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">{t('settings.profileTarget')}</div>
+                    <div className="text-white break-words">{profile.targetRole || '-'}</div>
+                  </div>
                 </div>
               ) : (
-                <p className="text-slate-500 text-sm mb-3">{t('settings.noProfile')}</p>
+                <div className="rounded-2xl border border-navy-600 bg-navy-950/60 p-3.5 mb-4">
+                  <p className="text-slate-500 text-sm">{t('settings.noProfile')}</p>
+                </div>
               )}
-              <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-sm mt-auto">
+              <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-sm mt-auto justify-center">
                 {profile ? t('settings.editProfile') : t('settings.setupProfile')}
               </button>
             </div>

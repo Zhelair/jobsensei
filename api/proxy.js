@@ -89,7 +89,7 @@ async function authorizeProxyRequest(req) {
       error: deviceAccess.blockedReason === 'limit_reached'
         ? 'This browser is not approved for your secure JobSensei account because your 2-device limit is already full.'
         : deviceAccess.blockedReason === 'cooldown_active'
-          ? 'A recently unlinked device started the 48-hour replacement cooldown. Try approving this browser again after the cooldown ends.'
+          ? 'A recently unlinked device started the 8-hour replacement cooldown. Try approving this browser again after the cooldown ends.'
           : 'This browser is not approved for your secure JobSensei account. Open Settings and refresh account access on this device.',
     }
   }

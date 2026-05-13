@@ -9574,7 +9574,7 @@ const unifiedUnlockAndLegalPatches = {
       secureAccountCooldownNotice: 'A device was recently unlinked. The next replacement device can be approved after {date}.',
       secureAccountRevokeTitle: 'Unlink this device?',
       secureAccountRevokeBody: 'This removes {device} from your approved devices list.',
-      secureAccountRevokeCooldownWarning: 'Unlinking a device starts a 48-hour cooldown before a replacement device can be approved.',
+      secureAccountRevokeCooldownWarning: 'Unlinking a device starts an 8-hour cooldown before a replacement device can be approved.',
       secureAccountRevokeCancel: 'Keep device',
       secureAccountConfirmRevoke: 'Unlink device',
       privacyTermsTitle: 'Privacy and terms',
