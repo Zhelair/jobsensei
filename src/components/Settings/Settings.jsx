@@ -286,6 +286,7 @@ export default function Settings() {
     : usingJobsenseiAI
       ? t('settings.planCopyHosted')
       : t('settings.planCopyNone')
+  const profileActionLabel = profile ? t('settings.editProfile') : t('settings.setupProfile')
 
   const pairedCardClass = 'card h-full flex flex-col'
   const railCardClass = 'card h-full flex flex-col border-indigo-500/10 bg-navy-800/90'
@@ -510,8 +511,8 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="grid xl:grid-cols-[minmax(0,1fr)_minmax(290px,340px)] gap-5 mt-4 items-start">
-          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-5 py-5">
+        <div className="grid xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] gap-5 mt-4 items-start">
+          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-5 py-5 h-full">
             <h4 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
               <Coffee size={15} className="text-yellow-400" /> {t('settings.jobsenseiAccessTitle')}
             </h4>
@@ -528,15 +529,19 @@ export default function Settings() {
                     <div className="text-slate-400 text-xs">{hostedPlanIdentity || t('settings.secureAccountStatusLinked')}</div>
                   </div>
                 </div>
-                {bmacToken && (
-                  <button onClick={clearBmacToken} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
-                    <LogOut size={13} /> {t('settings.signOut')}
-                  </button>
-                )}
-                {secureSignedIn && (
-                  <button onClick={signOutSecure} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
-                    <LogOut size={13} /> {t('settings.secureAccountSignOut')}
-                  </button>
+                {(bmacToken || secureSignedIn) && (
+                  <div className="flex flex-wrap gap-2">
+                    {bmacToken && (
+                      <button onClick={clearBmacToken} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
+                        <LogOut size={13} /> {t('settings.signOut')}
+                      </button>
+                    )}
+                    {secureSignedIn && (
+                      <button onClick={signOutSecure} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
+                        <LogOut size={13} /> {t('settings.secureAccountSignOut')}
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             ) : (
@@ -593,126 +598,127 @@ export default function Settings() {
                 )}
               </div>
             )}
-          </div>
 
-          <div className="space-y-4 min-w-0">
-            <div className={railCardClass}>
-              <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="mt-5 pt-5 border-t border-navy-700/80">
+              <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
                 <div className="min-w-0">
-                  <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-                    <Shield size={16} className="text-indigo-300 flex-shrink-0" /> {t('settings.secureAccountTitle')}
-                  </h3>
-                  <p className="text-slate-400 text-xs leading-relaxed">{t('settings.secureAccountDevicesCopy')}</p>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 font-display mb-2">{t('settings.profile')}</div>
+                  <h5 className="font-display font-semibold text-white">{t('settings.profile')}</h5>
+                  <p className="text-slate-400 text-xs mt-1 leading-relaxed">{t('settings.profilePlanCopy')}</p>
                 </div>
-                <MonitorSmartphone size={16} className="text-slate-500 flex-shrink-0 mt-0.5" />
+                <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-xs sm:text-sm justify-center">
+                  {profileActionLabel}
+                </button>
               </div>
 
-              {secureSignedIn ? (
-                <div className="space-y-3">
-                  <div className={`rounded-2xl border p-3.5 ${currentDeviceStatusClass}`}>
-                    <div className="text-sm font-display font-semibold break-all">
-                      {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
+              <div className="grid gap-2.5 md:grid-cols-3">
+                <div className="rounded-2xl border border-navy-600 bg-navy-900/60 px-3 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">{t('settings.profileName')}</div>
+                  <div className="text-white text-sm leading-relaxed break-words">{profile?.name || '-'}</div>
+                </div>
+                <div className="rounded-2xl border border-navy-600 bg-navy-900/60 px-3 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">{t('settings.profileRole')}</div>
+                  <div className="text-white text-sm leading-relaxed break-words">{profile?.currentRole || '-'}</div>
+                </div>
+                <div className="rounded-2xl border border-navy-600 bg-navy-900/60 px-3 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">{t('settings.profileTarget')}</div>
+                  <div className="text-white text-sm leading-relaxed break-words">{profile?.targetRole || '-'}</div>
+                </div>
+              </div>
+
+              {!profile && (
+                <p className="text-slate-500 text-xs mt-3">{t('settings.noProfile')}</p>
+              )}
+            </div>
+          </div>
+
+          <div className={`${railCardClass} min-w-0`}>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="min-w-0">
+                <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+                  <Shield size={16} className="text-indigo-300 flex-shrink-0" /> {t('settings.secureAccountTitle')}
+                </h3>
+                <p className="text-slate-400 text-xs leading-relaxed">{t('settings.secureAccountDevicesCopy')}</p>
+              </div>
+              <MonitorSmartphone size={16} className="text-slate-500 flex-shrink-0 mt-0.5" />
+            </div>
+
+            {secureSignedIn ? (
+              <div className="space-y-3">
+                <div className={`rounded-2xl border p-3.5 ${currentDeviceStatusClass}`}>
+                  <div className="text-sm font-display font-semibold break-all">
+                    {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
+                  </div>
+                  <div className="text-xs mt-1.5 leading-relaxed opacity-90">{currentDeviceStatusCopy}</div>
+                </div>
+
+                <div className="rounded-2xl border border-navy-600 bg-navy-950/70 p-3.5 space-y-3.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-white text-sm font-display font-semibold">
+                        {t('settings.secureAccountDevicesSummary', {
+                          count: secureAccount?.approvedDeviceCount || 0,
+                          limit: secureAccount?.deviceLimit || 2,
+                        })}
+                      </div>
                     </div>
-                    <div className="text-xs mt-1.5 leading-relaxed opacity-90">{currentDeviceStatusCopy}</div>
+                    <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/20 bg-indigo-500/10 text-indigo-200 flex-shrink-0">
+                      {secureAccount?.approvedDeviceCount || 0}/{secureAccount?.deviceLimit || 2}
+                    </span>
                   </div>
 
-                  <div className="rounded-2xl border border-navy-600 bg-navy-950/70 p-3.5 space-y-3.5">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-white text-sm font-display font-semibold">
-                          {t('settings.secureAccountDevicesSummary', {
-                            count: secureAccount?.approvedDeviceCount || 0,
-                            limit: secureAccount?.deviceLimit || 2,
-                          })}
-                        </div>
-                      </div>
-                      <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/20 bg-indigo-500/10 text-indigo-200 flex-shrink-0">
-                        {secureAccount?.approvedDeviceCount || 0}/{secureAccount?.deviceLimit || 2}
-                      </span>
+                  <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+                    <div className="text-slate-200 text-xs break-all leading-relaxed">
+                      {secureUser?.email || secureAccount?.email || '-'}
                     </div>
+                  </div>
 
-                    <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-                      <div className="text-slate-200 text-xs break-all leading-relaxed">
-                        {secureUser?.email || secureAccount?.email || '-'}
-                      </div>
+                  {replacementCooldownUntil && (
+                    <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-yellow-300 text-xs leading-relaxed">
+                      {t('settings.secureAccountCooldownNotice', { date: formatDeviceTimestamp(replacementCooldownUntil) })}
                     </div>
+                  )}
 
-                    {replacementCooldownUntil && (
-                      <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-yellow-300 text-xs leading-relaxed">
-                        {t('settings.secureAccountCooldownNotice', { date: formatDeviceTimestamp(replacementCooldownUntil) })}
-                      </div>
-                    )}
-
-                    {approvedDevices.length ? (
-                      <div className="space-y-2">
-                        {approvedDevices.map(device => (
-                          <div key={device.deviceId} className="rounded-2xl border border-navy-600 bg-navy-900/70 p-3.5">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0 flex-1">
-                                <div className="text-white text-sm font-display font-semibold leading-snug break-words">
-                                  {device.displayName}
-                                </div>
-                                <div className="text-slate-300 text-xs mt-1 leading-relaxed break-words">
-                                  {localizedDeviceStatus.last_seen.replace('{date}', formatDeviceTimestamp(device.lastSeenAt || device.createdAt) || '-')}
-                                </div>
+                  {approvedDevices.length ? (
+                    <div className="space-y-2">
+                      {approvedDevices.map(device => (
+                        <div key={device.deviceId} className="rounded-2xl border border-navy-600 bg-navy-900/70 p-3.5">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-white text-sm font-display font-semibold leading-snug break-words">
+                                {device.displayName}
                               </div>
-                              {device.isCurrent && (
-                                <span className="px-2 py-1 rounded-full text-[10px] border border-teal-500/20 bg-teal-500/10 text-teal-300 flex-shrink-0">
-                                  {t('settings.secureAccountCurrentBadge')}
-                                </span>
-                              )}
+                              <div className="text-slate-300 text-xs mt-1 leading-relaxed break-words">
+                                {localizedDeviceStatus.last_seen.replace('{date}', formatDeviceTimestamp(device.lastSeenAt || device.createdAt) || '-')}
+                              </div>
                             </div>
-
-                            <button
-                              onClick={() => handleRevokeDevice(device)}
-                              disabled={revokingDeviceId === device.deviceId}
-                              className="btn-ghost text-xs text-red-300 hover:text-red-200 hover:bg-red-500/10 mt-3 px-0"
-                            >
-                              {revokingDeviceId === device.deviceId ? t('settings.activating') : t('settings.secureAccountRevokeButton')}
-                            </button>
+                            {device.isCurrent && (
+                              <span className="px-2 py-1 rounded-full text-[10px] border border-teal-500/20 bg-teal-500/10 text-teal-300 flex-shrink-0">
+                                {t('settings.secureAccountCurrentBadge')}
+                              </span>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-slate-500 text-xs">{localizedDeviceStatus.no_devices}</div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-3 text-slate-500 text-xs leading-relaxed">
-                  {t('settings.secureAccountCopy')}
-                </div>
-              )}
-            </div>
 
-            <div className={railCardClass}>
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 font-display mb-2">{t('settings.profile')}</div>
-              <h3 className="font-display font-semibold text-white mb-1">{t('settings.profile')}</h3>
-              <p className="text-slate-400 text-xs mb-4 leading-relaxed">{t('settings.profilePlanCopy')}</p>
-              {profile ? (
-                <div className="rounded-2xl border border-navy-600 bg-navy-950/60 p-3.5 space-y-3 text-sm mb-4">
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">{t('settings.profileName')}</div>
-                    <div className="text-white break-words">{profile.name || '-'}</div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">{t('settings.profileRole')}</div>
-                    <div className="text-white break-words">{profile.currentRole || '-'}</div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">{t('settings.profileTarget')}</div>
-                    <div className="text-white break-words">{profile.targetRole || '-'}</div>
-                  </div>
+                          <button
+                            onClick={() => handleRevokeDevice(device)}
+                            disabled={revokingDeviceId === device.deviceId}
+                            className="btn-ghost text-xs text-red-300 hover:text-red-200 hover:bg-red-500/10 mt-3 px-0"
+                          >
+                            {revokingDeviceId === device.deviceId ? t('settings.activating') : t('settings.secureAccountRevokeButton')}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-slate-500 text-xs">{localizedDeviceStatus.no_devices}</div>
+                  )}
                 </div>
-              ) : (
-                <div className="rounded-2xl border border-navy-600 bg-navy-950/60 p-3.5 mb-4">
-                  <p className="text-slate-500 text-sm">{t('settings.noProfile')}</p>
-                </div>
-              )}
-              <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-sm mt-auto justify-center">
-                {profile ? t('settings.editProfile') : t('settings.setupProfile')}
-              </button>
-            </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-3 text-slate-500 text-xs leading-relaxed">
+                {t('settings.secureAccountCopy')}
+              </div>
+            )}
           </div>
         </div>
       </div>
