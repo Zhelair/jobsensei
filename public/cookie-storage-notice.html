@@ -63,134 +63,350 @@
     <script>
       const COPY = {
         en: {
-          pill: 'JobSensei',
-          title: 'Cookie / Storage Notice',
-          updated: 'Last updated: May 6, 2026',
-          intro: 'JobSensei mainly uses browser storage and necessary authentication/session mechanisms to make the app work. This page explains the main categories used today.',
+          pill: "JobSensei",
+          title: "Cookie / Storage Notice",
+          updated: "Last updated: May 13, 2026",
+          intro: "JobSensei uses browser storage, necessary authentication/session mechanisms, and Vercel measurement tools to keep the app working and to understand traffic and performance.",
           sections: [
-            { title: 'Local browser storage', items: ['Project, profile, resume, notes, and app preferences are mainly stored locally in your browser.', 'This helps the app reopen your workspace on the same device.'] },
-            { title: 'Necessary authentication and session storage', items: ['Secure sign-in may use cookies or similar storage needed to keep you signed in.', 'Device approval and account-access checks may also rely on necessary storage for security and access protection.'] },
-            { title: 'What is not required for the core product', items: ['No advertising or remarketing cookies are required for the core flow described here.', 'If optional analytics or marketing trackers are added later, this notice and consent behavior should be updated.'] },
-            { title: 'Your control', items: ['You can clear app data from Settings.', 'You can also clear browser storage from your browser controls, though this may sign you out or remove local workspace data.'] },
+            {
+              title: "Local browser storage",
+              items: [
+                "Project, profile, resume, notes, and app preferences are mainly stored locally in your browser.",
+                "This helps the app reopen your workspace on the same device.",
+              ],
+            },
+            {
+              title: "Necessary authentication and session storage",
+              items: [
+                "Secure sign-in may use cookies or similar storage needed to keep you signed in.",
+                "Device approval and account-access checks may also rely on necessary storage for security and access protection.",
+              ],
+            },
+            {
+              title: "Traffic and performance measurement",
+              items: [
+                "JobSensei currently uses Vercel Web Analytics and Speed Insights to understand page traffic and real-user performance.",
+                "According to Vercel, Web Analytics stores anonymized data and does not use cookies. Advertising or remarketing cookies are not required for the core flow described here.",
+              ],
+            },
+            {
+              title: "Your control",
+              items: [
+                "You can clear app data from Settings.",
+                "You can also clear browser storage from your browser controls, though this may sign you out or remove local workspace data.",
+              ],
+            },
           ],
         },
         bg: {
-          pill: 'JobSensei',
-          title: 'Известие за бисквитки / съхранение',
-          updated: 'Последна промяна: 6 май 2026',
-          intro: 'JobSensei използва основно browser storage и необходими authentication/session механизми, за да работи приложението. Тази страница обяснява основните категории, използвани в момента.',
+          pill: "JobSensei",
+          title: "Известие за бисквитки / съхранение",
+          updated: "Последна промяна: 13 май 2026",
+          intro: "JobSensei използва browser storage, необходими authentication/session механизми и Vercel инструменти за измерване, за да работи приложението и за да се следят трафикът и производителността.",
           sections: [
-            { title: 'Локално съхранение в браузъра', items: ['Проекти, профил, CV, бележки и предпочитания на приложението се пазят основно локално в браузъра.', 'Това помага на приложението да отвори отново workspace-а на същото устройство.'] },
-            { title: 'Необходими authentication и session механизми', items: ['Защитеният вход може да използва бисквитки или сходно съхранение, необходимо за това да останеш вписан.', 'Одобрението на устройства и проверките за достъп също може да разчитат на нужно съхранение за сигурност.'] },
-            { title: 'Какво не е необходимо за основния продукт', items: ['За основния flow не са необходими рекламни или remarketing бисквитки.', 'Ако по-късно бъдат добавени analytics или marketing тракери, това известие и consent логиката трябва да бъдат обновени.'] },
-            { title: 'Твоят контрол', items: ['Можеш да изчистиш данните на приложението от Settings.', 'Можеш да изчистиш browser storage и от самия браузър, но това може да те отпише или да премахне локалните workspace данни.'] },
+            {
+              title: "Локално съхранение в браузъра",
+              items: [
+                "Проекти, профил, CV, бележки и предпочитания на приложението се пазят основно локално в браузъра.",
+                "Това помага на приложението да отвори отново workspace-а на същото устройство.",
+              ],
+            },
+            {
+              title: "Необходими authentication и session механизми",
+              items: [
+                "Защитеният вход може да използва бисквитки или сходно съхранение, необходимо за това да останеш вписан.",
+                "Одобрението на устройства и проверките за достъп също може да разчитат на нужно съхранение за сигурност.",
+              ],
+            },
+            {
+              title: "Измерване на трафика и производителността",
+              items: [
+                "JobSensei в момента използва Vercel Web Analytics и Speed Insights, за да следи трафика и реалната производителност.",
+                "Според Vercel Web Analytics работи с анонимизирани данни и не използва бисквитки. За основния flow не са необходими рекламни или remarketing бисквитки.",
+              ],
+            },
+            {
+              title: "Твоят контрол",
+              items: [
+                "Можеш да изчистиш данните на приложението от Settings.",
+                "Можеш да изчистиш browser storage и от самия браузър, но това може да те отпише или да премахне локалните workspace данни.",
+              ],
+            },
           ],
         },
         ru: {
-          pill: 'JobSensei',
-          title: 'Уведомление о cookie / storage',
-          updated: 'Последнее обновление: 6 мая 2026',
-          intro: 'JobSensei в основном использует хранилище браузера и необходимые authentication/session механизмы, чтобы приложение работало. Эта страница объясняет основные категории, используемые сейчас.',
+          pill: "JobSensei",
+          title: "Уведомление о cookie / storage",
+          updated: "Последнее обновление: 13 мая 2026",
+          intro: "JobSensei использует хранилище браузера, необходимые authentication/session-механизмы и инструменты измерения от Vercel, чтобы приложение работало и чтобы было понятно, какой у него трафик и производительность.",
           sections: [
-            { title: 'Локальное хранилище браузера', items: ['Проекты, профиль, резюме, заметки и настройки приложения в основном хранятся локально в браузере.', 'Это помогает снова открыть workspace на том же устройстве.'] },
-            { title: 'Необходимые authentication и session механизмы', items: ['Безопасный вход может использовать cookie или похожее хранилище, необходимое для сохранения входа.', 'Проверка устройств и доступа к аккаунту тоже может использовать необходимое хранилище для безопасности.'] },
-            { title: 'Что не требуется для основного продукта', items: ['Для основного сценария не нужны рекламные или remarketing cookie.', 'Если позже будут добавлены analytics или marketing trackers, это уведомление и модель consent должны быть обновлены.'] },
-            { title: 'Ваш контроль', items: ['Вы можете очистить данные приложения в Settings.', 'Вы также можете очистить хранилище браузера через настройки браузера, но это может разлогинить вас или удалить локальные данные workspace.'] },
+            {
+              title: "Локальное хранилище браузера",
+              items: [
+                "Проекты, профиль, резюме, заметки и настройки приложения в основном хранятся локально в браузере.",
+                "Это помогает снова открыть workspace на том же устройстве.",
+              ],
+            },
+            {
+              title: "Необходимые authentication и session механизмы",
+              items: [
+                "Безопасный вход может использовать cookie или похожее хранилище, необходимое для сохранения входа.",
+                "Проверка устройств и доступа к аккаунту тоже может использовать необходимое хранилище для безопасности.",
+              ],
+            },
+            {
+              title: "Измерение трафика и производительности",
+              items: [
+                "Сейчас JobSensei использует Vercel Web Analytics и Speed Insights, чтобы понимать трафик по страницам и реальную производительность пользователей.",
+                "По данным Vercel, Web Analytics хранит анонимизированные данные и не использует cookies. Рекламные или remarketing cookies для основного сценария не требуются.",
+              ],
+            },
+            {
+              title: "Ваш контроль",
+              items: [
+                "Вы можете очистить данные приложения в Settings.",
+                "Вы также можете очистить хранилище браузера через настройки браузера, но это может разлогинить вас или удалить локальные данные workspace.",
+              ],
+            },
           ],
         },
-        'es-ES': {
-          pill: 'JobSensei',
-          title: 'Aviso de cookies / almacenamiento',
-          updated: 'Última actualización: 6 de mayo de 2026',
-          intro: 'JobSensei usa principalmente almacenamiento del navegador y mecanismos necesarios de authentication/session para que la app funcione. Esta página explica las categorías principales usadas hoy.',
+        "es-ES": {
+          pill: "JobSensei",
+          title: "Aviso de cookies / almacenamiento",
+          updated: "Última actualización: 13 de mayo de 2026",
+          intro: "JobSensei usa almacenamiento del navegador, mecanismos necesarios de authentication/session y herramientas de medición de Vercel para que la app funcione y para entender el tráfico y el rendimiento.",
           sections: [
-            { title: 'Almacenamiento local del navegador', items: ['Proyectos, perfil, CV, notas y preferencias de la app se guardan principalmente de forma local en tu navegador.', 'Esto ayuda a reabrir tu workspace en el mismo dispositivo.'] },
-            { title: 'Authentication y session necesarias', items: ['El inicio de sesión seguro puede usar cookies o almacenamiento similar necesario para mantener tu sesión iniciada.', 'La aprobación de dispositivos y las comprobaciones de acceso también pueden depender de almacenamiento necesario por seguridad.'] },
-            { title: 'Lo que no es necesario para el producto principal', items: ['No se requieren cookies de publicidad o remarketing para el flujo principal descrito aquí.', 'Si más adelante se añaden analytics o rastreadores de marketing, este aviso y el comportamiento de consentimiento deberán actualizarse.'] },
-            { title: 'Tu control', items: ['Puedes borrar los datos de la app desde Settings.', 'También puedes borrar el almacenamiento del navegador desde sus controles, aunque eso puede cerrar tu sesión o eliminar datos locales del workspace.'] },
+            {
+              title: "Almacenamiento local del navegador",
+              items: [
+                "Proyectos, perfil, CV, notas y preferencias de la app se guardan principalmente de forma local en tu navegador.",
+                "Esto ayuda a reabrir tu workspace en el mismo dispositivo.",
+              ],
+            },
+            {
+              title: "Authentication y session necesarias",
+              items: [
+                "El inicio de sesión seguro puede usar cookies o almacenamiento similar necesario para mantener tu sesión iniciada.",
+                "La aprobación de dispositivos y las comprobaciones de acceso también pueden depender de almacenamiento necesario por seguridad.",
+              ],
+            },
+            {
+              title: "Medición de tráfico y rendimiento",
+              items: [
+                "JobSensei usa actualmente Vercel Web Analytics y Speed Insights para entender el tráfico de páginas y el rendimiento real de los usuarios.",
+                "Según Vercel, Web Analytics guarda datos anonimizados y no usa cookies. No se requieren cookies de publicidad o remarketing para el flujo principal descrito aquí.",
+              ],
+            },
+            {
+              title: "Tu control",
+              items: [
+                "Puedes borrar los datos de la app desde Settings.",
+                "También puedes borrar el almacenamiento del navegador desde sus controles, aunque eso puede cerrar tu sesión o eliminar datos locales del workspace.",
+              ],
+            },
           ],
         },
         fr: {
-          pill: 'JobSensei',
-          title: 'Notice cookies / stockage',
-          updated: 'Dernière mise à jour : 6 mai 2026',
-          intro: 'JobSensei utilise surtout le stockage du navigateur et des mécanismes nécessaires d’authentication/session pour faire fonctionner l’application. Cette page explique les principales catégories utilisées aujourd’hui.',
+          pill: "JobSensei",
+          title: "Notice cookies / stockage",
+          updated: "Dernière mise à jour : 13 mai 2026",
+          intro: "JobSensei utilise le stockage du navigateur, des mécanismes nécessaires d’authentication/session et des outils de mesure Vercel pour faire fonctionner l’application et comprendre le trafic et les performances.",
           sections: [
-            { title: 'Stockage local du navigateur', items: ['Les projets, le profil, le CV, les notes et les préférences de l’application sont surtout stockés localement dans votre navigateur.', 'Cela aide l’application à rouvrir votre workspace sur le même appareil.'] },
-            { title: 'Authentication et session nécessaires', items: ['La connexion sécurisée peut utiliser des cookies ou un stockage similaire nécessaire pour vous garder connecté.', 'L’approbation des appareils et les vérifications d’accès peuvent aussi dépendre d’un stockage nécessaire pour la sécurité.'] },
-            { title: 'Ce qui n’est pas nécessaire au produit de base', items: ['Aucun cookie publicitaire ou de remarketing n’est requis pour le flux principal décrit ici.', 'Si des analytics ou trackers marketing sont ajoutés plus tard, cette notice et le comportement de consentement devront être mis à jour.'] },
-            { title: 'Votre contrôle', items: ['Vous pouvez effacer les données de l’application depuis Settings.', 'Vous pouvez aussi effacer le stockage du navigateur via votre navigateur, mais cela peut vous déconnecter ou supprimer des données locales du workspace.'] },
+            {
+              title: "Stockage local du navigateur",
+              items: [
+                "Les projets, le profil, le CV, les notes et les préférences de l’application sont surtout stockés localement dans votre navigateur.",
+                "Cela aide l’application à rouvrir votre workspace sur le même appareil.",
+              ],
+            },
+            {
+              title: "Authentication et session nécessaires",
+              items: [
+                "La connexion sécurisée peut utiliser des cookies ou un stockage similaire nécessaire pour vous garder connecté.",
+                "L’approbation des appareils et les vérifications d’accès peuvent aussi dépendre d’un stockage nécessaire pour la sécurité.",
+              ],
+            },
+            {
+              title: "Mesure du trafic et des performances",
+              items: [
+                "JobSensei utilise actuellement Vercel Web Analytics et Speed Insights pour comprendre le trafic des pages et les performances réelles des utilisateurs.",
+                "D’après Vercel, Web Analytics stocke des données anonymisées et n’utilise pas de cookies. Aucun cookie publicitaire ou de remarketing n’est requis pour le flux principal décrit ici.",
+              ],
+            },
+            {
+              title: "Votre contrôle",
+              items: [
+                "Vous pouvez effacer les données de l’application depuis Settings.",
+                "Vous pouvez aussi effacer le stockage du navigateur via votre navigateur, mais cela peut vous déconnecter ou supprimer des données locales du workspace.",
+              ],
+            },
           ],
         },
         it: {
-          pill: 'JobSensei',
-          title: 'Avviso cookie / storage',
-          updated: 'Ultimo aggiornamento: 6 maggio 2026',
-          intro: 'JobSensei usa principalmente storage del browser e meccanismi necessari di authentication/session per far funzionare l’app. Questa pagina spiega le principali categorie usate oggi.',
+          pill: "JobSensei",
+          title: "Avviso cookie / storage",
+          updated: "Ultimo aggiornamento: 13 maggio 2026",
+          intro: "JobSensei usa storage del browser, meccanismi necessari di authentication/session e strumenti di misurazione Vercel per far funzionare l’app e capire traffico e prestazioni.",
           sections: [
-            { title: 'Storage locale del browser', items: ['Progetti, profilo, CV, note e preferenze dell’app sono memorizzati soprattutto localmente nel browser.', 'Questo aiuta l’app a riaprire il workspace sullo stesso dispositivo.'] },
-            { title: 'Authentication e session necessarie', items: ['Il login sicuro può usare cookie o storage simile necessario per mantenerti connesso.', 'L’approvazione dei dispositivi e i controlli di accesso possono anche dipendere da storage necessario per motivi di sicurezza.'] },
-            { title: 'Cosa non è necessario per il prodotto base', items: ['Per il flusso principale descritto qui non servono cookie pubblicitari o di remarketing.', 'Se in futuro verranno aggiunti analytics o tracker marketing, questo avviso e il comportamento di consenso dovranno essere aggiornati.'] },
-            { title: 'Il tuo controllo', items: ['Puoi cancellare i dati dell’app da Settings.', 'Puoi anche cancellare lo storage del browser dai controlli del browser, ma questo potrebbe disconnetterti o rimuovere dati locali del workspace.'] },
+            {
+              title: "Storage locale del browser",
+              items: [
+                "Progetti, profilo, CV, note e preferenze dell’app sono memorizzati soprattutto localmente nel browser.",
+                "Questo aiuta l’app a riaprire il workspace sullo stesso dispositivo.",
+              ],
+            },
+            {
+              title: "Authentication e session necessarie",
+              items: [
+                "Il login sicuro può usare cookie o storage simile necessario per mantenerti connesso.",
+                "L’approvazione dei dispositivi e i controlli di accesso possono anche dipendere da storage necessario per motivi di sicurezza.",
+              ],
+            },
+            {
+              title: "Misurazione di traffico e prestazioni",
+              items: [
+                "JobSensei usa attualmente Vercel Web Analytics e Speed Insights per capire il traffico delle pagine e le prestazioni reali degli utenti.",
+                "Secondo Vercel, Web Analytics conserva dati anonimizzati e non usa cookie. Per il flusso principale descritto qui non servono cookie pubblicitari o di remarketing.",
+              ],
+            },
+            {
+              title: "Il tuo controllo",
+              items: [
+                "Puoi cancellare i dati dell’app da Settings.",
+                "Puoi anche cancellare lo storage del browser dai controlli del browser, ma questo potrebbe disconnetterti o rimuovere dati locali del workspace.",
+              ],
+            },
           ],
         },
-        'pt-BR': {
-          pill: 'JobSensei',
-          title: 'Aviso de cookies / armazenamento',
-          updated: 'Última atualização: 6 de maio de 2026',
-          intro: 'O JobSensei usa principalmente armazenamento do browser e mecanismos necessários de authentication/session para fazer a app funcionar. Esta página explica as principais categorias usadas hoje.',
+        "pt-BR": {
+          pill: "JobSensei",
+          title: "Aviso de cookies / armazenamento",
+          updated: "Última atualização: 13 de maio de 2026",
+          intro: "O JobSensei usa armazenamento do browser, mecanismos necessários de authentication/session e ferramentas de medição da Vercel para fazer a app funcionar e perceber o tráfego e a performance.",
           sections: [
-            { title: 'Armazenamento local do browser', items: ['Projetos, perfil, CV, notas e preferências da app ficam sobretudo armazenados localmente no browser.', 'Isto ajuda a app a reabrir o teu workspace no mesmo dispositivo.'] },
-            { title: 'Authentication e session necessárias', items: ['O início de sessão seguro pode usar cookies ou armazenamento semelhante necessário para te manter autenticado.', 'A aprovação de dispositivos e as verificações de acesso também podem depender de armazenamento necessário por segurança.'] },
-            { title: 'O que não é necessário para o produto principal', items: ['Não são necessários cookies de publicidade ou remarketing para o fluxo principal descrito aqui.', 'Se analytics opcionais ou trackers de marketing forem adicionados depois, este aviso e o comportamento de consentimento devem ser atualizados.'] },
-            { title: 'O teu controlo', items: ['Podes limpar os dados da app em Settings.', 'Também podes limpar o armazenamento do browser nos controlos do browser, embora isso possa terminar a sessão ou remover dados locais do workspace.'] },
+            {
+              title: "Armazenamento local do browser",
+              items: [
+                "Projetos, perfil, CV, notas e preferências da app ficam sobretudo armazenados localmente no browser.",
+                "Isto ajuda a app a reabrir o teu workspace no mesmo dispositivo.",
+              ],
+            },
+            {
+              title: "Authentication e session necessárias",
+              items: [
+                "O início de sessão seguro pode usar cookies ou armazenamento semelhante necessário para te manter autenticado.",
+                "A aprovação de dispositivos e as verificações de acesso também podem depender de armazenamento necessário por segurança.",
+              ],
+            },
+            {
+              title: "Medição de tráfego e performance",
+              items: [
+                "O JobSensei usa atualmente Vercel Web Analytics e Speed Insights para perceber o tráfego das páginas e a performance real dos utilizadores.",
+                "Segundo a Vercel, o Web Analytics guarda dados anonimizados e não usa cookies. Não são necessários cookies de publicidade ou remarketing para o fluxo principal descrito aqui.",
+              ],
+            },
+            {
+              title: "O teu controlo",
+              items: [
+                "Podes limpar os dados da app em Settings.",
+                "Também podes limpar o armazenamento do browser nos controlos do browser, embora isso possa terminar a sessão ou remover dados locais do workspace.",
+              ],
+            },
           ],
         },
         pl: {
-          pill: 'JobSensei',
-          title: 'Informacja o cookies / pamięci',
-          updated: 'Ostatnia aktualizacja: 6 maja 2026',
-          intro: 'JobSensei korzysta głównie z pamięci przeglądarki i niezbędnych mechanizmów authentication/session, aby aplikacja działała. Ta strona wyjaśnia główne kategorie używane obecnie.',
+          pill: "JobSensei",
+          title: "Informacja o cookies / pamięci",
+          updated: "Ostatnia aktualizacja: 13 maja 2026",
+          intro: "JobSensei korzysta z pamięci przeglądarki, niezbędnych mechanizmów authentication/session oraz narzędzi pomiarowych Vercel, aby aplikacja działała i aby rozumieć ruch oraz wydajność.",
           sections: [
-            { title: 'Lokalna pamięć przeglądarki', items: ['Projekty, profil, CV, notatki i preferencje aplikacji są przechowywane głównie lokalnie w przeglądarce.', 'Pomaga to ponownie otworzyć workspace na tym samym urządzeniu.'] },
-            { title: 'Niezbędne authentication i session', items: ['Bezpieczne logowanie może używać cookies lub podobnej pamięci potrzebnej do utrzymania zalogowania.', 'Zatwierdzanie urządzeń i kontrole dostępu również mogą zależeć od niezbędnej pamięci ze względów bezpieczeństwa.'] },
-            { title: 'Co nie jest potrzebne do podstawowego produktu', items: ['Do głównego przepływu opisanego tutaj nie są potrzebne reklamowe ani remarketingowe cookies.', 'Jeśli później zostaną dodane opcjonalne analytics lub marketingowe trackery, ta informacja i zachowanie zgody powinny zostać zaktualizowane.'] },
-            { title: 'Twoja kontrola', items: ['Możesz wyczyścić dane aplikacji w Settings.', 'Możesz też wyczyścić pamięć przeglądarki w samej przeglądarce, ale może to wylogować cię lub usunąć lokalne dane workspace.'] },
+            {
+              title: "Lokalna pamięć przeglądarki",
+              items: [
+                "Projekty, profil, CV, notatki i preferencje aplikacji są przechowywane głównie lokalnie w przeglądarce.",
+                "Pomaga to ponownie otworzyć workspace na tym samym urządzeniu.",
+              ],
+            },
+            {
+              title: "Niezbędne authentication i session",
+              items: [
+                "Bezpieczne logowanie może używać cookies lub podobnej pamięci potrzebnej do utrzymania zalogowania.",
+                "Zatwierdzanie urządzeń i kontrole dostępu również mogą zależeć od niezbędnej pamięci ze względów bezpieczeństwa.",
+              ],
+            },
+            {
+              title: "Pomiar ruchu i wydajności",
+              items: [
+                "JobSensei korzysta obecnie z Vercel Web Analytics i Speed Insights, aby rozumieć ruch na stronach i rzeczywistą wydajność użytkowników.",
+                "Według Vercel Web Analytics przechowuje zanonimizowane dane i nie używa cookies. Do głównego przepływu opisanego tutaj nie są potrzebne reklamowe ani remarketingowe cookies.",
+              ],
+            },
+            {
+              title: "Twoja kontrola",
+              items: [
+                "Możesz wyczyścić dane aplikacji w Settings.",
+                "Możesz też wyczyścić pamięć przeglądarki w samej przeglądarce, ale może to wylogować cię lub usunąć lokalne dane workspace.",
+              ],
+            },
           ],
         },
         de: {
-          pill: 'JobSensei',
-          title: 'Cookie- / Speicherhinweis',
-          updated: 'Zuletzt aktualisiert: 6. Mai 2026',
-          intro: 'JobSensei nutzt hauptsächlich Browserspeicher und notwendige Authentication-/Session-Mechanismen, damit die App funktioniert. Diese Seite erklärt die wichtigsten Kategorien, die heute verwendet werden.',
+          pill: "JobSensei",
+          title: "Cookie- / Speicherhinweis",
+          updated: "Zuletzt aktualisiert: 13. Mai 2026",
+          intro: "JobSensei nutzt Browserspeicher, notwendige Authentication-/Session-Mechanismen und Vercel-Messtools, damit die App funktioniert und damit Traffic und Performance verstanden werden können.",
           sections: [
-            { title: 'Lokaler Browserspeicher', items: ['Projekte, Profil, Lebenslauf, Notizen und App-Einstellungen werden überwiegend lokal im Browser gespeichert.', 'So kann die App deinen Workspace auf demselben Gerät wieder öffnen.'] },
-            { title: 'Notwendige Authentication- und Session-Speicherung', items: ['Die sichere Anmeldung kann Cookies oder ähnlichen Speicher verwenden, der nötig ist, um dich angemeldet zu halten.', 'Gerätefreigaben und Zugriffskontrollen können ebenfalls aus Sicherheitsgründen auf notwendigen Speicher angewiesen sein.'] },
-            { title: 'Was für das Kernprodukt nicht erforderlich ist', items: ['Für den hier beschriebenen Kernablauf sind keine Werbe- oder Remarketing-Cookies erforderlich.', 'Wenn später optionale Analytics oder Marketing-Tracker hinzukommen, sollten dieser Hinweis und das Consent-Verhalten aktualisiert werden.'] },
-            { title: 'Deine Kontrolle', items: ['Du kannst App-Daten in Settings löschen.', 'Du kannst Browserspeicher auch über deinen Browser löschen, aber dadurch kannst du abgemeldet werden oder lokale Workspace-Daten verlieren.'] },
+            {
+              title: "Lokaler Browserspeicher",
+              items: [
+                "Projekte, Profil, Lebenslauf, Notizen und App-Einstellungen werden überwiegend lokal im Browser gespeichert.",
+                "So kann die App deinen Workspace auf demselben Gerät wieder öffnen.",
+              ],
+            },
+            {
+              title: "Notwendige Authentication- und Session-Speicherung",
+              items: [
+                "Die sichere Anmeldung kann Cookies oder ähnlichen Speicher verwenden, der nötig ist, um dich angemeldet zu halten.",
+                "Gerätefreigaben und Zugriffskontrollen können ebenfalls aus Sicherheitsgründen auf notwendigen Speicher angewiesen sein.",
+              ],
+            },
+            {
+              title: "Messung von Traffic und Performance",
+              items: [
+                "JobSensei nutzt derzeit Vercel Web Analytics und Speed Insights, um Seiten-Traffic und die reale Performance von Nutzerinnen und Nutzern zu verstehen.",
+                "Laut Vercel speichert Web Analytics anonymisierte Daten und verwendet keine Cookies. Für den hier beschriebenen Kernablauf sind keine Werbe- oder Remarketing-Cookies erforderlich.",
+              ],
+            },
+            {
+              title: "Deine Kontrolle",
+              items: [
+                "Du kannst App-Daten in Settings löschen.",
+                "Du kannst Browserspeicher auch über deinen Browser löschen, aber dadurch kannst du abgemeldet werden oder lokale Workspace-Daten verlieren.",
+              ],
+            },
           ],
         },
       };
 
-      const param = new URLSearchParams(window.location.search).get('lang');
-      const browserLang = (param || navigator.language || 'en').trim();
-      const copy = COPY[browserLang] || COPY[browserLang.split('-')[0]] || COPY.en;
+      const param = new URLSearchParams(window.location.search).get("lang");
+      const browserLang = (param || navigator.language || "en").trim();
+      const copy = COPY[browserLang] || COPY[browserLang.split("-")[0]] || COPY.en;
 
       document.documentElement.lang = browserLang;
-      document.getElementById('pill').textContent = copy.pill;
-      document.getElementById('title').textContent = copy.title;
-      document.getElementById('updated').textContent = copy.updated;
-      document.getElementById('intro').textContent = copy.intro;
+      document.getElementById("pill").textContent = copy.pill;
+      document.getElementById("title").textContent = copy.title;
+      document.getElementById("updated").textContent = copy.updated;
+      document.getElementById("intro").textContent = copy.intro;
 
-      const sections = document.getElementById('sections');
-      copy.sections.forEach(section => {
-        const wrap = document.createElement('section');
-        const h2 = document.createElement('h2');
+      const sections = document.getElementById("sections");
+      copy.sections.forEach((section) => {
+        const wrap = document.createElement("section");
+        const h2 = document.createElement("h2");
         h2.textContent = section.title;
         wrap.appendChild(h2);
-        const list = document.createElement('ul');
-        section.items.forEach(item => {
-          const li = document.createElement('li');
+        const list = document.createElement("ul");
+        section.items.forEach((item) => {
+          const li = document.createElement("li");
           li.textContent = item;
           list.appendChild(li);
         });

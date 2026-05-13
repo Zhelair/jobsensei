@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { track } from '@vercel/analytics'
 import { useAuth } from './AuthContext'
 
 const AIContext = createContext(null)
@@ -57,6 +58,10 @@ function parseSavedJson(value, fallback = null) {
   } catch {
     return fallback
   }
+}
+
+function looksLikeEmail(value = '') {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim())
 }
 
 async function readProxyResponse(res, { onChunk, onUnauthorized } = {}) {
@@ -183,13 +188,26 @@ export function AIProvider({ children }) {
 
   async function unlockAccess(accessInput) {
     const normalizedInput = String(accessInput || '').trim()
+    const inputType = looksLikeEmail(normalizedInput) ? 'email' : 'code'
+
+    track('unlock_access_attempted', {
+      input_type: inputType,
+      secure_accounts_enabled: secureAccountsEnabled,
+    })
+
     const res = await fetch('/api/verify-member', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: normalizedInput }),
     })
     const data = await res.json()
-    if (!res.ok) throw new Error(data.error || 'Verification failed')
+    if (!res.ok) {
+      track('unlock_access_failed', {
+        input_type: inputType,
+        status: res.status,
+      })
+      throw new Error(data.error || 'Verification failed')
+    }
 
     if (data.next === 'magic_link') {
       if (!secureAccountsEnabled) {
@@ -197,6 +215,9 @@ export function AIProvider({ children }) {
       }
 
       await sendMagicLink(data.email || normalizedInput.toLowerCase())
+      track('unlock_access_magic_link_sent', {
+        input_type: 'email',
+      })
       return {
         mode: 'magic_link',
         email: data.email || normalizedInput.toLowerCase(),
@@ -204,6 +225,10 @@ export function AIProvider({ children }) {
     }
 
     saveBmacToken(data.token, data.email || null)
+    track('unlock_access_granted', {
+      input_type,
+      mode: 'legacy_code',
+    })
     return {
       mode: 'legacy_code',
       accessInput: normalizedInput,

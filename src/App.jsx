@@ -1,4 +1,6 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
+import { Analytics, track } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { AppProvider, useApp, SECTIONS } from './context/AppContext'
 import { AIProvider } from './context/AIContext'
 import { AuthProvider } from './context/AuthContext'
@@ -25,6 +27,17 @@ const APPLICATION_REQUIRED_SECTIONS = new Set([
   SECTIONS.INTERVIEW,
   SECTIONS.TOOLS,
 ])
+
+const SECTION_ANALYTICS_LABELS = {
+  [SECTIONS.TODAY]: 'today',
+  [SECTIONS.APPLICATIONS]: 'applications',
+  [SECTIONS.DASHBOARD]: 'dashboard',
+  [SECTIONS.INTERVIEW]: 'interview',
+  [SECTIONS.LEARNING]: 'learning',
+  [SECTIONS.TOOLS]: 'tools',
+  [SECTIONS.TRACKER]: 'tracker',
+  [SECTIONS.SETTINGS]: 'settings',
+}
 
 function ApplicationRequiredGate({ sectionLabel }) {
   const { setActiveSection } = useApp()
@@ -71,6 +84,7 @@ function AppContent() {
   const { activeSection, showOnboarding, navKey } = useApp()
   const { getProjectData } = useProject()
   const applications = getProjectData('applications') || []
+  const previousTrackedSectionRef = useRef('')
 
   const sections = {
     [SECTIONS.TODAY]: TodayPage,
@@ -89,6 +103,17 @@ function AppContent() {
   // Sections that use full height (chat interfaces)
   const fullHeightSections = [SECTIONS.INTERVIEW]
   const isFullHeight = fullHeightSections.includes(activeSection)
+
+  useEffect(() => {
+    if (previousTrackedSectionRef.current === activeSection) return
+
+    previousTrackedSectionRef.current = activeSection
+    track('section_view', {
+      section: SECTION_ANALYTICS_LABELS[activeSection] || String(activeSection || 'unknown'),
+      has_applications: applications.length > 0,
+      application_count: applications.length,
+    })
+  }, [activeSection, applications.length])
 
   return (
     <div className="flex h-screen overflow-hidden bg-mesh">
@@ -127,6 +152,8 @@ export default function App() {
             </AIProvider>
           </AuthProvider>
         </LanguageProvider>
+        <Analytics />
+        <SpeedInsights />
       </VisualsProvider>
     </ThemeProvider>
   )

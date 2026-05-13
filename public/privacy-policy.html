@@ -14,7 +14,11 @@
         --accent: #2dd4bf;
         --accent-soft: rgba(45, 212, 191, 0.12);
       }
-      * { box-sizing: border-box; }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
         font-family: Inter, system-ui, sans-serif;
@@ -24,8 +28,9 @@
         color: var(--text);
         line-height: 1.6;
       }
+
       main {
-        width: min(860px, calc(100vw - 32px));
+        width: min(880px, calc(100vw - 32px));
         margin: 40px auto;
         padding: 28px;
         background: var(--panel);
@@ -33,11 +38,31 @@
         border-radius: 24px;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
       }
-      h1, h2 { margin: 0 0 12px; }
-      h1 { font-size: 2rem; }
-      h2 { margin-top: 24px; font-size: 1.15rem; color: var(--accent); }
-      p, li { color: var(--text); }
-      .muted { color: var(--muted); }
+
+      h1,
+      h2 {
+        margin: 0 0 12px;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      h2 {
+        margin-top: 24px;
+        font-size: 1.15rem;
+        color: var(--accent);
+      }
+
+      p,
+      li {
+        color: var(--text);
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
       .pill {
         display: inline-block;
         margin-bottom: 12px;
@@ -49,8 +74,15 @@
         font-size: 0.78rem;
         font-weight: 600;
       }
-      ul { padding-left: 18px; margin: 0; }
-      li + li { margin-top: 6px; }
+
+      ul {
+        padding-left: 18px;
+        margin: 0;
+      }
+
+      li + li {
+        margin-top: 6px;
+      }
     </style>
   </head>
   <body>
@@ -66,111 +98,453 @@
         en: {
           pill: 'JobSensei',
           title: 'Privacy Policy',
-          updated: 'Last updated: May 6, 2026',
-          intro: 'JobSensei is designed to keep most workspace data local in your browser. This page explains what stays local, what may be stored server-side to run the product, and which providers help operate the service.',
+          updated: 'Last updated: May 13, 2026',
+          intro: 'JobSensei is designed to keep most workspace data local in your browser. This page explains what stays local, what may be stored server-side to run the product, and how analytics, storage, authentication, and approved-device checks are used.',
           sections: [
-            { title: 'What stays local', items: ['Most profile, project, resume, notes, applications, and workspace data stays in your browser on this device.', 'You can clear local data from Settings at any time.'] },
-            { title: 'What may be stored server-side', items: ['Account email used for secure sign-in.', 'Approved-device records used for the 2-device rule.', 'Plan or purchase-grant records used to decide whether hosted AI access is active.'] },
-            { title: 'Providers used to run JobSensei', items: ['Vercel for hosting and serverless functions.', 'Supabase for authentication and approved-device / plan-access records.', 'Buy Me a Coffee for payment and purchase confirmation.', 'Resend for sign-in email delivery when enabled.', 'AI providers that process the prompts you choose to send.'] },
-            { title: 'Your choices', items: ['You can clear local app data from Settings.', 'You can avoid hosted AI and use your own provider key where supported.', 'You can contact the JobSensei operator for privacy or deletion requests.'] },
-          ],
+            {
+              title: 'What stays local',
+              items: [
+                'Most profile, project, resume, notes, applications, and workspace data stays in your browser on this device.',
+                'You can clear local app data from Settings at any time.'
+              ]
+            },
+            {
+              title: 'What may be stored server-side',
+              items: [
+                'Your account email used for secure sign-in.',
+                'Approved-device records used to enforce the 2-device access rule and cooldown replacement checks.',
+                'Plan or purchase-grant records used to decide whether JobSensei-hosted AI access is active.'
+              ]
+            },
+            {
+              title: 'Providers used to run JobSensei',
+              items: [
+                'Vercel for hosting, serverless functions, Web Analytics, and Speed Insights.',
+                'Supabase for authentication and approved-device / plan-access records.',
+                'Buy Me a Coffee for payment events and purchase confirmation.',
+                'Resend for magic-link or sign-in email delivery when enabled.',
+                'The selected AI provider for prompts and responses you choose to send.'
+              ]
+            },
+            {
+              title: 'Analytics and performance measurement',
+              items: [
+                'JobSensei currently uses Vercel Web Analytics to measure visits, referrers, countries, operating systems, browsers, and custom product events such as unlock attempts or section views.',
+                'According to Vercel, Web Analytics stores anonymized data and does not use cookies for analytics tracking.',
+                'JobSensei also uses Vercel Speed Insights to measure Core Web Vitals and real-user performance on deployed environments.',
+                'Secure sign-in and approved-device protection can still rely on necessary cookies, tokens, or browser storage even if analytics tracking itself is cookie-free.'
+              ]
+            },
+            {
+              title: 'Your choices',
+              items: [
+                'You can clear local app data from Settings.',
+                'You can avoid hosted AI and use your own provider key where supported.',
+                'You can contact the JobSensei operator for privacy or deletion requests.'
+              ]
+            }
+          ]
         },
         bg: {
           pill: 'JobSensei',
           title: 'Политика за поверителност',
-          updated: 'Последна промяна: 6 май 2026',
-          intro: 'JobSensei е проектиран така, че повечето workspace данни да остават локално в твоя браузър. Тази страница обяснява какво остава локално, какво може да се пази сървърно и кои доставчици помагат на услугата да работи.',
+          updated: 'Последна промяна: 13 май 2026',
+          intro: 'JobSensei е проектиран така, че повечето workspace данни да остават локално в твоя браузър. Тази страница обяснява какво остава локално, какво може да се пази сървърно и как се използват analytics, storage, authentication и проверките за одобрени устройства.',
           sections: [
-            { title: 'Какво остава локално', items: ['Повечето данни за профил, проекти, CV, бележки, кандидатури и workspace остават в този браузър на това устройство.', 'Можеш да изчистиш локалните данни от Settings по всяко време.'] },
-            { title: 'Какво може да се пази сървърно', items: ['Имейлът за защитен вход.', 'Одобрените устройства за правилото с 2 устройства.', 'План или purchase-grant записи за hosted AI достъп.'] },
-            { title: 'Доставчици, които помагат на JobSensei', items: ['Vercel за хостинг и serverless функции.', 'Supabase за authentication и одобрени устройства / достъп до план.', 'Buy Me a Coffee за плащане и потвърждение на покупка.', 'Resend за sign-in имейли, ако е включен.', 'AI доставчици за prompt заявки, които решиш да изпратиш.'] },
-            { title: 'Твоите избори', items: ['Можеш да изчистиш локалните данни от Settings.', 'Можеш да ползваш свой AI ключ, ако е поддържан.', 'Можеш да се свържеш с оператора на JobSensei за поверителност или изтриване.'] },
-          ],
+            {
+              title: 'Какво остава локално',
+              items: [
+                'Повечето данни за профил, проекти, CV, бележки, кандидатури и workspace остават в този браузър на това устройство.',
+                'Можеш да изчистиш локалните данни на приложението от Settings по всяко време.'
+              ]
+            },
+            {
+              title: 'Какво може да се пази сървърно',
+              items: [
+                'Имейлът на акаунта, използван за защитен вход.',
+                'Записи за одобрени устройства, използвани за правилото с 2 устройства и cooldown проверките при подмяна.',
+                'Записи за план или purchase grant, използвани, за да се определи дали JobSensei-hosted AI достъпът е активен.'
+              ]
+            },
+            {
+              title: 'Доставчици, които помагат на JobSensei',
+              items: [
+                'Vercel за хостинг, serverless функции, Web Analytics и Speed Insights.',
+                'Supabase за authentication и записи за одобрени устройства / достъп до план.',
+                'Buy Me a Coffee за платежни събития и потвърждение на покупка.',
+                'Resend за magic link или sign-in имейли, когато е активиран.',
+                'Избраният AI доставчик за prompt заявки и отговорите, които решиш да изпратиш.'
+              ]
+            },
+            {
+              title: 'Аналитика и измерване на производителността',
+              items: [
+                'В момента JobSensei използва Vercel Web Analytics, за да измерва посещения, referrer източници, държави, операционни системи, браузъри и custom product events като unlock опити или section views.',
+                'Според Vercel, Web Analytics пази анонимизирани данни и не използва cookies за analytics проследяване.',
+                'JobSensei използва и Vercel Speed Insights, за да измерва Core Web Vitals и реалната производителност при потребители в deploy средите.',
+                'Защитеният вход и approved-device защитата все пак може да разчитат на необходими cookies, токени или browser storage, дори когато самата analytics част е без cookies.'
+              ]
+            },
+            {
+              title: 'Твоите избори',
+              items: [
+                'Можеш да изчистиш локалните данни на приложението от Settings.',
+                'Можеш да избегнеш hosted AI и да използваш свой ключ, когато това се поддържа.',
+                'Можеш да се свържеш с оператора на JobSensei за заявки за поверителност или изтриване.'
+              ]
+            }
+          ]
         },
         ru: {
           pill: 'JobSensei',
           title: 'Политика конфиденциальности',
-          updated: 'Последнее обновление: 6 мая 2026',
-          intro: 'JobSensei спроектирован так, чтобы большая часть данных workspace оставалась локально в браузере. На этой странице объясняется, что остаётся локально, что может храниться на сервере и какие провайдеры помогают сервису работать.',
+          updated: 'Последнее обновление: 13 мая 2026',
+          intro: 'JobSensei спроектирован так, чтобы большая часть данных workspace оставалась локально в вашем браузере. Эта страница объясняет, что остаётся локально, что может храниться на сервере и как используются analytics, storage, authentication и проверки одобренных устройств.',
           sections: [
-            { title: 'Что остаётся локально', items: ['Большая часть профиля, проектов, резюме, заметок, откликов и данных workspace остаётся в браузере на этом устройстве.', 'Локальные данные можно очистить в Settings в любой момент.'] },
-            { title: 'Что может храниться на сервере', items: ['Email для безопасного входа.', 'Одобренные устройства для правила 2 устройств.', 'Записи о плане или покупке для hosted AI доступа.'] },
-            { title: 'Провайдеры, которые помогают JobSensei', items: ['Vercel для хостинга и serverless-функций.', 'Supabase для authentication и доступа / устройств.', 'Buy Me a Coffee для оплаты и подтверждения покупки.', 'Resend для sign-in email, если он включён.', 'AI-провайдеры для обработки отправленных вами prompt-запросов.'] },
-            { title: 'Ваш выбор', items: ['Вы можете очистить локальные данные в Settings.', 'Вы можете использовать свой AI key, если это поддерживается.', 'Вы можете связаться с оператором JobSensei по вопросам конфиденциальности или удаления данных.'] },
-          ],
+            {
+              title: 'Что остаётся локально',
+              items: [
+                'Большая часть данных профиля, проектов, резюме, заметок, откликов и workspace остаётся в этом браузере на этом устройстве.',
+                'Вы можете очистить локальные данные приложения в Settings в любой момент.'
+              ]
+            },
+            {
+              title: 'Что может храниться на сервере',
+              items: [
+                'Email аккаунта, используемый для безопасного входа.',
+                'Записи об одобренных устройствах для правила 2 устройств и cooldown-проверок при замене устройства.',
+                'Записи о плане или purchase grant, используемые для определения, активирован ли доступ к JobSensei-hosted AI.'
+              ]
+            },
+            {
+              title: 'Провайдеры, которые помогают JobSensei',
+              items: [
+                'Vercel для хостинга, serverless-функций, Web Analytics и Speed Insights.',
+                'Supabase для authentication и записей об одобренных устройствах / доступе к плану.',
+                'Buy Me a Coffee для платёжных событий и подтверждения покупки.',
+                'Resend для magic link или sign-in email, когда это включено.',
+                'Выбранный AI-провайдер для prompt-запросов и ответов, которые вы решите отправить.'
+              ]
+            },
+            {
+              title: 'Аналитика и измерение производительности',
+              items: [
+                'Сейчас JobSensei использует Vercel Web Analytics для измерения посещений, источников переходов, стран, операционных систем, браузеров и custom product events, таких как попытки unlock или просмотры разделов.',
+                'Согласно Vercel, Web Analytics хранит анонимизированные данные и не использует cookies для аналитического отслеживания.',
+                'JobSensei также использует Vercel Speed Insights для измерения Core Web Vitals и реальной производительности у пользователей в развернутых средах.',
+                'Безопасный вход и защита approved-device всё равно могут использовать необходимые cookies, токены или browser storage, даже если сама аналитика работает без cookies.'
+              ]
+            },
+            {
+              title: 'Ваш выбор',
+              items: [
+                'Вы можете очистить локальные данные приложения в Settings.',
+                'Вы можете не использовать hosted AI и подключить свой ключ, если это поддерживается.',
+                'Вы можете связаться с оператором JobSensei по вопросам конфиденциальности или удаления данных.'
+              ]
+            }
+          ]
         },
         'es-ES': {
           pill: 'JobSensei',
           title: 'Política de privacidad',
-          updated: 'Última actualización: 6 de mayo de 2026',
-          intro: 'JobSensei está pensado para que la mayor parte de los datos del workspace se queden localmente en tu navegador. Esta página explica qué se queda local, qué puede guardarse del lado del servidor y qué proveedores ayudan a operar el servicio.',
+          updated: 'Última actualización: 13 de mayo de 2026',
+          intro: 'JobSensei está diseñado para que la mayor parte de los datos del workspace se quede localmente en tu navegador. Esta página explica qué se queda local, qué puede almacenarse en el servidor y cómo se usan analytics, storage, authentication y las comprobaciones de dispositivos aprobados.',
           sections: [
-            { title: 'Qué se queda local', items: ['La mayor parte del perfil, proyectos, CV, notas, candidaturas y datos del workspace se queda en este navegador.', 'Puedes borrar los datos locales desde Settings en cualquier momento.'] },
-            { title: 'Qué puede almacenarse del lado del servidor', items: ['El email usado para el inicio de sesión seguro.', 'Los dispositivos aprobados usados para la regla de 2 dispositivos.', 'Los registros de plan o compra usados para decidir si hosted AI está activa.'] },
-            { title: 'Proveedores que ayudan a JobSensei', items: ['Vercel para hosting y funciones serverless.', 'Supabase para authentication y acceso / dispositivos aprobados.', 'Buy Me a Coffee para pagos y confirmación de compra.', 'Resend para emails de inicio de sesión cuando esté activado.', 'Proveedores de AI que procesan los prompts que decidas enviar.'] },
-            { title: 'Tus opciones', items: ['Puedes borrar los datos locales desde Settings.', 'Puedes evitar hosted AI y usar tu propia clave cuando sea compatible.', 'Puedes contactar al operador de JobSensei para solicitudes de privacidad o eliminación.'] },
-          ],
+            {
+              title: 'Qué se queda local',
+              items: [
+                'La mayor parte del perfil, proyectos, CV, notas, candidaturas y datos del workspace se queda en este navegador y en este dispositivo.',
+                'Puedes borrar los datos locales de la app desde Settings en cualquier momento.'
+              ]
+            },
+            {
+              title: 'Qué puede almacenarse en el servidor',
+              items: [
+                'El email de la cuenta usado para el inicio de sesión seguro.',
+                'Los registros de dispositivos aprobados usados para la regla de acceso de 2 dispositivos y las comprobaciones de cooldown al reemplazar un dispositivo.',
+                'Los registros de plan o de purchase grant usados para decidir si el acceso a JobSensei-hosted AI está activo.'
+              ]
+            },
+            {
+              title: 'Proveedores que ayudan a JobSensei',
+              items: [
+                'Vercel para hosting, funciones serverless, Web Analytics y Speed Insights.',
+                'Supabase para authentication y registros de dispositivos aprobados / acceso al plan.',
+                'Buy Me a Coffee para eventos de pago y confirmación de compra.',
+                'Resend para el envío de magic link o emails de sign-in cuando está habilitado.',
+                'El proveedor de AI seleccionado para los prompts y respuestas que decidas enviar.'
+              ]
+            },
+            {
+              title: 'Analítica y medición de rendimiento',
+              items: [
+                'JobSensei usa actualmente Vercel Web Analytics para medir visitas, referrers, países, sistemas operativos, navegadores y custom product events como intentos de unlock o vistas de secciones.',
+                'Según Vercel, Web Analytics almacena datos anonimizados y no usa cookies para el seguimiento analítico.',
+                'JobSensei también usa Vercel Speed Insights para medir Core Web Vitals y el rendimiento real de usuarios en los entornos desplegados.',
+                'El inicio de sesión seguro y la protección de approved-device aún pueden depender de cookies necesarias, tokens o browser storage aunque la analítica en sí no use cookies.'
+              ]
+            },
+            {
+              title: 'Tus opciones',
+              items: [
+                'Puedes borrar los datos locales de la app desde Settings.',
+                'Puedes evitar hosted AI y usar tu propia clave cuando sea compatible.',
+                'Puedes contactar al operador de JobSensei para solicitudes de privacidad o eliminación.'
+              ]
+            }
+          ]
         },
         fr: {
           pill: 'JobSensei',
           title: 'Politique de confidentialité',
-          updated: 'Dernière mise à jour : 6 mai 2026',
-          intro: 'JobSensei est conçu pour garder la plupart des données workspace localement dans votre navigateur. Cette page explique ce qui reste local, ce qui peut être stocké côté serveur et quels fournisseurs aident le service à fonctionner.',
+          updated: 'Dernière mise à jour : 13 mai 2026',
+          intro: 'JobSensei est conçu pour conserver la plupart des données workspace localement dans votre navigateur. Cette page explique ce qui reste local, ce qui peut être stocké côté serveur et comment analytics, storage, authentication et les vérifications des appareils approuvés sont utilisés.',
           sections: [
-            { title: 'Ce qui reste local', items: ['La plupart des données de profil, projets, CV, notes, candidatures et workspace restent dans ce navigateur.', 'Vous pouvez effacer les données locales depuis Settings à tout moment.'] },
-            { title: 'Ce qui peut être stocké côté serveur', items: ['L’email utilisé pour la connexion sécurisée.', 'Les appareils approuvés utilisés pour la règle des 2 appareils.', 'Les enregistrements de plan ou d’achat utilisés pour activer hosted AI.'] },
-            { title: 'Fournisseurs utilisés pour JobSensei', items: ['Vercel pour l’hébergement et les fonctions serverless.', 'Supabase pour authentication et l’accès / les appareils approuvés.', 'Buy Me a Coffee pour les paiements et confirmations d’achat.', 'Resend pour les emails de connexion quand il est activé.', 'Les fournisseurs AI qui traitent les prompts que vous choisissez d’envoyer.'] },
-            { title: 'Vos choix', items: ['Vous pouvez effacer les données locales depuis Settings.', 'Vous pouvez utiliser votre propre clé AI lorsque c’est pris en charge.', 'Vous pouvez contacter l’opérateur de JobSensei pour une demande de confidentialité ou de suppression.'] },
-          ],
+            {
+              title: 'Ce qui reste local',
+              items: [
+                'La plupart des données de profil, projets, CV, notes, candidatures et workspace restent dans ce navigateur sur cet appareil.',
+                'Vous pouvez effacer les données locales de l’application depuis Settings à tout moment.'
+              ]
+            },
+            {
+              title: 'Ce qui peut être stocké côté serveur',
+              items: [
+                'L’email du compte utilisé pour la connexion sécurisée.',
+                'Les enregistrements d’appareils approuvés utilisés pour la règle d’accès à 2 appareils et les vérifications de cooldown lors du remplacement d’un appareil.',
+                'Les enregistrements de plan ou de purchase grant utilisés pour décider si l’accès JobSensei-hosted AI est actif.'
+              ]
+            },
+            {
+              title: 'Fournisseurs utilisés par JobSensei',
+              items: [
+                'Vercel pour l’hébergement, les fonctions serverless, Web Analytics et Speed Insights.',
+                'Supabase pour l’authentication et les enregistrements d’appareils approuvés / d’accès au plan.',
+                'Buy Me a Coffee pour les événements de paiement et la confirmation d’achat.',
+                'Resend pour l’envoi de magic link ou d’emails de sign-in lorsqu’il est activé.',
+                'Le fournisseur AI sélectionné pour les prompts et réponses que vous choisissez d’envoyer.'
+              ]
+            },
+            {
+              title: 'Analytique et mesure des performances',
+              items: [
+                'JobSensei utilise actuellement Vercel Web Analytics pour mesurer les visites, les referrers, les pays, les systèmes d’exploitation, les navigateurs et des custom product events comme les tentatives de unlock ou les vues de section.',
+                'Selon Vercel, Web Analytics stocke des données anonymisées et n’utilise pas de cookies pour le suivi analytique.',
+                'JobSensei utilise aussi Vercel Speed Insights pour mesurer les Core Web Vitals et les performances réelles des utilisateurs sur les environnements déployés.',
+                'La connexion sécurisée et la protection approved-device peuvent néanmoins reposer sur des cookies nécessaires, des jetons ou le browser storage même si l’analytics elle-même est sans cookies.'
+              ]
+            },
+            {
+              title: 'Vos choix',
+              items: [
+                'Vous pouvez effacer les données locales de l’application depuis Settings.',
+                'Vous pouvez éviter hosted AI et utiliser votre propre clé lorsque c’est pris en charge.',
+                'Vous pouvez contacter l’opérateur JobSensei pour les demandes de confidentialité ou de suppression.'
+              ]
+            }
+          ]
         },
         it: {
           pill: 'JobSensei',
           title: 'Informativa sulla privacy',
-          updated: 'Ultimo aggiornamento: 6 maggio 2026',
-          intro: 'JobSensei è progettato per lasciare la maggior parte dei dati del workspace localmente nel browser. Questa pagina spiega cosa resta locale, cosa può essere memorizzato lato server e quali provider aiutano il servizio a funzionare.',
+          updated: 'Ultimo aggiornamento: 13 maggio 2026',
+          intro: 'JobSensei è progettato per mantenere la maggior parte dei dati del workspace localmente nel browser. Questa pagina spiega cosa resta locale, cosa può essere memorizzato lato server e come vengono usati analytics, storage, authentication e i controlli dei dispositivi approvati.',
           sections: [
-            { title: 'Cosa resta locale', items: ['La maggior parte di profilo, progetti, CV, note, candidature e dati del workspace resta in questo browser.', 'Puoi cancellare i dati locali da Settings in qualsiasi momento.'] },
-            { title: 'Cosa può essere memorizzato lato server', items: ['L’email usata per il login sicuro.', 'I dispositivi approvati usati per la regola dei 2 dispositivi.', 'I record di piano o acquisto usati per attivare hosted AI.'] },
-            { title: 'Provider che aiutano JobSensei', items: ['Vercel per hosting e funzioni serverless.', 'Supabase per authentication e accesso / dispositivi approvati.', 'Buy Me a Coffee per pagamento e conferma acquisto.', 'Resend per le email di accesso quando attivo.', 'I provider AI che elaborano i prompt che scegli di inviare.'] },
-            { title: 'Le tue scelte', items: ['Puoi cancellare i dati locali da Settings.', 'Puoi usare la tua chiave AI dove supportato.', 'Puoi contattare l’operatore di JobSensei per privacy o cancellazione.'] },
-          ],
+            {
+              title: 'Cosa resta locale',
+              items: [
+                'La maggior parte di profilo, progetti, CV, note, candidature e dati del workspace resta in questo browser su questo dispositivo.',
+                'Puoi cancellare i dati locali dell’app da Settings in qualsiasi momento.'
+              ]
+            },
+            {
+              title: 'Cosa può essere memorizzato lato server',
+              items: [
+                'L’email dell’account usata per il login sicuro.',
+                'I record dei dispositivi approvati usati per la regola di accesso a 2 dispositivi e per i controlli di cooldown quando sostituisci un dispositivo.',
+                'I record di piano o di purchase grant usati per decidere se l’accesso a JobSensei-hosted AI è attivo.'
+              ]
+            },
+            {
+              title: 'Provider che aiutano JobSensei',
+              items: [
+                'Vercel per hosting, funzioni serverless, Web Analytics e Speed Insights.',
+                'Supabase per authentication e record di dispositivi approvati / accesso al piano.',
+                'Buy Me a Coffee per eventi di pagamento e conferma acquisto.',
+                'Resend per l’invio di magic link o email di sign-in quando abilitato.',
+                'Il provider AI selezionato per i prompt e le risposte che scegli di inviare.'
+              ]
+            },
+            {
+              title: 'Analytics e misurazione delle prestazioni',
+              items: [
+                'JobSensei usa attualmente Vercel Web Analytics per misurare visite, referrer, paesi, sistemi operativi, browser e custom product events come tentativi di unlock o visualizzazioni di sezione.',
+                'Secondo Vercel, Web Analytics memorizza dati anonimizzati e non usa cookie per il tracciamento analitico.',
+                'JobSensei usa anche Vercel Speed Insights per misurare Core Web Vitals e le prestazioni reali degli utenti negli ambienti distribuiti.',
+                'Il login sicuro e la protezione approved-device possono comunque fare affidamento su cookie necessari, token o browser storage anche se l’analytics in sé è cookie-free.'
+              ]
+            },
+            {
+              title: 'Le tue scelte',
+              items: [
+                'Puoi cancellare i dati locali dell’app da Settings.',
+                'Puoi evitare hosted AI e usare la tua chiave dove supportato.',
+                'Puoi contattare l’operatore di JobSensei per richieste di privacy o cancellazione.'
+              ]
+            }
+          ]
         },
         'pt-BR': {
           pill: 'JobSensei',
           title: 'Política de privacidade',
-          updated: 'Última atualização: 6 de maio de 2026',
-          intro: 'O JobSensei foi desenhado para manter a maior parte dos dados do workspace localmente no teu browser. Esta página explica o que fica local, o que pode ser guardado no servidor e que fornecedores ajudam a operar o serviço.',
+          updated: 'Última atualização: 13 de maio de 2026',
+          intro: 'O JobSensei foi desenhado para manter a maior parte dos dados do workspace localmente no teu browser. Esta página explica o que fica local, o que pode ser guardado no servidor e como analytics, storage, authentication e as verificações de dispositivos aprovados são usados.',
           sections: [
-            { title: 'O que fica local', items: ['A maior parte do perfil, projetos, CV, notas, candidaturas e dados do workspace fica neste browser.', 'Podes limpar os dados locais em Settings a qualquer momento.'] },
-            { title: 'O que pode ser guardado no servidor', items: ['O email usado para o início de sessão seguro.', 'Os dispositivos aprovados usados para a regra dos 2 dispositivos.', 'Os registos de plano ou compra usados para ativar hosted AI.'] },
-            { title: 'Fornecedores que ajudam o JobSensei', items: ['Vercel para alojamento e funções serverless.', 'Supabase para authentication e acesso / dispositivos aprovados.', 'Buy Me a Coffee para pagamento e confirmação de compra.', 'Resend para emails de início de sessão quando ativo.', 'Fornecedores de AI que processam os prompts que decides enviar.'] },
-            { title: 'As tuas escolhas', items: ['Podes limpar os dados locais em Settings.', 'Podes usar a tua própria chave AI quando suportado.', 'Podes contactar o operador do JobSensei para privacidade ou eliminação.'] },
-          ],
+            {
+              title: 'O que fica local',
+              items: [
+                'A maior parte do perfil, projetos, CV, notas, candidaturas e dados do workspace fica neste browser e neste dispositivo.',
+                'Podes limpar os dados locais da app em Settings a qualquer momento.'
+              ]
+            },
+            {
+              title: 'O que pode ser guardado no servidor',
+              items: [
+                'O email da conta usado para início de sessão seguro.',
+                'Os registos de dispositivos aprovados usados para a regra de acesso de 2 dispositivos e para verificações de cooldown ao substituir um dispositivo.',
+                'Os registos de plano ou de purchase grant usados para decidir se o acesso ao JobSensei-hosted AI está ativo.'
+              ]
+            },
+            {
+              title: 'Fornecedores que ajudam o JobSensei',
+              items: [
+                'Vercel para alojamento, funções serverless, Web Analytics e Speed Insights.',
+                'Supabase para authentication e registos de dispositivos aprovados / acesso ao plano.',
+                'Buy Me a Coffee para eventos de pagamento e confirmação de compra.',
+                'Resend para envio de magic link ou emails de sign-in quando estiver ativado.',
+                'O fornecedor de AI selecionado para os prompts e respostas que decidires enviar.'
+              ]
+            },
+            {
+              title: 'Analytics e medição de performance',
+              items: [
+                'O JobSensei usa atualmente o Vercel Web Analytics para medir visitas, referrers, países, sistemas operativos, browsers e custom product events como tentativas de unlock ou visualizações de secções.',
+                'Segundo a Vercel, o Web Analytics armazena dados anonimizados e não usa cookies para tracking analítico.',
+                'O JobSensei também usa o Vercel Speed Insights para medir Core Web Vitals e performance real dos utilizadores nos ambientes publicados.',
+                'O início de sessão seguro e a proteção approved-device ainda podem depender de cookies necessários, tokens ou browser storage, mesmo que a analytics em si seja sem cookies.'
+              ]
+            },
+            {
+              title: 'As tuas escolhas',
+              items: [
+                'Podes limpar os dados locais da app em Settings.',
+                'Podes evitar hosted AI e usar a tua própria chave quando suportado.',
+                'Podes contactar o operador do JobSensei para pedidos de privacidade ou eliminação.'
+              ]
+            }
+          ]
         },
         pl: {
           pill: 'JobSensei',
           title: 'Polityka prywatności',
-          updated: 'Ostatnia aktualizacja: 6 maja 2026',
-          intro: 'JobSensei został zaprojektowany tak, aby większość danych workspace pozostawała lokalnie w przeglądarce. Ta strona wyjaśnia, co zostaje lokalnie, co może być zapisane po stronie serwera i jacy dostawcy pomagają uruchamiać usługę.',
+          updated: 'Ostatnia aktualizacja: 13 maja 2026',
+          intro: 'JobSensei został zaprojektowany tak, aby większość danych workspace pozostawała lokalnie w przeglądarce. Ta strona wyjaśnia, co zostaje lokalnie, co może być przechowywane po stronie serwera oraz jak używane są analytics, storage, authentication i kontrole zatwierdzonych urządzeń.',
           sections: [
-            { title: 'Co zostaje lokalnie', items: ['Większość danych profilu, projektów, CV, notatek, aplikacji i workspace pozostaje w tej przeglądarce.', 'Dane lokalne możesz wyczyścić w Settings w dowolnym momencie.'] },
-            { title: 'Co może być przechowywane po stronie serwera', items: ['Email używany do bezpiecznego logowania.', 'Zatwierdzone urządzenia używane do zasady 2 urządzeń.', 'Rekordy planu lub zakupu używane do aktywacji hosted AI.'] },
-            { title: 'Dostawcy pomagający JobSensei', items: ['Vercel do hostingu i funkcji serverless.', 'Supabase do authentication oraz dostępu / zatwierdzonych urządzeń.', 'Buy Me a Coffee do płatności i potwierdzeń zakupu.', 'Resend do maili logowania, gdy jest włączony.', 'Dostawcy AI, którzy przetwarzają prompty, które zdecydujesz się wysłać.'] },
-            { title: 'Twoje wybory', items: ['Możesz wyczyścić dane lokalne w Settings.', 'Możesz używać własnego klucza AI tam, gdzie jest wspierany.', 'Możesz skontaktować się z operatorem JobSensei w sprawie prywatności lub usunięcia danych.'] },
-          ],
+            {
+              title: 'Co zostaje lokalnie',
+              items: [
+                'Większość danych profilu, projektów, CV, notatek, aplikacji i workspace pozostaje w tej przeglądarce na tym urządzeniu.',
+                'Możesz wyczyścić lokalne dane aplikacji w Settings w dowolnym momencie.'
+              ]
+            },
+            {
+              title: 'Co może być przechowywane po stronie serwera',
+              items: [
+                'Email konta używany do bezpiecznego logowania.',
+                'Rekordy zatwierdzonych urządzeń używane do zasady dostępu 2 urządzeń oraz kontroli cooldown przy wymianie urządzenia.',
+                'Rekordy planu lub purchase grant używane do ustalenia, czy dostęp do JobSensei-hosted AI jest aktywny.'
+              ]
+            },
+            {
+              title: 'Dostawcy wspierający JobSensei',
+              items: [
+                'Vercel do hostingu, funkcji serverless, Web Analytics i Speed Insights.',
+                'Supabase do authentication oraz rekordów zatwierdzonych urządzeń / dostępu do planu.',
+                'Buy Me a Coffee do zdarzeń płatniczych i potwierdzeń zakupu.',
+                'Resend do wysyłki magic linków lub maili sign-in, gdy jest włączony.',
+                'Wybrany dostawca AI dla promptów i odpowiedzi, które zdecydujesz się wysłać.'
+              ]
+            },
+            {
+              title: 'Analityka i pomiar wydajności',
+              items: [
+                'JobSensei używa obecnie Vercel Web Analytics do mierzenia wizyt, referrerów, krajów, systemów operacyjnych, przeglądarek i custom product events, takich jak próby unlock lub odsłony sekcji.',
+                'Według Vercel Web Analytics przechowuje zanonimizowane dane i nie używa cookies do śledzenia analitycznego.',
+                'JobSensei używa też Vercel Speed Insights do mierzenia Core Web Vitals i rzeczywistej wydajności użytkowników w wdrożonych środowiskach.',
+                'Bezpieczne logowanie i ochrona approved-device nadal mogą opierać się na niezbędnych cookies, tokenach lub browser storage, nawet jeśli sama analityka jest bezcookiesowa.'
+              ]
+            },
+            {
+              title: 'Twoje wybory',
+              items: [
+                'Możesz wyczyścić lokalne dane aplikacji w Settings.',
+                'Możesz zrezygnować z hosted AI i użyć własnego klucza tam, gdzie jest to wspierane.',
+                'Możesz skontaktować się z operatorem JobSensei w sprawie prywatności lub usunięcia danych.'
+              ]
+            }
+          ]
         },
         de: {
           pill: 'JobSensei',
           title: 'Datenschutzerklärung',
-          updated: 'Zuletzt aktualisiert: 6. Mai 2026',
-          intro: 'JobSensei ist darauf ausgelegt, den größten Teil der Workspace-Daten lokal im Browser zu behalten. Diese Seite erklärt, was lokal bleibt, was serverseitig gespeichert werden kann und welche Anbieter beim Betrieb des Dienstes helfen.',
+          updated: 'Zuletzt aktualisiert: 13. Mai 2026',
+          intro: 'JobSensei ist darauf ausgelegt, den größten Teil der Workspace-Daten lokal im Browser zu behalten. Diese Seite erklärt, was lokal bleibt, was serverseitig gespeichert werden kann und wie Analytics, Storage, Authentication und Prüfungen freigegebener Geräte verwendet werden.',
           sections: [
-            { title: 'Was lokal bleibt', items: ['Die meisten Profil-, Projekt-, Lebenslauf-, Notiz-, Bewerbungs- und Workspace-Daten bleiben in diesem Browser.', 'Du kannst lokale Daten jederzeit in Settings löschen.'] },
-            { title: 'Was serverseitig gespeichert werden kann', items: ['Die E-Mail für die sichere Anmeldung.', 'Freigegebene Geräte für die 2-Geräte-Regel.', 'Plan- oder Kaufdatensätze zur Aktivierung von hosted AI.'] },
-            { title: 'Anbieter, die JobSensei unterstützen', items: ['Vercel für Hosting und serverlose Funktionen.', 'Supabase für Authentication sowie Zugriff / freigegebene Geräte.', 'Buy Me a Coffee für Zahlung und Kaufbestätigung.', 'Resend für Anmelde-E-Mails, wenn aktiviert.', 'AI-Anbieter, die die von dir gesendeten Prompts verarbeiten.'] },
-            { title: 'Deine Wahlmöglichkeiten', items: ['Du kannst lokale Daten in Settings löschen.', 'Du kannst deinen eigenen AI-Schlüssel nutzen, wo dies unterstützt wird.', 'Du kannst den JobSensei-Betreiber für Datenschutz- oder Löschanfragen kontaktieren.'] },
-          ],
-        },
+            {
+              title: 'Was lokal bleibt',
+              items: [
+                'Die meisten Profil-, Projekt-, Lebenslauf-, Notiz-, Bewerbungs- und Workspace-Daten bleiben in diesem Browser auf diesem Gerät.',
+                'Du kannst lokale App-Daten jederzeit in Settings löschen.'
+              ]
+            },
+            {
+              title: 'Was serverseitig gespeichert werden kann',
+              items: [
+                'Die Konto-E-Mail für die sichere Anmeldung.',
+                'Datensätze zu freigegebenen Geräten für die 2-Geräte-Zugriffsregel und Cooldown-Prüfungen beim Gerätetausch.',
+                'Plan- oder Purchase-Grant-Datensätze, um festzustellen, ob der Zugriff auf JobSensei-hosted AI aktiv ist.'
+              ]
+            },
+            {
+              title: 'Anbieter, die JobSensei unterstützen',
+              items: [
+                'Vercel für Hosting, serverlose Funktionen, Web Analytics und Speed Insights.',
+                'Supabase für Authentication sowie Datensätze zu freigegebenen Geräten / Plan-Zugriff.',
+                'Buy Me a Coffee für Zahlungsereignisse und Kaufbestätigungen.',
+                'Resend für den Versand von Magic Links oder Sign-in-E-Mails, wenn aktiviert.',
+                'Der ausgewählte AI-Anbieter für Prompts und Antworten, die du senden möchtest.'
+              ]
+            },
+            {
+              title: 'Analytics und Performance-Messung',
+              items: [
+                'JobSensei verwendet derzeit Vercel Web Analytics, um Besuche, Referrer, Länder, Betriebssysteme, Browser und Custom Product Events wie Unlock-Versuche oder Bereichsaufrufe zu messen.',
+                'Laut Vercel speichert Web Analytics anonymisierte Daten und verwendet keine Cookies für analytisches Tracking.',
+                'JobSensei verwendet außerdem Vercel Speed Insights, um Core Web Vitals und die reale Nutzer-Performance in bereitgestellten Umgebungen zu messen.',
+                'Sichere Anmeldung und Approved-Device-Schutz können trotzdem auf notwendige Cookies, Tokens oder Browser-Storage angewiesen sein, auch wenn das Analytics-Tracking selbst cookie-frei ist.'
+              ]
+            },
+            {
+              title: 'Deine Wahlmöglichkeiten',
+              items: [
+                'Du kannst lokale App-Daten jederzeit in Settings löschen.',
+                'Du kannst hosted AI vermeiden und deinen eigenen Schlüssel nutzen, sofern unterstützt.',
+                'Du kannst den JobSensei-Betreiber für Datenschutz- oder Löschanfragen kontaktieren.'
+              ]
+            }
+          ]
+        }
       };
 
       const param = new URLSearchParams(window.location.search).get('lang');
@@ -188,15 +562,15 @@
       const sections = document.getElementById('sections');
       copy.sections.forEach(section => {
         const wrap = document.createElement('section');
-        const h2 = document.createElement('h2');
-        h2.textContent = section.title;
-        wrap.appendChild(h2);
+        const heading = document.createElement('h2');
+        heading.textContent = section.title;
+        wrap.appendChild(heading);
 
         const list = document.createElement('ul');
         section.items.forEach(item => {
-          const li = document.createElement('li');
-          li.textContent = item;
-          list.appendChild(li);
+          const row = document.createElement('li');
+          row.textContent = item;
+          list.appendChild(row);
         });
         wrap.appendChild(list);
         sections.appendChild(wrap);
