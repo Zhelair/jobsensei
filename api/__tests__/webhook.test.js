@@ -92,4 +92,49 @@ describe('bmac webhook', () => {
       source: 'purchase_claim',
     })
   })
+
+  it('returns debug details when an active webhook does not match the configured products', async () => {
+    vi.doMock('../_lib/authBridge.js', () => ({
+      canSendCustomAuthEmails: vi.fn().mockReturnValue(false),
+      createMagicLinkForEmail: vi.fn(),
+      createSupabaseAdminClient: vi.fn(),
+      extractBmacGrantDetails: vi.fn().mockReturnValue({
+        email: 'buyer@example.com',
+        eventType: 'donation.created',
+        externalRef: 'evt_456',
+        identifiers: [],
+        status: 'active',
+        shouldGrantAccess: false,
+        metadata: {
+          source: 'bmac_webhook',
+        },
+      }),
+      getBmacSignatureHeader: vi.fn().mockReturnValue('valid-signature'),
+      getRawRequestBodyString: vi.fn().mockReturnValue('{"event":"donation.created"}'),
+      getSecureSettingsUrl: vi.fn(),
+      isBmacWebhookConfigured: vi.fn().mockReturnValue(true),
+      sendMagicLinkEmail: vi.fn(),
+      setDefaultCorsHeaders: vi.fn(),
+      upsertBmacPlanGrant: vi.fn(),
+      verifyBmacWebhookSignature: vi.fn().mockReturnValue(true),
+    }))
+
+    const { default: handler } = await import('../webhook.js')
+    const { req, res } = makeReqRes(
+      { event: 'donation.created' },
+      { 'x-signature-sha256': 'valid-signature' },
+    )
+
+    await handler(req, res)
+
+    expect(res._status).toBe(202)
+    expect(res._body).toEqual({
+      ok: true,
+      skipped: true,
+      reason: 'Webhook event did not match the configured BMAC access products.',
+      eventType: 'donation.created',
+      identifiers: [],
+      hint: 'This payload did not include a product or membership identifier. BMAC test events can be generic even when real purchases include the shop item title.',
+    })
+  })
 })
