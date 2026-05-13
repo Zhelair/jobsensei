@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 const LEGACY_TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000
 const RESEND_API_URL = 'https://api.resend.com/emails'
 export const MAX_APPROVED_DEVICES = 2
-export const DEVICE_REPLACEMENT_COOLDOWN_MS = 48 * 60 * 60 * 1000
+export const DEVICE_REPLACEMENT_COOLDOWN_MS = 8 * 60 * 60 * 1000
 
 export const ACTIVE_PLAN_STATUSES = new Set(['active', 'grace'])
 
