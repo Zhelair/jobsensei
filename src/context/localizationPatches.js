@@ -10215,6 +10215,67 @@ Object.entries(liveSecureDevicePanelPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 
+const analyticsDisclosurePatches = {
+  en: {
+    settings: {
+      privacyTermsSummary: 'Short rules about what stays local, which providers help run JobSensei, and how analytics or storage are used.',
+      privacyTermsBullet2: 'Authentication, approved-device checks, plan access, traffic analytics, and performance monitoring may use Supabase, Vercel, Buy Me a Coffee, Resend, and your selected AI provider only to run JobSensei.',
+    },
+  },
+  ru: {
+    settings: {
+      privacyTermsSummary: 'Коротко о том, что остаётся локально, какие провайдеры помогают JobSensei и как используются analytics или storage.',
+      privacyTermsBullet2: 'Для работы JobSensei проверка входа, устройств, доступа к плану, traffic analytics и performance monitoring может использовать Supabase, Vercel, Buy Me a Coffee, Resend и выбранного AI-провайдера.',
+    },
+  },
+  bg: {
+    settings: {
+      privacyTermsSummary: 'Кратко какво остава локално, кои доставчици помагат на JobSensei и как се използват analytics или storage.',
+      privacyTermsBullet2: 'За да работи JobSensei, входът, проверките на устройствата, достъпът до плана, traffic analytics и performance monitoring може да използват Supabase, Vercel, Buy Me a Coffee, Resend и избрания AI доставчик.',
+    },
+  },
+  'es-ES': {
+    settings: {
+      privacyTermsSummary: 'Reglas breves sobre lo que se queda local, qué proveedores ayudan a JobSensei y cómo se usan analytics o almacenamiento.',
+      privacyTermsBullet2: 'La autenticación, las comprobaciones de dispositivos, el acceso al plan, los analytics de tráfico y la monitorización de rendimiento pueden usar Supabase, Vercel, Buy Me a Coffee, Resend y tu proveedor de AI elegido solo para ejecutar JobSensei.',
+    },
+  },
+  fr: {
+    settings: {
+      privacyTermsSummary: 'Petit résumé de ce qui reste local, des fournisseurs qui aident JobSensei et de la manière dont analytics ou stockage sont utilisés.',
+      privacyTermsBullet2: 'L’authentification, les vérifications d’appareils, l’accès au plan, les analytics de trafic et le suivi des performances peuvent utiliser Supabase, Vercel, Buy Me a Coffee, Resend et votre fournisseur AI choisi uniquement pour faire fonctionner JobSensei.',
+    },
+  },
+  it: {
+    settings: {
+      privacyTermsSummary: 'Regole brevi su cosa resta locale, quali provider aiutano JobSensei e come vengono usati analytics o storage.',
+      privacyTermsBullet2: 'Autenticazione, controlli dei dispositivi, accesso al piano, analytics del traffico e monitoraggio delle prestazioni possono usare Supabase, Vercel, Buy Me a Coffee, Resend e il provider AI scelto solo per far funzionare JobSensei.',
+    },
+  },
+  'pt-BR': {
+    settings: {
+      privacyTermsSummary: 'Regras curtas sobre o que fica local, que fornecedores ajudam o JobSensei e como analytics ou armazenamento são usados.',
+      privacyTermsBullet2: 'Autenticação, verificações de dispositivos, acesso ao plano, analytics de tráfego e monitorização de performance podem usar Supabase, Vercel, Buy Me a Coffee, Resend e o fornecedor de AI escolhido apenas para fazer o JobSensei funcionar.',
+    },
+  },
+  pl: {
+    settings: {
+      privacyTermsSummary: 'Krótko o tym, co zostaje lokalnie, którzy dostawcy pomagają JobSensei i jak używane są analytics lub pamięć.',
+      privacyTermsBullet2: 'Uwierzytelnianie, kontrola urządzeń, dostęp do planu, analityka ruchu i monitorowanie wydajności mogą wykorzystywać Supabase, Vercel, Buy Me a Coffee, Resend oraz wybranego dostawcę AI wyłącznie do działania JobSensei.',
+    },
+  },
+  de: {
+    settings: {
+      privacyTermsSummary: 'Kurze Regeln dazu, was lokal bleibt, welche Anbieter JobSensei helfen und wie Analytics oder Speicher verwendet werden.',
+      privacyTermsBullet2: 'Authentifizierung, Geräteprüfungen, Plan-Zugriff, Traffic-Analytics und Performance-Monitoring können Supabase, Vercel, Buy Me a Coffee, Resend und deinen gewählten AI-Anbieter nutzen, aber nur um JobSensei zu betreiben.',
+    },
+  },
+}
+
+Object.entries(analyticsDisclosurePatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
 export default localizationPatches
 
 
