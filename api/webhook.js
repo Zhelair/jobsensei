@@ -42,10 +42,16 @@ export default async function handler(req, res) {
     }
 
     if (!grantDetails.shouldGrantAccess && grantDetails.status === 'active') {
+      const identifiers = Array.isArray(grantDetails.identifiers) ? grantDetails.identifiers : []
       return res.status(202).json({
         ok: true,
         skipped: true,
         reason: 'Webhook event did not match the configured BMAC access products.',
+        eventType: grantDetails.eventType,
+        identifiers,
+        hint: identifiers.length > 0
+          ? 'Update BMAC_ALLOWED_PRODUCT_NAMES / IDS or membership allow-lists so one of these identifiers matches exactly.'
+          : 'This payload did not include a product or membership identifier. BMAC test events can be generic even when real purchases include the shop item title.',
       })
     }
 
