@@ -24,12 +24,40 @@ export default async function handler(req, res) {
 
   try {
     const supabase = createSupabaseAdminClient()
+    const now = new Date().toISOString()
 
     await logSecureAuditEvent({
       userId: user.id,
       action: 'account_delete_requested',
       metadata: {
         email: user.email || '',
+      },
+    })
+
+    // Release plan grants back to the email before deleting the auth user so
+    // the same person can sign in again later and reclaim access cleanly.
+    const { data: releasedGrants, error: grantsError } = await supabase
+      .from('plan_grants')
+      .update({
+        user_id: null,
+        claim_email: userEmail || null,
+        claimed_at: null,
+        updated_at: now,
+      })
+      .eq('user_id', user.id)
+      .select('id')
+
+    if (grantsError) {
+      console.error('delete-account failed to release grants:', grantsError)
+      return res.status(500).json({ error: 'Unable to delete this secure account right now.' })
+    }
+
+    await logSecureAuditEvent({
+      userId: user.id,
+      action: 'account_delete_grants_released',
+      metadata: {
+        email: user.email || '',
+        grantCount: releasedGrants?.length || 0,
       },
     })
 
