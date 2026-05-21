@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "i18n:audit": "node scripts/audit-translations.mjs",
+    "i18n:audit:strict": "node scripts/audit-translations.mjs --strict"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
