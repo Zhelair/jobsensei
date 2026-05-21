@@ -10452,6 +10452,67 @@ Object.entries(secureAccountClarificationPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 
+const settingsProjectBackupPatches = {
+  en: {
+    settings: {
+      projectBackupsTitle: 'Project backups',
+      projectBackupsCopy: 'Export this project, export all projects, or import a saved backup from another browser or computer.',
+    },
+  },
+  ru: {
+    settings: {
+      projectBackupsTitle: 'Резервные копии проектов',
+      projectBackupsCopy: 'Экспортируйте текущий проект, все проекты или импортируйте сохранённую резервную копию из другого браузера или компьютера.',
+    },
+  },
+  bg: {
+    settings: {
+      projectBackupsTitle: 'Резервни копия на проектите',
+      projectBackupsCopy: 'Експортирай този проект, всички проекти или импортирай запазено резервно копие от друг браузър или компютър.',
+    },
+  },
+  'es-ES': {
+    settings: {
+      projectBackupsTitle: 'Copias de seguridad de proyectos',
+      projectBackupsCopy: 'Exporta este proyecto, todos los proyectos o importa una copia guardada desde otro navegador u ordenador.',
+    },
+  },
+  fr: {
+    settings: {
+      projectBackupsTitle: 'Sauvegardes de projets',
+      projectBackupsCopy: 'Exportez ce projet, tous les projets, ou importez une sauvegarde enregistrée depuis un autre navigateur ou ordinateur.',
+    },
+  },
+  it: {
+    settings: {
+      projectBackupsTitle: 'Backup dei progetti',
+      projectBackupsCopy: 'Esporta questo progetto, tutti i progetti oppure importa un backup salvato da un altro browser o computer.',
+    },
+  },
+  'pt-BR': {
+    settings: {
+      projectBackupsTitle: 'Backups dos projetos',
+      projectBackupsCopy: 'Exporta este projeto, todos os projetos ou importa um backup guardado de outro browser ou computador.',
+    },
+  },
+  pl: {
+    settings: {
+      projectBackupsTitle: 'Kopie zapasowe projektów',
+      projectBackupsCopy: 'Wyeksportuj ten projekt, wszystkie projekty albo zaimportuj zapisaną kopię z innej przeglądarki lub komputera.',
+    },
+  },
+  de: {
+    settings: {
+      projectBackupsTitle: 'Projekt-Backups',
+      projectBackupsCopy: 'Exportiere dieses Projekt, alle Projekte oder importiere ein gespeichertes Backup aus einem anderen Browser oder Computer.',
+    },
+  },
+}
+
+Object.entries(settingsProjectBackupPatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
 export default localizationPatches
 
 

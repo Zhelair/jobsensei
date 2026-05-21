@@ -6,7 +6,7 @@ import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
 import {
   Zap, Check, Trash2, Eye, EyeOff, FileText, Upload, Download, X,
-  Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink, Puzzle,
+  Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink, Puzzle, FolderArchive,
   Globe, Volume2, Shield, MonitorSmartphone,
 } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
@@ -18,11 +18,11 @@ export default function Settings() {
   } = useAI()
   const {
     secureUser, secureAccount, statusError, accountError, signOutSecure,
-    deleteSecureAccount, deletingAccount, exportSecureAccountData, exportingAccountData, magicLinkSentTo,
+    magicLinkSentTo,
     revokeSecureDevice, revokingDeviceId,
   } = useAuth()
   const { profile, setShowOnboarding } = useApp()
-  const { activeProject, getProjectData, updateProjectData } = useProject()
+  const { activeProject, getProjectData, updateProjectData, exportProject, exportAll, importProjects } = useProject()
   const {
     t, language, setLanguage, languageOption, languages,
     activeVoice, voiceSupport,
@@ -40,24 +40,21 @@ export default function Settings() {
   const [bmacError, setBmacError] = useState('')
   const [bmacNotice, setBmacNotice] = useState('')
   const [magicLinkCooldownUntil, setMagicLinkCooldownUntil] = useState(0)
-  const [secureDeleteEmailInput, setSecureDeleteEmailInput] = useState('')
   const [secureError, setSecureError] = useState('')
   const [legalExpanded, setLegalExpanded] = useState(false)
+  const [importingProjects, setImportingProjects] = useState(false)
+  const [projectTransferMessage, setProjectTransferMessage] = useState('')
 
   const resume = getProjectData('resume')
   const [resumeText, setResumeText] = useState(resume || '')
   const [resumeSaved, setResumeSaved] = useState(false)
   const [extracting, setExtracting] = useState(false)
   const fileRef = useRef(null)
+  const projectImportRef = useRef(null)
 
   useEffect(() => {
     setForm({ provider, model, apiKey, customBaseUrl: customBaseUrl || '' })
   }, [provider, model, apiKey, customBaseUrl])
-
-  useEffect(() => {
-    if (!secureUser?.email) return
-    setSecureDeleteEmailInput(current => current || secureUser.email)
-  }, [secureUser?.email])
 
   useEffect(() => {
     if (!magicLinkCooldownUntil) return undefined
@@ -226,6 +223,24 @@ export default function Settings() {
     }
   }
 
+  async function handleProjectImport(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setImportingProjects(true)
+    setProjectTransferMessage('')
+    try {
+      const count = await importProjects(file)
+      setProjectTransferMessage(count === 1 ? t('projects.importedOne') : t('projects.importedMany', { count }))
+    } catch {
+      setProjectTransferMessage(t('projects.invalidFile'))
+    } finally {
+      setImportingProjects(false)
+      event.target.value = ''
+      window.setTimeout(() => setProjectTransferMessage(''), 3000)
+    }
+  }
+
   function previewVoice() {
     if (!window.speechSynthesis || !activeVoice) return
     window.speechSynthesis.cancel()
@@ -383,43 +398,6 @@ export default function Settings() {
     }
   }
 
-  async function handleDeleteSecureAccount() {
-    if (!secureUser?.email) return
-    if (secureDeleteEmailInput.trim().toLowerCase() !== secureUser.email.toLowerCase()) {
-      setSecureError(t('settings.secureAccountDeleteMismatch'))
-      return
-    }
-
-    if (!confirm(t('settings.secureAccountDeleteConfirm'))) return
-
-    setSecureError('')
-    try {
-      await deleteSecureAccount(secureDeleteEmailInput.trim())
-      setSecureDeleteEmailInput('')
-    } catch (err) {
-      setSecureError(err.message)
-    }
-  }
-
-  async function handleExportSecureAccount() {
-    setSecureError('')
-    try {
-      const payload = await exportSecureAccountData()
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      const stamp = new Date().toISOString().slice(0, 10)
-      link.href = url
-      link.download = `jobsensei-secure-account-${stamp}.json`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      URL.revokeObjectURL(url)
-    } catch (err) {
-      setSecureError(err.message)
-    }
-  }
-
   async function handleRevokeDevice(device) {
     const deviceName = device.displayName || device.deviceName || 'device'
     const localizedRevokeCooldownWarning = revokeCooldownWarningCopy[language]
@@ -443,7 +421,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in space-y-4">
+    <div className="p-4 md:p-6 max-w-4xl md:max-w-5xl xl:max-w-[72rem] mx-auto animate-in space-y-4">
       <h2 className="section-title mb-1">{t('settings.title')}</h2>
       <p className="section-sub">{t('settings.subtitle')}</p>
 
@@ -807,45 +785,31 @@ export default function Settings() {
             ))}
           </div>
 
-          {secureSignedIn && (
-            <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
-              <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountExportTitle')}</div>
-              <p className="text-slate-400 text-xs leading-relaxed">{t('settings.secureAccountExportCopy')}</p>
-              <p className="text-slate-500 text-[11px] leading-relaxed">{t('settings.secureAccountExportNote')}</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleExportSecureAccount}
-                  disabled={exportingAccountData}
-                  className="btn-secondary text-xs flex-1 justify-center"
-                >
-                  {exportingAccountData ? t('settings.secureAccountExporting') : t('settings.secureAccountExportButton')}
-                </button>
-              </div>
-
-              <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 space-y-2">
-                <div className="text-red-300 text-sm font-display font-semibold">{t('settings.secureAccountDeleteTitle')}</div>
-                <p className="text-red-200/80 text-xs leading-relaxed">{t('settings.secureAccountDeleteCopy')}</p>
-                <p className="text-slate-400 text-[11px] leading-relaxed">{t('settings.secureAccountDeleteRecreateNote')}</p>
-                <input
-                  className="input-field text-sm"
-                  type="email"
-                  placeholder={t('settings.secureAccountDeletePlaceholder')}
-                  value={secureDeleteEmailInput}
-                  onChange={e => {
-                    setSecureDeleteEmailInput(e.target.value)
-                    setSecureError('')
-                  }}
-                />
-                <button
-                  onClick={handleDeleteSecureAccount}
-                  disabled={!secureDeleteEmailInput.trim() || deletingAccount}
-                  className="btn-ghost text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 justify-center"
-                >
-                  {deletingAccount ? t('settings.secureAccountDeleting') : t('settings.secureAccountDeleteButton')}
-                </button>
-              </div>
+          <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
+            <div className="text-white text-sm font-display font-semibold">{t('settings.projectBackupsTitle')}</div>
+            <p className="text-slate-400 text-xs leading-relaxed">{t('settings.projectBackupsCopy')}</p>
+            <div className="grid sm:grid-cols-3 gap-2">
+              <button onClick={exportAll} className="btn-secondary text-xs justify-center">
+                <FolderArchive size={13} /> {t('projects.exportAllProjects')}
+              </button>
+              <button
+                onClick={() => activeProject && exportProject(activeProject.id)}
+                disabled={!activeProject}
+                className="btn-secondary text-xs justify-center"
+              >
+                <Download size={13} /> {t('projects.exportCurrentProject')}
+              </button>
+              <button onClick={() => projectImportRef.current?.click()} className="btn-secondary text-xs justify-center">
+                <Upload size={13} /> {importingProjects ? t('projects.importing') : t('projects.importProject')}
+              </button>
             </div>
-          )}
+            <input ref={projectImportRef} type="file" accept=".json" className="hidden" onChange={handleProjectImport} />
+            {projectTransferMessage && (
+              <p className={`text-xs ${projectTransferMessage.includes('Invalid') || projectTransferMessage.includes('❌') ? 'text-red-400' : 'text-teal-300'}`}>
+                {projectTransferMessage}
+              </p>
+            )}
+          </div>
 
           <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm mt-auto">
             <Trash2 size={14} /> {t('settings.clearAllData')}
