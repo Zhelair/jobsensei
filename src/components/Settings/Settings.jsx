@@ -766,7 +766,6 @@ export default function Settings() {
                     <ExternalLink size={13} /> {t('settings.cookieNoticeLink')}
                   </a>
                 </div>
-                <p className="text-slate-500 text-[11px] leading-relaxed">{t('settings.privacyTermsAgreement')}</p>
               </div>
             )}
           </div>
