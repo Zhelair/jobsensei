@@ -771,7 +771,7 @@ export default function Settings() {
             )}
           </div>
 
-          <div className="space-y-2 text-slate-400 text-xs leading-relaxed mb-3">
+          <div className="space-y-2.5 text-slate-400 text-sm leading-relaxed mb-3">
             {[
               t('settings.dataBullet1'),
               t('settings.dataBullet2'),

@@ -1431,13 +1431,13 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
           {result.strengths?.length > 0 && (
             <div className="card border-green-500/20">
               <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.resumechecker.strengths')}</h4>
-              <ul className="space-y-1">{result.strengths.map((s, i) => <li key={i} className="text-slate-300 text-xs">• {s}</li>)}</ul>
+              <ul className="space-y-1.5">{result.strengths.map((s, i) => <li key={i} className="text-slate-300 text-sm leading-relaxed">• {s}</li>)}</ul>
             </div>
           )}
           {result.suggestions?.length > 0 && (
             <div className="card">
               <h4 className="font-display font-semibold text-white text-sm mb-2">{t('tools.resumechecker.suggestions')}</h4>
-              <ul className="space-y-1">{result.suggestions.map((s, i) => <li key={i} className="text-slate-400 text-xs">• {s}</li>)}</ul>
+              <ul className="space-y-1.5">{result.suggestions.map((s, i) => <li key={i} className="text-slate-300 text-sm leading-relaxed">• {s}</li>)}</ul>
             </div>
           )}
         </div>
