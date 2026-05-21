@@ -630,7 +630,7 @@ export default function TopBar() {
 
       {/* Help popover */}
       {showHelp && help && (
-        <div className="guide-popover absolute right-4 top-full mt-2 z-50 w-80 bg-navy-800 border border-navy-600 rounded-2xl shadow-xl p-4 animate-in">
+        <div className="guide-popover absolute right-4 top-full mt-2 z-50 w-80 bg-navy-800 border border-navy-600 rounded-2xl shadow-xl p-4 animate-in flex flex-col">
           <div className="flex items-start justify-between mb-2">
             <h3 className="font-display font-semibold text-white text-sm">{helpTitle}</h3>
             <button onClick={() => setShowHelp(false)} className="text-slate-500 hover:text-slate-300 -mt-0.5">
@@ -638,21 +638,21 @@ export default function TopBar() {
             </button>
           </div>
           <p className="text-slate-300 text-xs mb-3 leading-relaxed">{helpDesc}</p>
-          <div className="guide-start-card rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3">
+          <div className="guide-start-card rounded-xl border border-navy-600 bg-navy-900/60 p-3 mt-3 order-2">
             <div className="text-white text-xs font-display font-semibold mb-2">{t('guide.getStarted')}</div>
             <button onClick={startGuidedTour} className="btn-primary text-xs w-full justify-center">
               {t('guide.startTour')}
             </button>
           </div>
           {helpTips.length > 0 && (
-            <div className="space-y-1">
+            <div className="space-y-1 order-1">
               {helpTips.map((tip, i) => (
                 <p key={i} className="text-slate-400 text-xs">• {renderGuideTip(tip)}</p>
               ))}
             </div>
           )}
           {helpDetails.length > 0 && (
-            <div className="guide-details-card mt-3 rounded-xl border border-navy-700 bg-navy-900/45 p-3">
+            <div className="guide-details-card mt-3 rounded-xl border border-navy-700 bg-navy-900/45 p-3 order-1">
               <div className="text-slate-300 text-xs font-display font-semibold mb-2">{t('guide.howThisPageWorks')}</div>
               <div className="space-y-1">
                 {helpDetails.map((detailKey) => (
@@ -661,7 +661,7 @@ export default function TopBar() {
               </div>
             </div>
           )}
-          <div className="mt-3 pt-3 border-t border-navy-700 flex items-center gap-1.5 text-xs text-slate-500">
+          <div className="mt-3 pt-3 border-t border-navy-700 flex items-center gap-1.5 text-xs text-slate-500 order-3">
             <Shield size={11} />
             <span>{t('guide.footer.sensei')}</span>
             <Zap size={11} className="ml-2" />
