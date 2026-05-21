@@ -10276,6 +10276,182 @@ Object.entries(analyticsDisclosurePatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 
+const resumeCheckerScoreExplainPatches = {
+  en: {
+    tools: {
+      resumechecker: {
+        scoringTitle: 'How these scores are judged',
+        atsScoreBreakdown: 'Checks keyword density, formatting clarity, section headers, quantified results, and action verbs.',
+        recruiterScoreBreakdown: 'Checks narrative impact, achievement framing, visual scannability, and uniqueness.',
+        jdContextNote: 'When you paste a JD, keyword gaps are judged against that role. Without a JD, the check stays more general for your field.',
+      },
+    },
+  },
+  ru: {
+    tools: {
+      resumechecker: {
+        scoringTitle: 'Как оцениваются эти баллы',
+        atsScoreBreakdown: 'Учитываются плотность ключевых слов, ясность форматирования, заголовки разделов, измеримые результаты и сильные глаголы действия.',
+        recruiterScoreBreakdown: 'Учитываются сила истории, подача достижений, удобство быстрого просмотра и уникальность.',
+        jdContextNote: 'Если вставить JD, пробелы по ключевым словам оцениваются под эту роль. Без JD проверка остаётся более общей для вашей сферы.',
+      },
+    },
+  },
+  bg: {
+    tools: {
+      resumechecker: {
+        scoringTitle: 'Как се оценяват тези резултати',
+        atsScoreBreakdown: 'Гледат се плътност на ключовите думи, яснота на форматирането, заглавия на секции, измерими резултати и силни глаголи за действие.',
+        recruiterScoreBreakdown: 'Гледат се силата на историята, представянето на постиженията, лесното сканиране и уникалността.',
+        jdContextNote: 'Ако поставиш JD, липсите в ключовите думи се оценяват спрямо тази роля. Без JD проверката остава по-обща за твоята сфера.',
+      },
+    },
+  },
+  'es-ES': {
+    tools: {
+      resumechecker: {
+        scoringTitle: 'Cómo se juzgan estas puntuaciones',
+        atsScoreBreakdown: 'Revisa densidad de palabras clave, claridad del formato, encabezados de secciones, resultados cuantificados y verbos de acción.',
+        recruiterScoreBreakdown: 'Revisa impacto narrativo, cómo presentas logros, facilidad de escaneo visual y singularidad.',
+        jdContextNote: 'Cuando pegas una JD, los huecos de palabras clave se juzgan contra ese puesto. Sin JD, la revisión queda más general para tu área.',
+      },
+    },
+  },
+  fr: {
+    tools: {
+      resumechecker: {
+        scoringTitle: 'Comment ces scores sont jugés',
+        atsScoreBreakdown: 'Vérifie la densité des mots-clés, la clarté du formatage, les titres de sections, les résultats chiffrés et les verbes d’action.',
+        recruiterScoreBreakdown: 'Vérifie l’impact narratif, la mise en valeur des résultats, la lisibilité rapide et l’originalité.',
+        jdContextNote: 'Quand vous collez une JD, les manques de mots-clés sont jugés par rapport à ce poste. Sans JD, la vérification reste plus générale pour votre domaine.',
+      },
+    },
+  },
+  it: {
+    tools: {
+      resumechecker: {
+        scoringTitle: 'Come vengono valutati questi punteggi',
+        atsScoreBreakdown: 'Controlla densità di parole chiave, chiarezza del formato, titoli delle sezioni, risultati quantificati e verbi d’azione.',
+        recruiterScoreBreakdown: 'Controlla impatto narrativo, modo in cui presenti i risultati, scansionabilità visiva e unicità.',
+        jdContextNote: 'Quando incolli una JD, i gap di parole chiave vengono giudicati rispetto a quel ruolo. Senza JD, il controllo resta più generale per il tuo settore.',
+      },
+    },
+  },
+  'pt-BR': {
+    tools: {
+      resumechecker: {
+        scoringTitle: 'Como estas pontuações são avaliadas',
+        atsScoreBreakdown: 'Verifica densidade de palavras-chave, clareza da formatação, cabeçalhos de secções, resultados quantificados e verbos de ação.',
+        recruiterScoreBreakdown: 'Verifica impacto narrativo, forma de apresentar conquistas, facilidade de leitura visual e singularidade.',
+        jdContextNote: 'Quando colas uma JD, as lacunas de palavras-chave são avaliadas contra essa função. Sem JD, a revisão fica mais geral para a tua área.',
+      },
+    },
+  },
+  pl: {
+    tools: {
+      resumechecker: {
+        scoringTitle: 'Jak oceniane są te wyniki',
+        atsScoreBreakdown: 'Sprawdza gęstość słów kluczowych, czytelność formatowania, nagłówki sekcji, mierzalne wyniki i mocne czasowniki działania.',
+        recruiterScoreBreakdown: 'Sprawdza siłę narracji, sposób pokazania osiągnięć, łatwość skanowania wzrokiem i unikalność.',
+        jdContextNote: 'Gdy wkleisz JD, braki w słowach kluczowych są oceniane pod tę rolę. Bez JD analiza zostaje bardziej ogólna dla Twojej branży.',
+      },
+    },
+  },
+  de: {
+    tools: {
+      resumechecker: {
+        scoringTitle: 'Wie diese Scores bewertet werden',
+        atsScoreBreakdown: 'Geprüft werden Keyword-Dichte, Klarheit der Formatierung, Abschnittsüberschriften, quantifizierte Ergebnisse und starke Aktionsverben.',
+        recruiterScoreBreakdown: 'Geprüft werden erzählerische Wirkung, Darstellung der Erfolge, visuelle Scanbarkeit und Eigenständigkeit.',
+        jdContextNote: 'Wenn du eine JD einfügst, werden Keyword-Lücken gegen diese Rolle bewertet. Ohne JD bleibt die Prüfung allgemeiner für dein Berufsfeld.',
+      },
+    },
+  },
+}
+
+Object.entries(resumeCheckerScoreExplainPatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
+const secureAccountClarificationPatches = {
+  en: {
+    settings: {
+      secureAccountExportCopy: 'Download a JSON file with the synced account profile, approved devices, and JobSensei access records tied to the signed-in email.',
+      secureAccountExportNote: 'Export only downloads a copy. It does not delete the account or clear this browser.',
+      secureAccountDeleteCopy: 'This deletes the hosted secure account profile, approved devices, and linked JobSensei access for the signed-in email, then signs this browser out. Local browser data is managed separately below.',
+      secureAccountDeleteRecreateNote: 'After deletion, the same email can sign in again later and reclaim access if that email still has an active JobSensei entitlement.',
+    },
+  },
+  ru: {
+    settings: {
+      secureAccountExportCopy: 'Скачивает JSON-файл с синхронизированным профилем аккаунта, одобренными устройствами и записями доступа JobSensei для текущего email.',
+      secureAccountExportNote: 'Экспорт только скачивает копию. Он не удаляет аккаунт и не очищает этот браузер.',
+      secureAccountDeleteCopy: 'Это удаляет размещённый защищённый профиль аккаунта, одобренные устройства и связанный доступ JobSensei для текущего email, а затем выводит этот браузер из аккаунта. Локальные данные браузера управляются отдельно ниже.',
+      secureAccountDeleteRecreateNote: 'После удаления тот же email сможет позже снова войти и заново получить доступ, если для него всё ещё активен доступ JobSensei.',
+    },
+  },
+  bg: {
+    settings: {
+      secureAccountExportCopy: 'Сваля JSON файл със синхронизирания профил на акаунта, одобрените устройства и записите за JobSensei достъп за влезлия имейл.',
+      secureAccountExportNote: 'Експортът само сваля копие. Не трие акаунта и не изчиства този браузър.',
+      secureAccountDeleteCopy: 'Това изтрива хоствания защитен профил на акаунта, одобрените устройства и свързания JobSensei достъп за влезлия имейл, след което изписва този браузър. Локалните данни в браузъра се управляват отделно по-долу.',
+      secureAccountDeleteRecreateNote: 'След изтриване същият имейл може по-късно да влезе отново и да си върне достъпа, ако за него още има активен JobSensei entitlement.',
+    },
+  },
+  'es-ES': {
+    settings: {
+      secureAccountExportCopy: 'Descarga un archivo JSON con el perfil sincronizado de la cuenta, los dispositivos aprobados y los registros de acceso de JobSensei vinculados al email conectado.',
+      secureAccountExportNote: 'Exportar solo descarga una copia. No elimina la cuenta ni borra este navegador.',
+      secureAccountDeleteCopy: 'Esto elimina el perfil seguro alojado, los dispositivos aprobados y el acceso de JobSensei vinculado al email conectado, y después cierra la sesión de este navegador. Los datos locales del navegador se gestionan aparte abajo.',
+      secureAccountDeleteRecreateNote: 'Después de eliminarla, el mismo email podrá iniciar sesión otra vez más tarde y recuperar el acceso si ese email sigue teniendo una suscripción JobSensei activa.',
+    },
+  },
+  fr: {
+    settings: {
+      secureAccountExportCopy: 'Télécharge un fichier JSON avec le profil synchronisé du compte, les appareils approuvés et les enregistrements d’accès JobSensei liés à l’email connecté.',
+      secureAccountExportNote: 'L’export ne fait que télécharger une copie. Il ne supprime pas le compte et n’efface pas ce navigateur.',
+      secureAccountDeleteCopy: 'Cela supprime le profil sécurisé hébergé, les appareils approuvés et l’accès JobSensei lié à l’email connecté, puis déconnecte ce navigateur. Les données locales du navigateur sont gérées séparément ci-dessous.',
+      secureAccountDeleteRecreateNote: 'Après suppression, le même email pourra se reconnecter plus tard et récupérer l’accès si cet email dispose toujours d’un droit JobSensei actif.',
+    },
+  },
+  it: {
+    settings: {
+      secureAccountExportCopy: 'Scarica un file JSON con il profilo sincronizzato dell’account, i dispositivi approvati e i record di accesso JobSensei collegati all’email connessa.',
+      secureAccountExportNote: 'L’esportazione scarica solo una copia. Non elimina l’account e non pulisce questo browser.',
+      secureAccountDeleteCopy: 'Questo elimina il profilo sicuro ospitato, i dispositivi approvati e l’accesso JobSensei collegato all’email connessa, poi disconnette questo browser. I dati locali del browser sono gestiti separatamente qui sotto.',
+      secureAccountDeleteRecreateNote: 'Dopo l’eliminazione, la stessa email potrà accedere di nuovo più tardi e recuperare l’accesso se per quella email è ancora attivo il diritto JobSensei.',
+    },
+  },
+  'pt-BR': {
+    settings: {
+      secureAccountExportCopy: 'Descarrega um ficheiro JSON com o perfil sincronizado da conta, os dispositivos aprovados e os registos de acesso JobSensei ligados ao email autenticado.',
+      secureAccountExportNote: 'Exportar só descarrega uma cópia. Não elimina a conta nem limpa este browser.',
+      secureAccountDeleteCopy: 'Isto elimina o perfil seguro alojado, os dispositivos aprovados e o acesso JobSensei ligado ao email autenticado, e depois termina a sessão neste browser. Os dados locais do browser são geridos separadamente abaixo.',
+      secureAccountDeleteRecreateNote: 'Depois da eliminação, o mesmo email poderá voltar a iniciar sessão mais tarde e recuperar o acesso se esse email continuar com entitlement ativo do JobSensei.',
+    },
+  },
+  pl: {
+    settings: {
+      secureAccountExportCopy: 'Pobiera plik JSON z zsynchronizowanym profilem konta, zatwierdzonymi urządzeniami i rekordami dostępu JobSensei powiązanymi z zalogowanym emailem.',
+      secureAccountExportNote: 'Eksport tylko pobiera kopię. Nie usuwa konta ani nie czyści tej przeglądarki.',
+      secureAccountDeleteCopy: 'To usuwa hostowany bezpieczny profil konta, zatwierdzone urządzenia i powiązany dostęp JobSensei dla zalogowanego emaila, a potem wylogowuje tę przeglądarkę. Lokalne dane przeglądarki są zarządzane osobno poniżej.',
+      secureAccountDeleteRecreateNote: 'Po usunięciu ten sam email będzie mógł później zalogować się ponownie i odzyskać dostęp, jeśli nadal ma aktywne uprawnienie JobSensei.',
+    },
+  },
+  de: {
+    settings: {
+      secureAccountExportCopy: 'Lädt eine JSON-Datei mit dem synchronisierten Kontoprofil, den freigegebenen Geräten und den JobSensei-Zugriffsdatensätzen für die angemeldete E-Mail herunter.',
+      secureAccountExportNote: 'Der Export lädt nur eine Kopie herunter. Er löscht weder das Konto noch diesen Browser.',
+      secureAccountDeleteCopy: 'Dadurch werden das gehostete sichere Kontoprofil, die freigegebenen Geräte und der verknüpfte JobSensei-Zugriff für die angemeldete E-Mail gelöscht; anschließend wird dieser Browser abgemeldet. Lokale Browserdaten werden unten separat verwaltet.',
+      secureAccountDeleteRecreateNote: 'Nach dem Löschen kann sich dieselbe E-Mail später wieder anmelden und den Zugriff erneut beanspruchen, sofern für diese E-Mail weiterhin ein aktiver JobSensei-Anspruch besteht.',
+    },
+  },
+}
+
+Object.entries(secureAccountClarificationPatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
 export default localizationPatches
 
 

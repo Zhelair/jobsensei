@@ -1387,12 +1387,26 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
               <div className={`font-display font-bold text-4xl mb-1 ${result.atsScore >= 80 ? 'text-green-400' : result.atsScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{result.atsScore}</div>
               <div className="text-slate-400 text-sm">{t('tools.resumechecker.atsScore')}</div>
               <div className="text-slate-600 text-xs mt-1">{t('tools.resumechecker.keywordMatching')}</div>
+              <p className="text-slate-500 text-[11px] leading-relaxed mt-2 max-w-[18rem] mx-auto">
+                {t('tools.resumechecker.atsScoreBreakdown')}
+              </p>
             </div>
             <div className="card text-center py-6">
               <div className={`font-display font-bold text-4xl mb-1 ${result.recruiterScore >= 80 ? 'text-green-400' : result.recruiterScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>{result.recruiterScore}</div>
               <div className="text-slate-400 text-sm">{t('tools.resumechecker.recruiterScore')}</div>
               <div className="text-slate-600 text-xs mt-1">{t('tools.resumechecker.humanAppeal')}</div>
+              <p className="text-slate-500 text-[11px] leading-relaxed mt-2 max-w-[18rem] mx-auto">
+                {t('tools.resumechecker.recruiterScoreBreakdown')}
+              </p>
             </div>
+          </div>
+          <div className="rounded-xl border border-indigo-500/15 bg-indigo-500/5 px-4 py-3">
+            <div className="text-indigo-200 text-xs font-display font-semibold mb-1">
+              {t('tools.resumechecker.scoringTitle')}
+            </div>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              {t('tools.resumechecker.jdContextNote')}
+            </p>
           </div>
           {result.redFlags?.length > 0 && (
             <div className="card border-red-500/20">

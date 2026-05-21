@@ -810,6 +810,8 @@ export default function Settings() {
           {secureSignedIn && (
             <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
               <div className="text-white text-sm font-display font-semibold">{t('settings.secureAccountExportTitle')}</div>
+              <p className="text-slate-400 text-xs leading-relaxed">{t('settings.secureAccountExportCopy')}</p>
+              <p className="text-slate-500 text-[11px] leading-relaxed">{t('settings.secureAccountExportNote')}</p>
               <div className="flex gap-2">
                 <button
                   onClick={handleExportSecureAccount}
@@ -822,6 +824,8 @@ export default function Settings() {
 
               <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 space-y-2">
                 <div className="text-red-300 text-sm font-display font-semibold">{t('settings.secureAccountDeleteTitle')}</div>
+                <p className="text-red-200/80 text-xs leading-relaxed">{t('settings.secureAccountDeleteCopy')}</p>
+                <p className="text-slate-400 text-[11px] leading-relaxed">{t('settings.secureAccountDeleteRecreateNote')}</p>
                 <input
                   className="input-field text-sm"
                   type="email"
