@@ -332,7 +332,7 @@ const TRANSLATIONS = {
     'tour.learning.title': 'Learning is the long game',
     'tour.learning.body': 'Add topics for the skills each role expects. Study, quiz, and save notes so preparation compounds over time.',
     'tour.projects.title': 'Create own Projects',
-    'tour.projects.body': 'Projects keep each job search separate: applications, resume/CV, notes, interview prep, learning topics, and saved AI results stay inside the selected project. Use New Project for a fresh workspace.',
+    'tour.projects.body': 'Projects keep each job search separate, and saved AI results stay inside the selected project. Use New Project for a fresh workspace.',
     'gate.title': 'Add an application first',
     'gate.copy': '{section} works best when JobSensei knows the company, role, and job description. Create or capture one real application first, then the tools will unlock with the right context.',
     'gate.add': 'Add Application',
