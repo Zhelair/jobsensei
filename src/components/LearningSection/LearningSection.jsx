@@ -576,6 +576,9 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
       </div>
       <ChatWindow messages={messages} isLoading={loading} emptyText={t('learning.tutor.emptyText')} />
       <div className="p-4 border-t border-navy-700 bg-navy-900 space-y-2">
+        <p className="text-slate-500 text-sm leading-relaxed">
+          {t('learning.tutor.startHint')}
+        </p>
         <VoiceChatBar
           onSend={sendMessage}
           isLoading={loading}
