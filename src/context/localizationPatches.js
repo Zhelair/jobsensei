@@ -9244,7 +9244,7 @@ const guidedTourPatches = {
       },
       projects: {
         title: 'Создавай свои Projects',
-        body: 'Projects разделяют разные поиски работы: заявки, резюме, заметки, подготовка к интервью, учебные темы и сохранённые AI-результаты остаются внутри выбранного проекта. Для нового пространства используйте New Project.',
+        body: 'Проекты разделяют каждый поиск работы, а сохранённые результаты AI остаются внутри выбранного проекта. Используйте New Project для нового workspace.',
       },
     },
   },
@@ -9280,7 +9280,7 @@ const guidedTourPatches = {
       },
       projects: {
         title: 'Създай свои Projects',
-        body: 'Projects държат отделните търсения на работа разделени: кандидатури, CV, бележки, подготовка за интервю, учебни теми и запазени AI резултати остават в избрания проект. Ползвайте New Project за ново workspace пространство.',
+        body: 'Проектите държат всяко търсене на работа отделно, а запазените AI резултати остават в избрания проект. Използвай New Project за нов workspace.',
       },
     },
   },
@@ -9316,7 +9316,7 @@ const guidedTourPatches = {
       },
       projects: {
         title: 'Crea tus propios Projects',
-        body: 'Projects mantiene separada cada búsqueda de empleo: candidaturas, CV, notas, preparación de entrevistas, temas de aprendizaje y resultados guardados de AI permanecen dentro del proyecto elegido. Usa New Project para un workspace nuevo.',
+        body: 'Los proyectos mantienen cada búsqueda de empleo separada y los resultados guardados por la AI permanecen dentro del proyecto seleccionado. Usa New Project para crear un workspace nuevo.',
       },
     },
   },
@@ -9352,7 +9352,7 @@ const guidedTourPatches = {
       },
       projects: {
         title: 'Crée tes propres Projects',
-        body: 'Projects sépare chaque recherche d’emploi : candidatures, CV, notes, préparation aux entretiens, sujets d’apprentissage et résultats AI sauvegardés restent dans le projet choisi. Utilise New Project pour un nouveau workspace.',
+        body: 'Les projets gardent chaque recherche d’emploi séparée, et les résultats AI enregistrés restent dans le projet sélectionné. Utilisez New Project pour créer un nouvel espace de travail.',
       },
     },
   },
@@ -9388,7 +9388,7 @@ const guidedTourPatches = {
       },
       projects: {
         title: 'Crea i tuoi Projects',
-        body: 'Projects tiene separata ogni ricerca di lavoro: candidature, CV, note, preparazione ai colloqui, argomenti di studio e risultati AI salvati restano nel progetto selezionato. Usa New Project per un workspace nuovo.',
+        body: 'I progetti tengono separata ogni ricerca di lavoro e i risultati AI salvati restano nel progetto selezionato. Usa New Project per creare un nuovo workspace.',
       },
     },
   },
@@ -9424,7 +9424,7 @@ const guidedTourPatches = {
       },
       projects: {
         title: 'Cria os teus próprios Projects',
-        body: 'Projects mantém cada procura de emprego separada: candidaturas, CV, notas, preparação para entrevistas, tópicos de aprendizagem e resultados de AI guardados ficam dentro do projeto selecionado. Usa New Project para um novo workspace.',
+        body: 'Os projetos mantêm cada procura de emprego separada, e os resultados de AI guardados ficam dentro do projeto selecionado. Usa New Project para criar um novo workspace.',
       },
     },
   },
@@ -9460,7 +9460,7 @@ const guidedTourPatches = {
       },
       projects: {
         title: 'Twórz własne Projects',
-        body: 'Projects rozdziela każde szukanie pracy: aplikacje, CV, notatki, przygotowanie do rozmów, tematy do nauki i zapisane wyniki AI zostają wewnątrz wybranego projektu. Użyj New Project, aby stworzyć nowy workspace.',
+        body: 'Projekty rozdzielają każde poszukiwanie pracy, a zapisane wyniki AI pozostają w wybranym projekcie. Użyj New Project, aby utworzyć nowy workspace.',
       },
     },
   },
@@ -9496,7 +9496,7 @@ const guidedTourPatches = {
       },
       projects: {
         title: 'Erstelle deine eigenen Projects',
-        body: 'Projects trennt jede Jobsuche sauber: Bewerbungen, Lebenslauf, Notizen, Interviewvorbereitung, Lernthemen und gespeicherte AI-Ergebnisse bleiben im ausgewählten Projekt. Nutze New Project für einen frischen Workspace.',
+        body: 'Projekte halten jede Jobsuche getrennt, und gespeicherte AI-Ergebnisse bleiben im ausgewählten Projekt. Nutze New Project für einen neuen Workspace.',
       },
     },
   },
