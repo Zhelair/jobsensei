@@ -803,9 +803,7 @@ export async function ensureSecureDeviceAccess({
     const deviceSlotsOpen = approvedDevices.length < MAX_APPROVED_DEVICES
     const cooldownActive = Boolean(replacementCooldownUntilMs && replacementCooldownUntilMs > Date.now())
 
-    if (currentRow?.revoked_at) {
-      blockedReason = 'device_revoked'
-    } else if (currentRow && !deviceRowIsApproved(currentRow)) {
+    if (currentRow && !deviceRowIsApproved(currentRow) && !currentRow.revoked_at) {
       blockedReason = 'device_not_approved'
     } else if (!deviceSlotsOpen) {
       blockedReason = 'limit_reached'

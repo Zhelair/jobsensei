@@ -305,6 +305,8 @@ export default function Settings() {
 
   const pairedCardClass = 'card h-full flex flex-col'
   const railCardClass = 'card h-full flex flex-col border-indigo-500/10 bg-navy-800/90'
+  const settingsSupportCopyClass = 'text-slate-400 text-sm leading-relaxed'
+  const settingsMutedCopyClass = 'text-slate-500 text-sm leading-relaxed'
   const secureSignedIn = !!secureUser
   const approvedDevices = (secureAccount?.devices || []).filter(device => device.isApproved)
   const replacementCooldownUntil = secureAccount?.replacementCooldownUntil || ''
@@ -494,7 +496,7 @@ export default function Settings() {
             <h4 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
               <Coffee size={15} className="text-yellow-400" /> {t('settings.jobsenseiAccessTitle')}
             </h4>
-            <p className="text-slate-400 text-xs mb-4">
+            <p className={`${settingsSupportCopyClass} mb-4`}>
               {t('settings.jobsenseiAccessCopy')}
             </p>
 
@@ -504,7 +506,7 @@ export default function Settings() {
                   <Check size={16} className="text-green-400 flex-shrink-0" />
                   <div>
                     <div className="text-green-400 text-sm font-display font-semibold">{t('settings.planActive')}</div>
-                    <div className="text-slate-400 text-xs">{hostedPlanIdentity || t('settings.secureAccountStatusLinked')}</div>
+                    <div className="text-slate-400 text-sm leading-relaxed">{hostedPlanIdentity || t('settings.secureAccountStatusLinked')}</div>
                   </div>
                 </div>
                 {(bmacToken || secureSignedIn) && (
@@ -556,9 +558,9 @@ export default function Settings() {
                 >
                   <Coffee size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
                 </button>
-                <p className="text-slate-500 text-xs">{t('settings.unlockInputHint')}</p>
-                {bmacNotice && <p className="text-green-400 text-xs">{bmacNotice}</p>}
-                {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
+                <p className={settingsMutedCopyClass}>{t('settings.unlockInputHint')}</p>
+                {bmacNotice && <p className="text-green-400 text-sm leading-relaxed">{bmacNotice}</p>}
+                {bmacError && <p className="text-red-400 text-sm leading-relaxed">{bmacError}</p>}
               </div>
             )}
             {(secureSignedIn || secureError || statusError || accountError) && (
@@ -568,11 +570,11 @@ export default function Settings() {
                     <div className="text-teal-300 text-sm font-display font-semibold">
                       {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
                     </div>
-                    <div className="text-slate-400 text-xs mt-1">{t('settings.secureAccountStatusLinked')}</div>
+                    <div className="text-slate-400 text-sm leading-relaxed mt-1">{t('settings.secureAccountStatusLinked')}</div>
                   </div>
                 )}
                 {(secureError || statusError || accountError) && (
-                  <p className="text-red-400 text-xs">{secureError || statusError || accountError}</p>
+                  <p className="text-red-400 text-sm leading-relaxed">{secureError || statusError || accountError}</p>
                 )}
               </div>
             )}
@@ -582,7 +584,7 @@ export default function Settings() {
                 <div className="min-w-0">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 font-display mb-2">{t('settings.profile')}</div>
                   <h5 className="font-display font-semibold text-white">{t('settings.profile')}</h5>
-                  <p className="text-slate-400 text-xs mt-1 leading-relaxed">{t('settings.profilePlanCopy')}</p>
+                  <p className={`${settingsSupportCopyClass} mt-1`}>{t('settings.profilePlanCopy')}</p>
                 </div>
                 <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-xs sm:text-sm justify-center">
                   {profileActionLabel}
@@ -605,7 +607,7 @@ export default function Settings() {
               </div>
 
               {!profile && (
-                <p className="text-slate-500 text-xs mt-3">{t('settings.noProfile')}</p>
+                <p className={`${settingsMutedCopyClass} mt-3`}>{t('settings.noProfile')}</p>
               )}
             </div>
           </div>
@@ -616,7 +618,7 @@ export default function Settings() {
                 <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
                   <Shield size={16} className="text-indigo-300 flex-shrink-0" /> {t('settings.secureAccountTitle')}
                 </h3>
-                <p className="text-slate-400 text-xs leading-relaxed">{t('settings.secureAccountDevicesCopy')}</p>
+                <p className={settingsSupportCopyClass}>{t('settings.secureAccountDevicesCopy')}</p>
               </div>
               <MonitorSmartphone size={16} className="text-slate-500 flex-shrink-0 mt-0.5" />
             </div>
@@ -627,7 +629,7 @@ export default function Settings() {
                   <div className="text-sm font-display font-semibold break-all">
                     {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
                   </div>
-                  <div className="text-xs mt-1.5 leading-relaxed opacity-90">{currentDeviceStatusCopy}</div>
+                  <div className="text-sm mt-1.5 leading-relaxed opacity-90">{currentDeviceStatusCopy}</div>
                 </div>
 
                 <div className="rounded-2xl border border-navy-600 bg-navy-950/70 p-3.5 space-y-3.5">
@@ -646,13 +648,13 @@ export default function Settings() {
                   </div>
 
                   <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-                    <div className="text-slate-200 text-xs break-all leading-relaxed">
+                    <div className="text-slate-200 text-sm break-all leading-relaxed">
                       {secureUser?.email || secureAccount?.email || '-'}
                     </div>
                   </div>
 
                   {replacementCooldownUntil && (
-                    <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-yellow-300 text-xs leading-relaxed">
+                    <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-yellow-300 text-sm leading-relaxed">
                       {t('settings.secureAccountCooldownNotice', { date: formatDeviceTimestamp(replacementCooldownUntil) })}
                     </div>
                   )}
@@ -666,7 +668,7 @@ export default function Settings() {
                               <div className="text-white text-sm font-display font-semibold leading-snug break-words">
                                 {device.displayName}
                               </div>
-                              <div className="text-slate-300 text-xs mt-1 leading-relaxed break-words">
+                              <div className="text-slate-300 text-sm mt-1 leading-relaxed break-words">
                                 {localizedDeviceStatus.last_seen.replace('{date}', formatDeviceTimestamp(device.lastSeenAt || device.createdAt) || '-')}
                               </div>
                             </div>
@@ -688,12 +690,12 @@ export default function Settings() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-slate-500 text-xs">{localizedDeviceStatus.no_devices}</div>
+                    <div className="text-slate-500 text-sm leading-relaxed">{localizedDeviceStatus.no_devices}</div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-3 text-slate-500 text-xs leading-relaxed">
+              <div className="rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-3 text-slate-500 text-sm leading-relaxed">
                 {t('settings.secureAccountCopy')}
               </div>
             )}
@@ -706,7 +708,7 @@ export default function Settings() {
           <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
             <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
           </h3>
-          <p className="text-slate-400 text-xs mb-3">{t('settings.resumeCopy')}</p>
+          <p className={`${settingsSupportCopyClass} mb-3`}>{t('settings.resumeCopy')}</p>
           <div className="flex gap-2 mb-3">
             <button onClick={() => fileRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
               <Upload size={13} /> {extracting ? t('settings.reading') : t('settings.resumeUpload')}
@@ -719,7 +721,7 @@ export default function Settings() {
             )}
           </div>
           <textarea
-            className="textarea-field h-36 text-xs mb-3"
+            className="textarea-field h-36 text-sm mb-3"
             placeholder={t('settings.resumePastePlaceholder')}
             value={resumeText}
             onChange={e => setResumeText(e.target.value)}
@@ -727,7 +729,7 @@ export default function Settings() {
           <button onClick={saveResume} className={`btn-primary text-sm ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
             {resumeSaved ? <><Check size={14} /> {t('settings.saved')}</> : t('settings.resumeSave')}
           </button>
-          <p className="text-slate-600 text-xs mt-2">{t('settings.resumeVisualNote')}</p>
+          <p className="text-slate-600 text-sm leading-relaxed mt-2">{t('settings.resumeVisualNote')}</p>
         </div>
 
         <div className={`${pairedCardClass} border-red-500/20`}>
@@ -740,14 +742,14 @@ export default function Settings() {
             >
               <div>
                 <div className="text-white text-sm font-display font-semibold">{t('settings.privacyTermsTitle')}</div>
-                <p className="text-slate-400 text-xs mt-1">{t('settings.privacyTermsSummary')}</p>
+                <p className="text-slate-400 text-sm leading-relaxed mt-1">{t('settings.privacyTermsSummary')}</p>
               </div>
               {legalExpanded ? <ChevronUp size={15} className="text-slate-400" /> : <ChevronDown size={15} className="text-slate-400" />}
             </button>
 
             {legalExpanded && (
               <div className="space-y-3 pt-1">
-                <div className="space-y-2 text-slate-300 text-xs leading-relaxed">
+                <div className="space-y-2 text-slate-300 text-sm leading-relaxed">
                   {[t('settings.privacyTermsBullet1'), t('settings.privacyTermsBullet2'), t('settings.privacyTermsBullet3')].map(line => (
                     <p key={line} className="flex items-start gap-2">
                       <span className="text-slate-500">-</span>
@@ -772,7 +774,6 @@ export default function Settings() {
 
           <div className="space-y-2.5 text-slate-400 text-sm leading-relaxed mb-3">
             {[
-              t('settings.dataBullet1'),
               t('settings.dataBullet2'),
               t('settings.dataBullet4'),
               t('settings.dataBullet5'),
@@ -786,7 +787,7 @@ export default function Settings() {
 
           <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
             <div className="text-white text-sm font-display font-semibold">{t('settings.projectBackupsTitle')}</div>
-            <p className="text-slate-400 text-xs leading-relaxed">{t('settings.projectBackupsCopy')}</p>
+            <p className={settingsSupportCopyClass}>{t('settings.projectBackupsCopy')}</p>
             <div className="grid sm:grid-cols-3 gap-2">
               <button onClick={exportAll} className="btn-secondary text-xs justify-center">
                 <FolderArchive size={13} /> {t('projects.exportAllProjects')}
@@ -804,7 +805,7 @@ export default function Settings() {
             </div>
             <input ref={projectImportRef} type="file" accept=".json" className="hidden" onChange={handleProjectImport} />
             {projectTransferMessage && (
-              <p className={`text-xs ${projectTransferMessage.includes('Invalid') || projectTransferMessage.includes('❌') ? 'text-red-400' : 'text-teal-300'}`}>
+              <p className={`text-sm leading-relaxed ${projectTransferMessage.includes('Invalid') || projectTransferMessage.includes('❌') ? 'text-red-400' : 'text-teal-300'}`}>
                 {projectTransferMessage}
               </p>
             )}
@@ -819,7 +820,7 @@ export default function Settings() {
           <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
             <Puzzle size={16} className="text-teal-400" /> {t('settings.chromeExtensionTitle')}
           </h3>
-          <p className="text-slate-400 text-xs mb-3">
+          <p className={`${settingsSupportCopyClass} mb-3`}>
             {t('settings.chromeExtensionCopy')}
           </p>
           <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3 space-y-1.5">
@@ -828,7 +829,7 @@ export default function Settings() {
               t('settings.chromeExtensionStep2'),
               t('settings.chromeExtensionStep3'),
             ].map((step, i) => (
-              <div key={step} className="flex gap-2 text-xs text-slate-300">
+              <div key={step} className="flex gap-2 text-sm text-slate-300 leading-relaxed">
                 <span className="text-teal-400 font-mono">{i + 1}</span>
                 <span>{step}</span>
               </div>
@@ -856,7 +857,7 @@ export default function Settings() {
             {hasPlanAccess && (showOwnKey ? <ChevronUp size={15} className="text-slate-400" /> : <ChevronDown size={15} className="text-slate-400" />)}
           </button>
 
-          <p className="text-slate-400 text-xs mt-2">
+          <p className={`${settingsSupportCopyClass} mt-2`}>
             {hasPlanAccess
               ? t('settings.byokCopy')
               : t('settings.byokLocked')}
@@ -881,7 +882,7 @@ export default function Settings() {
                 <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokApiKey')}</label>
                 <div className="relative">
                   <input
-                    className="input-field pr-10 font-mono text-xs"
+                    className="input-field pr-10 font-mono text-sm"
                     type={showKey ? 'text' : 'password'}
                     placeholder={t('settings.byokApiKeyPlaceholder')}
                     value={form.apiKey}
@@ -891,12 +892,12 @@ export default function Settings() {
                     {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
-                <p className="text-slate-600 text-xs mt-1">{t('settings.byokStoredLocal')}</p>
+                <p className="text-slate-600 text-sm leading-relaxed mt-1">{t('settings.byokStoredLocal')}</p>
               </div>
               <div>
                 <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokModel')}</label>
                 <input
-                  className="input-field font-mono text-xs"
+                  className="input-field font-mono text-sm"
                   placeholder={t('settings.byokModelPlaceholder')}
                   value={form.model}
                   onChange={e => update('model', e.target.value)}
@@ -906,14 +907,14 @@ export default function Settings() {
                 <div>
                   <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokCustomBaseUrl')}</label>
                   <input
-                    className="input-field font-mono text-xs"
+                    className="input-field font-mono text-sm"
                     placeholder="https://..."
                     value={form.customBaseUrl}
                     onChange={e => update('customBaseUrl', e.target.value)}
                   />
                 </div>
               )}
-              <div className="bg-navy-900 rounded-xl p-3 text-xs text-slate-500 space-y-1">
+              <div className="bg-navy-900 rounded-xl p-3 text-sm text-slate-500 leading-relaxed space-y-1">
                 <div><span className="text-slate-400">DeepSeek:</span> deepseek-v4-flash / deepseek-v4-pro</div>
                 <div><span className="text-slate-400">OpenAI:</span> gpt-5.4-mini / gpt-5.5</div>
                 <div><span className="text-slate-400">Anthropic:</span> claude-sonnet-4-6 / claude-haiku-4-5-20251001</div>
@@ -946,7 +947,7 @@ export default function Settings() {
                   >
                     <Coffee size={13} /> {t('settings.byokSwitchBack')}
                   </button>
-                  <p className="text-slate-600 text-xs text-center mt-1">{t('settings.byokSwitchBackNote')}</p>
+                  <p className="text-slate-600 text-sm leading-relaxed text-center mt-1">{t('settings.byokSwitchBackNote')}</p>
                 </div>
               )}
             </div>
