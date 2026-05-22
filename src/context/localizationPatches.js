@@ -1,5 +1,6 @@
 const localizationPatches = {
   en: {
+    'tour.projects.body': 'Projects keep each job search separate, and saved AI results stay inside the selected project. Use New Project for a fresh workspace.',
     'common.recommended': 'Recommended',
     'settings.jobsenseiAccessTitle': 'JobSensei AI access',
     'settings.jobsenseiAccessCopy': 'Use JobSensei-hosted AI through your plan, or activate access with your code. Billing is handled through Buy Me a Coffee.',
@@ -150,6 +151,7 @@ const localizationPatches = {
     'voice.speaking': 'Speaking - tap audio to stop',
   },
   ru: {
+    'tour.projects.body': 'Проекты разделяют каждый поиск работы, а сохранённые результаты AI остаются внутри выбранного проекта. Используйте New Project для нового workspace.',
     'common.recommended': 'Рекомендуем',
     'settings.jobsenseiAccessTitle': 'Доступ к JobSensei AI',
     'settings.jobsenseiAccessCopy': 'Используйте AI от JobSensei по вашему плану или активируйте доступ кодом. Оплата обрабатывается через Buy Me a Coffee.',
@@ -300,6 +302,7 @@ const localizationPatches = {
     'voice.speaking': 'AI говорит - нажмите, чтобы остановить звук',
   },
   bg: {
+    'tour.projects.body': 'Проектите държат всяко търсене на работа отделно, а запазените AI резултати остават в избрания проект. Използвай New Project за нов workspace.',
     'common.recommended': 'Препоръчано',
     'settings.jobsenseiAccessTitle': 'Достъп до JobSensei AI',
     'settings.jobsenseiAccessCopy': 'Използвай JobSensei-hosted AI през плана си или активирай достъп с кода си. Плащането минава през Buy Me a Coffee.',
@@ -450,6 +453,7 @@ const localizationPatches = {
     'voice.speaking': 'AI говори - натиснете, за да спрете звука',
   },
   es: {
+    'tour.projects.body': 'Los proyectos mantienen cada búsqueda de empleo separada y los resultados guardados por la AI permanecen dentro del proyecto seleccionado. Usa New Project para crear un workspace nuevo.',
     'common.recommended': 'Recomendado',
     'settings.jobsenseiAccessTitle': 'Acceso a JobSensei AI',
     'settings.jobsenseiAccessCopy': 'Usa el AI alojado por JobSensei con tu plan o activa el acceso con tu código. La facturación se gestiona con Buy Me a Coffee.',
@@ -600,6 +604,7 @@ const localizationPatches = {
     'voice.speaking': 'El AI está hablando - toca para detener el audio',
   },
   fr: {
+    'tour.projects.body': 'Les projets gardent chaque recherche d’emploi séparée, et les résultats AI enregistrés restent dans le projet sélectionné. Utilisez New Project pour créer un nouvel espace de travail.',
     'common.recommended': 'Recommandé',
     'settings.jobsenseiAccessTitle': 'Accès JobSensei AI',
     'settings.jobsenseiAccessCopy': 'Utilisez l’AI hébergée par JobSensei avec votre plan, ou activez l’accès avec votre code. La facturation passe par Buy Me a Coffee.',
@@ -750,6 +755,7 @@ const localizationPatches = {
     'voice.speaking': 'L’AI parle - touchez pour arrêter le son',
   },
   it: {
+    'tour.projects.body': 'I progetti tengono separata ogni ricerca di lavoro e i risultati AI salvati restano nel progetto selezionato. Usa New Project per creare un nuovo workspace.',
     'common.recommended': 'Consigliato',
     'settings.jobsenseiAccessTitle': 'Accesso a JobSensei AI',
     'settings.jobsenseiAccessCopy': 'Usa l’AI ospitata da JobSensei con il tuo piano, oppure attiva l’accesso con il tuo codice. La fatturazione passa tramite Buy Me a Coffee.',
@@ -900,6 +906,7 @@ const localizationPatches = {
     'voice.speaking': 'L’AI sta parlando - tocca per fermare l’audio',
   },
   pt: {
+    'tour.projects.body': 'Os projetos mantêm cada procura de emprego separada, e os resultados de AI guardados ficam dentro do projeto selecionado. Usa New Project para criar um novo workspace.',
     'common.recommended': 'Recomendado',
     'settings.jobsenseiAccessTitle': 'Acesso ao JobSensei AI',
     'settings.jobsenseiAccessCopy': 'Use o AI hospedado pelo JobSensei com o seu plano ou ative o acesso com o seu código. A cobrança é feita pelo Buy Me a Coffee.',
@@ -1050,6 +1057,7 @@ const localizationPatches = {
     'voice.speaking': 'O AI está falando - toque para parar o áudio',
   },
   pl: {
+    'tour.projects.body': 'Projekty rozdzielają każde poszukiwanie pracy, a zapisane wyniki AI pozostają w wybranym projekcie. Użyj New Project, aby utworzyć nowy workspace.',
     'common.recommended': 'Polecane',
     'settings.jobsenseiAccessTitle': 'Dostęp do JobSensei AI',
     'settings.jobsenseiAccessCopy': 'Używaj AI hostowanego przez JobSensei w ramach swojego planu albo aktywuj dostęp kodem. Płatność jest obsługiwana przez Buy Me a Coffee.',
@@ -1200,6 +1208,7 @@ const localizationPatches = {
     'voice.speaking': 'AI mówi - dotknij, aby zatrzymać dźwięk',
   },
   de: {
+    'tour.projects.body': 'Projekte halten jede Jobsuche getrennt, und gespeicherte AI-Ergebnisse bleiben im ausgewählten Projekt. Nutze New Project für einen neuen Workspace.',
     'common.recommended': 'Empfohlen',
     'settings.jobsenseiAccessTitle': 'JobSensei AI-Zugang',
     'settings.jobsenseiAccessCopy': 'Nutze das von JobSensei gehostete AI über deinen Plan oder aktiviere den Zugang mit deinem Code. Die Abrechnung läuft über Buy Me a Coffee.',

@@ -394,7 +394,7 @@ export default function TodayPage() {
               </button>
             </div>
             {focusApplication && (
-              <p className="text-slate-500 text-xs mt-3 leading-relaxed">
+              <p className="text-slate-500 text-sm mt-3 leading-relaxed">
                 {t('today.prepHubsNote')}
               </p>
             )}

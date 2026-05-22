@@ -1581,7 +1581,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
             <div className="rounded-2xl border border-navy-600 bg-navy-950/60 px-4 py-3">
               <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{t('applications.workspace.overview.stats.nextUp')}</div>
               <div className="text-white text-sm font-display font-semibold">{nextStep ? nextStep.title : t('applications.workspace.overview.stats.workflowComplete')}</div>
-              <div className="text-slate-400 text-xs mt-1">
+              <div className="text-slate-400 text-sm leading-relaxed mt-1">
                 {nextStep ? nextStep.summary : t('applications.workspace.overview.stats.workflowCompleteCopy')}
               </div>
             </div>
@@ -1590,14 +1590,14 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
               <div className="text-white text-sm font-display font-semibold">
                 {latestWorkspaceActivity?.date ? timeAgo(latestWorkspaceActivity.date) : t('applications.workspace.overview.stats.noSavedActivity')}
               </div>
-              <div className="text-slate-400 text-xs mt-1">
+              <div className="text-slate-400 text-sm leading-relaxed mt-1">
                 {latestWorkspaceActivity?.date ? t('applications.workspace.overview.stats.savedOn', { date: formatDate(latestWorkspaceActivity.date) }) : t('applications.workspace.overview.stats.startBuilding')}
               </div>
             </div>
             <div className="rounded-2xl border border-navy-600 bg-navy-950/60 px-4 py-3">
               <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{t('applications.workspace.overview.stats.researchNotes')}</div>
               <div className="text-white text-sm font-display font-semibold">{t('applications.workspace.overview.stats.savedFields', { count: noteCount })}</div>
-              <div className="text-slate-400 text-xs mt-1">
+              <div className="text-slate-400 text-sm leading-relaxed mt-1">
                 {hasPrep ? t('applications.workspace.overview.stats.prepReady') : t('applications.workspace.overview.stats.prepHint')}
               </div>
             </div>
@@ -1617,7 +1617,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
                     </div>
                     <h4 className="text-white text-base font-display font-semibold mb-1">{card.title}</h4>
                     <p className="text-slate-400 text-sm leading-relaxed">{card.desc}</p>
-                    <p className="text-slate-500 text-xs mt-2">{card.summary}</p>
+                    <p className="text-slate-500 text-sm leading-relaxed mt-2">{card.summary}</p>
                   </div>
                   <span className={`px-2.5 py-1 rounded-full text-[11px] border whitespace-nowrap ${status.badge}`}>
                     {status.label}
@@ -1666,7 +1666,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
             <div>
               <div className="text-white text-sm font-display font-semibold">{t('applications.workspace.overview.advancedToolsTitle')}</div>
-              <div className="text-slate-400 text-xs">{t('applications.workspace.overview.advancedToolsSubtitle')}</div>
+              <div className="text-slate-400 text-sm leading-relaxed">{t('applications.workspace.overview.advancedToolsSubtitle')}</div>
             </div>
             <button onClick={() => setShowAdvancedTools(prev => !prev)} className="btn-ghost text-xs">
               {showAdvancedTools ? t('applications.workspace.overview.hideAdvancedTools') : t('applications.workspace.overview.showAdvancedTools')}
