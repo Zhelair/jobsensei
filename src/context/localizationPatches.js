@@ -10522,6 +10522,40 @@ Object.entries(settingsProjectBackupPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 
+const learningTutorHintPatches = {
+  en: {
+    'learning.tutor.startHint': 'Type "teach me" to start this topic, or ask in your own words.',
+  },
+  ru: {
+    'learning.tutor.startHint': 'Напишите "teach me", чтобы начать эту тему, или задайте вопрос своими словами.',
+  },
+  bg: {
+    'learning.tutor.startHint': 'Напиши "teach me", за да започнеш тази тема, или пиши със свои думи.',
+  },
+  'es-ES': {
+    'learning.tutor.startHint': 'Escribe "teach me" para empezar este tema, o pregunta con tus propias palabras.',
+  },
+  fr: {
+    'learning.tutor.startHint': 'Tape "teach me" pour démarrer ce sujet, ou pose ta question avec tes propres mots.',
+  },
+  it: {
+    'learning.tutor.startHint': 'Scrivi "teach me" per iniziare questo argomento, oppure fai una domanda con parole tue.',
+  },
+  'pt-BR': {
+    'learning.tutor.startHint': 'Escreve "teach me" para começar este tópico, ou pergunta pelas tuas próprias palavras.',
+  },
+  pl: {
+    'learning.tutor.startHint': 'Wpisz "teach me", aby rozpocząć ten temat, albo zapytaj własnymi słowami.',
+  },
+  de: {
+    'learning.tutor.startHint': 'Schreibe "teach me", um dieses Thema zu starten, oder frage in deinen eigenen Worten.',
+  },
+}
+
+Object.entries(learningTutorHintPatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
 export default localizationPatches
 
 
