@@ -5,6 +5,10 @@ const LEGACY_TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000
 const RESEND_API_URL = 'https://api.resend.com/emails'
 export const MAX_APPROVED_DEVICES = 2
 export const DEVICE_REPLACEMENT_COOLDOWN_MS = 8 * 60 * 60 * 1000
+export const HOSTED_REQUEST_CREDITS = 31
+export const FREE_MONTHLY_CREDITS = 531
+export const PRO_MONTHLY_CREDITS = 53000
+export const CREDIT_PERIOD_DAYS = 31
 
 export const ACTIVE_PLAN_STATUSES = new Set(['active', 'grace'])
 
@@ -66,6 +70,55 @@ function getPrimaryGrant(activeGrants = []) {
 function derivePlanSourceFromGrant(grant) {
   const metadataSource = String(grant?.metadata?.planSource || grant?.metadata?.source || '').trim()
   return metadataSource || grant?.grant_type || 'payment_grant'
+}
+
+function derivePlanTierFromGrant(grant, fallbackTier = 'pro') {
+  const explicitTier = String(
+    grant?.metadata?.planTier
+    || grant?.metadata?.tier
+    || grant?.metadata?.plan_tier
+    || '',
+  ).trim().toLowerCase()
+
+  if (explicitTier === 'free' || explicitTier === 'pro') return explicitTier
+
+  const source = derivePlanSourceFromGrant(grant).toLowerCase()
+  if (source.includes('free') || source.includes('trial')) return 'free'
+
+  return fallbackTier
+}
+
+function getCreditAllowanceForPlanTier(planTier = 'pro') {
+  return planTier === 'free' ? FREE_MONTHLY_CREDITS : PRO_MONTHLY_CREDITS
+}
+
+function addDaysToIso(value, days) {
+  const next = new Date(value || Date.now())
+  next.setDate(next.getDate() + days)
+  return next.toISOString()
+}
+
+function getCreditPeriodWindow({
+  anchor,
+  now = Date.now(),
+  periodStart = null,
+  periodEnd = null,
+} = {}) {
+  let start = periodStart ? new Date(periodStart).toISOString() : new Date(anchor || Date.now()).toISOString()
+  let end = periodEnd ? new Date(periodEnd).toISOString() : addDaysToIso(start, CREDIT_PERIOD_DAYS)
+  let reset = false
+
+  while (new Date(end).getTime() <= now) {
+    start = end
+    end = addDaysToIso(start, CREDIT_PERIOD_DAYS)
+    reset = true
+  }
+
+  return {
+    creditPeriodStartedAt: start,
+    creditPeriodEndsAt: end,
+    reset,
+  }
 }
 
 function parseAllowedList(value = '') {
@@ -631,7 +684,7 @@ export async function ensureSecureAccountAccess({
   const [accountResponse, userGrantsResponse, claimableGrantsResponse] = await Promise.all([
     supabase
       .from('accounts')
-      .select('email, plan_status, plan_source, linked_at, legacy_code_hash')
+      .select('email, plan_status, plan_source, plan_tier, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at')
       .eq('user_id', user.id)
       .maybeSingle(),
     supabase
@@ -688,6 +741,24 @@ export async function ensureSecureAccountAccess({
 
   const primaryGrant = getPrimaryGrant(activeGrants)
   if (primaryGrant) {
+    const planTier = derivePlanTierFromGrant(primaryGrant, account?.plan_tier || 'pro')
+    const monthlyCreditAllowance = getCreditAllowanceForPlanTier(planTier)
+    const planAnchor = primaryGrant.created_at || account?.linked_at || account?.created_at || now
+    const tierChanged = account?.plan_tier && account.plan_tier !== planTier
+    const nextWindow = getCreditPeriodWindow({
+      anchor: planAnchor,
+      now: Date.now(),
+      periodStart: tierChanged ? planAnchor : (account?.credit_period_started_at || planAnchor),
+      periodEnd: tierChanged ? addDaysToIso(planAnchor, CREDIT_PERIOD_DAYS) : account?.credit_period_ends_at,
+    })
+    const nextCreditBalance = tierChanged
+      ? monthlyCreditAllowance
+      : nextWindow.reset
+        ? monthlyCreditAllowance
+        : Number.isFinite(Number(account?.credit_balance))
+          ? Math.max(0, Number(account.credit_balance))
+          : monthlyCreditAllowance
+
     const { data: nextAccount, error: accountUpsertError } = await supabase
       .from('accounts')
       .upsert({
@@ -695,11 +766,15 @@ export async function ensureSecureAccountAccess({
         email: user.email || account?.email || '',
         plan_status: 'active',
         plan_source: derivePlanSourceFromGrant(primaryGrant),
+        plan_tier: planTier,
         legacy_code_hash: account?.legacy_code_hash || null,
         linked_at: account?.linked_at || now,
+        credit_balance: nextCreditBalance,
+        credit_period_started_at: nextWindow.creditPeriodStartedAt,
+        credit_period_ends_at: nextWindow.creditPeriodEndsAt,
         updated_at: now,
       }, { onConflict: 'user_id' })
-      .select('email, plan_status, plan_source, linked_at, legacy_code_hash')
+      .select('email, plan_status, plan_source, plan_tier, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at')
       .single()
 
     if (accountUpsertError) throw accountUpsertError
@@ -713,7 +788,7 @@ export async function ensureSecureAccountAccess({
         updated_at: now,
       })
       .eq('user_id', user.id)
-      .select('email, plan_status, plan_source, linked_at, legacy_code_hash')
+      .select('email, plan_status, plan_source, plan_tier, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at')
       .single()
 
     if (revokeAccountError) throw revokeAccountError
@@ -850,6 +925,52 @@ export async function ensureSecureDeviceAccess({
     blockedReason,
     replacementCooldownUntil,
   }
+}
+
+export async function consumeHostedCredits({
+  supabase,
+  userId,
+  deviceId = '',
+  route = 'proxy',
+  provider = 'deepseek',
+  model = 'deepseek-v4-flash',
+  cost = HOSTED_REQUEST_CREDITS,
+} = {}) {
+  const { data, error } = await supabase.rpc('consume_hosted_credits', {
+    p_user_id: userId,
+    p_device_id: deviceId || null,
+    p_route: route,
+    p_provider: provider,
+    p_model: model,
+    p_cost: cost,
+  })
+
+  if (error) throw error
+  return Array.isArray(data) ? data[0] : data
+}
+
+export async function refundHostedCredits({
+  supabase,
+  userId,
+  deviceId = '',
+  route = 'proxy',
+  provider = 'deepseek',
+  model = 'deepseek-v4-flash',
+  amount = HOSTED_REQUEST_CREDITS,
+  reason = 'provider_error',
+} = {}) {
+  const { data, error } = await supabase.rpc('refund_hosted_credits', {
+    p_user_id: userId,
+    p_device_id: deviceId || null,
+    p_route: route,
+    p_provider: provider,
+    p_model: model,
+    p_amount: amount,
+    p_reason: reason,
+  })
+
+  if (error) throw error
+  return Array.isArray(data) ? data[0] : data
 }
 
 export async function upsertBmacPlanGrant({

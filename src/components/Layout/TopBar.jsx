@@ -346,7 +346,7 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
         })
 
   return (
-    <div className="rounded-2xl border border-navy-600 bg-navy-800/95 shadow-2xl backdrop-blur p-4 sm:p-4">
+    <div className="credits-panel rounded-2xl border border-navy-600 bg-navy-800/95 shadow-2xl backdrop-blur p-4 sm:p-4">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0">
           <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">
@@ -361,25 +361,37 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
       </div>
 
       <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+        <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
           <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricAllowance')}</div>
           <div className="text-white text-sm font-display font-semibold">
-            {snapshot.monthlyCredits != null ? formatCreditNumber(snapshot.monthlyCredits) : t('topbar.creditsMetricUnlimited')}
+            {snapshot.mode === 'byok'
+              ? t('topbar.creditsMetricUnlimited')
+              : snapshot.monthlyCredits != null
+                ? formatCreditNumber(snapshot.monthlyCredits)
+                : '-'}
           </div>
         </div>
-        <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+        <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
           <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricCost')}</div>
           <div className="text-white text-sm font-display font-semibold">
-            {snapshot.requestCost != null ? t('topbar.creditsRequestValue', { credits: formatCreditNumber(snapshot.requestCost) }) : t('topbar.creditsMetricUnlimited')}
+            {snapshot.requestCost != null
+              ? t('topbar.creditsRequestValue', { credits: formatCreditNumber(snapshot.requestCost) })
+              : snapshot.mode === 'byok'
+                ? t('topbar.creditsMetricUnlimited')
+                : '-'}
           </div>
         </div>
-        <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+        <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
           <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricRequests')}</div>
           <div className="text-white text-sm font-display font-semibold">
-            {snapshot.requestsIncluded != null ? formatCreditNumber(snapshot.requestsIncluded) : t('topbar.creditsMetricUnlimited')}
+            {snapshot.mode === 'byok'
+              ? t('topbar.creditsMetricUnlimited')
+              : snapshot.requestsIncluded != null
+                ? formatCreditNumber(snapshot.requestsIncluded)
+                : '-'}
           </div>
         </div>
-        <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+        <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
           <div className="text-[11px] text-slate-500 mb-1">
             {snapshot.balanceKnown ? t('topbar.creditsMetricLeft') : t('topbar.creditsMetricReset')}
           </div>
@@ -608,6 +620,12 @@ export default function TopBar() {
     setShowCredits(false)
   }
 
+  const openByokFromCredits = () => {
+    setActiveSection(SECTIONS.SETTINGS)
+    setShowCredits(false)
+    window.dispatchEvent(new CustomEvent('jobsensei:open-byok-settings'))
+  }
+
   return (
     <header className="bg-navy-900 border-b border-navy-700 px-4 md:px-6 py-3 flex items-center justify-between flex-shrink-0 relative">
       {showTour && <GuidedTour onClose={closeGuidedTour} />}
@@ -631,7 +649,7 @@ export default function TopBar() {
           <TopBarLanguageSelect />
         </div>
 
-        {/* Mobile: compact AI status dot — tap for details */}
+        {/* Mobile: compact AI status dot - tap for details */}
         <button
           onClick={() => {
             setShowCredits(prev => !prev)
@@ -649,7 +667,7 @@ export default function TopBar() {
           </span>
         </button>
 
-        {/* Visuals toggle — desktop only */}
+        {/* Visuals toggle - desktop only */}
         <button
           onClick={() => {
             const next = !visualsEnabled
@@ -662,7 +680,7 @@ export default function TopBar() {
           <Wand2 size={16} />
         </button>
 
-        {/* Theme cycle button — desktop only */}
+        {/* Theme cycle button - desktop only */}
         <button
           onClick={cycleTheme}
           className="hidden sm:flex btn-ghost"
@@ -671,7 +689,7 @@ export default function TopBar() {
           <ThemeIcon size={16} />
         </button>
 
-        {/* Global mute/unmute toggle — glows teal when AI is speaking */}
+        {/* Global mute/unmute toggle - glows teal when AI is speaking */}
         <button
           onClick={() => {
             if (!isMuted) window.speechSynthesis?.cancel()
@@ -712,7 +730,7 @@ export default function TopBar() {
           <span className="hidden sm:inline">{drillMode ? t('topbar.drill') : t('topbar.sensei')}</span>
         </button>
 
-        {/* Help button — desktop only (mobile users access via ⋯ menu) */}
+        {/* Help button - desktop only (mobile users access via ⋯ menu) */}
         {help && (
           <button
             data-guide="guide-button"
@@ -730,7 +748,7 @@ export default function TopBar() {
           </button>
         )}
 
-        {/* Mobile ⋯ overflow menu — Theme, Visuals, Help */}
+        {/* Mobile ⋯ overflow menu - Theme, Visuals, Help */}
         <div className="relative sm:hidden">
           <button
             onClick={() => setShowMore(v => !v)}
@@ -812,7 +830,7 @@ export default function TopBar() {
               snapshot={creditSnapshot}
               tone={creditTone}
               onPrimaryAction={openSettingsFromCredits}
-              onSecondaryAction={openSettingsFromCredits}
+              onSecondaryAction={openByokFromCredits}
               onClose={() => setShowCredits(false)}
             />
           </div>
@@ -823,7 +841,7 @@ export default function TopBar() {
               snapshot={creditSnapshot}
               tone={creditTone}
               onPrimaryAction={openSettingsFromCredits}
-              onSecondaryAction={openSettingsFromCredits}
+              onSecondaryAction={openByokFromCredits}
               onClose={() => setShowCredits(false)}
             />
           </div>
@@ -874,3 +892,4 @@ export default function TopBar() {
     </header>
   )
 }
+

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useAI } from '../../context/AIContext'
+import { SECTIONS, useApp } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { Coffee, X, Check, ExternalLink } from 'lucide-react'
 
@@ -7,6 +8,7 @@ const BMAC_URL = 'https://buymeacoffee.com/niksales73l/e/515014'
 
 export default function PaywallModal() {
   const { showPaywall, closePaywall, unlockAccess } = useAI()
+  const { setActiveSection } = useApp()
   const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -105,7 +107,11 @@ export default function PaywallModal() {
         <p className="text-slate-600 text-xs text-center mt-4">
           {t('paywall.byokPrefix')}{' '}
           <button
-            onClick={closePaywall}
+            onClick={() => {
+              closePaywall()
+              setActiveSection(SECTIONS.SETTINGS)
+              window.dispatchEvent(new CustomEvent('jobsensei:open-byok-settings'))
+            }}
             className="text-teal-400 hover:underline"
           >
             {t('paywall.byokLink')}

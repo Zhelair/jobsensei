@@ -5,12 +5,15 @@
 import {
   ACTIVE_PLAN_STATUSES,
   authenticateSupabaseUser,
+  consumeHostedCredits,
   createSupabaseAdminClient,
   ensureSecureAccountAccess,
   ensureSecureDeviceAccess,
+  HOSTED_REQUEST_CREDITS,
   looksLikeJwt,
   readSecureDeviceContext,
   readBearerToken,
+  refundHostedCredits,
   setDefaultCorsHeaders,
   verifyLegacyAccessToken,
 } from './_lib/authBridge.js'
@@ -98,6 +101,8 @@ async function authorizeProxyRequest(req) {
     ok: true,
     authMode: 'secure_account',
     userId: user.id,
+    supabase,
+    deviceId: deviceAccess.currentDevice?.deviceId || readSecureDeviceContext(req).deviceId || '',
   }
 }
 
@@ -123,7 +128,30 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid request body' })
   }
 
+  let creditsReserved = false
+
   try {
+    if (auth.authMode === 'secure_account') {
+      const consumeResult = await consumeHostedCredits({
+        supabase: auth.supabase,
+        userId: auth.userId,
+        deviceId: auth.deviceId,
+        route: 'proxy',
+        provider: 'deepseek',
+        model: 'deepseek-v4-flash',
+        cost: HOSTED_REQUEST_CREDITS,
+      })
+
+      if (!consumeResult?.charged) {
+        const creditError = consumeResult?.error === 'insufficient_credits'
+          ? 'You do not have enough hosted AI credits left on this account. Upgrade to Pro or switch to your own API key in Settings.'
+          : 'Unable to reserve hosted AI credits right now.'
+        return res.status(402).json({ error: creditError })
+      }
+
+      creditsReserved = true
+    }
+
     const deepseekRes = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -141,6 +169,18 @@ export default async function handler(req, res) {
     })
 
     if (!deepseekRes.ok) {
+      if (creditsReserved && auth.authMode === 'secure_account') {
+        await refundHostedCredits({
+          supabase: auth.supabase,
+          userId: auth.userId,
+          deviceId: auth.deviceId,
+          route: 'proxy',
+          provider: 'deepseek',
+          model: 'deepseek-v4-flash',
+          amount: HOSTED_REQUEST_CREDITS,
+          reason: 'provider_http_error',
+        }).catch(refundError => console.error('credit refund failed after provider HTTP error:', refundError))
+      }
       const errText = await deepseekRes.text()
       return res.status(deepseekRes.status).json({ error: `AI error: ${errText}` })
     }
@@ -165,6 +205,18 @@ export default async function handler(req, res) {
     res.end()
   } catch (err) {
     console.error('proxy error:', err)
+    if (creditsReserved && auth.authMode === 'secure_account') {
+      await refundHostedCredits({
+        supabase: auth.supabase,
+        userId: auth.userId,
+        deviceId: auth.deviceId,
+        route: 'proxy',
+        provider: 'deepseek',
+        model: 'deepseek-v4-flash',
+        amount: HOSTED_REQUEST_CREDITS,
+        reason: 'provider_exception',
+      }).catch(refundError => console.error('credit refund failed after proxy exception:', refundError))
+    }
     if (!res.headersSent) {
       res.status(500).json({ error: 'Proxy request failed. Please try again.' })
     }

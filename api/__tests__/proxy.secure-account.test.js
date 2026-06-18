@@ -17,10 +17,16 @@ function makeReqRes(body = {}, headers = {}, method = 'POST') {
 }
 
 describe('proxy secure-account mode', () => {
+  let consumeHostedCreditsMock
+  let refundHostedCreditsMock
+
   beforeEach(() => {
     vi.resetModules()
     process.env.DEEPSEEK_API_KEY = 'fake-deepseek-key'
     delete process.env.JWT_SECRET
+
+    consumeHostedCreditsMock = vi.fn().mockResolvedValue({ charged: true, balance: 52969 })
+    refundHostedCreditsMock = vi.fn().mockResolvedValue({ refunded: true, balance: 53000 })
 
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
@@ -39,23 +45,15 @@ describe('proxy secure-account mode', () => {
     vi.unmock('../_lib/authBridge.js')
   })
 
-  it('does not require JWT_SECRET for secure-account traffic', async () => {
-    const from = vi.fn(table => {
-      if (table === 'api_usage_events') {
-        return {
-          insert: vi.fn().mockResolvedValue({ error: null }),
-        }
-      }
-
-      throw new Error(`Unexpected table: ${table}`)
-    })
-
+  function mockAuthBridge() {
     vi.doMock('../_lib/authBridge.js', () => ({
       ACTIVE_PLAN_STATUSES: new Set(['active', 'grace']),
       authenticateSupabaseUser: vi.fn().mockResolvedValue({
         user: { id: 'user-1', email: 'person@example.com' },
         error: null,
       }),
+      consumeHostedCredits: consumeHostedCreditsMock,
+      createSupabaseAdminClient: vi.fn().mockReturnValue({ rpc: vi.fn() }),
       ensureSecureAccountAccess: vi.fn().mockResolvedValue({
         account: { plan_status: 'active' },
       }),
@@ -63,17 +61,23 @@ describe('proxy secure-account mode', () => {
         currentDeviceApproved: true,
         currentDeviceMissing: false,
         blockedReason: null,
+        currentDevice: { deviceId: 'js-device-1' },
       }),
-      createSupabaseAdminClient: vi.fn().mockReturnValue({ from }),
+      HOSTED_REQUEST_CREDITS: 31,
       looksLikeJwt: vi.fn().mockReturnValue(true),
       readSecureDeviceContext: vi.fn().mockReturnValue({
         deviceId: 'js-device-1',
         deviceName: 'Windows - Chrome',
       }),
       readBearerToken: vi.fn().mockReturnValue('jwt-token'),
+      refundHostedCredits: refundHostedCreditsMock,
       setDefaultCorsHeaders: vi.fn(),
       verifyLegacyAccessToken: vi.fn().mockReturnValue(null),
     }))
+  }
+
+  it('does not require JWT_SECRET for secure-account traffic', async () => {
+    mockAuthBridge()
 
     const { default: handler } = await import('../proxy.js')
     const { req, res } = makeReqRes(
@@ -85,5 +89,61 @@ describe('proxy secure-account mode', () => {
 
     expect(res._status).toBe(200)
     expect(res._body).toEqual({ content: 'Secure path response' })
+    expect(consumeHostedCreditsMock).toHaveBeenCalledWith(expect.objectContaining({
+      userId: 'user-1',
+      deviceId: 'js-device-1',
+      cost: 31,
+    }))
+    expect(refundHostedCreditsMock).not.toHaveBeenCalled()
+  })
+
+  it('returns 402 before calling the provider when credits are exhausted', async () => {
+    consumeHostedCreditsMock.mockResolvedValueOnce({
+      charged: false,
+      balance: 0,
+      error: 'insufficient_credits',
+    })
+    mockAuthBridge()
+
+    const { default: handler } = await import('../proxy.js')
+    const { req, res } = makeReqRes(
+      { messages: [{ role: 'user', content: 'hello' }] },
+      { authorization: 'Bearer jwt-token' },
+    )
+
+    await handler(req, res)
+
+    expect(res._status).toBe(402)
+    expect(res._body).toEqual({
+      error: 'You do not have enough hosted AI credits left on this account. Upgrade to Pro or switch to your own API key in Settings.',
+    })
+    expect(fetch).not.toHaveBeenCalled()
+    expect(refundHostedCreditsMock).not.toHaveBeenCalled()
+  })
+
+  it('refunds reserved credits when the provider returns an HTTP error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      text: async () => 'provider unavailable',
+    }))
+    mockAuthBridge()
+
+    const { default: handler } = await import('../proxy.js')
+    const { req, res } = makeReqRes(
+      { messages: [{ role: 'user', content: 'hello' }] },
+      { authorization: 'Bearer jwt-token' },
+    )
+
+    await handler(req, res)
+
+    expect(res._status).toBe(503)
+    expect(res._body).toEqual({ error: 'AI error: provider unavailable' })
+    expect(refundHostedCreditsMock).toHaveBeenCalledWith(expect.objectContaining({
+      userId: 'user-1',
+      deviceId: 'js-device-1',
+      amount: 31,
+      reason: 'provider_http_error',
+    }))
   })
 })

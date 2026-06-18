@@ -541,6 +541,35 @@
   box-shadow: 0 1px 4px rgba(80,60,40,0.08), 0 1px 2px rgba(80,60,40,0.04);
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
+[data-theme="daylight"] .credits-panel {
+  background: rgba(248, 244, 238, 0.98);
+  border-color: rgba(200, 189, 179, 0.95);
+  box-shadow: 0 12px 32px rgba(80, 60, 40, 0.14), 0 4px 12px rgba(80, 60, 40, 0.08);
+}
+[data-theme="daylight"] .credits-panel .text-white {
+  color: #243447;
+}
+[data-theme="daylight"] .credits-panel .text-slate-300 {
+  color: #5f6874;
+}
+[data-theme="daylight"] .credits-panel .text-slate-500 {
+  color: #8b7967;
+}
+[data-theme="daylight"] .credits-metric {
+  background: rgba(232, 226, 218, 0.92);
+  border-color: rgba(186, 176, 166, 0.65);
+}
+[data-theme="daylight"] .credits-panel .btn-secondary {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(226, 114, 91, 0.35);
+  color: #a14c3a;
+}
+[data-theme="daylight"] .credits-panel .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+[data-theme="daylight"] .credits-panel .btn-primary {
+  box-shadow: 0 10px 24px rgba(226, 114, 91, 0.18);
+}
 [data-theme="daylight"] .card-hover:hover {
   background: #EAE4DC;
   border-color: rgba(10, 186, 181, 0.35);
@@ -1519,6 +1548,9 @@
 [data-theme="daylight"] .bg-navy-900\/40 { background-color: rgba(253, 251, 248, 0.74); }
 [data-theme="daylight"] .bg-navy-900\/70 { background-color: rgba(253, 251, 248, 0.94); }
 [data-theme="daylight"] .bg-navy-800\/60 { background-color: rgba(244, 238, 231, 0.88); }
+[data-theme="daylight"] .bg-navy-800\/95 { background-color: rgba(248, 244, 238, 0.98); }
+[data-theme="daylight"] .bg-white\/\[0\.03\] { background-color: rgba(232, 226, 218, 0.55); }
+[data-theme="daylight"] .border-white\/5 { border-color: rgba(186, 176, 166, 0.45); }
 
 /* Logo mantra theme overrides */
 [data-theme="daylight"] .logo-mantra { color: rgba(226, 114, 91, 0.85); }
