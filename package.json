@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:extension-zip": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path 'public/jobsensei-capture-extension.zip') { Remove-Item 'public/jobsensei-capture-extension.zip' -Force }; Compress-Archive -Path 'extension/*' -DestinationPath 'public/jobsensei-capture-extension.zip' -Force\"",
+    "build:extension:store": "node scripts/build-extension-store.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
