@@ -2,8 +2,6 @@
 // Environment variables required: JWT_SECRET, ACCESS_CODES (comma-separated list of valid codes)
 
 import {
-  ACTIVE_PLAN_STATUSES,
-  createSupabaseAdminClient,
   getLegacyAccessCodes,
   isSupabaseServerConfigured,
   normalizeEmail,
@@ -36,45 +34,10 @@ export default async function handler(req, res) {
         return res.status(503).json({ error: 'Email-based unlock is not configured on this deployment yet.' })
       }
 
-      const normalizedEmail = normalizeEmail(input)
-
-      try {
-        const supabase = createSupabaseAdminClient()
-        const [{ data: activeAccount, error: accountError }, { data: activeGrant, error: grantError }] = await Promise.all([
-          supabase
-            .from('accounts')
-            .select('email, plan_status')
-            .eq('email', normalizedEmail)
-            .in('plan_status', [...ACTIVE_PLAN_STATUSES])
-            .maybeSingle(),
-          supabase
-            .from('plan_grants')
-            .select('id')
-            .eq('claim_email', normalizedEmail)
-            .eq('status', 'active')
-            .limit(1)
-            .maybeSingle(),
-        ])
-
-        if (accountError || grantError) {
-          console.error('verify-member email lookup failed:', accountError || grantError)
-          return res.status(500).json({ error: 'Unable to check email-based access right now.' })
-        }
-
-        if (!activeAccount && !activeGrant) {
-          return res.status(404).json({
-            error: 'No JobSensei access was found for this email yet. Support the app first or use a tester code.',
-          })
-        }
-
-        return res.status(200).json({
-          next: 'magic_link',
-          email: normalizedEmail,
-        })
-      } catch (err) {
-        console.error('verify-member email unlock failed:', err)
-        return res.status(500).json({ error: 'Unable to start email unlock right now.' })
-      }
+      return res.status(200).json({
+        next: 'magic_link',
+        email: normalizeEmail(input),
+      })
     }
 
     const validCodes = getLegacyAccessCodes()

@@ -84,7 +84,7 @@ export default function PaywallModal() {
           <div className="space-y-2">
             <input
               className="input-field text-sm w-full"
-              type="text"
+              type="email"
               placeholder={t('paywall.codePlaceholder')}
               value={email}
               onChange={e => { setEmail(e.target.value); setError(''); setNotice('') }}

@@ -1,20 +1,18 @@
 /**
  * Tests for /api/verify-member.js
  *
- * What we're testing (the auth flow):
- *   1. Empty code → rejected (400)
- *   2. Wrong code → rejected (403)
- *   3. Valid code → JWT token issued (200)
- *   4. Token can be decoded and contains correct fields
- *   5. Missing environment variables → server error (500)
+ * What we're testing:
+ *   1. Empty input -> rejected (400)
+ *   2. Email input -> magic-link flow starts (200)
+ *   3. Wrong legacy code -> rejected (403)
+ *   4. Valid legacy code -> JWT token issued (200)
+ *   5. Legacy token payload contains the expected fields
+ *   6. Missing environment variables -> server error (500/503)
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import handler from '../verify-member.js'
 
-// --- Helpers ---
-
-// Creates a fake req/res pair (mimics how Vercel calls your function)
 function makeReqRes(body = {}, method = 'POST') {
   const req = { method, body, headers: {} }
   const res = {
@@ -29,22 +27,32 @@ function makeReqRes(body = {}, method = 'POST') {
   return { req, res }
 }
 
-// --- Tests ---
-
-describe('verify-member — auth flow', () => {
-  // Set up real-looking env vars before each test
+describe('verify-member auth flow', () => {
   beforeEach(() => {
     process.env.JWT_SECRET = 'super-secret-test-key'
     process.env.ACCESS_CODES = 'SUPPORTER123, VIP456, testcode'
+    process.env.SUPABASE_URL = 'https://example.supabase.co'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key'
   })
 
-  // Clean up after each test so we don't leak state
   afterEach(() => {
     delete process.env.JWT_SECRET
     delete process.env.ACCESS_CODES
+    delete process.env.SUPABASE_URL
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY
   })
 
-  // ✅ Happy path
+  it('returns 200 + magic-link instructions for email input', async () => {
+    const { req, res } = makeReqRes({ email: 'Person@Example.com' })
+    await handler(req, res)
+
+    expect(res._status).toBe(200)
+    expect(res._body).toEqual({
+      next: 'magic_link',
+      email: 'person@example.com',
+    })
+  })
+
   it('returns 200 + token when access code is valid', async () => {
     const { req, res } = makeReqRes({ email: 'SUPPORTER123' })
     await handler(req, res)
@@ -55,7 +63,7 @@ describe('verify-member — auth flow', () => {
     expect(res._body.token.length).toBeGreaterThan(20)
   })
 
-  it('is case-insensitive — accepts lowercase version of valid code', async () => {
+  it('is case-insensitive for valid legacy codes', async () => {
     const { req, res } = makeReqRes({ email: 'supporter123' })
     await handler(req, res)
 
@@ -69,17 +77,14 @@ describe('verify-member — auth flow', () => {
 
     expect(res._status).toBe(200)
     const token = res._body.token
-
-    // Decode: it's base64 → JSON with { data, sig }
     const decoded = JSON.parse(Buffer.from(token, 'base64').toString())
     const payload = JSON.parse(decoded.data)
 
     expect(payload).toHaveProperty('code', 'vip456')
     expect(payload).toHaveProperty('exp')
-    expect(payload.exp).toBeGreaterThan(Date.now()) // expires in the future
+    expect(payload.exp).toBeGreaterThan(Date.now())
   })
 
-  // ❌ Rejection cases
   it('returns 403 when access code is wrong', async () => {
     const { req, res } = makeReqRes({ email: 'WRONGCODE' })
     await handler(req, res)
@@ -88,7 +93,7 @@ describe('verify-member — auth flow', () => {
     expect(res._body.error).toMatch(/invalid access code/i)
   })
 
-  it('returns 400 when no code is provided', async () => {
+  it('returns 400 when no input is provided', async () => {
     const { req, res } = makeReqRes({ email: '' })
     await handler(req, res)
 
@@ -110,8 +115,7 @@ describe('verify-member — auth flow', () => {
     expect(res._status).toBe(405)
   })
 
-  // 🔧 Server config errors
-  it('returns 500 when JWT_SECRET env var is missing', async () => {
+  it('returns 500 when JWT_SECRET env var is missing for legacy codes', async () => {
     delete process.env.JWT_SECRET
 
     const { req, res } = makeReqRes({ email: 'SUPPORTER123' })
@@ -121,12 +125,22 @@ describe('verify-member — auth flow', () => {
     expect(res._body.error).toMatch(/not configured|server error/i)
   })
 
-  it('returns 500 when ACCESS_CODES env var is missing', async () => {
+  it('returns 500 when ACCESS_CODES env var is missing for legacy codes', async () => {
     delete process.env.ACCESS_CODES
 
     const { req, res } = makeReqRes({ email: 'SUPPORTER123' })
     await handler(req, res)
 
     expect(res._status).toBe(500)
+  })
+
+  it('returns 503 for email unlock when Supabase server config is missing', async () => {
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    const { req, res } = makeReqRes({ email: 'person@example.com' })
+    await handler(req, res)
+
+    expect(res._status).toBe(503)
+    expect(res._body.error).toMatch(/not configured/i)
   })
 })
