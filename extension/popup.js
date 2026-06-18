@@ -278,19 +278,15 @@ function openJobSensei() {
 }
 
 async function openPinnedMode() {
-  setStatus(t('status.openingPinnedMode'))
-  const tabContext = await ensureCurrentTabContext()
-  if (!tabContext.tabId) {
+  const windowId = currentTabContext.windowId
+  if (!windowId) {
     setStatus(t('status.noActiveTab'), 'error')
     return
   }
 
+  setStatus(t('status.openingPinnedMode'))
   try {
-    await runtimeSendMessage({
-      type: 'open-side-panel',
-      tabId: tabContext.tabId,
-      windowId: tabContext.windowId,
-    })
+    await chrome.sidePanel.open({ windowId })
     closeSurface()
   } catch (error) {
     setStatus(error?.message || t('status.couldNotDeliver'), 'error')
