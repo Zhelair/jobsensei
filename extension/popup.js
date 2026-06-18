@@ -1,8 +1,10 @@
 const DEFAULT_APP_URL = 'https://jobsensei.app/#applications'
 const PENDING_SELECTION_KEY = 'jobsensei_pending_selection_capture_v1'
 const PREFS_KEY = 'jobsensei_extension_prefs_v1'
-const SIDEPANEL_STATE_KEY = 'jobsensei_sidepanel_open_tabs_v1'
-const SURFACE = new URLSearchParams(window.location.search).get('surface') === 'sidepanel' ? 'sidepanel' : 'popup'
+const SEARCH_PARAMS = new URLSearchParams(window.location.search)
+const SURFACE = SEARCH_PARAMS.get('surface') === 'sidepanel' ? 'sidepanel' : 'popup'
+const SIDEPANEL_TAB_ID = Number.parseInt(SEARCH_PARAMS.get('tabId') || '', 10) || null
+const SIDEPANEL_WINDOW_ID = Number.parseInt(SEARCH_PARAMS.get('windowId') || '', 10) || null
 const DEFAULT_PREFS = { theme: 'dark', visuals: false, language: 'en', languageChosen: false }
 const THEME_ORDER = ['dark', 'daylight', 'myspace']
 const THEME_META = {
@@ -19,6 +21,8 @@ const THEME_META = {
 const LANGUAGE_OPTIONS = window.JobSenseiExtensionI18n?.languages || [{ code: 'en', label: 'English', nativeLabel: 'English' }]
 const TRANSLATIONS = window.JobSenseiExtensionI18n?.strings || {}
 const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg>'
+
+document.documentElement.dataset.surface = SURFACE
 
 const elements = {
   brandMantra: document.getElementById('brandMantra'),
@@ -282,8 +286,11 @@ async function openPinnedMode() {
   }
 
   try {
-    await chrome.sidePanel.open({ tabId: tabContext.tabId })
-    await persistPinState(true)
+    await runtimeSendMessage({
+      type: 'open-side-panel',
+      tabId: tabContext.tabId,
+      windowId: tabContext.windowId,
+    })
     closeSurface()
   } catch (error) {
     setStatus(error?.message || t('status.couldNotDeliver'), 'error')
@@ -298,25 +305,11 @@ async function closeSidePanel() {
   }
 
   try {
-    if (chrome.sidePanel.close) {
-      try {
-        if (tabContext.tabId) {
-          await chrome.sidePanel.close({ tabId: tabContext.tabId })
-        } else {
-          throw new Error('Missing tabId')
-        }
-      } catch (error) {
-        if (!tabContext.windowId) throw error
-        await chrome.sidePanel.close({ windowId: tabContext.windowId })
-      }
-    } else {
-      await chrome.runtime.sendMessage({
-        type: 'close-side-panel',
-        tabId: tabContext.tabId,
-        windowId: tabContext.windowId,
-      })
-    }
-    await persistPinState(false)
+    await runtimeSendMessage({
+      type: 'close-side-panel',
+      tabId: tabContext.tabId,
+      windowId: tabContext.windowId,
+    })
   } catch (error) {
     setStatus(error?.message || t('status.couldNotDeliver'), 'error')
   }
@@ -339,7 +332,7 @@ async function captureCurrentPage(options = {}) {
   } = options
 
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    const tab = await getTargetTab()
     if (!tab?.id) throw new Error(t('status.noActiveTab'))
     if (userInitiated) {
       await ensureHostAccessForCapture(tab.url)
@@ -395,11 +388,22 @@ function updateSourceMeta() {
   elements.sourceMeta.textContent = `${t('meta.sourcePrefix')}: ${sourceLabel}`
 }
 
-async function refreshCurrentTabContext() {
+async function getTargetTab() {
+  if (SURFACE === 'sidepanel' && SIDEPANEL_TAB_ID) {
+    try {
+      return await chrome.tabs.get(SIDEPANEL_TAB_ID)
+    } catch {}
+  }
+
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  return tab || null
+}
+
+async function refreshCurrentTabContext() {
+  const tab = await getTargetTab()
   currentTabContext = {
-    tabId: tab?.id ?? null,
-    windowId: tab?.windowId ?? null,
+    tabId: tab?.id ?? SIDEPANEL_TAB_ID ?? null,
+    windowId: tab?.windowId ?? SIDEPANEL_WINDOW_ID ?? null,
   }
   return currentTabContext
 }
@@ -419,23 +423,11 @@ function getOriginPattern(input) {
   }
 }
 
-function getOriginValue(input) {
-  try {
-    return new URL(input || '').origin
-  } catch {
-    return ''
-  }
-}
-
 async function ensureHostAccessForCapture(tabUrl) {
   if (SURFACE !== 'sidepanel' || !chrome.permissions) return
 
   const originPattern = getOriginPattern(tabUrl)
   if (!originPattern) return
-
-  const currentOrigin = getOriginValue(tabUrl)
-  const previousOrigin = getOriginValue(currentCaptureMeta.url)
-  if (currentOrigin && previousOrigin && currentOrigin === previousOrigin) return
 
   const alreadyGranted = await chrome.permissions.contains({ origins: [originPattern] })
   if (alreadyGranted) return
@@ -445,19 +437,6 @@ async function ensureHostAccessForCapture(tabUrl) {
   if (!granted) {
     throw new Error('Site access was not granted for this page.')
   }
-}
-
-async function persistPinState(open) {
-  const tabContext = await ensureCurrentTabContext()
-  if (!tabContext.tabId) return
-  const saved = await storageGet(SIDEPANEL_STATE_KEY)
-  const nextState = { ...(saved?.[SIDEPANEL_STATE_KEY] || {}) }
-  if (open) {
-    nextState[String(tabContext.tabId)] = true
-  } else {
-    delete nextState[String(tabContext.tabId)]
-  }
-  await storageSet({ [SIDEPANEL_STATE_KEY]: nextState })
 }
 
 async function handoffCapture() {
@@ -534,6 +513,24 @@ function storageSet(value) {
 
 function storageRemove(key) {
   return new Promise(resolve => chrome.storage.local.remove(key, resolve))
+}
+
+function runtimeSendMessage(message) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(message, response => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message))
+        return
+      }
+
+      if (response?.ok === false) {
+        reject(new Error(response.error || t('status.couldNotDeliver')))
+        return
+      }
+
+      resolve(response)
+    })
+  })
 }
 
 function readJobPage(selectedText = '') {

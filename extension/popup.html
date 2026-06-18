@@ -1,14 +1,8 @@
 <!doctype html>
-<html lang="en" data-theme="dark" data-visuals="off">
+<html lang="en" data-theme="dark" data-visuals="off" data-surface="popup">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>
-      document.documentElement.dataset.surface =
-        new URLSearchParams(window.location.search).get('surface') === 'sidepanel'
-          ? 'sidepanel'
-          : 'popup'
-    </script>
     <title>JobSensei Capture</title>
     <style>
       :root {
@@ -112,6 +106,8 @@
 
       :root[data-surface="sidepanel"] .bg-mesh {
         min-height: 100vh;
+        width: min(100%, 406px);
+        margin: 0 auto;
         padding: 10px 8px 14px;
       }
 
@@ -141,9 +137,9 @@
       }
 
       :root[data-surface="sidepanel"] .card {
-        width: 100%;
-        max-width: none;
-        margin: 0;
+        width: min(100%, 390px);
+        max-width: 390px;
+        margin: 0 auto;
         padding: 12px;
       }
 
