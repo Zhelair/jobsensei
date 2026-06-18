@@ -1,6 +1,7 @@
 const BRIDGE_KEY = 'jobsensei_extension_capture_v1'
 const PENDING_SELECTION_KEY = 'jobsensei_pending_selection_capture_v1'
 const PREFS_KEY = 'jobsensei_extension_prefs_v1'
+const SIDEPANEL_STATE_KEY = 'jobsensei_sidepanel_open_tabs_v1'
 const SELECTION_MENU_ID = 'jobsensei-copy-jd-selection'
 const SIDEPANEL_PATH = 'sidepanel.html'
 const MENU_TITLES = {
@@ -16,10 +17,32 @@ const MENU_TITLES = {
 }
 
 chrome.runtime.onInstalled.addListener(() => {
+  void resetSidePanelState()
   void createContextMenus()
 })
 chrome.runtime.onStartup?.addListener(() => {
+  void resetSidePanelState()
   void createContextMenus()
+})
+
+if (chrome.sidePanel?.onOpened) {
+  chrome.sidePanel.onOpened.addListener(info => {
+    if (typeof info.tabId === 'number') {
+      void setSidePanelOpen(info.tabId, true)
+    }
+  })
+}
+
+if (chrome.sidePanel?.onClosed) {
+  chrome.sidePanel.onClosed.addListener(info => {
+    if (typeof info.tabId === 'number') {
+      void setSidePanelOpen(info.tabId, false)
+    }
+  })
+}
+
+chrome.tabs.onRemoved.addListener(tabId => {
+  void setSidePanelOpen(tabId, false)
 })
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
@@ -50,6 +73,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === 'close-side-panel') {
     handleCloseSidePanel(message.tabId)
       .then(() => sendResponse({ ok: true }))
+      .catch(error => sendResponse({ ok: false, error: error.message }))
+
+    return true
+  }
+
+  if (message?.type === 'get-side-panel-state') {
+    getSidePanelState(message.tabId)
+      .then(open => sendResponse({ ok: true, open }))
       .catch(error => sendResponse({ ok: false, error: error.message }))
 
     return true
@@ -209,13 +240,12 @@ async function handleSelectionCapture(info, tab) {
     await chrome.windows.update(tab.windowId, { focused: true })
   }
 
-  try {
-    const options = await chrome.sidePanel.getOptions({ tabId: tab.id })
-    if (options?.enabled) {
+  if (await getSidePanelState(tab.id)) {
+    try {
       await chrome.sidePanel.open({ tabId: tab.id })
       return
-    }
-  } catch {}
+    } catch {}
+  }
 
   try {
     await chrome.action.openPopup()
@@ -234,6 +264,7 @@ async function handleOpenSidePanel(tabId, windowId) {
     enabled: true,
   })
   await chrome.sidePanel.open({ tabId })
+  await setSidePanelOpen(tabId, true)
   if (windowId) {
     await chrome.windows.update(windowId, { focused: true })
   }
@@ -243,10 +274,15 @@ async function handleCloseSidePanel(tabId) {
   if (!tabId || !chrome.sidePanel) {
     throw new Error('Side panel is not available in this browser.')
   }
-  await chrome.sidePanel.setOptions({
-    tabId,
-    enabled: false,
-  })
+  if (chrome.sidePanel.close) {
+    await chrome.sidePanel.close({ tabId })
+  } else {
+    await chrome.sidePanel.setOptions({
+      tabId,
+      enabled: false,
+    })
+  }
+  await setSidePanelOpen(tabId, false)
 }
 
 function resolveLanguageCode(input) {
@@ -266,6 +302,28 @@ async function getContextMenuTitle(languageOverride = '') {
     || 'en'
   )
   return MENU_TITLES[safeLanguage] || MENU_TITLES.en
+}
+
+async function resetSidePanelState() {
+  await chrome.storage.local.set({ [SIDEPANEL_STATE_KEY]: {} })
+}
+
+async function getSidePanelState(tabId) {
+  if (typeof tabId !== 'number') return false
+  const saved = await chrome.storage.local.get(SIDEPANEL_STATE_KEY)
+  return !!saved?.[SIDEPANEL_STATE_KEY]?.[String(tabId)]
+}
+
+async function setSidePanelOpen(tabId, open) {
+  if (typeof tabId !== 'number') return
+  const saved = await chrome.storage.local.get(SIDEPANEL_STATE_KEY)
+  const nextState = { ...(saved?.[SIDEPANEL_STATE_KEY] || {}) }
+  if (open) {
+    nextState[String(tabId)] = true
+  } else {
+    delete nextState[String(tabId)]
+  }
+  await chrome.storage.local.set({ [SIDEPANEL_STATE_KEY]: nextState })
 }
 
 function extractSelectionCaptureFromPage(selectedText) {

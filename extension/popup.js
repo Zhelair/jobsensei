@@ -1,6 +1,7 @@
 const DEFAULT_APP_URL = 'https://jobsensei.app/#applications'
 const PENDING_SELECTION_KEY = 'jobsensei_pending_selection_capture_v1'
 const PREFS_KEY = 'jobsensei_extension_prefs_v1'
+const SIDEPANEL_STATE_KEY = 'jobsensei_sidepanel_open_tabs_v1'
 const SURFACE = new URLSearchParams(window.location.search).get('surface') === 'sidepanel' ? 'sidepanel' : 'popup'
 const DEFAULT_PREFS = { theme: 'dark', visuals: false, language: null }
 const THEME_ORDER = ['dark', 'daylight', 'myspace']
@@ -66,6 +67,8 @@ const elements = {
 let prefs = { ...DEFAULT_PREFS }
 let currentCaptureMeta = {}
 let languageMenuOpen = false
+let currentTabContext = { tabId: null, windowId: null }
+let pinActive = false
 
 document.addEventListener('DOMContentLoaded', async () => {
   elements.captureTab.addEventListener('click', () => showPanel('capture'))
@@ -97,6 +100,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   await loadPrefs()
+  await refreshCurrentTabContext()
+  await refreshPinState()
 
   const pendingSelection = await consumePendingSelectionCapture()
   if (pendingSelection) {
@@ -182,6 +187,7 @@ function applyPrefs() {
   updateMeta()
   updateSourceMeta()
   updateSurfaceControls()
+  applyPinState()
 }
 
 function applyTranslations() {
@@ -254,6 +260,10 @@ function updateSurfaceControls() {
   elements.closePanelBtn.classList.toggle('hidden', !isSidePanel)
 }
 
+function applyPinState() {
+  elements.pinBtn.classList.toggle('active', !!pinActive)
+}
+
 function closeSurface() {
   if (SURFACE === 'popup') {
     window.close()
@@ -267,41 +277,42 @@ function openJobSensei() {
 
 async function openPinnedMode() {
   setStatus(t('status.openingPinnedMode'))
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-  if (!tab?.id || !tab.windowId) {
+  const tabContext = await ensureCurrentTabContext()
+  if (!tabContext.tabId) {
     setStatus(t('status.noActiveTab'), 'error')
     return
   }
 
-  chrome.runtime.sendMessage({ type: 'open-side-panel', tabId: tab.id, windowId: tab.windowId }, response => {
-    if (chrome.runtime.lastError) {
-      setStatus(chrome.runtime.lastError.message, 'error')
-      return
-    }
-    if (!response?.ok) {
-      setStatus(response?.error || t('status.couldNotDeliver'), 'error')
-      return
-    }
+  try {
+    await chrome.sidePanel.open({ tabId: tabContext.tabId })
+    pinActive = true
+    applyPinState()
+    await persistPinState(true)
     closeSurface()
-  })
+  } catch (error) {
+    setStatus(error?.message || t('status.couldNotDeliver'), 'error')
+  }
 }
 
 async function closeSidePanel() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-  if (!tab?.id) {
+  const tabContext = await ensureCurrentTabContext()
+  if (!tabContext.tabId) {
     setStatus(t('status.noActiveTab'), 'error')
     return
   }
 
-  chrome.runtime.sendMessage({ type: 'close-side-panel', tabId: tab.id }, response => {
-    if (chrome.runtime.lastError) {
-      setStatus(chrome.runtime.lastError.message, 'error')
-      return
+  try {
+    if (chrome.sidePanel.close) {
+      await chrome.sidePanel.close({ tabId: tabContext.tabId })
+    } else {
+      await chrome.runtime.sendMessage({ type: 'close-side-panel', tabId: tabContext.tabId })
     }
-    if (!response?.ok) {
-      setStatus(response?.error || t('status.couldNotDeliver'), 'error')
-    }
-  })
+    pinActive = false
+    applyPinState()
+    await persistPinState(false)
+  } catch (error) {
+    setStatus(error?.message || t('status.couldNotDeliver'), 'error')
+  }
 }
 
 async function consumePendingSelectionCapture() {
@@ -370,6 +381,45 @@ function updateSourceMeta() {
     ? t('meta.selectedText')
     : (currentCaptureMeta.pageTitle || t('meta.currentPage'))
   elements.sourceMeta.textContent = `${t('meta.sourcePrefix')}: ${sourceLabel}`
+}
+
+async function refreshCurrentTabContext() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  currentTabContext = {
+    tabId: tab?.id ?? null,
+    windowId: tab?.windowId ?? null,
+  }
+  return currentTabContext
+}
+
+async function ensureCurrentTabContext() {
+  if (currentTabContext.tabId) return currentTabContext
+  return refreshCurrentTabContext()
+}
+
+async function refreshPinState() {
+  const tabContext = await ensureCurrentTabContext()
+  if (!tabContext.tabId) {
+    pinActive = false
+    applyPinState()
+    return
+  }
+  const saved = await storageGet(SIDEPANEL_STATE_KEY)
+  pinActive = !!saved?.[SIDEPANEL_STATE_KEY]?.[String(tabContext.tabId)]
+  applyPinState()
+}
+
+async function persistPinState(open) {
+  const tabContext = await ensureCurrentTabContext()
+  if (!tabContext.tabId) return
+  const saved = await storageGet(SIDEPANEL_STATE_KEY)
+  const nextState = { ...(saved?.[SIDEPANEL_STATE_KEY] || {}) }
+  if (open) {
+    nextState[String(tabContext.tabId)] = true
+  } else {
+    delete nextState[String(tabContext.tabId)]
+  }
+  await storageSet({ [SIDEPANEL_STATE_KEY]: nextState })
 }
 
 async function handoffCapture() {
