@@ -3,7 +3,6 @@ const PENDING_SELECTION_KEY = 'jobsensei_pending_selection_capture_v1'
 const PREFS_KEY = 'jobsensei_extension_prefs_v1'
 const SIDEPANEL_STATE_KEY = 'jobsensei_sidepanel_open_tabs_v1'
 const SELECTION_MENU_ID = 'jobsensei-copy-jd-selection'
-const SIDEPANEL_PATH = 'popup.html?surface=sidepanel'
 const MENU_TITLES = {
   en: 'Copy selected JD to JobSensei',
   de: 'Ausgewählten JD-Text nach JobSensei kopieren',
@@ -260,7 +259,7 @@ async function handleOpenSidePanel(tabId, windowId) {
   }
   await chrome.sidePanel.setOptions({
     tabId,
-    path: SIDEPANEL_PATH,
+    path: buildSidePanelPath(tabId, windowId),
     enabled: true,
   })
   await chrome.sidePanel.open({ tabId })
@@ -274,26 +273,74 @@ async function handleCloseSidePanel(tabId, windowId) {
   if ((!tabId && !windowId) || !chrome.sidePanel) {
     throw new Error('Side panel is not available in this browser.')
   }
+
+  let lastError = null
   if (chrome.sidePanel.close) {
-    try {
-      if (tabId) {
+    if (tabId) {
+      try {
         await chrome.sidePanel.close({ tabId })
-      } else {
-        throw new Error('Missing tabId')
+      } catch (error) {
+        lastError = error
       }
-    } catch (error) {
-      if (!windowId) throw error
-      await chrome.sidePanel.close({ windowId })
+    }
+
+    if (windowId) {
+      try {
+        await chrome.sidePanel.close({ windowId })
+        lastError = null
+      } catch (error) {
+        if (!lastError) lastError = error
+      }
     }
   } else if (tabId) {
-    await chrome.sidePanel.setOptions({
-      tabId,
-      enabled: false,
-    })
+    try {
+      await chrome.sidePanel.setOptions({
+        tabId,
+        enabled: false,
+      })
+      lastError = null
+    } catch (error) {
+      lastError = error
+    }
   }
+
+  if (tabId && chrome.sidePanel.setOptions) {
+    try {
+      await chrome.sidePanel.setOptions({
+        tabId,
+        path: buildSidePanelPath(tabId, windowId),
+        enabled: false,
+      })
+    } catch (error) {
+      if (!lastError) lastError = error
+    }
+  }
+
   if (tabId) {
     await setSidePanelOpen(tabId, false)
   }
+
+  if (lastError) {
+    const message = String(lastError.message || '')
+    if (/No active tab-specific side panel/i.test(message)) {
+      return
+    }
+    if (/No active side panel/i.test(message)) {
+      return
+    }
+    throw lastError
+  }
+}
+
+function buildSidePanelPath(tabId, windowId) {
+  const params = new URLSearchParams({ surface: 'sidepanel' })
+  if (tabId) {
+    params.set('tabId', String(tabId))
+  }
+  if (windowId) {
+    params.set('windowId', String(windowId))
+  }
+  return `popup.html?${params.toString()}`
 }
 
 function resolveLanguageCode(input) {
