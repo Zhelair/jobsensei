@@ -338,7 +338,6 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
       : snapshot.balanceKnown
         ? t('topbar.creditsKnownSummary', {
           credits: formatCreditNumber(snapshot.remainingCredits),
-          requests: formatCreditNumber(snapshot.remainingRequests),
         })
         : t('topbar.creditsMonthlySummary', {
           credits: formatCreditNumber(snapshot.monthlyCredits),
@@ -362,32 +361,12 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
 
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-          <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricAllowance')}</div>
-          <div className="text-white text-sm font-display font-semibold">
-            {snapshot.mode === 'byok'
-              ? t('topbar.creditsMetricUnlimited')
-              : snapshot.monthlyCredits != null
-                ? formatCreditNumber(snapshot.monthlyCredits)
-                : '-'}
-          </div>
-        </div>
-        <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
           <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricCost')}</div>
           <div className="text-white text-sm font-display font-semibold">
             {snapshot.requestCost != null
               ? t('topbar.creditsRequestValue', { credits: formatCreditNumber(snapshot.requestCost) })
               : snapshot.mode === 'byok'
                 ? t('topbar.creditsMetricUnlimited')
-                : '-'}
-          </div>
-        </div>
-        <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-          <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricRequests')}</div>
-          <div className="text-white text-sm font-display font-semibold">
-            {snapshot.mode === 'byok'
-              ? t('topbar.creditsMetricUnlimited')
-              : snapshot.requestsIncluded != null
-                ? formatCreditNumber(snapshot.requestsIncluded)
                 : '-'}
           </div>
         </div>
@@ -558,6 +537,15 @@ export default function TopBar() {
   const helpDesc = help ? t(help.descKey) : ''
   const helpTips = help?.tipKeys?.map(key => t(key)) || []
   const creditSnapshot = getCreditSnapshot({ secureAccount, bmacToken, apiKey })
+  const creditButtonCopy = isThinking
+    ? {
+        compact: t('topbar.thinking'),
+        full: t('topbar.aiMobileThinking'),
+      }
+    : {
+        compact: getCreditPillCopy(t, creditSnapshot, { compact: true }),
+        full: getCreditPillCopy(t, creditSnapshot),
+      }
   const creditTone = getCreditTone(creditSnapshot)
   const translatedSectionTitle = activeSection === SECTIONS.TODAY
     ? t('nav.today')
@@ -660,10 +648,10 @@ export default function TopBar() {
         >
           <Coins size={14} className={isThinking ? 'animate-pulse' : ''} />
           <span className="sm:hidden text-xs font-display font-semibold">
-            {getCreditPillCopy(t, creditSnapshot, { compact: true })}
+            {creditButtonCopy.compact}
           </span>
           <span className="hidden sm:inline text-xs font-display font-semibold whitespace-nowrap">
-            {getCreditPillCopy(t, creditSnapshot)}
+            {creditButtonCopy.full}
           </span>
         </button>
 
