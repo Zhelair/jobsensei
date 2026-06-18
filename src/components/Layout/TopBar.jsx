@@ -307,11 +307,12 @@ function getCreditPillCopy(t, snapshot, { compact = false } = {}) {
 
   const amount = formatCreditNumber(snapshot.balanceKnown ? snapshot.remainingCredits : snapshot.monthlyCredits, { compact })
   const tierKey = snapshot.tier === 'free' ? 'topbar.creditsTierFree' : 'topbar.creditsTierPro'
-  const suffixKey = snapshot.balanceKnown ? 'topbar.creditsSuffixLeft' : 'topbar.creditsSuffixMonthly'
 
   return compact
     ? `${amount}`
-    : `${t(tierKey)} ${amount}${t(suffixKey)}`
+    : snapshot.balanceKnown
+      ? `${t(tierKey)} ${amount}`
+      : `${t(tierKey)} ${amount}${t('topbar.creditsSuffixMonthly')}`
 }
 
 function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryAction, onClose }) {
