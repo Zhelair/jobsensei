@@ -1293,6 +1293,35 @@
   border-color: rgba(10, 186, 181, 0.30);
 }
 
+/* Final daylight contrast fixes for header pills, visuals, and small status badges */
+[data-theme="daylight"] .text-teal-200 {
+  color: #0A7A6B;
+}
+
+[data-theme="daylight"] .text-indigo-200 {
+  color: #3730A3;
+}
+
+[data-theme="daylight"] .visuals-active {
+  color: #C85640;
+  background-color: rgba(226, 114, 91, 0.08);
+  border: 1px solid rgba(226, 114, 91, 0.28);
+  box-shadow: 0 0 0 1px rgba(226, 114, 91, 0.12), 0 8px 18px rgba(226, 114, 91, 0.12);
+}
+
+[data-theme="daylight"] .visuals-particle {
+  opacity: 0.9;
+  filter: saturate(1.25) drop-shadow(0 0 4px rgba(80, 60, 40, 0.12));
+  mix-blend-mode: multiply;
+}
+
+[data-theme="daylight"][data-visuals="on"] .bg-mesh {
+  background-image:
+    radial-gradient(at 14% 18%, rgba(10, 186, 181, 0.12) 0px, transparent 42%),
+    radial-gradient(at 82% 78%, rgba(226, 114, 91, 0.12) 0px, transparent 42%),
+    radial-gradient(at 50% 50%, rgba(245, 158, 11, 0.06) 0px, transparent 48%);
+}
+
 [data-theme="myspace"] .save-note-cta {
   color: #F0E6FF;
   background: linear-gradient(135deg, rgba(255, 0, 110, 0.18), rgba(191, 90, 242, 0.18));

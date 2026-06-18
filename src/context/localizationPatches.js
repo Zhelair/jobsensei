@@ -11228,11 +11228,81 @@ const accountFlowPatches = {
   },
 }
 
+const creditsCopyTighteningPatches = {
+  en: {
+    'topbar.creditsSuffixLeft': '',
+    'topbar.creditsKnownSummary': '{credits} credits.',
+    'topbar.creditsMetricLeft': 'Credits',
+    'settings.creditsKnownCopy': '{credits} credits on this account.',
+    'settings.creditsMetricLeft': 'Credits',
+  },
+  ru: {
+    'topbar.creditsSuffixLeft': '',
+    'topbar.creditsKnownSummary': '{credits} кредитов.',
+    'topbar.creditsMetricLeft': 'Кредиты',
+    'settings.creditsKnownCopy': '{credits} кредитов на этом аккаунте.',
+    'settings.creditsMetricLeft': 'Кредиты',
+  },
+  bg: {
+    'topbar.creditsSuffixLeft': '',
+    'topbar.creditsKnownSummary': '{credits} кредита.',
+    'topbar.creditsMetricLeft': 'Кредити',
+    'settings.creditsKnownCopy': '{credits} кредита в този акаунт.',
+    'settings.creditsMetricLeft': 'Кредити',
+  },
+  es: {
+    'topbar.creditsSuffixLeft': '',
+    'topbar.creditsKnownSummary': '{credits} créditos.',
+    'topbar.creditsMetricLeft': 'Créditos',
+    'settings.creditsKnownCopy': '{credits} créditos en esta cuenta.',
+    'settings.creditsMetricLeft': 'Créditos',
+  },
+  fr: {
+    'topbar.creditsSuffixLeft': '',
+    'topbar.creditsKnownSummary': '{credits} crédits.',
+    'topbar.creditsMetricLeft': 'Crédits',
+    'settings.creditsKnownCopy': '{credits} crédits sur ce compte.',
+    'settings.creditsMetricLeft': 'Crédits',
+  },
+  it: {
+    'topbar.creditsSuffixLeft': '',
+    'topbar.creditsKnownSummary': '{credits} crediti.',
+    'topbar.creditsMetricLeft': 'Crediti',
+    'settings.creditsKnownCopy': '{credits} crediti su questo account.',
+    'settings.creditsMetricLeft': 'Crediti',
+  },
+  'pt-BR': {
+    'topbar.creditsSuffixLeft': '',
+    'topbar.creditsKnownSummary': '{credits} créditos.',
+    'topbar.creditsMetricLeft': 'Créditos',
+    'settings.creditsKnownCopy': '{credits} créditos nesta conta.',
+    'settings.creditsMetricLeft': 'Créditos',
+  },
+  pl: {
+    'topbar.creditsSuffixLeft': '',
+    'topbar.creditsKnownSummary': '{credits} kredytów.',
+    'topbar.creditsMetricLeft': 'Kredyty',
+    'settings.creditsKnownCopy': '{credits} kredytów na tym koncie.',
+    'settings.creditsMetricLeft': 'Kredyty',
+  },
+  de: {
+    'topbar.creditsSuffixLeft': '',
+    'topbar.creditsKnownSummary': '{credits} Credits.',
+    'topbar.creditsMetricLeft': 'Credits',
+    'settings.creditsKnownCopy': '{credits} Credits auf diesem Konto.',
+    'settings.creditsMetricLeft': 'Credits',
+  },
+}
+
 Object.entries(creditsUxPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 
 Object.entries(accountFlowPatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
+Object.entries(creditsCopyTighteningPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 
