@@ -835,6 +835,11 @@ export default function Settings() {
               </div>
             ))}
           </div>
+          <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 mb-3">
+            <p className={`${settingsSupportCopyClass} text-sm leading-relaxed`}>
+              {t('settings.chromeExtensionDisclaimer')}
+            </p>
+          </div>
           <div className="flex flex-wrap gap-2 mt-auto pt-1">
             <a href="/jobsensei-capture-extension.zip" download className="btn-secondary text-xs">
               <Download size={13} /> {t('settings.downloadZip')}

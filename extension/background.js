@@ -1,9 +1,26 @@
 const BRIDGE_KEY = 'jobsensei_extension_capture_v1'
 const PENDING_SELECTION_KEY = 'jobsensei_pending_selection_capture_v1'
+const PREFS_KEY = 'jobsensei_extension_prefs_v1'
 const SELECTION_MENU_ID = 'jobsensei-copy-jd-selection'
+const SIDEPANEL_PATH = 'sidepanel.html'
+const MENU_TITLES = {
+  en: 'Copy selected JD to JobSensei',
+  de: 'Ausgewählten JD-Text nach JobSensei kopieren',
+  bg: 'Копирай избрания JD текст в JobSensei',
+  ru: 'Скопировать выделенный JD-текст в JobSensei',
+  'es-ES': 'Copiar el texto JD seleccionado a JobSensei',
+  fr: 'Copier le texte JD sélectionné vers JobSensei',
+  it: 'Copia il testo JD selezionato in JobSensei',
+  pl: 'Skopiuj zaznaczony tekst JD do JobSensei',
+  'pt-BR': 'Copiar o texto JD selecionado para o JobSensei',
+}
 
-chrome.runtime.onInstalled.addListener(createContextMenus)
-chrome.runtime.onStartup?.addListener(createContextMenus)
+chrome.runtime.onInstalled.addListener(() => {
+  void createContextMenus()
+})
+chrome.runtime.onStartup?.addListener(() => {
+  void createContextMenus()
+})
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId !== SELECTION_MENU_ID) return
@@ -14,13 +31,39 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 })
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message?.type !== 'handoff-capture') return undefined
+  if (message?.type === 'handoff-capture') {
+    handleCaptureHandoff(message.payload, message.appUrl)
+      .then(() => sendResponse({ ok: true }))
+      .catch(error => sendResponse({ ok: false, error: error.message }))
 
-  handleCaptureHandoff(message.payload, message.appUrl)
-    .then(() => sendResponse({ ok: true }))
-    .catch(error => sendResponse({ ok: false, error: error.message }))
+    return true
+  }
 
-  return true
+  if (message?.type === 'open-side-panel') {
+    handleOpenSidePanel(message.tabId, message.windowId)
+      .then(() => sendResponse({ ok: true }))
+      .catch(error => sendResponse({ ok: false, error: error.message }))
+
+    return true
+  }
+
+  if (message?.type === 'close-side-panel') {
+    handleCloseSidePanel(message.tabId)
+      .then(() => sendResponse({ ok: true }))
+      .catch(error => sendResponse({ ok: false, error: error.message }))
+
+    return true
+  }
+
+  if (message?.type === 'extension-language-changed') {
+    createContextMenus(message.language)
+      .then(() => sendResponse({ ok: true }))
+      .catch(error => sendResponse({ ok: false, error: error.message }))
+
+    return true
+  }
+
+  return undefined
 })
 
 async function handleCaptureHandoff(payload, appUrl) {
@@ -127,12 +170,13 @@ function deliverCaptureToPage(storageKey, payload) {
   }
 }
 
-function createContextMenus() {
+async function createContextMenus(languageOverride = '') {
+  const title = await getContextMenuTitle(languageOverride)
   chrome.contextMenus.remove(SELECTION_MENU_ID, () => {
     void chrome.runtime.lastError
     chrome.contextMenus.create({
       id: SELECTION_MENU_ID,
-      title: 'Copy selected JD to JobSensei',
+      title,
       contexts: ['selection'],
     })
   })
@@ -166,10 +210,62 @@ async function handleSelectionCapture(info, tab) {
   }
 
   try {
+    const options = await chrome.sidePanel.getOptions({ tabId: tab.id })
+    if (options?.enabled) {
+      await chrome.sidePanel.open({ tabId: tab.id })
+      return
+    }
+  } catch {}
+
+  try {
     await chrome.action.openPopup()
   } catch {
     await chrome.tabs.create({ url: chrome.runtime.getURL('popup.html'), active: true })
   }
+}
+
+async function handleOpenSidePanel(tabId, windowId) {
+  if (!tabId || !chrome.sidePanel) {
+    throw new Error('Side panel is not available in this browser.')
+  }
+  await chrome.sidePanel.setOptions({
+    tabId,
+    path: SIDEPANEL_PATH,
+    enabled: true,
+  })
+  await chrome.sidePanel.open({ tabId })
+  if (windowId) {
+    await chrome.windows.update(windowId, { focused: true })
+  }
+}
+
+async function handleCloseSidePanel(tabId) {
+  if (!tabId || !chrome.sidePanel) {
+    throw new Error('Side panel is not available in this browser.')
+  }
+  await chrome.sidePanel.setOptions({
+    tabId,
+    enabled: false,
+  })
+}
+
+function resolveLanguageCode(input) {
+  const raw = String(input || '').trim()
+  if (!raw) return 'en'
+  const exact = Object.keys(MENU_TITLES).find(code => code.toLowerCase() === raw.toLowerCase())
+  if (exact) return exact
+  const base = raw.split('-')[0].toLowerCase()
+  return Object.keys(MENU_TITLES).find(code => code.split('-')[0].toLowerCase() === base) || 'en'
+}
+
+async function getContextMenuTitle(languageOverride = '') {
+  const safeLanguage = resolveLanguageCode(
+    languageOverride
+    || (await chrome.storage.local.get(PREFS_KEY))?.[PREFS_KEY]?.language
+    || chrome.i18n.getUILanguage()
+    || 'en'
+  )
+  return MENU_TITLES[safeLanguage] || MENU_TITLES.en
 }
 
 function extractSelectionCaptureFromPage(selectedText) {
