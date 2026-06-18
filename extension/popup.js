@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   elements.pinBtn.addEventListener('click', openPinnedMode)
   elements.closePanelBtn.addEventListener('click', closeSidePanel)
   elements.jdText.addEventListener('input', updateMeta)
-  elements.refreshBtn.addEventListener('click', captureCurrentPage)
+  elements.refreshBtn.addEventListener('click', () => captureCurrentPage({ userInitiated: true }))
   elements.sendBtn.addEventListener('click', handoffCapture)
   elements.themeBtn.addEventListener('click', () => {
     const idx = THEME_ORDER.indexOf(prefs.theme)
@@ -292,16 +292,29 @@ async function openPinnedMode() {
 
 async function closeSidePanel() {
   const tabContext = await ensureCurrentTabContext()
-  if (!tabContext.tabId) {
+  if (!tabContext.tabId && !tabContext.windowId) {
     setStatus(t('status.noActiveTab'), 'error')
     return
   }
 
   try {
     if (chrome.sidePanel.close) {
-      await chrome.sidePanel.close({ tabId: tabContext.tabId })
+      try {
+        if (tabContext.tabId) {
+          await chrome.sidePanel.close({ tabId: tabContext.tabId })
+        } else {
+          throw new Error('Missing tabId')
+        }
+      } catch (error) {
+        if (!tabContext.windowId) throw error
+        await chrome.sidePanel.close({ windowId: tabContext.windowId })
+      }
     } else {
-      await chrome.runtime.sendMessage({ type: 'close-side-panel', tabId: tabContext.tabId })
+      await chrome.runtime.sendMessage({
+        type: 'close-side-panel',
+        tabId: tabContext.tabId,
+        windowId: tabContext.windowId,
+      })
     }
     await persistPinState(false)
   } catch (error) {
@@ -322,11 +335,15 @@ async function captureCurrentPage(options = {}) {
     jdOverride = '',
     fallbackPayload = null,
     statusMessage = t('status.captureRefreshed'),
+    userInitiated = false,
   } = options
 
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (!tab?.id) throw new Error(t('status.noActiveTab'))
+    if (userInitiated) {
+      await ensureHostAccessForCapture(tab.url)
+    }
 
     const [result] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
@@ -363,6 +380,7 @@ function fillForm(payload) {
   currentCaptureMeta = {
     source: payload.source || 'chrome-extension',
     pageTitle: payload.pageTitle || '',
+    url: payload.url || '',
     capturedAt: payload.capturedAt,
     jdOnly: !!payload.jdOnly,
   }
@@ -389,6 +407,44 @@ async function refreshCurrentTabContext() {
 async function ensureCurrentTabContext() {
   if (currentTabContext.tabId) return currentTabContext
   return refreshCurrentTabContext()
+}
+
+function getOriginPattern(input) {
+  try {
+    const url = new URL(input || '')
+    if (!/^https?:$/.test(url.protocol)) return ''
+    return `${url.protocol}//${url.hostname}/*`
+  } catch {
+    return ''
+  }
+}
+
+function getOriginValue(input) {
+  try {
+    return new URL(input || '').origin
+  } catch {
+    return ''
+  }
+}
+
+async function ensureHostAccessForCapture(tabUrl) {
+  if (SURFACE !== 'sidepanel' || !chrome.permissions) return
+
+  const originPattern = getOriginPattern(tabUrl)
+  if (!originPattern) return
+
+  const currentOrigin = getOriginValue(tabUrl)
+  const previousOrigin = getOriginValue(currentCaptureMeta.url)
+  if (currentOrigin && previousOrigin && currentOrigin === previousOrigin) return
+
+  const alreadyGranted = await chrome.permissions.contains({ origins: [originPattern] })
+  if (alreadyGranted) return
+
+  setStatus('Requesting access to this site...')
+  const granted = await chrome.permissions.request({ origins: [originPattern] })
+  if (!granted) {
+    throw new Error('Site access was not granted for this page.')
+  }
 }
 
 async function persistPinState(open) {

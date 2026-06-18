@@ -71,7 +71,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message?.type === 'close-side-panel') {
-    handleCloseSidePanel(message.tabId)
+    handleCloseSidePanel(message.tabId, message.windowId)
       .then(() => sendResponse({ ok: true }))
       .catch(error => sendResponse({ ok: false, error: error.message }))
 
@@ -270,19 +270,30 @@ async function handleOpenSidePanel(tabId, windowId) {
   }
 }
 
-async function handleCloseSidePanel(tabId) {
-  if (!tabId || !chrome.sidePanel) {
+async function handleCloseSidePanel(tabId, windowId) {
+  if ((!tabId && !windowId) || !chrome.sidePanel) {
     throw new Error('Side panel is not available in this browser.')
   }
   if (chrome.sidePanel.close) {
-    await chrome.sidePanel.close({ tabId })
-  } else {
+    try {
+      if (tabId) {
+        await chrome.sidePanel.close({ tabId })
+      } else {
+        throw new Error('Missing tabId')
+      }
+    } catch (error) {
+      if (!windowId) throw error
+      await chrome.sidePanel.close({ windowId })
+    }
+  } else if (tabId) {
     await chrome.sidePanel.setOptions({
       tabId,
       enabled: false,
     })
   }
-  await setSidePanelOpen(tabId, false)
+  if (tabId) {
+    await setSidePanelOpen(tabId, false)
+  }
 }
 
 function resolveLanguageCode(input) {
