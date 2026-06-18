@@ -538,7 +538,6 @@ export default function Settings() {
                     : creditSnapshot.balanceKnown
                       ? t('settings.creditsKnownCopy', {
                         credits: formatCreditNumber(creditSnapshot.remainingCredits),
-                        requests: formatCreditNumber(creditSnapshot.remainingRequests),
                       })
                       : t('settings.creditsMonthlyCopy', {
                         credits: formatCreditNumber(creditSnapshot.monthlyCredits),
@@ -565,17 +564,7 @@ export default function Settings() {
             </span>
           </div>
 
-          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2">
-            <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
-              <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricAllowance')}</div>
-              <div className="text-white text-sm font-display font-semibold">
-                {creditSnapshot.mode === 'byok'
-                  ? t('settings.creditsUnlimited')
-                  : creditSnapshot.monthlyCredits != null
-                    ? formatCreditNumber(creditSnapshot.monthlyCredits)
-                    : '-'}
-              </div>
-            </div>
+          <div className="grid sm:grid-cols-2 gap-2">
             <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
               <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricCost')}</div>
               <div className="text-white text-sm font-display font-semibold">
@@ -583,16 +572,6 @@ export default function Settings() {
                   ? t('settings.creditsRequestValue', { credits: formatCreditNumber(creditSnapshot.requestCost) })
                   : creditSnapshot.mode === 'byok'
                     ? t('settings.creditsUnlimited')
-                    : '-'}
-              </div>
-            </div>
-            <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
-              <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricRequests')}</div>
-              <div className="text-white text-sm font-display font-semibold">
-                {creditSnapshot.mode === 'byok'
-                  ? t('settings.creditsUnlimited')
-                  : creditSnapshot.requestsIncluded != null
-                    ? formatCreditNumber(creditSnapshot.requestsIncluded)
                     : '-'}
               </div>
             </div>

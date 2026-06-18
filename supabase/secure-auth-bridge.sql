@@ -1,5 +1,5 @@
 -- JobSensei secure auth bridge schema
--- Run after the existing telegram schema if you want to enable optional secure accounts.
+-- Run this in Supabase SQL Editor to enable secure accounts and hosted credit tracking.
 
 create extension if not exists pgcrypto;
 
