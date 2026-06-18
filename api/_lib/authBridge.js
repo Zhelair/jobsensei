@@ -779,20 +779,45 @@ export async function ensureSecureAccountAccess({
 
     if (accountUpsertError) throw accountUpsertError
     account = nextAccount
-  } else if (account?.plan_source === 'bmac_webhook' && ACTIVE_PLAN_STATUSES.has(account.plan_status)) {
-    const { data: revokedAccount, error: revokeAccountError } = await supabase
+  } else {
+    const planTier = 'free'
+    const monthlyCreditAllowance = getCreditAllowanceForPlanTier(planTier)
+    const planAnchor = account?.linked_at || account?.created_at || now
+    const tierChanged = account?.plan_tier && account.plan_tier !== planTier
+    const nextWindow = getCreditPeriodWindow({
+      anchor: planAnchor,
+      now: Date.now(),
+      periodStart: tierChanged ? planAnchor : (account?.credit_period_started_at || planAnchor),
+      periodEnd: tierChanged ? addDaysToIso(planAnchor, CREDIT_PERIOD_DAYS) : account?.credit_period_ends_at,
+    })
+    const nextCreditBalance = tierChanged
+      ? monthlyCreditAllowance
+      : nextWindow.reset
+        ? monthlyCreditAllowance
+        : Number.isFinite(Number(account?.credit_balance))
+          ? Math.max(0, Number(account.credit_balance))
+          : monthlyCreditAllowance
+
+    const { data: nextAccount, error: accountUpsertError } = await supabase
       .from('accounts')
-      .update({
-        email: user.email || account.email || '',
-        plan_status: 'revoked',
+      .upsert({
+        user_id: user.id,
+        email: user.email || account?.email || '',
+        plan_status: 'active',
+        plan_source: 'free_magic_link',
+        plan_tier: planTier,
+        legacy_code_hash: account?.legacy_code_hash || null,
+        linked_at: account?.linked_at || now,
+        credit_balance: nextCreditBalance,
+        credit_period_started_at: nextWindow.creditPeriodStartedAt,
+        credit_period_ends_at: nextWindow.creditPeriodEndsAt,
         updated_at: now,
-      })
-      .eq('user_id', user.id)
+      }, { onConflict: 'user_id' })
       .select('email, plan_status, plan_source, plan_tier, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at')
       .single()
 
-    if (revokeAccountError) throw revokeAccountError
-    account = revokedAccount
+    if (accountUpsertError) throw accountUpsertError
+    account = nextAccount
   }
 
   return {

@@ -145,8 +145,13 @@ export function AIProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    setIsConnected(Boolean(apiKey || bmacToken || hasSecurePlanAccess))
-  }, [apiKey, bmacToken, hasSecurePlanAccess])
+    setIsConnected(Boolean(apiKey || hasSecurePlanAccess))
+  }, [apiKey, hasSecurePlanAccess])
+
+  useEffect(() => {
+    if (!secureAccountsEnabled || !bmacToken) return
+    clearBmacToken()
+  }, [bmacToken, secureAccountsEnabled])
 
   function saveConfig(cfg) {
     const next = {
@@ -225,6 +230,10 @@ export function AIProvider({ children }) {
       }
     }
 
+    if (secureAccountsEnabled) {
+      throw new Error('Enter your email address to receive a magic link.')
+    }
+
     saveBmacToken(data.token, data.email || null)
     track('unlock_access_granted', {
       input_type,
@@ -241,7 +250,7 @@ export function AIProvider({ children }) {
   }
 
   async function callAI({ systemPrompt, messages, temperature = 0.7, onChunk, signal }) {
-    const hasHostedAccess = Boolean(bmacToken || hasSecurePlanAccess)
+    const hasHostedAccess = Boolean(hasSecurePlanAccess)
 
     if (!apiKey && !hasHostedAccess) {
       setShowPaywall(true)
@@ -251,19 +260,8 @@ export function AIProvider({ children }) {
     if (!apiKey) {
       setIsThinking(true)
       try {
-        if (hasSecurePlanAccess) {
-          return await callSecureProxy({
-            accessToken: secureSession.access_token,
-            systemPrompt,
-            messages,
-            temperature,
-            onChunk,
-            signal,
-          })
-        }
-
-        return await callLegacyProxy({
-          bmacToken,
+        return await callSecureProxy({
+          accessToken: secureSession.access_token,
           systemPrompt,
           messages,
           temperature,
@@ -287,23 +285,6 @@ export function AIProvider({ children }) {
     } finally {
       setIsThinking(false)
     }
-  }
-
-  async function callLegacyProxy({ bmacToken: token, systemPrompt, messages, temperature, onChunk, signal }) {
-    const res = await fetch('/api/proxy', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ systemPrompt, messages, temperature, stream: !!onChunk }),
-      signal,
-    })
-
-    return readProxyResponse(res, {
-      onChunk,
-      onUnauthorized: clearBmacToken,
-    })
   }
 
   async function callSecureProxy({ accessToken, systemPrompt, messages, temperature, onChunk, signal }) {

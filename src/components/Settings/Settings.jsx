@@ -15,7 +15,7 @@ import { getCreditSnapshot } from '../../lib/credits'
 export default function Settings() {
   const {
     provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS,
-    bmacToken, bmacEmail, unlockAccess, clearBmacToken, restoreToProxy, isConnected,
+    bmacToken, unlockAccess, restoreToProxy, isConnected,
   } = useAI()
   const {
     secureUser, secureAccount, statusError, accountError, signOutSecure,
@@ -140,6 +140,11 @@ export default function Settings() {
     saveConfig(form)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  async function handleSecureSignOut() {
+    if (!window.confirm(t('settings.signOutConfirm'))) return
+    await signOutSecure()
   }
 
   async function handleUnlockAccess() {
@@ -297,10 +302,10 @@ export default function Settings() {
     : `${languageOption.nativeLabel} (${languageOption.speechLang})`
 
   const hasSecureHostedAccess = !!secureAccount?.planActive
-  const hasPlanAccess = !!bmacToken || hasSecureHostedAccess
+  const hasPlanAccess = hasSecureHostedAccess
   const usingOwnKey = !!apiKey
   const usingJobsenseiAI = hasPlanAccess && !apiKey
-  const hostedPlanIdentity = bmacEmail || secureUser?.email || secureAccount?.email || ''
+  const hostedPlanIdentity = secureUser?.email || secureAccount?.email || ''
   const providerLabelFor = providerKey => {
     const config = PROVIDER_CONFIGS[providerKey]
     if (!config) return t('settings.customProvider')
@@ -614,13 +619,8 @@ export default function Settings() {
                 </div>
                 {(bmacToken || secureSignedIn) && (
                   <div className="flex flex-wrap gap-2">
-                    {bmacToken && (
-                      <button onClick={clearBmacToken} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
-                        <LogOut size={13} /> {t('settings.signOut')}
-                      </button>
-                    )}
                     {secureSignedIn && (
-                      <button onClick={signOutSecure} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
+                      <button onClick={handleSecureSignOut} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
                         <LogOut size={13} /> {t('settings.secureAccountSignOut')}
                       </button>
                     )}
@@ -644,7 +644,7 @@ export default function Settings() {
                 </div>
                 <input
                   className="input-field text-sm"
-                  type="text"
+                  type="email"
                   placeholder={t('settings.accessCodePlaceholder')}
                   value={bmacInput}
                   onChange={e => {
@@ -971,90 +971,98 @@ export default function Settings() {
 
           {showOwnKey && (
             <div className="mt-4 space-y-3">
-              <DeepSeekGuide />
-              <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-3 py-3">
-                <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{t('settings.byokStatus')}</div>
-                <div className="text-white text-sm">
-                  {usingOwnKey ? `${currentProviderLabel} - ${form.model}` : t('settings.byokStatusEmpty')}
+              {!secureSignedIn ? (
+                <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm leading-relaxed text-yellow-200">
+                  {t('settings.byokLocked')}
                 </div>
-              </div>
-              <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokProvider')}</label>
-                <select className="input-field" value={form.provider} onChange={e => update('provider', e.target.value)}>
-                  {Object.entries(PROVIDER_CONFIGS).map(([k]) => <option key={k} value={k}>{providerLabelFor(k)}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokApiKey')}</label>
-                <div className="relative">
-                  <input
-                    className="input-field pr-10 font-mono text-sm"
-                    type={showKey ? 'text' : 'password'}
-                    placeholder={t('settings.byokApiKeyPlaceholder')}
-                    value={form.apiKey}
-                    onChange={e => update('apiKey', e.target.value)}
-                  />
-                  <button onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
-                    {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
-                <p className="text-slate-600 text-sm leading-relaxed mt-1">{t('settings.byokStoredLocal')}</p>
-              </div>
-              <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokModel')}</label>
-                <input
-                  className="input-field font-mono text-sm"
-                  placeholder={t('settings.byokModelPlaceholder')}
-                  value={form.model}
-                  onChange={e => update('model', e.target.value)}
-                />
-              </div>
-              {form.provider === PROVIDERS.CUSTOM && (
-                <div>
-                  <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokCustomBaseUrl')}</label>
-                  <input
-                    className="input-field font-mono text-sm"
-                    placeholder="https://..."
-                    value={form.customBaseUrl}
-                    onChange={e => update('customBaseUrl', e.target.value)}
-                  />
-                </div>
-              )}
-              <div className="bg-navy-900 rounded-xl p-3 text-sm text-slate-500 leading-relaxed space-y-1">
-                <div><span className="text-slate-400">DeepSeek:</span> deepseek-v4-flash / deepseek-v4-pro</div>
-                <div><span className="text-slate-400">OpenAI:</span> gpt-5.4-mini / gpt-5.5</div>
-                <div><span className="text-slate-400">Anthropic:</span> claude-sonnet-4-6 / claude-haiku-4-5-20251001</div>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={testConnection} disabled={!form.apiKey || testing} className="btn-secondary flex-1 justify-center">
-                  <Zap size={14} /> {testing ? t('settings.byokTesting') : t('settings.byokTest')}
-                </button>
-                <button onClick={save} className={`btn-primary flex-1 justify-center ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-                  {saved ? <><Check size={14} /> {t('settings.saved')}</> : t('settings.byokSaveConfig')}
-                </button>
-              </div>
-              {testResult === 'success' && <p className="text-green-400 text-sm text-center">{t('settings.byokConnectionSuccess')}</p>}
-              {testResult === 'error' && <p className="text-red-400 text-sm text-center">{t('settings.byokConnectionFailed')}</p>}
+              ) : (
+                <>
+                  <DeepSeekGuide />
+                  <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-3 py-3">
+                    <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{t('settings.byokStatus')}</div>
+                    <div className="text-white text-sm">
+                      {usingOwnKey ? `${currentProviderLabel} - ${form.model}` : t('settings.byokStatusEmpty')}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokProvider')}</label>
+                    <select className="input-field" value={form.provider} onChange={e => update('provider', e.target.value)}>
+                      {Object.entries(PROVIDER_CONFIGS).map(([k]) => <option key={k} value={k}>{providerLabelFor(k)}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokApiKey')}</label>
+                    <div className="relative">
+                      <input
+                        className="input-field pr-10 font-mono text-sm"
+                        type={showKey ? 'text' : 'password'}
+                        placeholder={t('settings.byokApiKeyPlaceholder')}
+                        value={form.apiKey}
+                        onChange={e => update('apiKey', e.target.value)}
+                      />
+                      <button onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                        {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                    <p className="text-slate-600 text-sm leading-relaxed mt-1">{t('settings.byokStoredLocal')}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokModel')}</label>
+                    <input
+                      className="input-field font-mono text-sm"
+                      placeholder={t('settings.byokModelPlaceholder')}
+                      value={form.model}
+                      onChange={e => update('model', e.target.value)}
+                    />
+                  </div>
+                  {form.provider === PROVIDERS.CUSTOM && (
+                    <div>
+                      <label className="text-sm text-slate-400 mb-1.5 block">{t('settings.byokCustomBaseUrl')}</label>
+                      <input
+                        className="input-field font-mono text-sm"
+                        placeholder="https://..."
+                        value={form.customBaseUrl}
+                        onChange={e => update('customBaseUrl', e.target.value)}
+                      />
+                    </div>
+                  )}
+                  <div className="bg-navy-900 rounded-xl p-3 text-sm text-slate-500 leading-relaxed space-y-1">
+                    <div><span className="text-slate-400">DeepSeek:</span> deepseek-v4-flash / deepseek-v4-pro</div>
+                    <div><span className="text-slate-400">OpenAI:</span> gpt-5.4-mini / gpt-5.5</div>
+                    <div><span className="text-slate-400">Anthropic:</span> claude-sonnet-4-6 / claude-haiku-4-5-20251001</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={testConnection} disabled={!form.apiKey || testing} className="btn-secondary flex-1 justify-center">
+                      <Zap size={14} /> {testing ? t('settings.byokTesting') : t('settings.byokTest')}
+                    </button>
+                    <button onClick={save} className={`btn-primary flex-1 justify-center ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
+                      {saved ? <><Check size={14} /> {t('settings.saved')}</> : t('settings.byokSaveConfig')}
+                    </button>
+                  </div>
+                  {testResult === 'success' && <p className="text-green-400 text-sm text-center">{t('settings.byokConnectionSuccess')}</p>}
+                  {testResult === 'error' && <p className="text-red-400 text-sm text-center">{t('settings.byokConnectionFailed')}</p>}
 
-              {bmacToken && apiKey && (
-                <div className="pt-2 border-t border-navy-700">
-                  <button
-                    onClick={() => {
-                      restoreToProxy()
-                      setForm(f => ({
-                        ...f,
-                        apiKey: '',
-                        provider: PROVIDERS.DEEPSEEK,
-                        model: PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel,
-                        customBaseUrl: '',
-                      }))
-                    }}
-                    className="btn-ghost text-xs text-yellow-400 hover:text-yellow-300 w-full justify-center"
-                  >
-                    <Coffee size={13} /> {t('settings.byokSwitchBack')}
-                  </button>
-                  <p className="text-slate-600 text-sm leading-relaxed text-center mt-1">{t('settings.byokSwitchBackNote')}</p>
-                </div>
+                  {hasPlanAccess && apiKey && (
+                    <div className="pt-2 border-t border-navy-700">
+                      <button
+                        onClick={() => {
+                          restoreToProxy()
+                          setForm(f => ({
+                            ...f,
+                            apiKey: '',
+                            provider: PROVIDERS.DEEPSEEK,
+                            model: PROVIDER_CONFIGS[PROVIDERS.DEEPSEEK].defaultModel,
+                            customBaseUrl: '',
+                          }))
+                        }}
+                        className="btn-ghost text-xs text-yellow-400 hover:text-yellow-300 w-full justify-center"
+                      >
+                        <Coffee size={13} /> {t('settings.byokSwitchBack')}
+                      </button>
+                      <p className="text-slate-600 text-sm leading-relaxed text-center mt-1">{t('settings.byokSwitchBackNote')}</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

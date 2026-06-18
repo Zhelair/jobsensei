@@ -14,8 +14,8 @@ function addDays(value, days) {
   return base.toISOString()
 }
 
-function inferHostedTier({ secureAccount, bmacToken }) {
-  if (!secureAccount?.planActive && !bmacToken) return null
+function inferHostedTier({ secureAccount }) {
+  if (!secureAccount?.planActive) return null
 
   const explicitTier = String(secureAccount?.planTier || '').toLowerCase()
   if (explicitTier === 'free' || explicitTier === 'pro') return explicitTier
@@ -31,6 +31,8 @@ function getAllowanceForTier(tier) {
 }
 
 export function getCreditSnapshot({ secureAccount, bmacToken, apiKey }) {
+  void bmacToken
+
   if (apiKey) {
     return {
       mode: 'byok',
@@ -46,7 +48,7 @@ export function getCreditSnapshot({ secureAccount, bmacToken, apiKey }) {
     }
   }
 
-  const hostedTier = inferHostedTier({ secureAccount, bmacToken })
+  const hostedTier = inferHostedTier({ secureAccount })
   if (!hostedTier) {
     return {
       mode: 'locked',
