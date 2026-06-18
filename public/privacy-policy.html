@@ -75,6 +75,18 @@
         font-weight: 600;
       }
 
+      .callout {
+        margin: 20px 0 0;
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(45, 212, 191, 0.26);
+        background: rgba(45, 212, 191, 0.08);
+      }
+
+      .callout h2 {
+        margin-top: 0;
+      }
+
       ul {
         padding-left: 18px;
         margin: 0;
@@ -558,6 +570,25 @@
       document.getElementById('title').textContent = copy.title;
       document.getElementById('updated').textContent = copy.updated;
       document.getElementById('intro').textContent = copy.intro;
+
+      const limitedUse = document.createElement('section');
+      limitedUse.className = 'callout';
+
+      const limitedUseHeading = document.createElement('h2');
+      limitedUseHeading.textContent = 'Chrome Web Store Limited Use';
+      limitedUse.appendChild(limitedUseHeading);
+
+      [
+        'The JobSensei Capture extension uses captured job-page information only to let you review and send company, role, job URL, and selected or visible job-description text into your JobSensei workspace.',
+        'JobSensei does not sell captured extension data or use it for advertising.',
+        'The use of data collected by the JobSensei Capture extension will adhere to the Chrome Web Store User Data Policy, including the Limited Use requirements.',
+      ].forEach(text => {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = text;
+        limitedUse.appendChild(paragraph);
+      });
+
+      document.getElementById('intro').insertAdjacentElement('afterend', limitedUse);
 
       const sections = document.getElementById('sections');
       copy.sections.forEach(section => {
