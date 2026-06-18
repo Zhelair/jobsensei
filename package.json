@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:extension-zip": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path 'public/jobsensei-capture-extension.zip') { Remove-Item 'public/jobsensei-capture-extension.zip' -Force }; Compress-Archive -Path 'extension/*' -DestinationPath 'public/jobsensei-capture-extension.zip' -Force\"",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
