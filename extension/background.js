@@ -3,7 +3,7 @@ const PENDING_SELECTION_KEY = 'jobsensei_pending_selection_capture_v1'
 const PREFS_KEY = 'jobsensei_extension_prefs_v1'
 const SIDEPANEL_STATE_KEY = 'jobsensei_sidepanel_open_tabs_v1'
 const SELECTION_MENU_ID = 'jobsensei-copy-jd-selection'
-const SIDEPANEL_PATH = 'sidepanel.html'
+const SIDEPANEL_PATH = 'popup.html?surface=sidepanel'
 const MENU_TITLES = {
   en: 'Copy selected JD to JobSensei',
   de: 'Ausgewählten JD-Text nach JobSensei kopieren',

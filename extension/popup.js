@@ -3,7 +3,7 @@ const PENDING_SELECTION_KEY = 'jobsensei_pending_selection_capture_v1'
 const PREFS_KEY = 'jobsensei_extension_prefs_v1'
 const SIDEPANEL_STATE_KEY = 'jobsensei_sidepanel_open_tabs_v1'
 const SURFACE = new URLSearchParams(window.location.search).get('surface') === 'sidepanel' ? 'sidepanel' : 'popup'
-const DEFAULT_PREFS = { theme: 'dark', visuals: false, language: null }
+const DEFAULT_PREFS = { theme: 'dark', visuals: false, language: 'en', languageChosen: false }
 const THEME_ORDER = ['dark', 'daylight', 'myspace']
 const THEME_META = {
   dark: {
@@ -68,7 +68,6 @@ let prefs = { ...DEFAULT_PREFS }
 let currentCaptureMeta = {}
 let languageMenuOpen = false
 let currentTabContext = { tabId: null, windowId: null }
-let pinActive = false
 
 document.addEventListener('DOMContentLoaded', async () => {
   elements.captureTab.addEventListener('click', () => showPanel('capture'))
@@ -101,7 +100,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await loadPrefs()
   await refreshCurrentTabContext()
-  await refreshPinState()
 
   const pendingSelection = await consumePendingSelectionCapture()
   if (pendingSelection) {
@@ -150,8 +148,10 @@ function showPanel(panel) {
 
 async function loadPrefs() {
   const saved = await storageGet(PREFS_KEY)
-  prefs = { ...DEFAULT_PREFS, ...(saved?.[PREFS_KEY] || {}) }
-  prefs.language = resolveLanguageCode(prefs.language || chrome.i18n?.getUILanguage?.() || navigator.language || 'en')
+  const savedPrefs = saved?.[PREFS_KEY] || {}
+  prefs = { ...DEFAULT_PREFS, ...savedPrefs }
+  prefs.languageChosen = !!savedPrefs.languageChosen
+  prefs.language = resolveLanguageCode(prefs.languageChosen ? prefs.language : 'en')
   if (prefs.theme === 'night') prefs.theme = 'dark'
   if (prefs.theme === 'neon') prefs.theme = 'myspace'
   if (!THEME_ORDER.includes(prefs.theme)) prefs.theme = DEFAULT_PREFS.theme
@@ -161,6 +161,9 @@ async function loadPrefs() {
 async function updatePrefs(next) {
   const previousLanguage = prefs.language
   prefs = { ...prefs, ...next }
+  if (Object.prototype.hasOwnProperty.call(next, 'language')) {
+    prefs.languageChosen = true
+  }
   prefs.language = resolveLanguageCode(prefs.language)
   applyPrefs()
   await storageSet({ [PREFS_KEY]: prefs })
@@ -187,7 +190,6 @@ function applyPrefs() {
   updateMeta()
   updateSourceMeta()
   updateSurfaceControls()
-  applyPinState()
 }
 
 function applyTranslations() {
@@ -260,10 +262,6 @@ function updateSurfaceControls() {
   elements.closePanelBtn.classList.toggle('hidden', !isSidePanel)
 }
 
-function applyPinState() {
-  elements.pinBtn.classList.toggle('active', !!pinActive)
-}
-
 function closeSurface() {
   if (SURFACE === 'popup') {
     window.close()
@@ -285,8 +283,6 @@ async function openPinnedMode() {
 
   try {
     await chrome.sidePanel.open({ tabId: tabContext.tabId })
-    pinActive = true
-    applyPinState()
     await persistPinState(true)
     closeSurface()
   } catch (error) {
@@ -307,8 +303,6 @@ async function closeSidePanel() {
     } else {
       await chrome.runtime.sendMessage({ type: 'close-side-panel', tabId: tabContext.tabId })
     }
-    pinActive = false
-    applyPinState()
     await persistPinState(false)
   } catch (error) {
     setStatus(error?.message || t('status.couldNotDeliver'), 'error')
@@ -395,18 +389,6 @@ async function refreshCurrentTabContext() {
 async function ensureCurrentTabContext() {
   if (currentTabContext.tabId) return currentTabContext
   return refreshCurrentTabContext()
-}
-
-async function refreshPinState() {
-  const tabContext = await ensureCurrentTabContext()
-  if (!tabContext.tabId) {
-    pinActive = false
-    applyPinState()
-    return
-  }
-  const saved = await storageGet(SIDEPANEL_STATE_KEY)
-  pinActive = !!saved?.[SIDEPANEL_STATE_KEY]?.[String(tabContext.tabId)]
-  applyPinState()
 }
 
 async function persistPinState(open) {
