@@ -1,30 +1,45 @@
 const DEFAULT_APP_URL = 'https://jobsensei.app/#applications'
 const PENDING_SELECTION_KEY = 'jobsensei_pending_selection_capture_v1'
 const PREFS_KEY = 'jobsensei_extension_prefs_v1'
-const DEFAULT_PREFS = { theme: 'dark', visuals: false }
+const SURFACE = new URLSearchParams(window.location.search).get('surface') === 'sidepanel' ? 'sidepanel' : 'popup'
+const DEFAULT_PREFS = { theme: 'dark', visuals: false, language: null }
 const THEME_ORDER = ['dark', 'daylight', 'myspace']
 const THEME_META = {
   dark: {
-    label: 'Dark',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>',
   },
   daylight: {
-    label: 'Daylight',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>',
   },
   myspace: {
-    label: 'Neon',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.93 2.74c.24-.99 1.9-.99 2.14 0l.52 2.14a3.4 3.4 0 0 0 2.53 2.53l2.14.52c.99.24.99 1.9 0 2.14l-2.14.52a3.4 3.4 0 0 0-2.53 2.53l-.52 2.14c-.24.99-1.9.99-2.14 0l-.52-2.14a3.4 3.4 0 0 0-2.53-2.53l-2.14-.52c-.99-.24-.99-1.9 0-2.14l2.14-.52a3.4 3.4 0 0 0 2.53-2.53l.52-2.14Z"></path><path d="M20 15v4"></path><path d="M22 17h-4"></path></svg>',
   },
 }
+const LANGUAGE_OPTIONS = window.JobSenseiExtensionI18n?.languages || [{ code: 'en', label: 'English', nativeLabel: 'English' }]
+const TRANSLATIONS = window.JobSenseiExtensionI18n?.strings || {}
+const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg>'
 
 const elements = {
+  brandMantra: document.getElementById('brandMantra'),
   captureTab: document.getElementById('captureTab'),
   aboutTab: document.getElementById('aboutTab'),
   capturePanel: document.getElementById('capturePanel'),
   aboutPanel: document.getElementById('aboutPanel'),
+  pinBtn: document.getElementById('pinBtn'),
+  closePanelBtn: document.getElementById('closePanelBtn'),
   themeBtn: document.getElementById('themeBtn'),
   visualsBtn: document.getElementById('visualsBtn'),
+  languageTrigger: document.getElementById('languageTrigger'),
+  languageMenu: document.getElementById('languageMenu'),
+  languageHeading: document.getElementById('languageHeading'),
+  languageOptions: document.getElementById('languageOptions'),
+  languageNative: document.getElementById('languageNative'),
+  languageLabel: document.getElementById('languageLabel'),
+  captureNotice: document.getElementById('captureNotice'),
+  companyLabel: document.getElementById('companyLabel'),
+  roleLabel: document.getElementById('roleLabel'),
+  urlLabel: document.getElementById('urlLabel'),
+  jdLabel: document.getElementById('jdLabel'),
   company: document.getElementById('company'),
   role: document.getElementById('role'),
   url: document.getElementById('url'),
@@ -34,18 +49,31 @@ const elements = {
   lengthMeta: document.getElementById('lengthMeta'),
   refreshBtn: document.getElementById('refreshBtn'),
   sendBtn: document.getElementById('sendBtn'),
+  aboutTitle: document.getElementById('aboutTitle'),
+  aboutCopy: document.getElementById('aboutCopy'),
+  feature1Title: document.getElementById('feature1Title'),
+  feature1Body: document.getElementById('feature1Body'),
+  feature2Title: document.getElementById('feature2Title'),
+  feature2Body: document.getElementById('feature2Body'),
+  feature3Title: document.getElementById('feature3Title'),
+  feature3Body: document.getElementById('feature3Body'),
+  dataSentSummary: document.getElementById('dataSentSummary'),
+  dataSentBody: document.getElementById('dataSentBody'),
   openAppBtn: document.getElementById('openAppBtn'),
   backToCaptureBtn: document.getElementById('backToCaptureBtn'),
 }
 
 let prefs = { ...DEFAULT_PREFS }
 let currentCaptureMeta = {}
+let languageMenuOpen = false
 
 document.addEventListener('DOMContentLoaded', async () => {
   elements.captureTab.addEventListener('click', () => showPanel('capture'))
   elements.aboutTab.addEventListener('click', () => showPanel('about'))
   elements.backToCaptureBtn.addEventListener('click', () => showPanel('capture'))
   elements.openAppBtn.addEventListener('click', openJobSensei)
+  elements.pinBtn.addEventListener('click', openPinnedMode)
+  elements.closePanelBtn.addEventListener('click', closeSidePanel)
   elements.jdText.addEventListener('input', updateMeta)
   elements.refreshBtn.addEventListener('click', captureCurrentPage)
   elements.sendBtn.addEventListener('click', handoffCapture)
@@ -54,6 +82,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     updatePrefs({ theme: THEME_ORDER[(idx + 1) % THEME_ORDER.length] })
   })
   elements.visualsBtn.addEventListener('click', () => updatePrefs({ visuals: !prefs.visuals }))
+  elements.languageTrigger.addEventListener('click', () => setLanguageMenuOpen(!languageMenuOpen))
+
+  document.addEventListener('mousedown', event => {
+    if (!languageMenuOpen) return
+    if (elements.languageTrigger.contains(event.target) || elements.languageMenu.contains(event.target)) return
+    setLanguageMenuOpen(false)
+  })
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && languageMenuOpen) {
+      setLanguageMenuOpen(false)
+    }
+  })
 
   await loadPrefs()
 
@@ -62,13 +103,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     await captureCurrentPage({
       jdOverride: pendingSelection.jdText,
       fallbackPayload: pendingSelection,
-      statusMessage: 'Selected JD loaded. Review it, then send to JobSensei.',
+      statusMessage: t('status.selectedLoaded'),
     })
     return
   }
 
   await captureCurrentPage()
 })
+
+function resolveLanguageCode(input) {
+  const raw = String(input || '').trim()
+  if (!raw) return 'en'
+  const exact = LANGUAGE_OPTIONS.find(option => option.code.toLowerCase() === raw.toLowerCase())
+  if (exact) return exact.code
+  const base = raw.split('-')[0].toLowerCase()
+  const match = LANGUAGE_OPTIONS.find(option => option.code.split('-')[0].toLowerCase() === base)
+  return match?.code || 'en'
+}
+
+function getLanguageOption(code = prefs.language) {
+  return LANGUAGE_OPTIONS.find(option => option.code === resolveLanguageCode(code)) || LANGUAGE_OPTIONS[0]
+}
+
+function getStrings() {
+  return TRANSLATIONS[resolveLanguageCode(prefs.language)] || TRANSLATIONS.en
+}
+
+function t(path, replacements = {}) {
+  const value = path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), getStrings())
+  if (typeof value !== 'string') return path
+  return value.replace(/\{(\w+)\}/g, (_, key) => String(replacements[key] ?? ''))
+}
 
 function showPanel(panel) {
   const isCapture = panel === 'capture'
@@ -81,6 +146,7 @@ function showPanel(panel) {
 async function loadPrefs() {
   const saved = await storageGet(PREFS_KEY)
   prefs = { ...DEFAULT_PREFS, ...(saved?.[PREFS_KEY] || {}) }
+  prefs.language = resolveLanguageCode(prefs.language || chrome.i18n?.getUILanguage?.() || navigator.language || 'en')
   if (prefs.theme === 'night') prefs.theme = 'dark'
   if (prefs.theme === 'neon') prefs.theme = 'myspace'
   if (!THEME_ORDER.includes(prefs.theme)) prefs.theme = DEFAULT_PREFS.theme
@@ -88,23 +154,154 @@ async function loadPrefs() {
 }
 
 async function updatePrefs(next) {
+  const previousLanguage = prefs.language
   prefs = { ...prefs, ...next }
+  prefs.language = resolveLanguageCode(prefs.language)
   applyPrefs()
   await storageSet({ [PREFS_KEY]: prefs })
+  if (prefs.language !== previousLanguage) {
+    chrome.runtime.sendMessage({ type: 'extension-language-changed', language: prefs.language }, () => void chrome.runtime.lastError)
+  }
 }
 
 function applyPrefs() {
+  document.documentElement.lang = prefs.language
   document.documentElement.dataset.theme = prefs.theme || DEFAULT_PREFS.theme
   document.documentElement.dataset.visuals = prefs.visuals ? 'on' : 'off'
+  document.title = t('title')
   elements.visualsBtn.classList.toggle('active', !!prefs.visuals)
-  elements.visualsBtn.title = prefs.visuals ? 'Visuals ON - click to disable' : 'Visuals OFF - click to enable'
+  elements.visualsBtn.title = prefs.visuals ? t('controls.visualsOn') : t('controls.visualsOff')
   elements.themeBtn.innerHTML = THEME_META[prefs.theme]?.icon || THEME_META.dark.icon
-  elements.themeBtn.title = `Theme: ${THEME_META[prefs.theme]?.label || 'Dark'} - click to cycle`
+  elements.themeBtn.title = t('controls.themeCycle', { theme: t(`themes.${prefs.theme}`) })
+  elements.pinBtn.title = t('buttons.pin')
+  elements.closePanelBtn.title = t('buttons.closePanel')
+  elements.languageTrigger.title = t('interfaceLanguage')
+  elements.languageMenu.setAttribute('aria-label', t('interfaceLanguage'))
+  applyTranslations()
+  renderLanguageMenu()
+  updateMeta()
+  updateSourceMeta()
+  updateSurfaceControls()
+}
+
+function applyTranslations() {
+  elements.brandMantra.textContent = t('brandMantra')
+  elements.captureTab.textContent = t('tabs.capture')
+  elements.aboutTab.textContent = t('tabs.about')
+  elements.captureNotice.textContent = t('notice')
+  elements.companyLabel.textContent = t('labels.company')
+  elements.roleLabel.textContent = t('labels.role')
+  elements.urlLabel.textContent = t('labels.url')
+  elements.jdLabel.textContent = t('labels.jd')
+  elements.company.placeholder = t('placeholders.company')
+  elements.role.placeholder = t('placeholders.role')
+  elements.url.placeholder = t('placeholders.url')
+  elements.jdText.placeholder = t('placeholders.jd')
+  elements.refreshBtn.textContent = t('buttons.refresh')
+  elements.sendBtn.textContent = t('buttons.send')
+  elements.openAppBtn.textContent = t('buttons.open')
+  elements.backToCaptureBtn.textContent = t('buttons.back')
+  elements.aboutTitle.textContent = t('about.title')
+  elements.aboutCopy.textContent = t('about.copy')
+  elements.feature1Title.textContent = getStrings().features[0].title
+  elements.feature1Body.textContent = getStrings().features[0].body
+  elements.feature2Title.textContent = getStrings().features[1].title
+  elements.feature2Body.textContent = getStrings().features[1].body
+  elements.feature3Title.textContent = getStrings().features[2].title
+  elements.feature3Body.textContent = getStrings().features[2].body
+  elements.dataSentSummary.textContent = t('about.dataTitle')
+  elements.dataSentBody.textContent = t('about.dataBody')
+  elements.languageHeading.textContent = t('interfaceLanguage')
+}
+
+function renderLanguageMenu() {
+  const selected = getLanguageOption()
+  elements.languageNative.textContent = selected.nativeLabel
+  elements.languageLabel.textContent = selected.label
+  elements.languageOptions.innerHTML = ''
+
+  LANGUAGE_OPTIONS.forEach(option => {
+    const isSelected = option.code === prefs.language
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = `language-option${isSelected ? ' is-selected' : ''}`
+    button.setAttribute('role', 'option')
+    button.setAttribute('aria-selected', isSelected ? 'true' : 'false')
+    button.innerHTML = `
+      <span class="language-option-copy">
+        <span class="language-option-native">${escapeHtml(option.nativeLabel)}</span>
+        <span class="language-option-label">${escapeHtml(option.label)}</span>
+      </span>
+      <span class="language-check">${CHECK_ICON}</span>
+    `
+    button.addEventListener('click', async () => {
+      setLanguageMenuOpen(false)
+      await updatePrefs({ language: option.code })
+    })
+    elements.languageOptions.appendChild(button)
+  })
+}
+
+function setLanguageMenuOpen(nextOpen) {
+  languageMenuOpen = !!nextOpen
+  elements.languageTrigger.setAttribute('aria-expanded', languageMenuOpen ? 'true' : 'false')
+  elements.languageMenu.classList.toggle('hidden', !languageMenuOpen)
+}
+
+function updateSurfaceControls() {
+  const isSidePanel = SURFACE === 'sidepanel'
+  elements.pinBtn.classList.toggle('hidden', isSidePanel)
+  elements.closePanelBtn.classList.toggle('hidden', !isSidePanel)
+}
+
+function closeSurface() {
+  if (SURFACE === 'popup') {
+    window.close()
+  }
 }
 
 function openJobSensei() {
   chrome.tabs.create({ url: DEFAULT_APP_URL })
-  window.close()
+  closeSurface()
+}
+
+async function openPinnedMode() {
+  setStatus(t('status.openingPinnedMode'))
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  if (!tab?.id || !tab.windowId) {
+    setStatus(t('status.noActiveTab'), 'error')
+    return
+  }
+
+  chrome.runtime.sendMessage({ type: 'open-side-panel', tabId: tab.id, windowId: tab.windowId }, response => {
+    if (chrome.runtime.lastError) {
+      setStatus(chrome.runtime.lastError.message, 'error')
+      return
+    }
+    if (!response?.ok) {
+      setStatus(response?.error || t('status.couldNotDeliver'), 'error')
+      return
+    }
+    closeSurface()
+  })
+}
+
+async function closeSidePanel() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  if (!tab?.id) {
+    setStatus(t('status.noActiveTab'), 'error')
+    return
+  }
+
+  chrome.runtime.sendMessage({ type: 'close-side-panel', tabId: tab.id }, response => {
+    if (chrome.runtime.lastError) {
+      setStatus(chrome.runtime.lastError.message, 'error')
+      return
+    }
+    if (!response?.ok) {
+      setStatus(response?.error || t('status.couldNotDeliver'), 'error')
+    }
+  })
 }
 
 async function consumePendingSelectionCapture() {
@@ -115,12 +312,16 @@ async function consumePendingSelectionCapture() {
 }
 
 async function captureCurrentPage(options = {}) {
-  setStatus('Reading the current page...')
-  const { jdOverride = '', fallbackPayload = null, statusMessage = 'Capture refreshed. Review details before sending.' } = options
+  setStatus(t('status.readingCurrentPage'))
+  const {
+    jdOverride = '',
+    fallbackPayload = null,
+    statusMessage = t('status.captureRefreshed'),
+  } = options
 
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    if (!tab?.id) throw new Error('No active tab available.')
+    if (!tab?.id) throw new Error(t('status.noActiveTab'))
 
     const [result] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
@@ -128,7 +329,7 @@ async function captureCurrentPage(options = {}) {
     })
 
     const payload = result?.result
-    if (!payload) throw new Error('Could not read the current page.')
+    if (!payload) throw new Error(t('status.couldNotReadCurrentPage'))
 
     fillForm({
       ...payload,
@@ -145,7 +346,7 @@ async function captureCurrentPage(options = {}) {
       setStatus(statusMessage, 'success')
       return
     }
-    setStatus(error.message || 'Could not capture the current page.', 'error')
+    setStatus(error.message || t('status.couldNotReadCurrentPage'), 'error')
   }
 }
 
@@ -156,21 +357,26 @@ function fillForm(payload) {
   elements.jdText.value = payload.jdText || ''
   currentCaptureMeta = {
     source: payload.source || 'chrome-extension',
+    pageTitle: payload.pageTitle || '',
     capturedAt: payload.capturedAt,
     jdOnly: !!payload.jdOnly,
   }
-  const sourceLabel = payload.source === 'chrome-extension-selection'
-    ? 'selected JD text'
-    : (payload.pageTitle || 'current page')
-  elements.sourceMeta.textContent = `Source: ${sourceLabel}`
+  updateSourceMeta()
   updateMeta()
+}
+
+function updateSourceMeta() {
+  const sourceLabel = currentCaptureMeta.source === 'chrome-extension-selection'
+    ? t('meta.selectedText')
+    : (currentCaptureMeta.pageTitle || t('meta.currentPage'))
+  elements.sourceMeta.textContent = `${t('meta.sourcePrefix')}: ${sourceLabel}`
 }
 
 async function handoffCapture() {
   const payload = getFormPayload()
 
   if (!hasPayloadDetails(payload)) {
-    setStatus('Add at least one job detail before sending it to JobSensei.', 'error')
+    setStatus(t('status.addJobDetail'), 'error')
     return
   }
 
@@ -194,7 +400,7 @@ function hasPayloadDetails(payload) {
 }
 
 async function sendToJobSensei(payload) {
-  setStatus('Opening JobSensei...')
+  setStatus(t('status.openingJobSensei'))
 
   chrome.runtime.sendMessage({ type: 'handoff-capture', payload, appUrl: DEFAULT_APP_URL }, response => {
     if (chrome.runtime.lastError) {
@@ -203,22 +409,31 @@ async function sendToJobSensei(payload) {
     }
 
     if (!response?.ok) {
-      setStatus(response?.error || 'Could not deliver the capture to JobSensei.', 'error')
+      setStatus(response?.error || t('status.couldNotDeliver'), 'error')
       return
     }
 
-    setStatus('Sent to JobSensei.', 'success')
-    window.close()
+    setStatus(t('status.sentToJobSensei'), 'success')
+    closeSurface()
   })
 }
 
 function updateMeta() {
-  elements.lengthMeta.textContent = `JD: ${elements.jdText.value.trim().length} chars`
+  elements.lengthMeta.textContent = t('meta.jdChars', { count: elements.jdText.value.trim().length })
 }
 
 function setStatus(message, tone = '') {
   elements.status.textContent = message
   elements.status.className = `status ${tone}`.trim()
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
 }
 
 function storageGet(key) {

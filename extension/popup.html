@@ -3,6 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      document.documentElement.dataset.surface =
+        new URLSearchParams(window.location.search).get('surface') === 'sidepanel'
+          ? 'sidepanel'
+          : 'popup'
+    </script>
     <title>JobSensei Capture</title>
     <style>
       :root {
@@ -82,7 +88,7 @@
       body {
         margin: 0;
         width: 390px;
-        min-height: 560px;
+        min-height: 600px;
         overflow-x: hidden;
         background-color: var(--navy-900);
         color: var(--text);
@@ -90,13 +96,22 @@
         -webkit-font-smoothing: antialiased;
       }
 
+      :root[data-surface="sidepanel"] body {
+        width: auto;
+        min-height: 100vh;
+      }
+
       .bg-mesh {
-        min-height: 560px;
+        min-height: 600px;
         padding: 12px;
         background-image:
           radial-gradient(at 20% 20%, rgba(20,184,166,0.08) 0px, transparent 50%),
           radial-gradient(at 80% 80%, rgba(99,102,241,0.08) 0px, transparent 50%),
           radial-gradient(at 50% 50%, rgba(15,23,42,0) 0px, rgba(15,23,42,0.8) 100%);
+      }
+
+      :root[data-surface="sidepanel"] .bg-mesh {
+        min-height: 100vh;
       }
 
       :root[data-theme="daylight"] .bg-mesh {
@@ -124,6 +139,11 @@
         padding: 14px;
       }
 
+      :root[data-surface="sidepanel"] .card {
+        max-width: 430px;
+        margin: 0 auto;
+      }
+
       :root[data-theme="daylight"] .card {
         box-shadow: 0 1px 4px rgba(80,60,40,0.08), 0 1px 2px rgba(80,60,40,0.04);
       }
@@ -132,6 +152,7 @@
         box-shadow: 0 0 20px rgba(255,0,110,0.08), 0 0 40px rgba(191,90,242,0.06);
       }
 
+      .hidden { display: none !important; }
       .stack { display: grid; gap: 10px; }
       .row { display: grid; gap: 7px; }
 
@@ -140,6 +161,11 @@
         align-items: center;
         justify-content: space-between;
         gap: 12px;
+      }
+
+      .toolbar-stack {
+        display: grid;
+        gap: 10px;
       }
 
       .brand {
@@ -222,6 +248,224 @@
         stroke: currentColor;
       }
 
+      .language-shell {
+        position: relative;
+      }
+
+      .language-trigger {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 13px;
+        border: 1px solid rgba(20, 184, 166, 0.18);
+        background: rgba(15, 23, 42, 0.72);
+        color: var(--text);
+        transition: all 0.2s ease;
+      }
+
+      .language-trigger:hover,
+      .language-trigger[aria-expanded="true"] {
+        border-color: rgba(20, 184, 166, 0.35);
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.08);
+      }
+
+      .language-icon {
+        width: 16px;
+        height: 16px;
+        color: var(--teal-400);
+        flex: 0 0 auto;
+      }
+
+      .language-icon svg {
+        width: 100%;
+        height: 100%;
+        stroke: currentColor;
+      }
+
+      .language-trigger-copy {
+        min-width: 0;
+        display: grid;
+        gap: 2px;
+        text-align: left;
+      }
+
+      .language-native {
+        color: var(--text-strong);
+        font-family: "Syne", system-ui, sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.1;
+      }
+
+      .language-label {
+        color: var(--muted-soft);
+        font-size: 11px;
+        line-height: 1.1;
+      }
+
+      .language-caret {
+        width: 15px;
+        height: 15px;
+        margin-left: auto;
+        color: var(--muted);
+        transition: transform 0.2s ease;
+      }
+
+      .language-caret svg {
+        width: 100%;
+        height: 100%;
+        stroke: currentColor;
+      }
+
+      .language-trigger[aria-expanded="true"] .language-caret {
+        transform: rotate(180deg);
+      }
+
+      .language-menu {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(100% + 8px);
+        z-index: 20;
+        padding: 8px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.97);
+        box-shadow: 0 16px 40px rgba(2, 6, 23, 0.38);
+      }
+
+      .language-menu.hidden {
+        display: none;
+      }
+
+      .language-heading {
+        padding: 2px 6px 8px;
+        color: var(--muted-soft);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .language-options {
+        max-height: 280px;
+        overflow-y: auto;
+        padding-right: 2px;
+      }
+
+      .language-option {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 11px 12px;
+        border-radius: 13px;
+        background: transparent;
+        color: var(--text);
+        transition: all 0.2s ease;
+      }
+
+      .language-option:hover {
+        background: rgba(20, 184, 166, 0.08);
+      }
+
+      .language-option.is-selected {
+        background: rgba(20, 184, 166, 0.11);
+        border: 1px solid rgba(20, 184, 166, 0.22);
+      }
+
+      .language-option-copy {
+        min-width: 0;
+        display: grid;
+        gap: 3px;
+        text-align: left;
+      }
+
+      .language-option-native {
+        color: var(--text-strong);
+        font-family: "Syne", system-ui, sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.1;
+      }
+
+      .language-option-label {
+        color: var(--muted-soft);
+        font-size: 11px;
+        line-height: 1.1;
+      }
+
+      .language-check {
+        width: 15px;
+        height: 15px;
+        color: var(--text-strong);
+        opacity: 0;
+      }
+
+      .language-option.is-selected .language-check {
+        opacity: 1;
+      }
+
+      .language-check svg {
+        width: 100%;
+        height: 100%;
+        stroke: currentColor;
+      }
+
+      :root[data-theme="daylight"] .language-trigger {
+        background: rgba(255, 255, 255, 0.76);
+        border-color: rgba(226, 114, 91, 0.25);
+      }
+
+      :root[data-theme="daylight"] .language-trigger:hover,
+      :root[data-theme="daylight"] .language-trigger[aria-expanded="true"] {
+        border-color: rgba(226, 114, 91, 0.42);
+        box-shadow: 0 0 0 3px rgba(226, 114, 91, 0.08);
+      }
+
+      :root[data-theme="daylight"] .language-menu {
+        background: rgba(248, 244, 238, 0.98);
+        box-shadow: 0 18px 40px rgba(80, 60, 40, 0.16);
+      }
+
+      :root[data-theme="daylight"] .language-option:hover {
+        background: rgba(13, 148, 136, 0.08);
+      }
+
+      :root[data-theme="daylight"] .language-option.is-selected {
+        background: linear-gradient(135deg, rgba(10, 186, 181, 0.1), rgba(226, 114, 91, 0.08));
+        border-color: rgba(10, 186, 181, 0.24);
+      }
+
+      :root[data-theme="myspace"] .language-trigger {
+        background: rgba(17, 0, 32, 0.92);
+        border-color: rgba(255, 0, 110, 0.35);
+      }
+
+      :root[data-theme="myspace"] .language-trigger:hover,
+      :root[data-theme="myspace"] .language-trigger[aria-expanded="true"] {
+        border-color: rgba(255, 0, 110, 0.58);
+        box-shadow: 0 0 0 3px rgba(255, 0, 110, 0.12), 0 0 24px rgba(191, 90, 242, 0.12);
+      }
+
+      :root[data-theme="myspace"] .language-menu {
+        background: rgba(17, 0, 32, 0.98);
+        border-color: rgba(191, 90, 242, 0.26);
+        box-shadow: 0 22px 46px rgba(7, 0, 14, 0.52), 0 0 26px rgba(255, 0, 110, 0.08);
+      }
+
+      :root[data-theme="myspace"] .language-option:hover {
+        background: rgba(191, 90, 242, 0.08);
+      }
+
+      :root[data-theme="myspace"] .language-option.is-selected {
+        background: linear-gradient(135deg, rgba(255, 0, 110, 0.15), rgba(191, 90, 242, 0.12));
+        border-color: rgba(255, 0, 110, 0.32);
+      }
+
       .tabs {
         display: flex;
         gap: 6px;
@@ -284,6 +528,10 @@
       textarea.input-field {
         min-height: 130px;
         resize: vertical;
+      }
+
+      :root[data-surface="sidepanel"] textarea.input-field {
+        min-height: 180px;
       }
 
       .input-field::placeholder { color: var(--muted-soft); }
@@ -404,6 +652,7 @@
         gap: 10px;
         color: var(--muted-soft);
         font-size: 11px;
+        flex-wrap: wrap;
       }
 
       .status {
@@ -537,16 +786,31 @@
       </div>
 
       <div class="card stack">
-        <div class="topbar">
-          <div class="brand">
-            <img class="logo" src="icons/icon-48.png" alt="" aria-hidden="true" />
-            <div>
-              <h1>JobSensei</h1>
-              <p class="logo-mantra">Be confident. Get hired.</p>
+        <div class="toolbar-stack">
+          <div class="topbar">
+            <div class="brand">
+              <img class="logo" src="icons/icon-48.png" alt="" aria-hidden="true" />
+              <div>
+                <h1>JobSensei</h1>
+                <p id="brandMantra" class="logo-mantra">Be confident. Get hired.</p>
+              </div>
             </div>
-          </div>
-          <div class="top-actions" aria-label="Extension controls">
-            <button id="visualsBtn" class="icon-btn" type="button" title="Visuals">
+            <div class="top-actions" aria-label="Extension controls">
+              <button id="pinBtn" class="icon-btn" type="button" title="Pin to page">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 17v5"></path>
+                  <path d="M6 7V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v3"></path>
+                  <path d="m5 7 7 7 7-7"></path>
+                  <path d="M4 7h16"></path>
+                </svg>
+              </button>
+              <button id="closePanelBtn" class="icon-btn hidden" type="button" title="Close panel">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M18 6 6 18"></path>
+                  <path d="m6 6 12 12"></path>
+                </svg>
+              </button>
+              <button id="visualsBtn" class="icon-btn" type="button" title="Visuals">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.21 1.21 0 0 0 1.72 0L21.64 5.36a1.21 1.21 0 0 0 0-1.72Z"></path>
                 <path d="m14 7 3 3"></path>
@@ -558,7 +822,36 @@
                 <path d="M11 3H9"></path>
               </svg>
             </button>
-            <button id="themeBtn" class="icon-btn" type="button" title="Theme"></button>
+              <button id="themeBtn" class="icon-btn" type="button" title="Theme"></button>
+            </div>
+          </div>
+          <div class="language-shell">
+            <button id="languageTrigger" class="language-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" title="Interface language">
+              <span class="language-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m5 8 6 6"></path>
+                  <path d="m4 14 6-6 2-3"></path>
+                  <path d="M2 5h12"></path>
+                  <path d="M7 2h1"></path>
+                  <path d="m22 22-5-10-5 10"></path>
+                  <path d="M14 18h6"></path>
+                </svg>
+              </span>
+              <span class="language-trigger-copy">
+                <span id="languageNative" class="language-native">English</span>
+                <span id="languageLabel" class="language-label">English</span>
+              </span>
+              <span class="language-caret" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m6 9 6 6 6-6"></path>
+                </svg>
+              </span>
+            </button>
+
+            <div id="languageMenu" class="language-menu hidden" role="listbox" aria-label="Interface language">
+              <div id="languageHeading" class="language-heading">Interface language</div>
+              <div id="languageOptions" class="language-options"></div>
+            </div>
           </div>
         </div>
 
@@ -568,27 +861,27 @@
         </div>
 
         <section id="capturePanel" class="panel stack">
-          <div class="notice">
-            Auto-capture is a helper, not magic. Review the company, role, and JD before sending.
+          <div id="captureNotice" class="notice">
+            Auto-capture is a helper, please review the company, role, and JD before sending.
           </div>
 
           <div class="row">
-            <label class="label" for="company">Company</label>
+            <label id="companyLabel" class="label" for="company">Company</label>
             <input id="company" class="input-field" type="text" placeholder="Company name" />
           </div>
 
           <div class="row">
-            <label class="label" for="role">Role</label>
+            <label id="roleLabel" class="label" for="role">Role</label>
             <input id="role" class="input-field" type="text" placeholder="Role title" />
           </div>
 
           <div class="row">
-            <label class="label" for="url">Job URL</label>
+            <label id="urlLabel" class="label" for="url">Job URL</label>
             <input id="url" class="input-field" type="url" placeholder="https://..." />
           </div>
 
           <div class="row">
-            <label class="label" for="jdText">Job Description - review before sending</label>
+            <label id="jdLabel" class="label" for="jdText">Job Description - review before sending</label>
             <textarea id="jdText" class="input-field" placeholder="The extension will try to pull the visible job description here."></textarea>
           </div>
 
@@ -607,27 +900,19 @@
 
         <section id="aboutPanel" class="panel intro hidden">
           <div>
-            <h2>What this extension does</h2>
-            <p>It turns a job page into a JobSensei application workspace for research, notes, and prep.</p>
+            <h2 id="aboutTitle">What this extension does</h2>
+            <p id="aboutCopy">It turns a job page into a JobSensei application workspace for research, notes, and prep.</p>
           </div>
 
           <div class="pill-list">
-            <div class="pill"><span>1</span><p><strong>Captures the current job page.</strong><br />Company, role, URL, and visible JD text are pulled into one review screen.</p></div>
-            <div class="pill"><span>2</span><p><strong>Captures selected JD text too.</strong><br />Highlight the JD, right-click, and choose the JobSensei capture action.</p></div>
-            <div class="pill"><span>3</span><p><strong>Opens the right workspace.</strong><br />JobSensei updates an existing matching application or creates a new one.</p></div>
+            <div class="pill"><span>1</span><p><strong id="feature1Title">Captures the current job page.</strong><br /><span id="feature1Body">Company, role, URL, and visible JD text are pulled into one review screen.</span></p></div>
+            <div class="pill"><span>2</span><p><strong id="feature2Title">Captures selected JD text too.</strong><br /><span id="feature2Body">Highlight the JD, right-click, and choose the JobSensei capture action.</span></p></div>
+            <div class="pill"><span>3</span><p><strong id="feature3Title">Opens the right workspace.</strong><br /><span id="feature3Body">JobSensei updates an existing matching application or creates a new one.</span></p></div>
           </div>
 
           <details>
-            <summary>Does it apply to jobs for me?</summary>
-            <p>No. It only captures information into JobSensei. You stay in control of applications and submissions.</p>
-          </details>
-          <details>
-            <summary>What data is sent?</summary>
-            <p>Only the fields shown in the Capture tab: company, role, job URL, and job description text.</p>
-          </details>
-          <details>
-            <summary>What if capture is wrong?</summary>
-            <p>Edit the fields first, use selected-text capture for the JD, or press Refresh Capture after opening the job details.</p>
+            <summary id="dataSentSummary">What data is sent?</summary>
+            <p id="dataSentBody">Only the fields shown in the Capture tab: company, role, job URL, and job description text.</p>
           </details>
 
           <div class="actions">
@@ -638,6 +923,7 @@
       </div>
     </div>
 
+    <script src="i18n.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
