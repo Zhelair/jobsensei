@@ -1,14 +1,24 @@
 export const HOSTED_REQUEST_CREDITS = 31
 export const FREE_MONTHLY_CREDITS = 531
 export const PRO_MONTHLY_CREDITS = 53000
+export const CREDIT_PERIOD_DAYS = 31
 
 function toFiniteNumber(value) {
   const next = Number(value)
   return Number.isFinite(next) ? next : null
 }
 
+function addDays(value, days) {
+  const base = value ? new Date(value) : new Date()
+  base.setDate(base.getDate() + days)
+  return base.toISOString()
+}
+
 function inferHostedTier({ secureAccount, bmacToken }) {
   if (!secureAccount?.planActive && !bmacToken) return null
+
+  const explicitTier = String(secureAccount?.planTier || '').toLowerCase()
+  if (explicitTier === 'free' || explicitTier === 'pro') return explicitTier
 
   const source = String(secureAccount?.planSource || '').toLowerCase()
   if (source.includes('free') || source.includes('trial')) return 'free'
@@ -16,9 +26,8 @@ function inferHostedTier({ secureAccount, bmacToken }) {
   return 'pro'
 }
 
-function getDefaultResetDate() {
-  const now = new Date()
-  return new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
+function getAllowanceForTier(tier) {
+  return tier === 'free' ? FREE_MONTHLY_CREDITS : PRO_MONTHLY_CREDITS
 }
 
 export function getCreditSnapshot({ secureAccount, bmacToken, apiKey }) {
@@ -53,15 +62,18 @@ export function getCreditSnapshot({ secureAccount, bmacToken, apiKey }) {
     }
   }
 
-  const monthlyCredits = hostedTier === 'free' ? FREE_MONTHLY_CREDITS : PRO_MONTHLY_CREDITS
+  const monthlyCredits = getAllowanceForTier(hostedTier)
   const requestsIncluded = Math.floor(monthlyCredits / HOSTED_REQUEST_CREDITS)
-
   const remainingCredits = toFiniteNumber(
     secureAccount?.creditsRemaining
     ?? secureAccount?.creditBalance
     ?? secureAccount?.monthlyCreditsRemaining,
   )
   const balanceKnown = remainingCredits != null
+  const resetAt = secureAccount?.creditsResetAt
+    || secureAccount?.creditPeriodEndsAt
+    || secureAccount?.monthlyCreditsResetAt
+    || addDays(secureAccount?.linkedAt, CREDIT_PERIOD_DAYS)
 
   return {
     mode: 'hosted',
@@ -71,7 +83,7 @@ export function getCreditSnapshot({ secureAccount, bmacToken, apiKey }) {
     requestsIncluded,
     remainingCredits: balanceKnown ? Math.max(0, remainingCredits) : monthlyCredits,
     remainingRequests: balanceKnown ? Math.max(0, Math.floor(remainingCredits / HOSTED_REQUEST_CREDITS)) : requestsIncluded,
-    resetAt: secureAccount?.creditsResetAt || secureAccount?.monthlyCreditsResetAt || getDefaultResetDate(),
+    resetAt,
     balanceKnown,
     upgradeRecommended: hostedTier !== 'pro',
   }

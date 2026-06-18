@@ -52,6 +52,7 @@ export default function Settings() {
   const [extracting, setExtracting] = useState(false)
   const fileRef = useRef(null)
   const projectImportRef = useRef(null)
+  const byokCardRef = useRef(null)
 
   function formatCreditNumber(value) {
     if (!Number.isFinite(value)) return '-'
@@ -73,6 +74,18 @@ export default function Settings() {
   useEffect(() => {
     setForm({ provider, model, apiKey, customBaseUrl: customBaseUrl || '' })
   }, [provider, model, apiKey, customBaseUrl])
+
+  useEffect(() => {
+    function openByokPanel() {
+      setShowOwnKey(true)
+      window.setTimeout(() => {
+        byokCardRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }, 60)
+    }
+
+    window.addEventListener('jobsensei:open-byok-settings', openByokPanel)
+    return () => window.removeEventListener('jobsensei:open-byok-settings', openByokPanel)
+  }, [])
 
   useEffect(() => {
     if (!magicLinkCooldownUntil) return undefined
@@ -98,10 +111,6 @@ export default function Settings() {
   }
 
   async function testConnection() {
-    if (!bmacToken) {
-      setTestResult('locked')
-      return
-    }
     setTesting(true)
     setTestResult(null)
     const cfg = PROVIDER_CONFIGS[form.provider]
@@ -128,10 +137,6 @@ export default function Settings() {
   }
 
   function save() {
-    if (!bmacToken) {
-      setTestResult('locked')
-      return
-    }
     saveConfig(form)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -293,7 +298,7 @@ export default function Settings() {
 
   const hasSecureHostedAccess = !!secureAccount?.planActive
   const hasPlanAccess = !!bmacToken || hasSecureHostedAccess
-  const usingOwnKey = hasPlanAccess && !!apiKey
+  const usingOwnKey = !!apiKey
   const usingJobsenseiAI = hasPlanAccess && !apiKey
   const hostedPlanIdentity = bmacEmail || secureUser?.email || secureAccount?.email || ''
   const providerLabelFor = providerKey => {
@@ -510,7 +515,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-4">
+        <div className="credits-panel mt-4 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-4">
           <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
             <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">
@@ -561,25 +566,37 @@ export default function Settings() {
           </div>
 
           <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2">
-            <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+            <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
               <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricAllowance')}</div>
               <div className="text-white text-sm font-display font-semibold">
-                {creditSnapshot.monthlyCredits != null ? formatCreditNumber(creditSnapshot.monthlyCredits) : t('settings.creditsUnlimited')}
+                {creditSnapshot.mode === 'byok'
+                  ? t('settings.creditsUnlimited')
+                  : creditSnapshot.monthlyCredits != null
+                    ? formatCreditNumber(creditSnapshot.monthlyCredits)
+                    : '-'}
               </div>
             </div>
-            <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+            <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
               <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricCost')}</div>
               <div className="text-white text-sm font-display font-semibold">
-                {creditSnapshot.requestCost != null ? t('settings.creditsRequestValue', { credits: formatCreditNumber(creditSnapshot.requestCost) }) : t('settings.creditsUnlimited')}
+                {creditSnapshot.requestCost != null
+                  ? t('settings.creditsRequestValue', { credits: formatCreditNumber(creditSnapshot.requestCost) })
+                  : creditSnapshot.mode === 'byok'
+                    ? t('settings.creditsUnlimited')
+                    : '-'}
               </div>
             </div>
-            <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+            <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
               <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricRequests')}</div>
               <div className="text-white text-sm font-display font-semibold">
-                {creditSnapshot.requestsIncluded != null ? formatCreditNumber(creditSnapshot.requestsIncluded) : t('settings.creditsUnlimited')}
+                {creditSnapshot.mode === 'byok'
+                  ? t('settings.creditsUnlimited')
+                  : creditSnapshot.requestsIncluded != null
+                    ? formatCreditNumber(creditSnapshot.requestsIncluded)
+                    : '-'}
               </div>
             </div>
-            <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+            <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
               <div className="text-[11px] text-slate-500 mb-1">
                 {creditSnapshot.balanceKnown ? t('settings.creditsMetricLeft') : t('settings.creditsMetricReset')}
               </div>
@@ -957,25 +974,23 @@ export default function Settings() {
           </div>
         </div>
 
-      <div className={pairedCardClass}>
+      <div ref={byokCardRef} className={pairedCardClass}>
           <button
-            onClick={() => hasPlanAccess && setShowOwnKey(o => !o)}
+            onClick={() => setShowOwnKey(o => !o)}
             className="w-full flex items-center justify-between gap-3"
-            aria-expanded={hasPlanAccess && showOwnKey}
+            aria-expanded={showOwnKey}
           >
             <span className="font-display font-semibold text-white text-sm flex items-center gap-2">
               <Zap size={15} className="text-teal-400" /> {t('settings.byokTitle')}
             </span>
-            {hasPlanAccess && (showOwnKey ? <ChevronUp size={15} className="text-slate-400" /> : <ChevronDown size={15} className="text-slate-400" />)}
+            {showOwnKey ? <ChevronUp size={15} className="text-slate-400" /> : <ChevronDown size={15} className="text-slate-400" />}
           </button>
 
           <p className={`${settingsSupportCopyClass} mt-2`}>
-            {hasPlanAccess
-              ? t('settings.byokCopy')
-              : t('settings.byokLocked')}
+            {t('settings.byokCopy')}
           </p>
 
-          {hasPlanAccess && showOwnKey && (
+          {showOwnKey && (
             <div className="mt-4 space-y-3">
               <DeepSeekGuide />
               <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-3 py-3">
@@ -1070,3 +1085,4 @@ export default function Settings() {
     </div>
   )
 }
+

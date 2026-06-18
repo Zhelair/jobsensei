@@ -111,6 +111,7 @@ export function AIProvider({ children }) {
     secureAccountsEnabled,
     sendMagicLink,
     secureDevice,
+    refreshSecureAccount,
   } = useAuth()
   const [provider, setProvider] = useState(PROVIDERS.DEEPSEEK)
   const [apiKey, setApiKey] = useState('')
@@ -144,8 +145,8 @@ export function AIProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    setIsConnected(Boolean(bmacToken || hasSecurePlanAccess))
-  }, [bmacToken, hasSecurePlanAccess])
+    setIsConnected(Boolean(apiKey || bmacToken || hasSecurePlanAccess))
+  }, [apiKey, bmacToken, hasSecurePlanAccess])
 
   function saveConfig(cfg) {
     const next = {
@@ -242,7 +243,7 @@ export function AIProvider({ children }) {
   async function callAI({ systemPrompt, messages, temperature = 0.7, onChunk, signal }) {
     const hasHostedAccess = Boolean(bmacToken || hasSecurePlanAccess)
 
-    if (!hasHostedAccess) {
+    if (!apiKey && !hasHostedAccess) {
       setShowPaywall(true)
       throw new Error('JobSensei access required.')
     }
@@ -318,7 +319,9 @@ export function AIProvider({ children }) {
       signal,
     })
 
-    return readProxyResponse(res, { onChunk })
+    const content = await readProxyResponse(res, { onChunk })
+    await refreshSecureAccount(accessToken).catch(() => {})
+    return content
   }
 
   async function callOpenAICompat({ baseUrl, systemPrompt, messages, temperature, onChunk, signal }) {
