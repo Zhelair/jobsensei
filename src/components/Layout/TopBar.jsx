@@ -1,11 +1,13 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
+import { useAuth } from '../../context/AuthContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 import { useVisuals } from '../../context/VisualsContext'
 import { useLanguage } from '../../context/LanguageContext'
-import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal, Languages, ChevronDown, Check } from 'lucide-react'
+import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal, Languages, ChevronDown, Check, Coins } from 'lucide-react'
 import BrandMark from '../shared/BrandMark'
+import { getCreditSnapshot } from '../../lib/credits'
 
 const THEME_ICONS = {
   [THEMES.DARK]: Moon,
@@ -238,6 +240,175 @@ const GUIDED_TOUR_STEPS = [
   },
 ]
 
+function formatCreditNumber(value, { compact = false } = {}) {
+  if (!Number.isFinite(value)) return ''
+
+  if (compact) {
+    try {
+      return new Intl.NumberFormat(undefined, {
+        notation: 'compact',
+        maximumFractionDigits: value >= 1000 ? 1 : 0,
+      }).format(value)
+    } catch {}
+  }
+
+  return new Intl.NumberFormat().format(value)
+}
+
+function formatResetDate(value) {
+  if (!value) return ''
+
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: 'numeric',
+    }).format(new Date(value))
+  } catch {
+    return ''
+  }
+}
+
+function getCreditTone(snapshot) {
+  if (snapshot.mode === 'locked') {
+    return {
+      button: 'border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/15',
+      badge: 'border-red-500/20 bg-red-500/10 text-red-300',
+    }
+  }
+
+  if (snapshot.mode === 'byok') {
+    return {
+      button: 'border-indigo-500/30 bg-indigo-500/10 text-indigo-200 hover:bg-indigo-500/15',
+      badge: 'border-indigo-500/20 bg-indigo-500/10 text-indigo-200',
+    }
+  }
+
+  if (snapshot.tier === 'free') {
+    return {
+      button: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-500/15',
+      badge: 'border-yellow-500/20 bg-yellow-500/10 text-yellow-200',
+    }
+  }
+
+  return {
+    button: 'border-teal-500/30 bg-teal-500/10 text-teal-200 hover:bg-teal-500/15',
+    badge: 'border-teal-500/20 bg-teal-500/10 text-teal-200',
+  }
+}
+
+function getCreditPillCopy(t, snapshot, { compact = false } = {}) {
+  if (snapshot.mode === 'locked') {
+    return compact ? t('topbar.creditsCompactLocked') : t('topbar.creditsLocked')
+  }
+
+  if (snapshot.mode === 'byok') {
+    return compact ? t('topbar.creditsCompactByok') : t('topbar.creditsByok')
+  }
+
+  const amount = formatCreditNumber(snapshot.balanceKnown ? snapshot.remainingCredits : snapshot.monthlyCredits, { compact })
+  const tierKey = snapshot.tier === 'free' ? 'topbar.creditsTierFree' : 'topbar.creditsTierPro'
+  const suffixKey = snapshot.balanceKnown ? 'topbar.creditsSuffixLeft' : 'topbar.creditsSuffixMonthly'
+
+  return compact
+    ? `${amount}`
+    : `${t(tierKey)} ${amount}${t(suffixKey)}`
+}
+
+function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryAction, onClose }) {
+  const resetDate = formatResetDate(snapshot.resetAt)
+  const primaryLabel = snapshot.mode === 'locked'
+    ? t('topbar.creditsPrimaryUnlock')
+    : snapshot.upgradeRecommended
+      ? t('topbar.creditsPrimaryUpgrade')
+      : t('topbar.creditsPrimaryManage')
+  const secondaryLabel = snapshot.mode === 'byok'
+    ? t('topbar.creditsSecondaryManage')
+    : t('topbar.creditsSecondaryByok')
+  const headline = snapshot.mode === 'byok'
+    ? t('topbar.creditsByokHeadline')
+    : snapshot.mode === 'locked'
+      ? t('topbar.creditsLockedHeadline')
+      : snapshot.tier === 'free'
+        ? t('topbar.creditsFreeHeadline')
+        : t('topbar.creditsProHeadline')
+  const summary = snapshot.mode === 'byok'
+    ? t('topbar.creditsByokSummary')
+    : snapshot.mode === 'locked'
+      ? t('topbar.creditsLockedSummary')
+      : snapshot.balanceKnown
+        ? t('topbar.creditsKnownSummary', {
+          credits: formatCreditNumber(snapshot.remainingCredits),
+          requests: formatCreditNumber(snapshot.remainingRequests),
+        })
+        : t('topbar.creditsMonthlySummary', {
+          credits: formatCreditNumber(snapshot.monthlyCredits),
+          requests: formatCreditNumber(snapshot.requestsIncluded),
+        })
+
+  return (
+    <div className="rounded-2xl border border-navy-600 bg-navy-800/95 shadow-2xl backdrop-blur p-4 sm:p-4">
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="min-w-0">
+          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">
+            {t('topbar.creditsKicker')}
+          </div>
+          <h3 className="font-display font-semibold text-white text-sm sm:text-base">{headline}</h3>
+          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mt-1">{summary}</p>
+        </div>
+        <button onClick={onClose} className="text-slate-500 hover:text-slate-300 flex-shrink-0">
+          <X size={14} />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+          <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricAllowance')}</div>
+          <div className="text-white text-sm font-display font-semibold">
+            {snapshot.monthlyCredits != null ? formatCreditNumber(snapshot.monthlyCredits) : t('topbar.creditsMetricUnlimited')}
+          </div>
+        </div>
+        <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+          <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricCost')}</div>
+          <div className="text-white text-sm font-display font-semibold">
+            {snapshot.requestCost != null ? t('topbar.creditsRequestValue', { credits: formatCreditNumber(snapshot.requestCost) }) : t('topbar.creditsMetricUnlimited')}
+          </div>
+        </div>
+        <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+          <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricRequests')}</div>
+          <div className="text-white text-sm font-display font-semibold">
+            {snapshot.requestsIncluded != null ? formatCreditNumber(snapshot.requestsIncluded) : t('topbar.creditsMetricUnlimited')}
+          </div>
+        </div>
+        <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+          <div className="text-[11px] text-slate-500 mb-1">
+            {snapshot.balanceKnown ? t('topbar.creditsMetricLeft') : t('topbar.creditsMetricReset')}
+          </div>
+          <div className="text-white text-sm font-display font-semibold">
+            {snapshot.balanceKnown
+              ? formatCreditNumber(snapshot.remainingCredits)
+              : (resetDate || t('topbar.creditsMetricSoon'))}
+          </div>
+        </div>
+      </div>
+
+      {!snapshot.balanceKnown && snapshot.mode === 'hosted' && (
+        <div className={`rounded-xl border px-3 py-2.5 text-xs leading-relaxed mb-3 ${tone.badge}`}>
+          {t('topbar.creditsSyncNote')}
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row gap-2">
+        <button onClick={onPrimaryAction} className="btn-primary justify-center flex-1">
+          {primaryLabel}
+        </button>
+        <button onClick={onSecondaryAction} className="btn-secondary justify-center flex-1">
+          {secondaryLabel}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function GuidedTour({ onClose }) {
   const { setActiveSection } = useApp()
   const { t } = useLanguage()
@@ -336,12 +507,14 @@ function GuidedTour({ onClose }) {
 
 export default function TopBar() {
   const { activeSection, setActiveSection, drillMode, setDrillMode, isMuted, setIsMuted, showOnboarding } = useApp()
-  const { isConnected, isThinking } = useAI()
+  const { isConnected, isThinking, apiKey, bmacToken } = useAI()
+  const { secureAccount } = useAuth()
   const { theme, cycleTheme } = useTheme()
   const { enabled: visualsEnabled, setEnabled: setVisualsEnabled, triggerConfetti } = useVisuals()
   const { t } = useLanguage()
   const [showHelp, setShowHelp] = useState(false)
   const [showMore, setShowMore] = useState(false)
+  const [showCredits, setShowCredits] = useState(false)
   const [feedback, setFeedback] = useState(null)
   const [aiSpeaking, setAiSpeaking] = useState(false)
   const [guideSeen, setGuideSeen] = useState(() => localStorage.getItem('js_guide_seen') === 'true')
@@ -372,6 +545,8 @@ export default function TopBar() {
   const helpTitle = help ? t(help.titleKey) : ''
   const helpDesc = help ? t(help.descKey) : ''
   const helpTips = help?.tipKeys?.map(key => t(key)) || []
+  const creditSnapshot = getCreditSnapshot({ secureAccount, bmacToken, apiKey })
+  const creditTone = getCreditTone(creditSnapshot)
   const translatedSectionTitle = activeSection === SECTIONS.TODAY
     ? t('nav.today')
     : activeSection === SECTIONS.APPLICATIONS || activeSection === SECTIONS.TRACKER
@@ -407,6 +582,7 @@ export default function TopBar() {
   }
 
   const openGuide = () => {
+    setShowCredits(false)
     setShowHelp(v => !v)
     if (!guideSeen) {
       localStorage.setItem('js_guide_seen', 'true')
@@ -425,6 +601,11 @@ export default function TopBar() {
     localStorage.setItem('js_guide_seen', 'true')
     setGuideSeen(true)
     setShowTour(false)
+  }
+
+  const openSettingsFromCredits = () => {
+    setActiveSection(SECTIONS.SETTINGS)
+    setShowCredits(false)
   }
 
   return (
@@ -452,31 +633,21 @@ export default function TopBar() {
 
         {/* Mobile: compact AI status dot — tap for details */}
         <button
-          className="flex sm:hidden items-center gap-1 px-2 py-1 rounded-lg bg-navy-800 border border-navy-700"
-          onClick={() => showFeedback(
-            isThinking ? t('topbar.aiMobileThinking')
-            : isConnected ? t('topbar.aiMobileReady')
-            : t('topbar.aiMobileLocked')
-          )}
+          onClick={() => {
+            setShowCredits(prev => !prev)
+            setShowMore(false)
+          }}
+          className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border transition-colors ${creditTone.button}`}
+          title={t('topbar.creditsTitle')}
         >
-          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isThinking ? 'bg-indigo-400 animate-pulse' : isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
-          <span className={`text-xs font-mono ${isThinking ? 'text-indigo-300' : isConnected ? 'text-green-400' : 'text-red-400'}`}>
-            {isThinking ? t('topbar.aiCompactThinking') : isConnected ? t('topbar.aiCompactConnected') : t('topbar.aiCompactOff')}
+          <Coins size={14} className={isThinking ? 'animate-pulse' : ''} />
+          <span className="sm:hidden text-xs font-display font-semibold">
+            {getCreditPillCopy(t, creditSnapshot, { compact: true })}
+          </span>
+          <span className="hidden sm:inline text-xs font-display font-semibold whitespace-nowrap">
+            {getCreditPillCopy(t, creditSnapshot)}
           </span>
         </button>
-
-        {/* Desktop: full AI status indicator */}
-        {isThinking ? (
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono bg-indigo-500/10 text-indigo-300 animate-pulse">
-            <Brain size={13} className="animate-pulse" />
-            {t('topbar.thinking')}
-          </div>
-        ) : (
-          <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono ${isConnected ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-            <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
-            {isConnected ? t('topbar.aiConnected') : t('topbar.locked')}
-          </div>
-        )}
 
         {/* Visuals toggle — desktop only */}
         <button
@@ -614,7 +785,10 @@ export default function TopBar() {
 
         <button
           data-guide="settings-button"
-          onClick={() => setActiveSection(SECTIONS.SETTINGS)}
+          onClick={() => {
+            setActiveSection(SECTIONS.SETTINGS)
+            setShowCredits(false)
+          }}
           className="btn-ghost"
         >
           <Settings size={16} />
@@ -626,6 +800,34 @@ export default function TopBar() {
         <div className="absolute right-4 top-full mt-1.5 px-3 py-1.5 bg-navy-700 border border-navy-600 rounded-xl text-xs text-white shadow-xl z-50 pointer-events-none whitespace-nowrap animate-in">
           {feedback}
         </div>
+      )}
+
+      {showCredits && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setShowCredits(false)} />
+
+          <div className="hidden sm:block absolute right-4 top-full mt-2 z-50 w-[360px]">
+            <CreditStatusPanel
+              t={t}
+              snapshot={creditSnapshot}
+              tone={creditTone}
+              onPrimaryAction={openSettingsFromCredits}
+              onSecondaryAction={openSettingsFromCredits}
+              onClose={() => setShowCredits(false)}
+            />
+          </div>
+
+          <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 px-3 pb-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}>
+            <CreditStatusPanel
+              t={t}
+              snapshot={creditSnapshot}
+              tone={creditTone}
+              onPrimaryAction={openSettingsFromCredits}
+              onSecondaryAction={openSettingsFromCredits}
+              onClose={() => setShowCredits(false)}
+            />
+          </div>
+        </>
       )}
 
       {/* Help popover */}

@@ -10,6 +10,7 @@ import {
   Globe, Volume2, Shield, MonitorSmartphone,
 } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
+import { getCreditSnapshot } from '../../lib/credits'
 
 export default function Settings() {
   const {
@@ -51,6 +52,23 @@ export default function Settings() {
   const [extracting, setExtracting] = useState(false)
   const fileRef = useRef(null)
   const projectImportRef = useRef(null)
+
+  function formatCreditNumber(value) {
+    if (!Number.isFinite(value)) return '-'
+    return new Intl.NumberFormat().format(value)
+  }
+
+  function formatCreditResetDate(value) {
+    if (!value) return ''
+    try {
+      return new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+        day: 'numeric',
+      }).format(new Date(value))
+    } catch {
+      return ''
+    }
+  }
 
   useEffect(() => {
     setForm({ provider, model, apiKey, customBaseUrl: customBaseUrl || '' })
@@ -284,6 +302,7 @@ export default function Settings() {
     return config.labelKey ? t(config.labelKey) : (config.label || t('settings.customProvider'))
   }
   const currentProviderLabel = providerLabelFor(form.provider)
+  const creditSnapshot = getCreditSnapshot({ secureAccount, bmacToken, apiKey })
   const planBadgeClass = usingOwnKey
     ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300'
     : usingJobsenseiAI
@@ -489,6 +508,94 @@ export default function Settings() {
               )}
             </div>
           </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+            <div className="min-w-0">
+              <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">
+                {t('settings.creditsKicker')}
+              </div>
+              <h4 className="font-display font-semibold text-white">
+                {creditSnapshot.mode === 'byok'
+                  ? t('settings.creditsByokHeadline')
+                  : creditSnapshot.mode === 'locked'
+                    ? t('settings.creditsLockedHeadline')
+                    : creditSnapshot.tier === 'free'
+                      ? t('settings.creditsFreeHeadline')
+                      : t('settings.creditsProHeadline')}
+              </h4>
+              <p className="text-slate-300 text-sm leading-relaxed mt-1">
+                {creditSnapshot.mode === 'byok'
+                  ? t('settings.creditsByokCopy')
+                  : creditSnapshot.mode === 'locked'
+                    ? t('settings.creditsLockedCopy')
+                    : creditSnapshot.balanceKnown
+                      ? t('settings.creditsKnownCopy', {
+                        credits: formatCreditNumber(creditSnapshot.remainingCredits),
+                        requests: formatCreditNumber(creditSnapshot.remainingRequests),
+                      })
+                      : t('settings.creditsMonthlyCopy', {
+                        credits: formatCreditNumber(creditSnapshot.monthlyCredits),
+                        requests: formatCreditNumber(creditSnapshot.requestsIncluded),
+                      })}
+              </p>
+            </div>
+            <span className={`px-2.5 py-1 rounded-full text-[11px] border ${
+              creditSnapshot.mode === 'locked'
+                ? 'border-red-500/20 bg-red-500/10 text-red-300'
+                : creditSnapshot.mode === 'byok'
+                  ? 'border-indigo-500/20 bg-indigo-500/10 text-indigo-200'
+                  : creditSnapshot.tier === 'free'
+                    ? 'border-yellow-500/20 bg-yellow-500/10 text-yellow-200'
+                    : 'border-teal-500/20 bg-teal-500/10 text-teal-200'
+            }`}>
+              {creditSnapshot.mode === 'byok'
+                ? t('settings.creditsBadgeByok')
+                : creditSnapshot.mode === 'locked'
+                  ? t('settings.creditsBadgeLocked')
+                  : creditSnapshot.tier === 'free'
+                    ? t('settings.creditsBadgeFree')
+                    : t('settings.creditsBadgePro')}
+            </span>
+          </div>
+
+          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2">
+            <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+              <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricAllowance')}</div>
+              <div className="text-white text-sm font-display font-semibold">
+                {creditSnapshot.monthlyCredits != null ? formatCreditNumber(creditSnapshot.monthlyCredits) : t('settings.creditsUnlimited')}
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+              <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricCost')}</div>
+              <div className="text-white text-sm font-display font-semibold">
+                {creditSnapshot.requestCost != null ? t('settings.creditsRequestValue', { credits: formatCreditNumber(creditSnapshot.requestCost) }) : t('settings.creditsUnlimited')}
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+              <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricRequests')}</div>
+              <div className="text-white text-sm font-display font-semibold">
+                {creditSnapshot.requestsIncluded != null ? formatCreditNumber(creditSnapshot.requestsIncluded) : t('settings.creditsUnlimited')}
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+              <div className="text-[11px] text-slate-500 mb-1">
+                {creditSnapshot.balanceKnown ? t('settings.creditsMetricLeft') : t('settings.creditsMetricReset')}
+              </div>
+              <div className="text-white text-sm font-display font-semibold">
+                {creditSnapshot.balanceKnown
+                  ? formatCreditNumber(creditSnapshot.remainingCredits)
+                  : (formatCreditResetDate(creditSnapshot.resetAt) || t('settings.creditsSoon'))}
+              </div>
+            </div>
+          </div>
+
+          {!creditSnapshot.balanceKnown && creditSnapshot.mode === 'hosted' && (
+            <div className="mt-3 rounded-xl border border-indigo-500/20 bg-indigo-500/10 px-3 py-2.5 text-indigo-200 text-sm leading-relaxed">
+              {t('settings.creditsSyncNote')}
+            </div>
+          )}
         </div>
 
         <div className="grid xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] gap-5 mt-4 items-start">
