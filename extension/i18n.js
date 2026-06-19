@@ -43,11 +43,20 @@ window.JobSenseiExtensionI18n = {
         pin: 'Pin to page',
         closePanel: 'Close panel',
       },
+      pinCoach: {
+        kicker: 'Tip',
+        title: 'Pin JobSensei beside the job page',
+        body: 'Use the pin button to keep capture open while you browse and review the JD.',
+        cta: 'Pin it',
+        dismiss: 'Later',
+      },
       about: {
         title: 'What this extension does',
-        copy: 'It turns a job page into a JobSensei application workspace for research, notes, and prep.',
+        copy: 'It captures a live job page and sends it into your JobSensei workspace for tracking, notes, and prep.',
         dataTitle: 'What data is sent?',
         dataBody: 'Only the fields shown in the Capture tab: company, role, job URL, and job description text.',
+        accessTitle: 'Works with the JobSensei app',
+        accessBody: 'Start free inside JobSensei with email sign-in. Free includes monthly AI credits, while BYOK and Pro stay optional in the app.',
       },
       features: [
         {
@@ -60,7 +69,7 @@ window.JobSenseiExtensionI18n = {
         },
         {
           title: 'Opens the right workspace.',
-          body: 'JobSensei updates an existing matching application or creates a new one.',
+          body: 'JobSensei updates the matching application workspace or creates a new one.',
         },
       ],
       status: {
