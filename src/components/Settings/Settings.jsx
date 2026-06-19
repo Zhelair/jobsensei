@@ -327,6 +327,14 @@ export default function Settings() {
       ? (creditSnapshot.statusDate || secureAccount?.planExpiresAt || null)
       : secureAccount?.planExpiresAt || null,
   }
+  const proPreviewCreditsValue = proPlanPreview.isActive
+    ? (creditSnapshot.balanceKnown
+        ? formatCreditNumber(creditSnapshot.remainingCredits)
+        : formatCreditNumber(creditSnapshot.monthlyCredits ?? proPlanPreview.monthlyCredits))
+    : 'N/A'
+  const proPreviewResetValue = proPlanPreview.isActive
+    ? (formatCreditResetDate(creditSnapshot.statusDate || creditSnapshot.resetAt) || t('settings.creditsSoon'))
+    : 'N/A'
   const planBadgeClass = usingOwnKey
     ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300'
     : usingJobsenseiAI
@@ -635,7 +643,7 @@ export default function Settings() {
               </span>
             </div>
 
-            <div className="grid sm:grid-cols-3 gap-2">
+            <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2">
               <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
                 <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricAllowance')}</div>
                 <div className="text-white text-sm font-display font-semibold">{formatCreditNumber(proPlanPreview.monthlyCredits)}</div>
@@ -647,9 +655,15 @@ export default function Settings() {
                 </div>
               </div>
               <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
-                <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricActiveUntil')}</div>
+                <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricLeft')}</div>
                 <div className="text-white text-sm font-display font-semibold">
-                  {formatCreditResetDate(proPlanPreview.statusDate) || t('settings.creditsSoon')}
+                  {proPreviewCreditsValue}
+                </div>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+                <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricReset')}</div>
+                <div className="text-white text-sm font-display font-semibold">
+                  {proPreviewResetValue}
                 </div>
               </div>
             </div>
@@ -920,13 +934,8 @@ export default function Settings() {
 
             {legalExpanded && (
               <div className="space-y-3 pt-1">
-                <div className="space-y-2 text-slate-300 text-sm leading-relaxed">
-                  {[t('settings.privacyTermsBullet1'), t('settings.privacyTermsBullet2'), t('settings.privacyTermsBullet3')].map(line => (
-                    <p key={line} className="flex items-start gap-2">
-                      <span className="text-slate-500">-</span>
-                      <span>{line}</span>
-                    </p>
-                  ))}
+                <div className="text-slate-300 text-sm leading-relaxed">
+                  {t('settings.privacyTermsAgreement')}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
