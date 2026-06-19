@@ -9596,14 +9596,14 @@ const unifiedUnlockAndLegalPatches = {
       secureAccountRevokeCancel: 'Keep device',
       secureAccountConfirmRevoke: 'Unlink device',
       privacyTermsTitle: 'Privacy and terms',
-      privacyTermsSummary: 'Short rules about what stays local, what is processed by providers, and what you agree to when using JobSensei.',
+      privacyTermsSummary: 'Quick links to the main legal pages for JobSensei.',
       privacyTermsBullet1: 'Most profile, project, resume, notes, and workspace data stays in this browser unless you explicitly export, sync, or send it to an AI provider.',
       privacyTermsBullet2: 'Authentication, approved-device checks, and plan access may use Supabase, Vercel, Buy Me a Coffee, Resend, and your selected AI provider only to run JobSensei.',
       privacyTermsBullet3: 'Using Unlock app or hosted AI means you agree to the Terms and Conditions, Privacy Policy, and Cookie / Storage Notice linked below.',
       privacyPolicyLink: 'Privacy Policy',
       termsConditionsLink: 'Terms and Conditions',
       cookieNoticeLink: 'Cookie / Storage Notice',
-      privacyTermsAgreement: 'These pages are meant to stay short and readable. Review them before using hosted AI or linking a secure account.',
+      privacyTermsAgreement: 'By using JobSensei, you agree to the Terms and Conditions, Privacy Policy, and Cookie / Storage Notice linked below.',
     },
     paywall: {
       alreadySupporter: 'Already have access?',
@@ -10236,7 +10236,7 @@ Object.entries(liveSecureDevicePanelPatches).forEach(([locale, patch]) => {
 const analyticsDisclosurePatches = {
   en: {
     settings: {
-      privacyTermsSummary: 'Short rules about what stays local and which providers help run JobSensei.',
+      privacyTermsSummary: 'Quick links to the main legal pages for JobSensei.',
       privacyTermsBullet2: 'Sign-in, approved-device checks, plan access, traffic analytics, and performance monitoring may use Supabase, Vercel, Buy Me a Coffee, Resend, and your selected AI provider only to run JobSensei.',
     },
   },
