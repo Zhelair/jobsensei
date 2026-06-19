@@ -5,7 +5,14 @@ const SEARCH_PARAMS = new URLSearchParams(window.location.search)
 const SURFACE = SEARCH_PARAMS.get('surface') === 'sidepanel' ? 'sidepanel' : 'popup'
 const SIDEPANEL_TAB_ID = Number.parseInt(SEARCH_PARAMS.get('tabId') || '', 10) || null
 const SIDEPANEL_WINDOW_ID = Number.parseInt(SEARCH_PARAMS.get('windowId') || '', 10) || null
-const DEFAULT_PREFS = { theme: 'dark', visuals: false, language: 'en', languageChosen: false }
+const DEFAULT_PREFS = {
+  theme: 'dark',
+  visuals: false,
+  language: 'en',
+  languageChosen: false,
+  pinCoachDismissed: false,
+  pinnedModeUsed: false,
+}
 const THEME_ORDER = ['dark', 'daylight', 'myspace']
 const THEME_META = {
   dark: {
@@ -31,6 +38,12 @@ const elements = {
   capturePanel: document.getElementById('capturePanel'),
   aboutPanel: document.getElementById('aboutPanel'),
   pinBtn: document.getElementById('pinBtn'),
+  pinCoach: document.getElementById('pinCoach'),
+  pinCoachKicker: document.getElementById('pinCoachKicker'),
+  pinCoachTitle: document.getElementById('pinCoachTitle'),
+  pinCoachBody: document.getElementById('pinCoachBody'),
+  pinCoachConfirmBtn: document.getElementById('pinCoachConfirmBtn'),
+  pinCoachDismissBtn: document.getElementById('pinCoachDismissBtn'),
   closePanelBtn: document.getElementById('closePanelBtn'),
   themeBtn: document.getElementById('themeBtn'),
   visualsBtn: document.getElementById('visualsBtn'),
@@ -56,6 +69,8 @@ const elements = {
   sendBtn: document.getElementById('sendBtn'),
   aboutTitle: document.getElementById('aboutTitle'),
   aboutCopy: document.getElementById('aboutCopy'),
+  aboutAccessTitle: document.getElementById('aboutAccessTitle'),
+  aboutAccessBody: document.getElementById('aboutAccessBody'),
   feature1Title: document.getElementById('feature1Title'),
   feature1Body: document.getElementById('feature1Body'),
   feature2Title: document.getElementById('feature2Title'),
@@ -79,6 +94,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   elements.backToCaptureBtn.addEventListener('click', () => showPanel('capture'))
   elements.openAppBtn.addEventListener('click', openJobSensei)
   elements.pinBtn.addEventListener('click', openPinnedMode)
+  elements.pinCoachConfirmBtn.addEventListener('click', openPinnedMode)
+  elements.pinCoachDismissBtn.addEventListener('click', dismissPinCoach)
   elements.closePanelBtn.addEventListener('click', closeSidePanel)
   elements.jdText.addEventListener('input', updateMeta)
   elements.refreshBtn.addEventListener('click', () => captureCurrentPage({ userInitiated: true }))
@@ -136,8 +153,13 @@ function getStrings() {
   return TRANSLATIONS[resolveLanguageCode(prefs.language)] || TRANSLATIONS.en
 }
 
+function getPathValue(source, path) {
+  return path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), source)
+}
+
 function t(path, replacements = {}) {
-  const value = path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), getStrings())
+  const value = getPathValue(getStrings(), path)
+    ?? getPathValue(TRANSLATIONS.en || {}, path)
   if (typeof value !== 'string') return path
   return value.replace(/\{(\w+)\}/g, (_, key) => String(replacements[key] ?? ''))
 }
@@ -213,8 +235,15 @@ function applyTranslations() {
   elements.sendBtn.textContent = t('buttons.send')
   elements.openAppBtn.textContent = t('buttons.open')
   elements.backToCaptureBtn.textContent = t('buttons.back')
+  elements.pinCoachKicker.textContent = t('pinCoach.kicker')
+  elements.pinCoachTitle.textContent = t('pinCoach.title')
+  elements.pinCoachBody.textContent = t('pinCoach.body')
+  elements.pinCoachConfirmBtn.textContent = t('pinCoach.cta')
+  elements.pinCoachDismissBtn.textContent = t('pinCoach.dismiss')
   elements.aboutTitle.textContent = t('about.title')
   elements.aboutCopy.textContent = t('about.copy')
+  elements.aboutAccessTitle.textContent = t('about.accessTitle')
+  elements.aboutAccessBody.textContent = t('about.accessBody')
   elements.feature1Title.textContent = getStrings().features[0].title
   elements.feature1Body.textContent = getStrings().features[0].body
   elements.feature2Title.textContent = getStrings().features[1].title
@@ -264,6 +293,7 @@ function updateSurfaceControls() {
   const isSidePanel = SURFACE === 'sidepanel'
   elements.pinBtn.classList.toggle('hidden', isSidePanel)
   elements.closePanelBtn.classList.toggle('hidden', !isSidePanel)
+  updatePinCoach()
 }
 
 function closeSurface() {
@@ -287,10 +317,16 @@ async function openPinnedMode() {
   setStatus(t('status.openingPinnedMode'))
   try {
     await chrome.sidePanel.open({ windowId })
+    await updatePrefs({ pinnedModeUsed: true, pinCoachDismissed: true })
     closeSurface()
   } catch (error) {
     setStatus(error?.message || t('status.couldNotDeliver'), 'error')
   }
+}
+
+async function dismissPinCoach() {
+  if (prefs.pinCoachDismissed) return
+  await updatePrefs({ pinCoachDismissed: true })
 }
 
 async function closeSidePanel() {
@@ -401,12 +437,32 @@ async function refreshCurrentTabContext() {
     tabId: tab?.id ?? SIDEPANEL_TAB_ID ?? null,
     windowId: tab?.windowId ?? SIDEPANEL_WINDOW_ID ?? null,
   }
+  updatePinCoach()
   return currentTabContext
 }
 
 async function ensureCurrentTabContext() {
   if (currentTabContext.tabId) return currentTabContext
   return refreshCurrentTabContext()
+}
+
+function shouldShowPinCoach() {
+  return SURFACE === 'popup'
+    && !!chrome.sidePanel?.open
+    && !!currentTabContext.windowId
+    && !prefs.pinCoachDismissed
+    && !prefs.pinnedModeUsed
+}
+
+function updatePinCoach() {
+  const visible = shouldShowPinCoach()
+  elements.pinCoach.classList.toggle('hidden', !visible)
+  elements.pinBtn.classList.toggle('pin-spotlight', visible)
+  if (visible) {
+    elements.pinBtn.setAttribute('aria-describedby', 'pinCoach')
+  } else {
+    elements.pinBtn.removeAttribute('aria-describedby')
+  }
 }
 
 function getOriginPattern(input) {

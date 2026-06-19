@@ -1,6 +1,10 @@
 # JobSensei — Posts
 **For Buy Me a Coffee, Instagram, LinkedIn, TikTok captions & more**
 
+> June 19, 2026 note:
+> Parts of this file predate secure accounts, Free hosted credits, and the current Buy Me a Coffee flow.
+> Do not reuse old `no account`, `no backend`, or `support to unlock everything` wording without checking [docs/bmac-copy-refresh-june-2026.md](/C:/Users/niksa/OneDrive/Documents/GitHub/NEW%20PROJECTS/jobsensei/docs/bmac-copy-refresh-june-2026.md).
+
 ---
 
 ## 📌 POST 1 — Launch / Introduction

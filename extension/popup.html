@@ -211,6 +211,7 @@
         display: flex;
         align-items: center;
         gap: 6px;
+        position: relative;
       }
 
       button, a.button-link {
@@ -241,6 +242,19 @@
       .icon-btn.active {
         color: var(--visual-accent);
         border: 1px solid currentColor;
+      }
+
+      .icon-btn.pin-spotlight {
+        color: var(--text-strong);
+        background: linear-gradient(135deg, rgba(20, 184, 166, 0.18), rgba(99, 102, 241, 0.14));
+        border: 1px solid rgba(20, 184, 166, 0.34);
+        box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.16), 0 0 20px rgba(20, 184, 166, 0.24);
+        animation: pinPulse 1.8s ease-in-out infinite;
+      }
+
+      .icon-btn.pin-spotlight:hover {
+        color: var(--text-strong);
+        background: linear-gradient(135deg, rgba(20, 184, 166, 0.24), rgba(99, 102, 241, 0.18));
       }
 
       .icon-btn svg {
@@ -465,6 +479,92 @@
       :root[data-theme="myspace"] .language-option.is-selected {
         background: linear-gradient(135deg, rgba(255, 0, 110, 0.15), rgba(191, 90, 242, 0.12));
         border-color: rgba(255, 0, 110, 0.32);
+      }
+
+      .pin-coach {
+        display: grid;
+        gap: 9px;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(20, 184, 166, 0.24);
+        background:
+          linear-gradient(135deg, rgba(20, 184, 166, 0.12), rgba(99, 102, 241, 0.08)),
+          rgba(15, 23, 42, 0.88);
+      }
+
+      .pin-coach.hidden {
+        display: none;
+      }
+
+      .pin-coach-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .pin-coach-kicker {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: rgba(20, 184, 166, 0.16);
+        color: var(--teal-400);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .pin-coach-title {
+        color: var(--text-strong);
+        font-family: "Syne", system-ui, sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .pin-coach-body {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .pin-coach-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .pin-coach-actions .btn-primary,
+      .pin-coach-actions .btn-ghost {
+        flex: 1;
+      }
+
+      :root[data-theme="daylight"] .pin-coach {
+        background:
+          linear-gradient(135deg, rgba(10, 186, 181, 0.12), rgba(226, 114, 91, 0.08)),
+          rgba(255, 255, 255, 0.88);
+        border-color: rgba(226, 114, 91, 0.2);
+        box-shadow: 0 6px 18px rgba(80, 60, 40, 0.08);
+      }
+
+      :root[data-theme="daylight"] .pin-coach-kicker {
+        background: rgba(226, 114, 91, 0.12);
+        color: #C2553F;
+      }
+
+      :root[data-theme="myspace"] .pin-coach {
+        background:
+          linear-gradient(135deg, rgba(255, 0, 110, 0.16), rgba(191, 90, 242, 0.12)),
+          rgba(17, 0, 32, 0.92);
+        border-color: rgba(255, 0, 110, 0.28);
+        box-shadow: 0 0 22px rgba(255, 0, 110, 0.14);
+      }
+
+      :root[data-theme="myspace"] .pin-coach-kicker {
+        background: rgba(255, 0, 110, 0.16);
+        color: #FF79B0;
       }
 
       .tabs {
@@ -720,9 +820,41 @@
         font-size: 12px;
       }
 
+      .about-note {
+        display: grid;
+        gap: 5px;
+        padding: 11px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(20, 184, 166, 0.18);
+        background: rgba(20, 184, 166, 0.08);
+      }
+
+      .about-note strong {
+        color: var(--text-strong);
+        font-family: "Syne", system-ui, sans-serif;
+        font-size: 13px;
+      }
+
+      .about-note p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      :root[data-theme="myspace"] .about-note {
+        border-color: rgba(255, 0, 110, 0.28);
+        background: rgba(255, 0, 110, 0.1);
+      }
+
       @keyframes glowPulse {
         0%, 100% { box-shadow: 0 0 10px rgba(20,184,166,0.35), 0 0 4px rgba(20,184,166,0.15); }
         50% { box-shadow: 0 0 28px rgba(20,184,166,0.8), 0 0 55px rgba(99,102,241,0.35); }
+      }
+
+      @keyframes pinPulse {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-1px); }
       }
 
       @keyframes meshShift {
@@ -826,6 +958,17 @@
               <button id="themeBtn" class="icon-btn" type="button" title="Theme"></button>
             </div>
           </div>
+          <div id="pinCoach" class="pin-coach hidden" role="note" aria-live="polite">
+            <div class="pin-coach-head">
+              <span id="pinCoachKicker" class="pin-coach-kicker">Tip</span>
+              <span id="pinCoachTitle" class="pin-coach-title">Pin JobSensei beside the job page</span>
+            </div>
+            <p id="pinCoachBody" class="pin-coach-body">Use the pin button to keep capture open while you browse and review the JD.</p>
+            <div class="pin-coach-actions">
+              <button id="pinCoachConfirmBtn" class="btn-primary" type="button">Pin it</button>
+              <button id="pinCoachDismissBtn" class="btn-ghost" type="button">Later</button>
+            </div>
+          </div>
           <div class="language-shell">
             <button id="languageTrigger" class="language-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" title="Interface language">
               <span class="language-icon" aria-hidden="true">
@@ -915,6 +1058,11 @@
             <summary id="dataSentSummary">What data is sent?</summary>
             <p id="dataSentBody">Only the fields shown in the Capture tab: company, role, job URL, and job description text.</p>
           </details>
+
+          <div class="about-note">
+            <strong id="aboutAccessTitle">Works with the JobSensei app</strong>
+            <p id="aboutAccessBody">Start free inside JobSensei with email sign-in. Free includes monthly AI credits, while BYOK and Pro stay optional in the app.</p>
+          </div>
 
           <div class="actions">
             <button id="openAppBtn" class="btn-primary" type="button">Open JobSensei</button>
