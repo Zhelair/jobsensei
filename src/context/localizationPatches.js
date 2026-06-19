@@ -11298,9 +11298,16 @@ const hostedPlanClarityPatches = {
   en: {
     'topbar.creditsMetricActiveUntil': 'Active until',
     'settings.creditsMetricActiveUntil': 'Active until',
+    'settings.planInactiveBadge': 'Inactive',
     'settings.jobsenseiAccessCopy': 'Register with your email to start on Free, or unlock Pro through Buy Me a Coffee. Use the same purchase email so JobSensei can link Pro automatically.',
     'settings.unlockInputHint': 'Enter your email to receive a magic link. Free starts on this email right away. If you bought Pro, use the same purchase email so JobSensei can connect it automatically.',
     'paywall.codeHint': 'Enter your email to receive a magic link. Free starts immediately, and Pro will connect automatically if this email already has an active purchase.',
+    'planExpiredModal.title': 'Your Pro plan ended',
+    'planExpiredModal.copy': 'Your Pro access ended on {date}. JobSensei has already switched this account back to Free, so your work stays available.',
+    'planExpiredModal.note': 'You can stay on Free, or renew Pro now to restore the 53,000-credit monthly allowance on this same account.',
+    'planExpiredModal.renew': 'Renew Pro',
+    'planExpiredModal.stayFree': 'Stay on Free',
+    'planExpiredModal.dateFallback': 'your last Pro cycle',
   },
 }
 

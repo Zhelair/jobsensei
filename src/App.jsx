@@ -10,6 +10,7 @@ import { VisualsProvider } from './context/VisualsContext'
 import { LanguageProvider, useLanguage } from './context/LanguageContext'
 import VisualsOverlay from './components/shared/VisualsOverlay'
 import PaywallModal from './components/shared/PaywallModal'
+import PlanExpiredModal from './components/shared/PlanExpiredModal'
 import Sidebar from './components/Layout/Sidebar'
 import TopBar from './components/Layout/TopBar'
 import BottomNav from './components/Layout/BottomNav'
@@ -133,6 +134,7 @@ function AppContent() {
       <BottomNav />
       <VisualsOverlay />
       <PaywallModal />
+      <PlanExpiredModal />
     </div>
   )
 }

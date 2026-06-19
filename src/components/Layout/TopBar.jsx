@@ -341,14 +341,10 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
     ? t('topbar.creditsByokSummary')
     : snapshot.mode === 'locked'
       ? t('topbar.creditsLockedSummary')
-      : snapshot.balanceKnown
-        ? t('topbar.creditsKnownSummary', {
-          credits: formatCreditNumber(snapshot.remainingCredits),
-        })
-        : t('topbar.creditsMonthlySummary', {
-          credits: formatCreditNumber(snapshot.monthlyCredits),
-          requests: formatCreditNumber(snapshot.requestsIncluded),
-        })
+      : t('topbar.creditsMonthlySummary', {
+        credits: formatCreditNumber(snapshot.monthlyCredits),
+        requests: formatCreditNumber(snapshot.requestsIncluded),
+      })
 
   return (
     <div className="credits-panel rounded-2xl border border-navy-600 bg-navy-800/95 shadow-2xl backdrop-blur p-4 sm:p-4">

@@ -3,8 +3,7 @@ import { useAI } from '../../context/AIContext'
 import { SECTIONS, useApp } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { Coffee, X, Check, ExternalLink } from 'lucide-react'
-
-const BMAC_URL = 'https://buymeacoffee.com/niksales73l/e/515014'
+import { BMAC_PRO_URL } from '../../lib/billing'
 
 export default function PaywallModal() {
   const { showPaywall, closePaywall, unlockAccess } = useAI()
@@ -60,7 +59,7 @@ export default function PaywallModal() {
         </div>
 
         <a
-          href={BMAC_URL}
+          href={BMAC_PRO_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-primary w-full justify-center mb-4 bg-yellow-500 hover:bg-yellow-400 text-black border-0"
