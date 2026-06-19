@@ -630,10 +630,10 @@ export default function Settings() {
 
         {!proPlanPreview.isActive && (
           <div className="mt-4">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4">
+            <div className="rounded-2xl border border-white/5 bg-navy-950/35 px-4 py-4 opacity-80">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0">
-                  <h5 className="font-display font-semibold text-white">{t('settings.creditsProHeadline')}</h5>
+                  <h5 className="font-display font-semibold text-slate-300">{t('settings.creditsProHeadline')}</h5>
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-[11px] border border-slate-500/20 bg-slate-500/10 text-slate-300">
                   {t('settings.planInactiveBadge')}
@@ -641,25 +641,25 @@ export default function Settings() {
               </div>
 
               <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2">
-                <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+                <div className="rounded-xl border border-white/5 bg-navy-950/50 px-3 py-3">
                   <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricAllowance')}</div>
-                  <div className="text-white text-sm font-display font-semibold">{formatCreditNumber(proPlanPreview.monthlyCredits)}</div>
+                  <div className="text-slate-300 text-sm font-display font-semibold">{formatCreditNumber(proPlanPreview.monthlyCredits)}</div>
                 </div>
-                <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+                <div className="rounded-xl border border-white/5 bg-navy-950/50 px-3 py-3">
                   <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricCost')}</div>
-                  <div className="text-white text-sm font-display font-semibold">
+                  <div className="text-slate-300 text-sm font-display font-semibold">
                     {t('settings.creditsRequestValue', { credits: formatCreditNumber(proPlanPreview.requestCost) })}
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+                <div className="rounded-xl border border-white/5 bg-navy-950/50 px-3 py-3">
                   <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricLeft')}</div>
-                  <div className="text-white text-sm font-display font-semibold">
+                  <div className="text-slate-400 text-sm font-display font-semibold">
                     {proPreviewCreditsValue}
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+                <div className="rounded-xl border border-white/5 bg-navy-950/50 px-3 py-3">
                   <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricReset')}</div>
-                  <div className="text-white text-sm font-display font-semibold">
+                  <div className="text-slate-400 text-sm font-display font-semibold">
                     {proPreviewResetValue}
                   </div>
                 </div>
@@ -669,7 +669,7 @@ export default function Settings() {
                 href={BMAC_PRO_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-secondary w-full justify-center mt-3"
+                className="btn-secondary w-full justify-center mt-3 text-slate-200 border-slate-600/80 bg-slate-700/40 hover:bg-slate-700/60"
               >
                 <Coffee size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
               </a>
