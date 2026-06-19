@@ -360,7 +360,7 @@ export default function Tools({ mode = 'prep-tools' }) {
             <div className="flex flex-wrap items-center gap-2 xl:justify-end">
               {(applications.length > 1 || !activeApplicationId) && (
                 <select
-                  className="input-field h-10 min-w-[220px] text-xs"
+                  className="input-field h-10 w-full sm:w-auto sm:min-w-[220px] text-xs"
                   value={activeApplicationId || ''}
                   onChange={e => switchActiveApplication(e.target.value)}
                 >
@@ -1159,7 +1159,7 @@ function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, 
             { value: 'Professional', label: t('tools.followup.toneProfessional') },
             { value: 'Enthusiastic', label: t('tools.followup.toneEnthusiastic') },
           ].map(option => (
-            <button key={option.value} onClick={() => setTone(option.value)} className={`tool-choice-pill min-w-[150px] flex-1 ${tone === option.value ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' : 'bg-navy-700 text-slate-400 border-navy-600 hover:border-slate-500'}`}>{option.label}</button>
+            <button key={option.value} onClick={() => setTone(option.value)} className={`tool-choice-pill w-full sm:min-w-[150px] sm:flex-1 ${tone === option.value ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' : 'bg-navy-700 text-slate-400 border-navy-600 hover:border-slate-500'}`}>{option.label}</button>
           ))}
         </div>
       </div>
@@ -1316,7 +1316,7 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
             <div>
               <div className="flex gap-2.5 mb-3 flex-wrap md:flex-nowrap">
                 {result.letters.map((l, i) => (
-                  <button key={i} onClick={() => setActiveTab(i)} className={`tool-choice-pill min-w-[160px] flex-1 ${activeTab === i ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' : 'bg-navy-700 text-slate-400 border-navy-600 hover:border-slate-500'}`}>{l.tone}</button>
+                  <button key={i} onClick={() => setActiveTab(i)} className={`tool-choice-pill w-full sm:min-w-[160px] sm:flex-1 ${activeTab === i ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' : 'bg-navy-700 text-slate-400 border-navy-600 hover:border-slate-500'}`}>{l.tone}</button>
                 ))}
               </div>
               {result.letters[activeTab] && (
