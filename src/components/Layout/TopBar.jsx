@@ -341,10 +341,7 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
     ? t('topbar.creditsByokSummary')
     : snapshot.mode === 'locked'
       ? t('topbar.creditsLockedSummary')
-      : t('topbar.creditsMonthlySummary', {
-        credits: formatCreditNumber(snapshot.monthlyCredits),
-        requests: formatCreditNumber(snapshot.requestsIncluded),
-      })
+      : ''
 
   return (
     <div className="credits-panel rounded-2xl border border-navy-600 bg-navy-800/95 shadow-2xl backdrop-blur p-4 sm:p-4">
@@ -354,7 +351,9 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
             {t('topbar.creditsKicker')}
           </div>
           <h3 className="font-display font-semibold text-white text-sm sm:text-base">{headline}</h3>
-          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mt-1">{summary}</p>
+          {summary && (
+            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mt-1">{summary}</p>
+          )}
         </div>
         <button onClick={onClose} className="text-slate-500 hover:text-slate-300 flex-shrink-0">
           <X size={14} />

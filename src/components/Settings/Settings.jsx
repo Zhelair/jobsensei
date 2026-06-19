@@ -10,7 +10,7 @@ import {
   Globe, Volume2, Shield, MonitorSmartphone,
 } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
-import { FREE_MONTHLY_CREDITS, getCreditSnapshot, HOSTED_REQUEST_CREDITS, PRO_MONTHLY_CREDITS } from '../../lib/credits'
+import { getCreditSnapshot, HOSTED_REQUEST_CREDITS, PRO_MONTHLY_CREDITS } from '../../lib/credits'
 import { BMAC_PRO_URL } from '../../lib/billing'
 
 export default function Settings() {
@@ -318,15 +318,6 @@ export default function Settings() {
   const creditStatusDateLabel = creditSnapshot.statusDateKind === 'active_until'
     ? t('settings.creditsMetricActiveUntil')
     : t('settings.creditsMetricReset')
-  const freePlanPreview = {
-    tier: 'free',
-    monthlyCredits: FREE_MONTHLY_CREDITS,
-    requestCost: HOSTED_REQUEST_CREDITS,
-    isActive: creditSnapshot.mode === 'hosted' && creditSnapshot.tier === 'free',
-    statusDate: creditSnapshot.mode === 'hosted' && creditSnapshot.tier === 'free'
-      ? (creditSnapshot.statusDate || creditSnapshot.resetAt)
-      : secureAccount?.creditPeriodEndsAt || secureAccount?.creditsResetAt || null,
-  }
   const proPlanPreview = {
     tier: 'pro',
     monthlyCredits: PRO_MONTHLY_CREDITS,
@@ -558,16 +549,13 @@ export default function Settings() {
                       ? t('settings.creditsFreeHeadline')
                       : t('settings.creditsProHeadline')}
               </h4>
-              <p className="text-slate-300 text-sm leading-relaxed mt-1">
-                {creditSnapshot.mode === 'byok'
-                  ? t('settings.creditsByokCopy')
-                  : creditSnapshot.mode === 'locked'
-                    ? t('settings.creditsLockedCopy')
-                    : t('settings.creditsMonthlyCopy', {
-                        credits: formatCreditNumber(creditSnapshot.monthlyCredits),
-                        requests: formatCreditNumber(creditSnapshot.requestsIncluded),
-                      })}
-              </p>
+              {(creditSnapshot.mode === 'byok' || creditSnapshot.mode === 'locked') && (
+                <p className="text-slate-300 text-sm leading-relaxed mt-1">
+                  {creditSnapshot.mode === 'byok'
+                    ? t('settings.creditsByokCopy')
+                    : t('settings.creditsLockedCopy')}
+                </p>
+              )}
             </div>
             <span className={`px-2.5 py-1 rounded-full text-[11px] border ${
               creditSnapshot.mode === 'locked'
@@ -632,67 +620,51 @@ export default function Settings() {
           )}
         </div>
 
-        <div className="grid xl:grid-cols-2 gap-3 mt-4">
-          {[freePlanPreview, proPlanPreview].map(plan => {
-            const isFree = plan.tier === 'free'
-            const badgeClass = plan.isActive
-              ? (isFree
-                  ? 'border-yellow-500/20 bg-yellow-500/10 text-yellow-200'
-                  : 'border-teal-500/20 bg-teal-500/10 text-teal-200')
-              : 'border-slate-500/20 bg-slate-500/10 text-slate-300'
-            const headline = isFree ? t('settings.creditsFreeHeadline') : t('settings.creditsProHeadline')
-            const badge = plan.isActive
-              ? (isFree ? t('settings.creditsBadgeFree') : t('settings.creditsBadgePro'))
-              : t('settings.planInactiveBadge')
-            const dateLabel = isFree ? t('settings.creditsMetricReset') : t('settings.creditsMetricActiveUntil')
-
-            return (
-              <div key={plan.tier} className={`rounded-2xl border px-4 py-4 ${plan.isActive ? 'border-white/10 bg-white/[0.03]' : 'border-white/5 bg-navy-950/40'}`}>
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="min-w-0">
-                    <h5 className="font-display font-semibold text-white">{headline}</h5>
-                    <p className="text-slate-400 text-sm leading-relaxed mt-1">
-                      {t('settings.creditsMonthlyCopy', {
-                        credits: formatCreditNumber(plan.monthlyCredits),
-                        requests: formatCreditNumber(Math.floor(plan.monthlyCredits / plan.requestCost)),
-                      })}
-                    </p>
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-full text-[11px] border ${badgeClass}`}>{badge}</span>
-                </div>
-
-                <div className="grid sm:grid-cols-3 gap-2">
-                  <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
-                    <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricAllowance')}</div>
-                    <div className="text-white text-sm font-display font-semibold">{formatCreditNumber(plan.monthlyCredits)}</div>
-                  </div>
-                  <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
-                    <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricCost')}</div>
-                    <div className="text-white text-sm font-display font-semibold">
-                      {t('settings.creditsRequestValue', { credits: formatCreditNumber(plan.requestCost) })}
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
-                    <div className="text-[11px] text-slate-500 mb-1">{dateLabel}</div>
-                    <div className="text-white text-sm font-display font-semibold">
-                      {formatCreditResetDate(plan.statusDate) || t('settings.creditsSoon')}
-                    </div>
-                  </div>
-                </div>
-
-                {!plan.isActive && plan.tier === 'pro' && (
-                  <a
-                    href={BMAC_PRO_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-secondary w-full justify-center mt-3"
-                  >
-                    <Coffee size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
-                  </a>
-                )}
+        <div className="mt-4">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="min-w-0">
+                <h5 className="font-display font-semibold text-white">{t('settings.creditsProHeadline')}</h5>
               </div>
-            )
-          })}
+              <span className={`px-2.5 py-1 rounded-full text-[11px] border ${
+                proPlanPreview.isActive
+                  ? 'border-teal-500/20 bg-teal-500/10 text-teal-200'
+                  : 'border-slate-500/20 bg-slate-500/10 text-slate-300'
+              }`}>
+                {proPlanPreview.isActive ? t('settings.creditsBadgePro') : t('settings.planInactiveBadge')}
+              </span>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-2">
+              <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+                <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricAllowance')}</div>
+                <div className="text-white text-sm font-display font-semibold">{formatCreditNumber(proPlanPreview.monthlyCredits)}</div>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+                <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricCost')}</div>
+                <div className="text-white text-sm font-display font-semibold">
+                  {t('settings.creditsRequestValue', { credits: formatCreditNumber(proPlanPreview.requestCost) })}
+                </div>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+                <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricActiveUntil')}</div>
+                <div className="text-white text-sm font-display font-semibold">
+                  {formatCreditResetDate(proPlanPreview.statusDate) || t('settings.creditsSoon')}
+                </div>
+              </div>
+            </div>
+
+            {!proPlanPreview.isActive && (
+              <a
+                href={BMAC_PRO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary w-full justify-center mt-3"
+              >
+                <Coffee size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
+              </a>
+            )}
+          </div>
         </div>
 
         <div className="grid xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] gap-5 mt-4 items-start">
