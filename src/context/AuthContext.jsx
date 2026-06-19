@@ -8,6 +8,8 @@ import {
 
 const AuthContext = createContext(null)
 const SECURE_DEVICE_ID_STORAGE_KEY = 'js_secure_device_id'
+const PLAN_SNAPSHOT_STORAGE_KEY = 'js_secure_plan_snapshot'
+const PLAN_EXPIRED_NOTICE_STORAGE_KEY = 'js_secure_plan_expired_notice'
 
 function createSecureDeviceId() {
   if (window.crypto?.randomUUID) {
@@ -137,6 +139,15 @@ async function parseJsonSafe(response) {
   }
 }
 
+function parseStoredJson(value, fallback = null) {
+  if (!value) return fallback
+  try {
+    return JSON.parse(value)
+  } catch {
+    return fallback
+  }
+}
+
 function normalizeAuthMessage(message, { customAuthEmailsEnabled = false } = {}) {
   const text = String(message || '').trim()
   if (!text) return ''
@@ -176,6 +187,7 @@ export function AuthProvider({ children }) {
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [exportingAccountData, setExportingAccountData] = useState(false)
   const [revokingDeviceId, setRevokingDeviceId] = useState('')
+  const [planExpiredNotice, setPlanExpiredNotice] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -405,6 +417,39 @@ export function AuthProvider({ children }) {
     refreshSecureAccount(secureSession.access_token).catch(() => {})
   }, [secureDevice, secureSession?.access_token])
 
+  useEffect(() => {
+    if (!secureAccount?.email) return
+
+    const currentSnapshot = {
+      email: secureAccount.email,
+      planTier: secureAccount.planTier || null,
+      planActive: Boolean(secureAccount.planActive),
+      planExpiresAt: secureAccount.planExpiresAt || null,
+    }
+    const previousSnapshot = parseStoredJson(localStorage.getItem(PLAN_SNAPSHOT_STORAGE_KEY), null)
+    const dismissedNoticeId = localStorage.getItem(PLAN_EXPIRED_NOTICE_STORAGE_KEY) || ''
+    const wasActivePro = Boolean(
+      previousSnapshot
+      && previousSnapshot.email === currentSnapshot.email
+      && previousSnapshot.planActive
+      && previousSnapshot.planTier === 'pro',
+    )
+    const isActiveFree = Boolean(currentSnapshot.planActive && currentSnapshot.planTier === 'free')
+    const noticeId = wasActivePro
+      ? `${currentSnapshot.email}:${previousSnapshot.planExpiresAt || 'pro'}`
+      : ''
+
+    if (wasActivePro && isActiveFree && noticeId && dismissedNoticeId !== noticeId) {
+      setPlanExpiredNotice({
+        id: noticeId,
+        email: currentSnapshot.email,
+        previousExpiresAt: previousSnapshot.planExpiresAt || null,
+      })
+    }
+
+    localStorage.setItem(PLAN_SNAPSHOT_STORAGE_KEY, JSON.stringify(currentSnapshot))
+  }, [secureAccount])
+
   async function sendMagicLink(email) {
     if (!supabase) {
       throw new Error('Email sign-in is not enabled yet.')
@@ -559,6 +604,13 @@ export function AuthProvider({ children }) {
     }
   }
 
+  function dismissPlanExpiredNotice() {
+    if (planExpiredNotice?.id) {
+      localStorage.setItem(PLAN_EXPIRED_NOTICE_STORAGE_KEY, planExpiredNotice.id)
+    }
+    setPlanExpiredNotice(null)
+  }
+
   const value = {
     bridgeStatus,
     statusError,
@@ -574,6 +626,7 @@ export function AuthProvider({ children }) {
     deletingAccount,
     exportingAccountData,
     revokingDeviceId,
+    planExpiredNotice,
     secureDevice,
     sendMagicLink,
     signOutSecure,
@@ -581,6 +634,7 @@ export function AuthProvider({ children }) {
     deleteSecureAccount,
     exportSecureAccountData,
     revokeSecureDevice,
+    dismissPlanExpiredNotice,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
