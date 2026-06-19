@@ -6,7 +6,7 @@ const localizationPatches = {
     'settings.jobsenseiAccessCopy': 'Use JobSensei-hosted AI through your plan, or activate access with your code. Billing is handled through Buy Me a Coffee.',
     'settings.planActive': 'Plan active',
     'settings.signOut': 'Sign out of JobSensei AI',
-    'settings.upgradeViaBmac': 'Unlock via Buy Me a Coffee',
+    'settings.upgradeViaBmac': 'Renew / Unlock Pro',
     'settings.alreadyHaveAccess': 'Already have access?',
     'settings.accessCodePlaceholder': 'Enter your access email or code',
     'settings.activating': 'Activating...',
@@ -10578,7 +10578,7 @@ const creditsUxPatches = {
     'topbar.creditsSuffixMonthly': '/mo',
     'topbar.creditsKicker': 'AI credits',
     'topbar.creditsPrimaryUnlock': 'Unlock AI',
-    'topbar.creditsPrimaryUpgrade': 'Upgrade to Pro',
+    'topbar.creditsPrimaryUpgrade': 'Renew / Unlock Pro',
     'topbar.creditsPrimaryManage': 'Manage plan',
     'topbar.creditsSecondaryManage': 'Open settings',
     'topbar.creditsSecondaryByok': 'Use your own key',
@@ -11075,7 +11075,7 @@ const creditsUxPatches = {
 const accountFlowPatches = {
   en: {
     'settings.jobsenseiAccessCopy': 'Register with your email to start on Free, or unlock Pro through Buy Me a Coffee. The same account tracks credits and approved devices.',
-    'settings.upgradeViaBmac': 'Unlock Pro via Buy Me a Coffee',
+    'settings.upgradeViaBmac': 'Renew / Unlock Pro',
     'settings.alreadyHaveAccess': 'Free or Pro?',
     'settings.accessCodePlaceholder': 'Enter your email address...',
     'settings.activateAccess': 'Register now',
