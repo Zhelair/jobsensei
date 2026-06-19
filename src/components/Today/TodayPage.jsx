@@ -431,7 +431,7 @@ export default function TodayPage() {
           <div className="flex gap-2 flex-wrap">
             {applications.length > 0 && (
               <select
-                className="input-field h-10 min-w-[220px] text-xs"
+                className="input-field h-10 w-full sm:w-auto sm:min-w-[220px] text-xs"
                 value={focusApplication?.id || ''}
                 onChange={e => changeFocusApplication(e.target.value)}
                 aria-label={t('today.changeActiveApplication')}
