@@ -262,6 +262,7 @@ function formatResetDate(value) {
     return new Intl.DateTimeFormat(undefined, {
       month: 'short',
       day: 'numeric',
+      year: 'numeric',
     }).format(new Date(value))
   } catch {
     return ''
@@ -317,6 +318,10 @@ function getCreditPillCopy(t, snapshot, { compact = false } = {}) {
 
 function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryAction, onClose }) {
   const resetDate = formatResetDate(snapshot.resetAt)
+  const statusDate = formatResetDate(snapshot.statusDate)
+  const statusDateLabel = snapshot.statusDateKind === 'active_until'
+    ? t('topbar.creditsMetricActiveUntil')
+    : t('topbar.creditsMetricReset')
   const primaryLabel = snapshot.mode === 'locked'
     ? t('topbar.creditsPrimaryUnlock')
     : snapshot.upgradeRecommended
@@ -360,7 +365,17 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+        <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+          <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricAllowance')}</div>
+          <div className="text-white text-sm font-display font-semibold">
+            {snapshot.monthlyCredits != null
+              ? formatCreditNumber(snapshot.monthlyCredits)
+              : snapshot.mode === 'byok'
+                ? t('topbar.creditsMetricUnlimited')
+                : '-'}
+          </div>
+        </div>
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
           <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricCost')}</div>
           <div className="text-white text-sm font-display font-semibold">
@@ -372,13 +387,17 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
           </div>
         </div>
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-          <div className="text-[11px] text-slate-500 mb-1">
-            {snapshot.balanceKnown ? t('topbar.creditsMetricLeft') : t('topbar.creditsMetricReset')}
-          </div>
+          <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricLeft')}</div>
           <div className="text-white text-sm font-display font-semibold">
             {snapshot.balanceKnown
               ? formatCreditNumber(snapshot.remainingCredits)
-              : (resetDate || t('topbar.creditsMetricSoon'))}
+              : (snapshot.monthlyCredits != null ? formatCreditNumber(snapshot.monthlyCredits) : '-')}
+          </div>
+        </div>
+        <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5 col-span-2 sm:col-span-3">
+          <div className="text-[11px] text-slate-500 mb-1">{statusDateLabel}</div>
+          <div className="text-white text-sm font-display font-semibold">
+            {statusDate || resetDate || t('topbar.creditsMetricSoon')}
           </div>
         </div>
       </div>

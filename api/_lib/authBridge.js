@@ -63,6 +63,9 @@ function escapeHtml(value = '') {
 
 function getPrimaryGrant(activeGrants = []) {
   return [...activeGrants].sort((left, right) => {
+    const leftExpiry = new Date(getGrantExpiryIso(left) || 0).getTime()
+    const rightExpiry = new Date(getGrantExpiryIso(right) || 0).getTime()
+    if (leftExpiry !== rightExpiry) return rightExpiry - leftExpiry
     return new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime()
   })[0] || null
 }
@@ -92,10 +95,91 @@ function getCreditAllowanceForPlanTier(planTier = 'pro') {
   return planTier === 'free' ? FREE_MONTHLY_CREDITS : PRO_MONTHLY_CREDITS
 }
 
+function parsePositiveInteger(value) {
+  const next = Number(value)
+  return Number.isInteger(next) && next > 0 ? next : null
+}
+
 function addDaysToIso(value, days) {
   const next = new Date(value || Date.now())
   next.setDate(next.getDate() + days)
   return next.toISOString()
+}
+
+function getGrantDurationDays(grant) {
+  const explicitDurationDays = parsePositiveInteger(
+    grant?.metadata?.durationDays
+    || grant?.metadata?.duration_days
+    || grant?.metadata?.periodDays
+    || grant?.metadata?.period_days
+    || grant?.metadata?.planDurationDays
+    || grant?.metadata?.plan_duration_days,
+  )
+
+  if (explicitDurationDays) return explicitDurationDays
+
+  const planTier = derivePlanTierFromGrant(grant, '')
+  const planSource = derivePlanSourceFromGrant(grant).toLowerCase()
+  if (planTier === 'pro' || planSource.includes('bmac') || planSource.includes('payment') || planSource.includes('purchase')) {
+    return CREDIT_PERIOD_DAYS
+  }
+
+  return null
+}
+
+function getGrantExpiryIso(grant) {
+  const explicitExpiry = toIsoOrNull(
+    grant?.metadata?.expiresAt
+    || grant?.metadata?.expires_at
+    || grant?.metadata?.periodEndsAt
+    || grant?.metadata?.period_ends_at
+    || grant?.metadata?.planExpiresAt
+    || grant?.metadata?.plan_expires_at,
+  )
+  if (explicitExpiry) return explicitExpiry
+
+  const durationDays = getGrantDurationDays(grant)
+  if (!durationDays) return null
+
+  const anchor = firstNonEmpty(
+    grant?.metadata?.periodStartedAt,
+    grant?.metadata?.period_started_at,
+    grant?.metadata?.purchasedAt,
+    grant?.metadata?.purchased_at,
+    grant?.metadata?.grantedAt,
+    grant?.metadata?.granted_at,
+    grant?.created_at,
+  )
+
+  return toIsoOrNull(addDaysToIso(anchor || Date.now(), durationDays))
+}
+
+function grantIsCurrentlyActive(grant, now = Date.now()) {
+  if (grant?.status !== 'active') return false
+
+  const expiry = getGrantExpiryIso(grant)
+  if (!expiry) return true
+
+  return new Date(expiry).getTime() > now
+}
+
+async function expireElapsedPlanGrants({ supabase, grants = [] } = {}) {
+  const expiredGrantIds = grants
+    .filter(grant => grant?.id && grant?.status === 'active' && !grantIsCurrentlyActive(grant))
+    .map(grant => grant.id)
+
+  if (!expiredGrantIds.length) return
+
+  const now = new Date().toISOString()
+  const { error } = await supabase
+    .from('plan_grants')
+    .update({
+      status: 'expired',
+      updated_at: now,
+    })
+    .in('id', expiredGrantIds)
+
+  if (error) throw error
 }
 
 function getCreditPeriodWindow({
@@ -676,10 +760,12 @@ export async function ensureSecureAccountAccess({
       account: null,
       activeGrants: [],
       claimedGrantCount: 0,
+      planExpiresAt: null,
     }
   }
 
   const now = new Date().toISOString()
+  const nowMs = Date.now()
   const userEmail = normalizeEmail(user.email)
   const [accountResponse, userGrantsResponse, claimableGrantsResponse] = await Promise.all([
     supabase
@@ -710,10 +796,19 @@ export async function ensureSecureAccountAccess({
 
   let account = accountResponse.data || null
   let activeGrants = [...(userGrantsResponse.data || [])]
+  let claimableGrants = [...(claimableGrantsResponse.data || [])]
   let claimedGrantCount = 0
 
-  if ((claimableGrantsResponse.data || []).length) {
-    const claimableGrantIds = claimableGrantsResponse.data.map(grant => grant.id)
+  await expireElapsedPlanGrants({
+    supabase,
+    grants: [...activeGrants, ...claimableGrants],
+  })
+
+  activeGrants = activeGrants.filter(grant => grantIsCurrentlyActive(grant, nowMs))
+  claimableGrants = claimableGrants.filter(grant => grantIsCurrentlyActive(grant, nowMs))
+
+  if (claimableGrants.length) {
+    const claimableGrantIds = claimableGrants.map(grant => grant.id)
     const { data: claimedGrants, error: claimError } = await supabase
       .from('plan_grants')
       .update({
@@ -727,7 +822,10 @@ export async function ensureSecureAccountAccess({
     if (claimError) throw claimError
 
     claimedGrantCount = claimedGrants?.length || 0
-    activeGrants = [...activeGrants, ...(claimedGrants || [])]
+    activeGrants = [
+      ...activeGrants,
+      ...(claimedGrants || []).filter(grant => grantIsCurrentlyActive(grant, nowMs)),
+    ]
 
     await logSecureAuditEvent({
       userId: user.id,
@@ -740,6 +838,7 @@ export async function ensureSecureAccountAccess({
   }
 
   const primaryGrant = getPrimaryGrant(activeGrants)
+  const planExpiresAt = primaryGrant ? getGrantExpiryIso(primaryGrant) : null
   if (primaryGrant) {
     const planTier = derivePlanTierFromGrant(primaryGrant, account?.plan_tier || 'pro')
     const monthlyCreditAllowance = getCreditAllowanceForPlanTier(planTier)
@@ -824,6 +923,7 @@ export async function ensureSecureAccountAccess({
     account,
     activeGrants,
     claimedGrantCount,
+    planExpiresAt,
   }
 }
 
@@ -1028,13 +1128,30 @@ export async function upsertBmacPlanGrant({
 
   if (existingGrantError) throw existingGrantError
 
+  const nextGrantExpiry = status === 'active'
+    ? (
+        toIsoOrNull(
+          metadata?.expiresAt
+          || metadata?.expires_at
+          || metadata?.periodEndsAt
+          || metadata?.period_ends_at,
+        ) || addDaysToIso(now, CREDIT_PERIOD_DAYS)
+      )
+    : null
+
   const grantPayload = {
     user_id: existingAccount?.user_id || null,
     grant_type: 'bmac_webhook',
     external_ref: externalRef,
     claim_email: normalizedEmail,
     status,
-    metadata,
+    metadata: {
+      ...metadata,
+      planTier: metadata?.planTier || metadata?.tier || 'pro',
+      planSource: metadata?.planSource || metadata?.source || 'bmac_webhook',
+      durationDays: parsePositiveInteger(metadata?.durationDays || metadata?.duration_days) || CREDIT_PERIOD_DAYS,
+      ...(nextGrantExpiry ? { expiresAt: nextGrantExpiry } : {}),
+    },
     updated_at: now,
   }
 
