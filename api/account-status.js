@@ -8,7 +8,7 @@ import {
   setDefaultCorsHeaders,
 } from './_lib/authBridge.js'
 
-function toAccountSummary(account, deviceAccess) {
+function toAccountSummary(account, deviceAccess, accessSync = {}) {
   if (!account) return null
 
   return {
@@ -19,6 +19,7 @@ function toAccountSummary(account, deviceAccess) {
     linkedAt: account.linked_at,
     linked: Boolean(account.linked_at),
     planActive: ACTIVE_PLAN_STATUSES.has(account.plan_status),
+    planExpiresAt: accessSync.planExpiresAt || null,
     creditBalance: Number.isFinite(Number(account.credit_balance)) ? Math.max(0, Number(account.credit_balance)) : null,
     creditsRemaining: Number.isFinite(Number(account.credit_balance)) ? Math.max(0, Number(account.credit_balance)) : null,
     creditsResetAt: account.credit_period_ends_at || null,
@@ -76,7 +77,7 @@ export default async function handler(req, res) {
         id: user.id,
         email: user.email || '',
       },
-      account: toAccountSummary(account, deviceAccess),
+      account: toAccountSummary(account, deviceAccess, accessSync),
       claimedGrantCount: accessSync.claimedGrantCount,
     })
   } catch (err) {

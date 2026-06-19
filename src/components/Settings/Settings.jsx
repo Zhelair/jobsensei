@@ -65,6 +65,7 @@ export default function Settings() {
       return new Intl.DateTimeFormat(undefined, {
         month: 'short',
         day: 'numeric',
+        year: 'numeric',
       }).format(new Date(value))
     } catch {
       return ''
@@ -313,6 +314,9 @@ export default function Settings() {
   }
   const currentProviderLabel = providerLabelFor(form.provider)
   const creditSnapshot = getCreditSnapshot({ secureAccount, bmacToken, apiKey })
+  const creditStatusDateLabel = creditSnapshot.statusDateKind === 'active_until'
+    ? t('settings.creditsMetricActiveUntil')
+    : t('settings.creditsMetricReset')
   const planBadgeClass = usingOwnKey
     ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300'
     : usingJobsenseiAI
@@ -569,7 +573,17 @@ export default function Settings() {
             </span>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-2">
+          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2">
+            <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+              <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricAllowance')}</div>
+              <div className="text-white text-sm font-display font-semibold">
+                {creditSnapshot.monthlyCredits != null
+                  ? formatCreditNumber(creditSnapshot.monthlyCredits)
+                  : creditSnapshot.mode === 'byok'
+                    ? t('settings.creditsUnlimited')
+                    : '-'}
+              </div>
+            </div>
             <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
               <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricCost')}</div>
               <div className="text-white text-sm font-display font-semibold">
@@ -581,13 +595,17 @@ export default function Settings() {
               </div>
             </div>
             <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
-              <div className="text-[11px] text-slate-500 mb-1">
-                {creditSnapshot.balanceKnown ? t('settings.creditsMetricLeft') : t('settings.creditsMetricReset')}
-              </div>
+              <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricLeft')}</div>
               <div className="text-white text-sm font-display font-semibold">
                 {creditSnapshot.balanceKnown
                   ? formatCreditNumber(creditSnapshot.remainingCredits)
-                  : (formatCreditResetDate(creditSnapshot.resetAt) || t('settings.creditsSoon'))}
+                  : (creditSnapshot.monthlyCredits != null ? formatCreditNumber(creditSnapshot.monthlyCredits) : '-')}
+              </div>
+            </div>
+            <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
+              <div className="text-[11px] text-slate-500 mb-1">{creditStatusDateLabel}</div>
+              <div className="text-white text-sm font-display font-semibold">
+                {formatCreditResetDate(creditSnapshot.statusDate || creditSnapshot.resetAt) || t('settings.creditsSoon')}
               </div>
             </div>
           </div>

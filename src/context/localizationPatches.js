@@ -11294,6 +11294,16 @@ const creditsCopyTighteningPatches = {
   },
 }
 
+const hostedPlanClarityPatches = {
+  en: {
+    'topbar.creditsMetricActiveUntil': 'Active until',
+    'settings.creditsMetricActiveUntil': 'Active until',
+    'settings.jobsenseiAccessCopy': 'Register with your email to start on Free, or unlock Pro through Buy Me a Coffee. Use the same purchase email so JobSensei can link Pro automatically.',
+    'settings.unlockInputHint': 'Enter your email to receive a magic link. Free starts on this email right away. If you bought Pro, use the same purchase email so JobSensei can connect it automatically.',
+    'paywall.codeHint': 'Enter your email to receive a magic link. Free starts immediately, and Pro will connect automatically if this email already has an active purchase.',
+  },
+}
+
 Object.entries(creditsUxPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
@@ -11303,6 +11313,10 @@ Object.entries(accountFlowPatches).forEach(([locale, patch]) => {
 })
 
 Object.entries(creditsCopyTighteningPatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
+Object.entries(hostedPlanClarityPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 

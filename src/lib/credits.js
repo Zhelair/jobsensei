@@ -43,6 +43,8 @@ export function getCreditSnapshot({ secureAccount, bmacToken, apiKey }) {
       remainingCredits: null,
       remainingRequests: null,
       resetAt: null,
+      statusDate: null,
+      statusDateKind: null,
       balanceKnown: false,
       upgradeRecommended: false,
     }
@@ -59,6 +61,8 @@ export function getCreditSnapshot({ secureAccount, bmacToken, apiKey }) {
       remainingCredits: null,
       remainingRequests: null,
       resetAt: null,
+      statusDate: null,
+      statusDateKind: null,
       balanceKnown: false,
       upgradeRecommended: true,
     }
@@ -76,6 +80,7 @@ export function getCreditSnapshot({ secureAccount, bmacToken, apiKey }) {
     || secureAccount?.creditPeriodEndsAt
     || secureAccount?.monthlyCreditsResetAt
     || addDays(secureAccount?.linkedAt, CREDIT_PERIOD_DAYS)
+  const planExpiresAt = secureAccount?.planExpiresAt || null
 
   return {
     mode: 'hosted',
@@ -86,6 +91,8 @@ export function getCreditSnapshot({ secureAccount, bmacToken, apiKey }) {
     remainingCredits: balanceKnown ? Math.max(0, remainingCredits) : monthlyCredits,
     remainingRequests: balanceKnown ? Math.max(0, Math.floor(remainingCredits / HOSTED_REQUEST_CREDITS)) : requestsIncluded,
     resetAt,
+    statusDate: hostedTier === 'pro' ? (planExpiresAt || resetAt) : resetAt,
+    statusDateKind: hostedTier === 'pro' ? 'active_until' : 'reset',
     balanceKnown,
     upgradeRecommended: hostedTier !== 'pro',
   }

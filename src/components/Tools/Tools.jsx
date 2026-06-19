@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
+import { useAuth } from '../../context/AuthContext'
 import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
@@ -1449,10 +1450,12 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
 // ─── Visual Design Review ──────────────────────────────────────────────────────
 
 function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, onDelete }) {
-  const { callAI, isConnected, provider, PROVIDERS, bmacToken, apiKey } = useAI()
+  const { callAI, isConnected, provider, PROVIDERS, apiKey } = useAI()
+  const { secureAccount } = useAuth()
   const { t } = useLanguage()
   const toolLabel = getToolLabel(t, 'visualreview')
-  const isDeepSeekActive = (bmacToken && !apiKey) || (apiKey && provider === PROVIDERS.DEEPSEEK)
+  const usingHostedJobsenseiAi = Boolean(secureAccount?.planActive && !apiKey)
+  const isDeepSeekActive = usingHostedJobsenseiAi || (apiKey && provider === PROVIDERS.DEEPSEEK)
   const imageInputRef = useRef(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [imageData, setImageData] = useState(null)
@@ -1482,7 +1485,12 @@ function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, o
       const raw = await callAI({ systemPrompt: 'You are an expert resume designer and career coach. Analyze resume images for visual design quality, layout, and professional impact. Provide structured, actionable feedback.', messages: [{ role: 'user', content: userContent }], temperature: 0.5 })
       setResult(raw); saveHistory({ fileName: 'resume image' }, { analysis: raw })
     } catch (err) {
+      setResult(`Visual analysis failed: ${err.message || 'Unknown error'}. Visual Design Review needs a vision-capable model like OpenAI GPT-4o or Anthropic Claude. DeepSeek-hosted access cannot analyze images.`)
+      setAnalyzing(false)
+      return
+      /*
       setResult(`⚠️ Visual analysis failed: ${err.message || 'Unknown error'}. Make sure you are using a vision-capable model (e.g. gpt-4o).`)
+      */
     }
     setAnalyzing(false)
   }
