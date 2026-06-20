@@ -10578,7 +10578,7 @@ const creditsUxPatches = {
     'topbar.creditsSuffixMonthly': '/mo',
     'topbar.creditsKicker': 'AI credits',
     'topbar.creditsPrimaryUnlock': 'Unlock AI',
-    'topbar.creditsPrimaryUpgrade': 'Renew / Unlock Pro',
+    'topbar.creditsPrimaryUpgrade': 'Unlock Pro',
     'topbar.creditsPrimaryManage': 'Manage plan',
     'topbar.creditsSecondaryManage': 'Open settings',
     'topbar.creditsSecondaryByok': 'Use your own key',
