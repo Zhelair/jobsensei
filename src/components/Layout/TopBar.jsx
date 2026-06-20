@@ -363,7 +363,7 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
           <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricAllowance')}</div>
-          <div className="text-white text-sm font-display font-semibold">
+          <div className="text-white text-sm font-display font-semibold leading-[1.95rem]">
             {snapshot.monthlyCredits != null
               ? formatCreditNumber(snapshot.monthlyCredits)
               : snapshot.mode === 'byok'
@@ -373,7 +373,7 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
         </div>
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
           <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricCost')}</div>
-          <div className="text-white text-sm font-display font-semibold">
+          <div className="text-white text-sm font-display font-semibold leading-[1.95rem]">
             {snapshot.requestCost != null
               ? t('topbar.creditsRequestValue', { credits: formatCreditNumber(snapshot.requestCost) })
               : snapshot.mode === 'byok'
@@ -383,7 +383,7 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
         </div>
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
           <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricLeft')}</div>
-          <div className="text-white text-sm font-display font-semibold">
+          <div className="text-white text-sm font-display font-semibold leading-[1.95rem]">
             {snapshot.balanceKnown
               ? formatCreditNumber(snapshot.remainingCredits)
               : (snapshot.monthlyCredits != null ? formatCreditNumber(snapshot.monthlyCredits) : '-')}
@@ -404,10 +404,10 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
       )}
 
       <div className="flex flex-col sm:flex-row gap-2">
-        <button onClick={onPrimaryAction} className="btn-primary justify-center flex-1">
+        <button onClick={onPrimaryAction} className="btn-primary justify-center flex-1 text-sm min-h-[44px] py-2.5">
           {primaryLabel}
         </button>
-        <button onClick={onSecondaryAction} className="btn-secondary justify-center flex-1">
+        <button onClick={onSecondaryAction} className="btn-secondary justify-center flex-1 text-sm min-h-[44px] py-2.5">
           {secondaryLabel}
         </button>
       </div>
