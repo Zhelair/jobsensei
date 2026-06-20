@@ -112,6 +112,7 @@ export function AIProvider({ children }) {
     sendMagicLink,
     secureDevice,
     refreshSecureAccount,
+    patchSecureAccount,
   } = useAuth()
   const [provider, setProvider] = useState(PROVIDERS.DEEPSEEK)
   const [apiKey, setApiKey] = useState('')
@@ -301,6 +302,20 @@ export function AIProvider({ children }) {
     })
 
     const content = await readProxyResponse(res, { onChunk })
+    const nextBalance = Number(res.headers.get('x-jobsensei-credit-balance'))
+    const nextPeriodStartedAt = res.headers.get('x-jobsensei-credit-period-started-at') || ''
+    const nextPeriodEndsAt = res.headers.get('x-jobsensei-credit-period-ends-at') || ''
+
+    if (Number.isFinite(nextBalance)) {
+      patchSecureAccount({
+        creditBalance: Math.max(0, nextBalance),
+        creditsRemaining: Math.max(0, nextBalance),
+        creditPeriodStartedAt: nextPeriodStartedAt || secureAccount?.creditPeriodStartedAt || null,
+        creditPeriodEndsAt: nextPeriodEndsAt || secureAccount?.creditPeriodEndsAt || null,
+        creditsResetAt: nextPeriodEndsAt || secureAccount?.creditsResetAt || null,
+      })
+    }
+
     await refreshSecureAccount(accessToken).catch(() => {})
     return content
   }

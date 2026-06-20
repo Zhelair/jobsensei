@@ -89,6 +89,7 @@ describe('proxy secure-account mode', () => {
 
     expect(res._status).toBe(200)
     expect(res._body).toEqual({ content: 'Secure path response' })
+    expect(res._headers['X-JobSensei-Credit-Balance']).toBe('52969')
     expect(consumeHostedCreditsMock).toHaveBeenCalledWith(expect.objectContaining({
       userId: 'user-1',
       deviceId: 'js-device-1',

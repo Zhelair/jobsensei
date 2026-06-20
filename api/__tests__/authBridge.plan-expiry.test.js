@@ -240,4 +240,33 @@ describe('ensureSecureAccountAccess accounts-first flow', () => {
     expect(result.claimedGrantCount).toBe(1)
     expect(result.planExpiresAt).toBe('2026-07-10T10:00:00.000Z')
   })
+
+  it('does not rewrite an already-active account when no grant or expiry change happened', async () => {
+    const existingAccount = {
+      email: 'buyer@example.com',
+      plan_status: 'active',
+      plan_source: 'manual_admin',
+      plan_tier: 'pro',
+      plan_expires_at: '2026-07-10T10:00:00.000Z',
+      linked_at: '2026-06-01T10:00:00.000Z',
+      legacy_code_hash: null,
+      credit_balance: 52969,
+      credit_period_started_at: '2026-06-10T10:00:00.000Z',
+      credit_period_ends_at: '2026-07-10T10:00:00.000Z',
+      created_at: '2026-06-01T10:00:00.000Z',
+    }
+    const supabase = createSecureAccountSupabaseMock({
+      account: existingAccount,
+      claimableGrants: [],
+    })
+
+    const result = await ensureSecureAccountAccess({
+      supabase,
+      user: { id: 'user-1', email: 'buyer@example.com' },
+    })
+
+    expect(supabase.calls.accountUpserts).toHaveLength(0)
+    expect(result.account).toEqual(existingAccount)
+    expect(result.claimedGrantCount).toBe(0)
+  })
 })
