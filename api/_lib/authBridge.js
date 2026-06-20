@@ -992,19 +992,6 @@ export async function ensureSecureAccountAccess({
       },
     })
     accountSynced = true
-  } else if (!accountSynced) {
-    account = await persistAccountState({
-      supabase,
-      account,
-      user,
-      nowIso: now,
-      nowMs,
-      overrides: {
-        planTier: account?.plan_tier || 'free',
-        planSource: account?.plan_source || 'free_magic_link',
-        planExpiresAt: account?.plan_expires_at || null,
-      },
-    })
   }
 
   return {

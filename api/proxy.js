@@ -139,6 +139,9 @@ export default async function handler(req, res) {
   }
 
   let creditsReserved = false
+  let latestCreditBalance = null
+  let latestPeriodStartedAt = ''
+  let latestPeriodEndsAt = ''
 
   try {
     if (auth.authMode === 'secure_account') {
@@ -160,6 +163,11 @@ export default async function handler(req, res) {
       }
 
       creditsReserved = true
+      latestCreditBalance = Number.isFinite(Number(consumeResult?.balance))
+        ? Math.max(0, Number(consumeResult.balance))
+        : null
+      latestPeriodStartedAt = consumeResult?.period_started_at || ''
+      latestPeriodEndsAt = consumeResult?.period_ends_at || ''
     }
 
     const deepseekRes = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -197,12 +205,30 @@ export default async function handler(req, res) {
 
     if (!stream) {
       const data = await deepseekRes.json()
+      if (latestCreditBalance != null) {
+        res.setHeader('X-JobSensei-Credit-Balance', String(latestCreditBalance))
+      }
+      if (latestPeriodStartedAt) {
+        res.setHeader('X-JobSensei-Credit-Period-Started-At', latestPeriodStartedAt)
+      }
+      if (latestPeriodEndsAt) {
+        res.setHeader('X-JobSensei-Credit-Period-Ends-At', latestPeriodEndsAt)
+      }
       return res.status(200).json({ content: data.choices[0].message.content })
     }
 
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache, no-transform')
     res.setHeader('X-Accel-Buffering', 'no')
+    if (latestCreditBalance != null) {
+      res.setHeader('X-JobSensei-Credit-Balance', String(latestCreditBalance))
+    }
+    if (latestPeriodStartedAt) {
+      res.setHeader('X-JobSensei-Credit-Period-Started-At', latestPeriodStartedAt)
+    }
+    if (latestPeriodEndsAt) {
+      res.setHeader('X-JobSensei-Credit-Period-Ends-At', latestPeriodEndsAt)
+    }
 
     const reader = deepseekRes.body.getReader()
     const decoder = new TextDecoder()

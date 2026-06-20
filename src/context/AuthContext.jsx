@@ -633,6 +633,16 @@ export function AuthProvider({ children }) {
     setPlanExpiredNotice(null)
   }
 
+  function patchSecureAccount(nextPatch = {}) {
+    setSecureAccount(current => {
+      if (!current) return current
+      return {
+        ...current,
+        ...nextPatch,
+      }
+    })
+  }
+
   const value = {
     bridgeStatus,
     statusError,
@@ -653,6 +663,7 @@ export function AuthProvider({ children }) {
     sendMagicLink,
     signOutSecure,
     refreshSecureAccount,
+    patchSecureAccount,
     deleteSecureAccount,
     exportSecureAccountData,
     revokeSecureDevice,
