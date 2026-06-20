@@ -827,16 +827,6 @@ export default function TopBar() {
           )}
         </div>
 
-        <button
-          data-guide="settings-button"
-          onClick={() => {
-            setActiveSection(SECTIONS.SETTINGS)
-            setShowCredits(false)
-          }}
-          className="hidden sm:flex btn-ghost"
-        >
-          <Settings size={16} />
-        </button>
       </div>
 
       {/* Mobile button feedback toast */}
