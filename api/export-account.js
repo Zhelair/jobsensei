@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     ] = await Promise.all([
       supabase
         .from('accounts')
-        .select('email, plan_status, plan_source, linked_at, created_at, updated_at')
+        .select('email, plan_status, plan_source, plan_tier, plan_expires_at, credit_balance, credit_period_started_at, credit_period_ends_at, linked_at, created_at, updated_at')
         .eq('user_id', user.id)
         .maybeSingle(),
       supabase

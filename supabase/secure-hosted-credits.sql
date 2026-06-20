@@ -15,6 +15,88 @@ alter table public.accounts
 alter table public.accounts
   add column if not exists credit_period_ends_at timestamptz;
 
+alter table public.accounts
+  add column if not exists plan_expires_at timestamptz;
+
+create or replace function public.normalize_account_plan_state()
+returns trigger
+language plpgsql
+as $$
+declare
+  v_now timestamptz := timezone('utc', now());
+  v_allowance integer;
+  v_anchor timestamptz;
+  v_should_reset boolean;
+begin
+  new.plan_tier := case
+    when lower(coalesce(new.plan_tier, 'free')) = 'pro' then 'pro'
+    else 'free'
+  end;
+
+  if new.plan_status is null or new.plan_status not in ('inactive', 'active', 'grace', 'revoked') then
+    new.plan_status := 'active';
+  elsif new.plan_status <> 'revoked' then
+    new.plan_status := 'active';
+  end if;
+
+  if new.plan_tier = 'free' then
+    new.plan_expires_at := null;
+    if coalesce(nullif(trim(coalesce(new.plan_source, '')), ''), '') = '' then
+      new.plan_source := 'free_magic_link';
+    end if;
+  else
+    if coalesce(nullif(trim(coalesce(new.plan_source, '')), ''), '') = '' then
+      new.plan_source := 'manual_admin';
+    end if;
+  end if;
+
+  v_allowance := case when new.plan_tier = 'free' then 531 else 53000 end;
+  if tg_op = 'INSERT' then
+    v_should_reset := true;
+  else
+    v_should_reset := coalesce(old.plan_tier, '') is distinct from coalesce(new.plan_tier, '')
+      or coalesce(old.plan_expires_at, 'epoch'::timestamptz) is distinct from coalesce(new.plan_expires_at, 'epoch'::timestamptz);
+  end if;
+
+  v_anchor := coalesce(new.credit_period_started_at, new.linked_at, new.created_at, v_now);
+
+  if v_should_reset then
+    new.credit_period_started_at := v_anchor;
+    new.credit_period_ends_at := case
+      when new.plan_tier = 'pro' and new.plan_expires_at is not null then new.plan_expires_at
+      else v_anchor + make_interval(days => 31)
+    end;
+    new.credit_balance := v_allowance;
+  else
+    new.credit_period_started_at := coalesce(new.credit_period_started_at, v_anchor);
+    new.credit_period_ends_at := coalesce(
+      new.credit_period_ends_at,
+      case
+        when new.plan_tier = 'pro' and new.plan_expires_at is not null then new.plan_expires_at
+        else new.credit_period_started_at + make_interval(days => 31)
+      end
+    );
+
+    if new.plan_tier = 'pro' and new.plan_expires_at is not null and new.credit_period_ends_at > new.plan_expires_at then
+      new.credit_period_ends_at := new.plan_expires_at;
+    end if;
+
+    if new.credit_balance is null or new.credit_balance < 0 then
+      new.credit_balance := v_allowance;
+    end if;
+  end if;
+
+  new.updated_at := v_now;
+  return new;
+end;
+$$;
+
+drop trigger if exists normalize_account_plan_state_before_write on public.accounts;
+create trigger normalize_account_plan_state_before_write
+before insert or update on public.accounts
+for each row
+execute function public.normalize_account_plan_state();
+
 create table if not exists public.hosted_credit_events (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,

@@ -20,7 +20,6 @@ function createPlanGrantUpdateResult(selectedRows) {
 
 function createSecureAccountSupabaseMock({
   account = null,
-  userGrants = [],
   claimableGrants = [],
 } = {}) {
   const calls = {
@@ -72,24 +71,6 @@ function createSecureAccountSupabaseMock({
         return {
           select() {
             return {
-              eq(column, value) {
-                if (column === 'user_id') {
-                  expect(value).toBe('user-1')
-                  return {
-                    eq(nextColumn, nextValue) {
-                      expect(nextColumn).toBe('status')
-                      expect(nextValue).toBe('active')
-                      return {
-                        order() {
-                          return Promise.resolve({ data: userGrants, error: null })
-                        },
-                      }
-                    },
-                  }
-                }
-
-                throw new Error(`Unexpected plan_grants select.eq call for ${column}`)
-              },
               is(column, value) {
                 expect(column).toBe('user_id')
                 expect(value).toBe(null)
@@ -119,7 +100,7 @@ function createSecureAccountSupabaseMock({
                 expect(column).toBe('id')
                 calls.planGrantUpdates.push({ payload, ids })
 
-                const matchedRows = [...userGrants, ...claimableGrants]
+                const matchedRows = claimableGrants
                   .filter(grant => ids.includes(grant.id))
                   .map(grant => ({
                     ...grant,
@@ -141,7 +122,7 @@ function createSecureAccountSupabaseMock({
   }
 }
 
-describe('ensureSecureAccountAccess plan expiry', () => {
+describe('ensureSecureAccountAccess accounts-first flow', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-06-19T12:00:00.000Z'))
@@ -151,13 +132,35 @@ describe('ensureSecureAccountAccess plan expiry', () => {
     vi.useRealTimers()
   })
 
-  it('expires elapsed Pro grants and falls back to Free credits', async () => {
+  it('creates a Free account when the signed-in user has no secure account yet', async () => {
+    const supabase = createSecureAccountSupabaseMock()
+
+    const result = await ensureSecureAccountAccess({
+      supabase,
+      user: { id: 'user-1', email: 'buyer@example.com' },
+    })
+
+    expect(supabase.calls.accountUpserts).toHaveLength(1)
+    expect(supabase.calls.accountUpserts[0].payload).toMatchObject({
+      plan_status: 'active',
+      plan_source: 'free_magic_link',
+      plan_tier: 'free',
+      plan_expires_at: null,
+      credit_balance: FREE_MONTHLY_CREDITS,
+    })
+    expect(result.account.plan_tier).toBe('free')
+    expect(result.planExpiresAt).toBe(null)
+    expect(result.claimedGrantCount).toBe(0)
+  })
+
+  it('downgrades an expired Pro account to Free and burns the remaining Pro balance', async () => {
     const supabase = createSecureAccountSupabaseMock({
       account: {
         email: 'buyer@example.com',
         plan_status: 'active',
         plan_source: 'bmac_webhook',
         plan_tier: 'pro',
+        plan_expires_at: '2026-06-01T09:00:00.000Z',
         linked_at: '2026-05-01T09:00:00.000Z',
         legacy_code_hash: null,
         credit_balance: 52938,
@@ -165,21 +168,6 @@ describe('ensureSecureAccountAccess plan expiry', () => {
         credit_period_ends_at: '2026-06-01T09:00:00.000Z',
         created_at: '2026-05-01T09:00:00.000Z',
       },
-      userGrants: [
-        {
-          id: 'grant-expired',
-          grant_type: 'bmac_webhook',
-          external_ref: 'evt-old',
-          status: 'active',
-          claim_email: 'buyer@example.com',
-          user_id: 'user-1',
-          metadata: {
-            planTier: 'pro',
-            expiresAt: '2026-06-01T09:00:00.000Z',
-          },
-          created_at: '2026-05-01T09:00:00.000Z',
-        },
-      ],
     })
 
     const result = await ensureSecureAccountAccess({
@@ -187,25 +175,33 @@ describe('ensureSecureAccountAccess plan expiry', () => {
       user: { id: 'user-1', email: 'buyer@example.com' },
     })
 
-    expect(supabase.calls.planGrantUpdates).toHaveLength(1)
-    expect(supabase.calls.planGrantUpdates[0]).toMatchObject({
-      payload: expect.objectContaining({ status: 'expired' }),
-      ids: ['grant-expired'],
-    })
     expect(supabase.calls.accountUpserts).toHaveLength(1)
     expect(supabase.calls.accountUpserts[0].payload).toMatchObject({
       plan_status: 'active',
       plan_source: 'free_magic_link',
       plan_tier: 'free',
+      plan_expires_at: null,
       credit_balance: FREE_MONTHLY_CREDITS,
     })
     expect(result.account.plan_tier).toBe('free')
-    expect(result.activeGrants).toEqual([])
     expect(result.planExpiresAt).toBe(null)
   })
 
-  it('claims a matching Pro grant and keeps the Pro allowance active until its expiry', async () => {
+  it('claims a matching Pro grant once and copies it into accounts', async () => {
     const supabase = createSecureAccountSupabaseMock({
+      account: {
+        email: 'buyer@example.com',
+        plan_status: 'active',
+        plan_source: 'free_magic_link',
+        plan_tier: 'free',
+        plan_expires_at: null,
+        linked_at: '2026-06-01T10:00:00.000Z',
+        legacy_code_hash: null,
+        credit_balance: FREE_MONTHLY_CREDITS,
+        credit_period_started_at: '2026-06-01T10:00:00.000Z',
+        credit_period_ends_at: '2026-07-02T10:00:00.000Z',
+        created_at: '2026-06-01T10:00:00.000Z',
+      },
       claimableGrants: [
         {
           id: 'grant-pro',
@@ -233,11 +229,11 @@ describe('ensureSecureAccountAccess plan expiry', () => {
     expect(supabase.calls.planGrantUpdates[0].payload).toMatchObject({
       user_id: 'user-1',
     })
-    expect(supabase.calls.accountUpserts).toHaveLength(1)
-    expect(supabase.calls.accountUpserts[0].payload).toMatchObject({
+    expect(supabase.calls.accountUpserts.at(-1).payload).toMatchObject({
       plan_status: 'active',
       plan_source: 'bmac_webhook',
       plan_tier: 'pro',
+      plan_expires_at: '2026-07-10T10:00:00.000Z',
       credit_balance: PRO_MONTHLY_CREDITS,
     })
     expect(result.account.plan_tier).toBe('pro')

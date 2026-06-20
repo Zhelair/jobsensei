@@ -1,56 +1,27 @@
 -- Promote an already registered JobSensei user from Free to Pro.
 --
--- Correct flow:
--- 1. The person signs in normally with the magic link and gets a Free account.
--- 2. You run this SQL with THEIR exact signed-in email.
--- 3. They refresh Settings or reopen the app while still signed in.
--- 4. JobSensei claims the grant, switches accounts.plan_tier to 'pro',
---    sets plan_source to 'manual_admin', and resets credit_balance to 53000.
+-- New model:
+-- - public.accounts is the live source of truth for plan + credits.
+-- - public.plan_grants is only optional history / delayed-claim support.
 --
--- Important:
--- - Do NOT manually edit accounts.plan_tier and expect it to stick.
--- - plan_grants is the source of truth; accounts is only the synced snapshot.
--- - claim_email must exactly match the user's signed-in email.
+-- Use this when the user has already signed in at least once and has an
+-- accounts row. The trigger from secure-auth-bridge.sql will reset credits
+-- and the credit window automatically when plan_tier / plan_expires_at change.
 --
 -- Replace these values before running:
 -- - friend@example.com
--- - manual-pro-friend-001
---
--- Optional:
--- - add expiresAt if you want temporary Pro access
--- - keep status = 'active'
+-- - 2026-07-20T00:00:00.000Z
 
-delete from public.plan_grants
-where grant_type = 'manual_admin'
-  and external_ref = 'manual-pro-friend-001';
+update public.accounts
+set
+  plan_tier = 'pro',
+  plan_source = 'manual_admin',
+  plan_expires_at = '2026-07-20T00:00:00.000Z',
+  updated_at = timezone('utc', now())
+where lower(email) = lower('friend@example.com');
 
-insert into public.plan_grants (
-  grant_type,
-  external_ref,
-  claim_email,
-  status,
-  metadata
-)
-values (
-  'manual_admin',
-  'manual-pro-friend-001',
-  'friend@example.com',
-  'active',
-  jsonb_build_object(
-    'planTier', 'pro',
-    'planSource', 'manual_admin',
-    'source', 'manual_admin',
-    'note', 'Manual Pro access granted by admin'
-    -- Optional:
-    -- ,'expiresAt', '2026-07-20T00:00:00.000Z'
-  )
-);
-
--- Expected result after the next secure account refresh:
--- - plan_grants.user_id becomes the signed-in user id
--- - plan_grants.claimed_at is filled
+-- Expected result:
 -- - accounts.plan_tier becomes 'pro'
 -- - accounts.plan_source becomes 'manual_admin'
--- - accounts.credit_balance becomes 53000
--- - accounts.credit_period_started_at / credit_period_ends_at reset for the new Pro window
-
+-- - accounts.plan_expires_at becomes your chosen Pro end date
+-- - credits reset to the Pro monthly allowance automatically
