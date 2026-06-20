@@ -310,10 +310,7 @@ export default function TodayPage() {
           : t('today.openWorkspace'),
         onClick: nextFocusStep ? nextFocusStep.onClick : () => openTrackerApplication(focusApplication.id, 'overview'),
       }
-    : {
-        label: t('today.openApplications'),
-        onClick: () => setActiveSection(SECTIONS.APPLICATIONS),
-      }
+    : null
 
   const actionCards = [
     {
@@ -385,14 +382,16 @@ export default function TodayPage() {
             <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">{t('today.activeFocus')}</div>
             <h3 className="font-display font-semibold text-white text-xl mb-2">{heroTitle}</h3>
             <p className="text-slate-300 text-sm leading-relaxed">{heroCopy}</p>
-            <div className="mt-4">
-              <button
-                onClick={primaryAction.onClick}
-                className="btn-primary text-sm md:text-base px-5 py-3 min-h-[48px] md:min-h-[52px] shadow-lg shadow-teal-500/20"
-              >
-                {primaryAction.label}
-              </button>
-            </div>
+            {primaryAction && (
+              <div className="mt-4">
+                <button
+                  onClick={primaryAction.onClick}
+                  className="btn-primary text-sm md:text-base px-5 py-3 min-h-[48px] md:min-h-[52px] shadow-lg shadow-teal-500/20"
+                >
+                  {primaryAction.label}
+                </button>
+              </div>
+            )}
             {focusApplication && (
               <p className="text-slate-500 text-sm mt-3 leading-relaxed">
                 {t('today.prepHubsNote')}
@@ -447,11 +446,7 @@ export default function TodayPage() {
               <button onClick={() => openTrackerApplication(focusApplication.id, 'overview')} className="btn-primary text-sm">
                 {t('today.workspace')}
               </button>
-            ) : (
-              <button onClick={() => setActiveSection(SECTIONS.APPLICATIONS)} className="btn-primary text-sm">
-                {t('today.applications')}
-              </button>
-            )}
+            ) : null}
           </div>
         </div>
 
