@@ -341,7 +341,7 @@ const TRANSLATIONS = {
     'today.subtitle': 'One place to see the next real move in your job search.',
     'today.activeFocus': 'Active Focus',
     'today.startFirst': 'Start your first application',
-    'today.startCopy': 'Add a company and role first. JobSensei will turn it into one guided workspace with research, story prep, practice, and follow-up.',
+    'today.startCopy': 'JobSensei turns one job description into a complete interview-prep workflow. Add the company, role, and job description once, then see your likely gaps, practice the interview, and keep your notes, follow-up, and prep in one place instead of across 12 tabs.',
     'today.openApplications': 'Open Applications',
     'today.applications': 'Applications',
     'today.workspaceProgress': 'Workspace Progress',
