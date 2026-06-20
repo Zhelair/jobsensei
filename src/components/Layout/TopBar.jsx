@@ -362,8 +362,10 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-          <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricAllowance')}</div>
-          <div className="text-white text-sm font-display font-semibold leading-[1.95rem]">
+          <div className="text-[10px] sm:text-[11px] text-slate-500 mb-1 leading-tight min-h-[26px]">
+            {t('topbar.creditsMetricAllowance')}
+          </div>
+          <div className="text-white text-[15px] sm:text-sm font-display font-semibold leading-tight">
             {snapshot.monthlyCredits != null
               ? formatCreditNumber(snapshot.monthlyCredits)
               : snapshot.mode === 'byok'
@@ -372,8 +374,10 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
           </div>
         </div>
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-          <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricCost')}</div>
-          <div className="text-white text-sm font-display font-semibold leading-[1.95rem]">
+          <div className="text-[10px] sm:text-[11px] text-slate-500 mb-1 leading-tight min-h-[26px]">
+            {t('topbar.creditsMetricCost')}
+          </div>
+          <div className="text-white text-[15px] sm:text-sm font-display font-semibold leading-tight">
             {snapshot.requestCost != null
               ? t('topbar.creditsRequestValue', { credits: formatCreditNumber(snapshot.requestCost) })
               : snapshot.mode === 'byok'
@@ -382,8 +386,10 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
           </div>
         </div>
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-          <div className="text-[11px] text-slate-500 mb-1">{t('topbar.creditsMetricLeft')}</div>
-          <div className="text-white text-sm font-display font-semibold leading-[1.95rem]">
+          <div className="text-[10px] sm:text-[11px] text-slate-500 mb-1 leading-tight min-h-[26px]">
+            {t('topbar.creditsMetricLeft')}
+          </div>
+          <div className="text-white text-[15px] sm:text-sm font-display font-semibold leading-tight">
             {snapshot.balanceKnown
               ? formatCreditNumber(snapshot.remainingCredits)
               : (snapshot.monthlyCredits != null ? formatCreditNumber(snapshot.monthlyCredits) : '-')}
@@ -404,10 +410,10 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
       )}
 
       <div className="flex flex-col sm:flex-row gap-2">
-        <button onClick={onPrimaryAction} className="btn-primary justify-center flex-1 text-sm min-h-[44px] py-2.5">
+        <button onClick={onPrimaryAction} className="btn-primary justify-center flex-1 text-xs sm:text-sm min-h-[40px] py-2">
           {primaryLabel}
         </button>
-        <button onClick={onSecondaryAction} className="btn-secondary justify-center flex-1 text-sm min-h-[44px] py-2.5">
+        <button onClick={onSecondaryAction} className="btn-secondary justify-center flex-1 text-xs sm:text-sm min-h-[40px] py-2">
           {secondaryLabel}
         </button>
       </div>
@@ -760,10 +766,15 @@ export default function TopBar() {
         <div className="relative sm:hidden">
           <button
             onClick={() => setShowMore(v => !v)}
-            className={`btn-ghost text-base leading-none ${showMore ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+            className={`btn-ghost relative text-base leading-none ${!guideSeen && help ? 'ring-1 ring-teal-500/40 text-teal-300 opacity-100' : showMore ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
             title={t('topbar.moreOptions')}
           >
             <MoreHorizontal size={18} />
+            {!guideSeen && help && (
+              <span className="absolute -top-2 -right-2 rounded-full bg-yellow-400 px-1.5 py-0.5 text-[10px] font-bold text-navy-950">
+                {t('topbar.start')}
+              </span>
+            )}
           </button>
           {showMore && (
             <>
@@ -815,7 +826,7 @@ export default function TopBar() {
             setActiveSection(SECTIONS.SETTINGS)
             setShowCredits(false)
           }}
-          className="btn-ghost"
+          className="hidden sm:flex btn-ghost"
         >
           <Settings size={16} />
         </button>
