@@ -5,6 +5,8 @@
 import {
   ACTIVE_PLAN_STATUSES,
   authenticateSupabaseUser,
+  isSupabaseClientConfigured,
+  isSupabaseServerConfigured,
   consumeHostedCredits,
   createSupabaseAdminClient,
   ensureSecureAccountAccess,
@@ -26,6 +28,14 @@ async function authorizeProxyRequest(req) {
 
   const legacyPayload = verifyLegacyAccessToken(token)
   if (legacyPayload) {
+    if (isSupabaseServerConfigured() && isSupabaseClientConfigured()) {
+      return {
+        ok: false,
+        status: 401,
+        error: 'This deployment now requires secure email sign-in. Open Settings and sign in again to refresh your JobSensei access.',
+      }
+    }
+
     return {
       ok: true,
       authMode: 'legacy',

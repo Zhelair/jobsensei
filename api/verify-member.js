@@ -3,6 +3,7 @@
 
 import {
   getLegacyAccessCodes,
+  isSupabaseClientConfigured,
   isSupabaseServerConfigured,
   normalizeEmail,
   setDefaultCorsHeaders,
@@ -37,6 +38,12 @@ export default async function handler(req, res) {
       return res.status(200).json({
         next: 'magic_link',
         email: normalizeEmail(input),
+      })
+    }
+
+    if (isSupabaseServerConfigured() && isSupabaseClientConfigured()) {
+      return res.status(409).json({
+        error: 'This deployment now uses secure email sign-in only. Enter the email linked to your JobSensei access.',
       })
     }
 
