@@ -53,6 +53,7 @@ export default function Settings() {
   const [extracting, setExtracting] = useState(false)
   const fileRef = useRef(null)
   const projectImportRef = useRef(null)
+  const planAccessRef = useRef(null)
   const byokCardRef = useRef(null)
 
   function formatCreditNumber(value) {
@@ -78,6 +79,12 @@ export default function Settings() {
   }, [provider, model, apiKey, customBaseUrl])
 
   useEffect(() => {
+    function openPlanAccessPanel() {
+      window.setTimeout(() => {
+        planAccessRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+      }, 60)
+    }
+
     function openByokPanel() {
       setShowOwnKey(true)
       window.setTimeout(() => {
@@ -85,8 +92,12 @@ export default function Settings() {
       }, 60)
     }
 
+    window.addEventListener('jobsensei:open-plan-settings', openPlanAccessPanel)
     window.addEventListener('jobsensei:open-byok-settings', openByokPanel)
-    return () => window.removeEventListener('jobsensei:open-byok-settings', openByokPanel)
+    return () => {
+      window.removeEventListener('jobsensei:open-plan-settings', openPlanAccessPanel)
+      window.removeEventListener('jobsensei:open-byok-settings', openByokPanel)
+    }
   }, [])
 
   useEffect(() => {
@@ -520,7 +531,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="card border-teal-500/20 bg-teal-500/5">
+      <div ref={planAccessRef} className="card border-teal-500/20 bg-teal-500/5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0 max-w-3xl">
             <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">{t('settings.planAccess')}</div>

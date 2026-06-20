@@ -109,7 +109,9 @@ export default function PaywallModal() {
             onClick={() => {
               closePaywall()
               setActiveSection(SECTIONS.SETTINGS)
-              window.dispatchEvent(new CustomEvent('jobsensei:open-byok-settings'))
+              window.setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('jobsensei:open-byok-settings'))
+              }, 80)
             }}
             className="text-teal-400 hover:underline"
           >
