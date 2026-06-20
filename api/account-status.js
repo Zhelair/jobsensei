@@ -19,7 +19,7 @@ function toAccountSummary(account, deviceAccess, accessSync = {}) {
     linkedAt: account.linked_at,
     linked: Boolean(account.linked_at),
     planActive: ACTIVE_PLAN_STATUSES.has(account.plan_status),
-    planExpiresAt: accessSync.planExpiresAt || null,
+    planExpiresAt: account.plan_expires_at || accessSync.planExpiresAt || null,
     creditBalance: Number.isFinite(Number(account.credit_balance)) ? Math.max(0, Number(account.credit_balance)) : null,
     creditsRemaining: Number.isFinite(Number(account.credit_balance)) ? Math.max(0, Number(account.credit_balance)) : null,
     creditsResetAt: account.credit_period_ends_at || null,
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
 
     const { data: account, error: accountError } = await supabase
       .from('accounts')
-      .select('email, plan_status, plan_source, plan_tier, linked_at, credit_balance, credit_period_started_at, credit_period_ends_at')
+      .select('email, plan_status, plan_source, plan_tier, plan_expires_at, linked_at, credit_balance, credit_period_started_at, credit_period_ends_at')
       .eq('user_id', user.id)
       .maybeSingle()
 

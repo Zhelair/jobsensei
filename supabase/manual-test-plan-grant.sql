@@ -2,20 +2,19 @@
 -- Replace the email/ref values, then run this in Supabase SQL Editor.
 --
 -- Important:
--- - plan_grants is the source of truth for hosted access.
--- - accounts is only the synced/cached account snapshot.
--- - You can create this grant before OR after the user signs in.
+-- - accounts is the live source of truth once the person has a secure account.
+-- - plan_grants is now only a delayed-claim / history helper.
+-- - Use this only when the person has NOT signed in yet or when you want a
+--   pending email-based Pro grant waiting for their first secure sign-in.
 --
 -- If the user has never signed in yet:
 -- 1. Insert this grant.
 -- 2. Send a magic link to the same email in JobSensei Settings.
 -- 3. Open the link on the same device.
--- 4. account-status should auto-claim this grant and sync the account to Pro.
+-- 4. account-status should claim this grant once and copy it into accounts.
 --
 -- If the user already signed in before:
--- 1. Insert this grant.
--- 2. Refresh Settings or re-open the app while signed in.
--- 3. account-status should claim the unclaimed grant on the next secure refresh.
+-- - Prefer updating public.accounts directly instead of creating a new grant.
 --
 -- This script deletes the old manual test row first so it works even if
 -- your database doesn't infer the partial unique index for ON CONFLICT.

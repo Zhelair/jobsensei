@@ -205,6 +205,105 @@ function getCreditPeriodWindow({
   }
 }
 
+function getPlanWindowEnd({
+  planTier = 'free',
+  anchor,
+  planExpiresAt = null,
+} = {}) {
+  const normalizedExpiry = toIsoOrNull(planExpiresAt)
+  if (planTier === 'pro' && normalizedExpiry) return normalizedExpiry
+  return addDaysToIso(anchor || Date.now(), CREDIT_PERIOD_DAYS)
+}
+
+function isAccountProExpired(account, now = Date.now()) {
+  if (String(account?.plan_tier || '').toLowerCase() !== 'pro') return false
+  const expiry = toIsoOrNull(account?.plan_expires_at)
+  if (!expiry) return false
+  return new Date(expiry).getTime() <= now
+}
+
+function buildDefaultAccountState({
+  account = null,
+  user,
+  nowIso,
+  nowMs = Date.now(),
+  overrides = {},
+} = {}) {
+  const planTier = overrides.planTier || String(account?.plan_tier || 'free').toLowerCase() || 'free'
+  const normalizedPlanTier = planTier === 'pro' ? 'pro' : 'free'
+  const creditAllowance = getCreditAllowanceForPlanTier(normalizedPlanTier)
+  const anchor = overrides.anchor || account?.linked_at || account?.created_at || nowIso
+  const rawPlanExpiry = normalizedPlanTier === 'pro'
+    ? (overrides.planExpiresAt ?? account?.plan_expires_at ?? null)
+    : null
+  const planExpiresAt = normalizedPlanTier === 'pro' ? toIsoOrNull(rawPlanExpiry) : null
+  const planSource = overrides.planSource || account?.plan_source || (normalizedPlanTier === 'pro' ? 'manual_admin' : 'free_magic_link')
+  const planStatus = overrides.planStatus || (
+    account?.plan_status === 'revoked'
+      ? 'revoked'
+      : 'active'
+  )
+  const tierChanged = Boolean(account?.plan_tier) && account.plan_tier !== normalizedPlanTier
+  const resetCredits = Boolean(overrides.resetCredits || tierChanged)
+  const periodStart = resetCredits
+    ? anchor
+    : (account?.credit_period_started_at || anchor)
+  const computedPeriodEnd = getPlanWindowEnd({
+    planTier: normalizedPlanTier,
+    anchor: periodStart,
+    planExpiresAt,
+  })
+  const nextWindow = getCreditPeriodWindow({
+    anchor: periodStart,
+    now: nowMs,
+    periodStart,
+    periodEnd: resetCredits
+      ? computedPeriodEnd
+      : (account?.credit_period_ends_at || computedPeriodEnd),
+  })
+  const nextCreditBalance = resetCredits
+    ? creditAllowance
+    : nextWindow.reset
+      ? creditAllowance
+      : Number.isFinite(Number(account?.credit_balance))
+        ? Math.max(0, Number(account.credit_balance))
+        : creditAllowance
+
+  return {
+    user_id: user.id,
+    email: user.email || account?.email || '',
+    plan_status: planStatus,
+    plan_source: planSource,
+    plan_tier: normalizedPlanTier,
+    plan_expires_at: planExpiresAt,
+    legacy_code_hash: account?.legacy_code_hash || null,
+    linked_at: account?.linked_at || nowIso,
+    credit_balance: nextCreditBalance,
+    credit_period_started_at: nextWindow.creditPeriodStartedAt,
+    credit_period_ends_at: nextWindow.creditPeriodEndsAt,
+    updated_at: nowIso,
+  }
+}
+
+async function persistAccountState({ supabase, account, user, nowIso, nowMs = Date.now(), overrides = {} }) {
+  const payload = buildDefaultAccountState({
+    account,
+    user,
+    nowIso,
+    nowMs,
+    overrides,
+  })
+
+  const { data: nextAccount, error } = await supabase
+    .from('accounts')
+    .upsert(payload, { onConflict: 'user_id' })
+    .select('email, plan_status, plan_source, plan_tier, plan_expires_at, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at')
+    .single()
+
+  if (error) throw error
+  return nextAccount
+}
+
 function parseAllowedList(value = '') {
   return new Set(
     String(value || '')
@@ -767,18 +866,12 @@ export async function ensureSecureAccountAccess({
   const now = new Date().toISOString()
   const nowMs = Date.now()
   const userEmail = normalizeEmail(user.email)
-  const [accountResponse, userGrantsResponse, claimableGrantsResponse] = await Promise.all([
+  const [accountResponse, claimableGrantsResponse] = await Promise.all([
     supabase
       .from('accounts')
-      .select('email, plan_status, plan_source, plan_tier, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at')
+      .select('email, plan_status, plan_source, plan_tier, plan_expires_at, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at')
       .eq('user_id', user.id)
       .maybeSingle(),
-    supabase
-      .from('plan_grants')
-      .select('id, grant_type, external_ref, status, claim_email, user_id, metadata, created_at')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false }),
     userEmail
       ? supabase
           .from('plan_grants')
@@ -790,22 +883,39 @@ export async function ensureSecureAccountAccess({
       : Promise.resolve({ data: [], error: null }),
   ])
 
-  if (accountResponse.error || userGrantsResponse.error || claimableGrantsResponse.error) {
-    throw accountResponse.error || userGrantsResponse.error || claimableGrantsResponse.error
+  if (accountResponse.error || claimableGrantsResponse.error) {
+    throw accountResponse.error || claimableGrantsResponse.error
   }
 
   let account = accountResponse.data || null
-  let activeGrants = [...(userGrantsResponse.data || [])]
   let claimableGrants = [...(claimableGrantsResponse.data || [])]
   let claimedGrantCount = 0
+  let accountSynced = false
 
   await expireElapsedPlanGrants({
     supabase,
-    grants: [...activeGrants, ...claimableGrants],
+    grants: [...claimableGrants],
   })
 
-  activeGrants = activeGrants.filter(grant => grantIsCurrentlyActive(grant, nowMs))
   claimableGrants = claimableGrants.filter(grant => grantIsCurrentlyActive(grant, nowMs))
+
+  if (!account) {
+    account = await persistAccountState({
+      supabase,
+      account: null,
+      user,
+      nowIso: now,
+      nowMs,
+      overrides: {
+        planTier: 'free',
+        planSource: 'free_magic_link',
+        planExpiresAt: null,
+        resetCredits: true,
+        anchor: now,
+      },
+    })
+    accountSynced = true
+  }
 
   if (claimableGrants.length) {
     const claimableGrantIds = claimableGrants.map(grant => grant.id)
@@ -822,10 +932,38 @@ export async function ensureSecureAccountAccess({
     if (claimError) throw claimError
 
     claimedGrantCount = claimedGrants?.length || 0
-    activeGrants = [
-      ...activeGrants,
-      ...(claimedGrants || []).filter(grant => grantIsCurrentlyActive(grant, nowMs)),
-    ]
+    const activeClaimedGrants = (claimedGrants || []).filter(grant => grantIsCurrentlyActive(grant, nowMs))
+    const primaryGrant = getPrimaryGrant(activeClaimedGrants)
+
+    if (primaryGrant) {
+      const planTier = derivePlanTierFromGrant(primaryGrant, 'pro')
+      const planAnchor = firstNonEmpty(
+        primaryGrant?.metadata?.periodStartedAt,
+        primaryGrant?.metadata?.period_started_at,
+        primaryGrant?.metadata?.purchasedAt,
+        primaryGrant?.metadata?.purchased_at,
+        primaryGrant?.metadata?.grantedAt,
+        primaryGrant?.metadata?.granted_at,
+        primaryGrant?.created_at,
+        now,
+      )
+
+      account = await persistAccountState({
+        supabase,
+        account,
+        user,
+        nowIso: now,
+        nowMs,
+        overrides: {
+          planTier,
+          planSource: derivePlanSourceFromGrant(primaryGrant),
+          planExpiresAt: getGrantExpiryIso(primaryGrant),
+          resetCredits: true,
+          anchor: planAnchor,
+        },
+      })
+      accountSynced = true
+    }
 
     await logSecureAuditEvent({
       userId: user.id,
@@ -837,93 +975,43 @@ export async function ensureSecureAccountAccess({
     })
   }
 
-  const primaryGrant = getPrimaryGrant(activeGrants)
-  const planExpiresAt = primaryGrant ? getGrantExpiryIso(primaryGrant) : null
-  if (primaryGrant) {
-    const planTier = derivePlanTierFromGrant(primaryGrant, account?.plan_tier || 'pro')
-    const monthlyCreditAllowance = getCreditAllowanceForPlanTier(planTier)
-    const planAnchor = primaryGrant.created_at || account?.linked_at || account?.created_at || now
-    const tierChanged = account?.plan_tier && account.plan_tier !== planTier
-    const nextWindow = getCreditPeriodWindow({
-      anchor: planAnchor,
-      now: Date.now(),
-      periodStart: tierChanged ? planAnchor : (account?.credit_period_started_at || planAnchor),
-      periodEnd: tierChanged ? addDaysToIso(planAnchor, CREDIT_PERIOD_DAYS) : account?.credit_period_ends_at,
+  const planExpired = isAccountProExpired(account, nowMs)
+  if (planExpired) {
+    account = await persistAccountState({
+      supabase,
+      account,
+      user,
+      nowIso: now,
+      nowMs,
+      overrides: {
+        planTier: 'free',
+        planSource: 'free_magic_link',
+        planExpiresAt: null,
+        resetCredits: true,
+        anchor: now,
+      },
     })
-    const nextCreditBalance = tierChanged
-      ? monthlyCreditAllowance
-      : nextWindow.reset
-        ? monthlyCreditAllowance
-        : Number.isFinite(Number(account?.credit_balance))
-          ? Math.max(0, Number(account.credit_balance))
-          : monthlyCreditAllowance
-
-    const { data: nextAccount, error: accountUpsertError } = await supabase
-      .from('accounts')
-      .upsert({
-        user_id: user.id,
-        email: user.email || account?.email || '',
-        plan_status: 'active',
-        plan_source: derivePlanSourceFromGrant(primaryGrant),
-        plan_tier: planTier,
-        legacy_code_hash: account?.legacy_code_hash || null,
-        linked_at: account?.linked_at || now,
-        credit_balance: nextCreditBalance,
-        credit_period_started_at: nextWindow.creditPeriodStartedAt,
-        credit_period_ends_at: nextWindow.creditPeriodEndsAt,
-        updated_at: now,
-      }, { onConflict: 'user_id' })
-      .select('email, plan_status, plan_source, plan_tier, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at')
-      .single()
-
-    if (accountUpsertError) throw accountUpsertError
-    account = nextAccount
-  } else {
-    const planTier = 'free'
-    const monthlyCreditAllowance = getCreditAllowanceForPlanTier(planTier)
-    const planAnchor = account?.linked_at || account?.created_at || now
-    const tierChanged = account?.plan_tier && account.plan_tier !== planTier
-    const nextWindow = getCreditPeriodWindow({
-      anchor: planAnchor,
-      now: Date.now(),
-      periodStart: tierChanged ? planAnchor : (account?.credit_period_started_at || planAnchor),
-      periodEnd: tierChanged ? addDaysToIso(planAnchor, CREDIT_PERIOD_DAYS) : account?.credit_period_ends_at,
+    accountSynced = true
+  } else if (!accountSynced) {
+    account = await persistAccountState({
+      supabase,
+      account,
+      user,
+      nowIso: now,
+      nowMs,
+      overrides: {
+        planTier: account?.plan_tier || 'free',
+        planSource: account?.plan_source || 'free_magic_link',
+        planExpiresAt: account?.plan_expires_at || null,
+      },
     })
-    const nextCreditBalance = tierChanged
-      ? monthlyCreditAllowance
-      : nextWindow.reset
-        ? monthlyCreditAllowance
-        : Number.isFinite(Number(account?.credit_balance))
-          ? Math.max(0, Number(account.credit_balance))
-          : monthlyCreditAllowance
-
-    const { data: nextAccount, error: accountUpsertError } = await supabase
-      .from('accounts')
-      .upsert({
-        user_id: user.id,
-        email: user.email || account?.email || '',
-        plan_status: 'active',
-        plan_source: 'free_magic_link',
-        plan_tier: planTier,
-        legacy_code_hash: account?.legacy_code_hash || null,
-        linked_at: account?.linked_at || now,
-        credit_balance: nextCreditBalance,
-        credit_period_started_at: nextWindow.creditPeriodStartedAt,
-        credit_period_ends_at: nextWindow.creditPeriodEndsAt,
-        updated_at: now,
-      }, { onConflict: 'user_id' })
-      .select('email, plan_status, plan_source, plan_tier, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at')
-      .single()
-
-    if (accountUpsertError) throw accountUpsertError
-    account = nextAccount
   }
 
   return {
     account,
-    activeGrants,
+    activeGrants: [],
     claimedGrantCount,
-    planExpiresAt,
+    planExpiresAt: account?.plan_expires_at || null,
   }
 }
 
@@ -1164,13 +1252,61 @@ export async function upsertBmacPlanGrant({
   if (grantError) throw grantError
 
   if (existingAccount?.user_id) {
-    await ensureSecureAccountAccess({
-      supabase,
-      user: {
-        id: existingAccount.user_id,
-        email: existingAccount.email || normalizedEmail,
-      },
-    })
+    const accountUser = {
+      id: existingAccount.user_id,
+      email: existingAccount.email || normalizedEmail,
+    }
+    const { data: currentAccount, error: currentAccountError } = await supabase
+      .from('accounts')
+      .select('email, plan_status, plan_source, plan_tier, plan_expires_at, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at')
+      .eq('user_id', existingAccount.user_id)
+      .maybeSingle()
+
+    if (currentAccountError) throw currentAccountError
+
+    if (status === 'active') {
+      const planTier = derivePlanTierFromGrant(grant, 'pro')
+      const planAnchor = firstNonEmpty(
+        grant?.metadata?.periodStartedAt,
+        grant?.metadata?.period_started_at,
+        grant?.metadata?.purchasedAt,
+        grant?.metadata?.purchased_at,
+        grant?.metadata?.grantedAt,
+        grant?.metadata?.granted_at,
+        grant?.created_at,
+        now,
+      )
+
+      await persistAccountState({
+        supabase,
+        account: currentAccount,
+        user: accountUser,
+        nowIso: now,
+        nowMs: Date.now(),
+        overrides: {
+          planTier,
+          planSource: derivePlanSourceFromGrant(grant),
+          planExpiresAt: getGrantExpiryIso(grant),
+          resetCredits: true,
+          anchor: planAnchor,
+        },
+      })
+    } else if (String(currentAccount?.plan_source || '').toLowerCase() === 'bmac_webhook') {
+      await persistAccountState({
+        supabase,
+        account: currentAccount,
+        user: accountUser,
+        nowIso: now,
+        nowMs: Date.now(),
+        overrides: {
+          planTier: 'free',
+          planSource: 'free_magic_link',
+          planExpiresAt: null,
+          resetCredits: true,
+          anchor: now,
+        },
+      })
+    }
   }
 
   return {
