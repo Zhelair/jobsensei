@@ -386,6 +386,7 @@ export function AuthProvider({ children }) {
     setLoadingAccount(true)
     try {
       const response = await fetch('/api/account-status', {
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${nextAccessToken}`,
           ...buildSecureDeviceHeaders(secureDevice),
@@ -416,6 +417,27 @@ export function AuthProvider({ children }) {
 
     refreshSecureAccount(secureSession.access_token).catch(() => {})
   }, [secureDevice, secureSession?.access_token])
+
+  useEffect(() => {
+    if (!secureSession?.access_token) return
+
+    const refreshCurrentAccount = () => {
+      refreshSecureAccount(secureSession.access_token).catch(() => {})
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshCurrentAccount()
+      }
+    }
+
+    window.addEventListener('focus', refreshCurrentAccount)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', refreshCurrentAccount)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [refreshSecureAccount, secureSession?.access_token])
 
   useEffect(() => {
     if (!secureAccount?.email) return

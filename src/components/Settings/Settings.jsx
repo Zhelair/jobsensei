@@ -21,7 +21,7 @@ export default function Settings() {
   const {
     secureUser, secureAccount, statusError, accountError, signOutSecure,
     magicLinkSentTo,
-    revokeSecureDevice, revokingDeviceId,
+    revokeSecureDevice, revokingDeviceId, loadingAccount, refreshSecureAccount,
   } = useAuth()
   const { profile, setShowOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData, exportProject, exportAll, importProjects } = useProject()
@@ -158,6 +158,16 @@ export default function Settings() {
   async function handleSecureSignOut() {
     if (!window.confirm(t('settings.signOutConfirm'))) return
     await signOutSecure()
+  }
+
+  async function handleSecureRefresh() {
+    setSecureError('')
+
+    try {
+      await refreshSecureAccount()
+    } catch (error) {
+      setSecureError(error.message || 'Unable to load account access status.')
+    }
   }
 
   async function handleUnlockAccess() {
@@ -709,6 +719,15 @@ export default function Settings() {
                 {(bmacToken || secureSignedIn) && (
                   <div className="flex flex-wrap gap-2">
                     {secureSignedIn && (
+                      <button
+                        onClick={handleSecureRefresh}
+                        disabled={loadingAccount}
+                        className="btn-ghost text-xs text-slate-300 hover:text-teal-300 disabled:opacity-60"
+                      >
+                        {loadingAccount ? `${t('settings.secureAccountRefresh')}...` : t('settings.secureAccountRefresh')}
+                      </button>
+                    )}
+                    {secureSignedIn && (
                       <button onClick={handleSecureSignOut} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
                         <LogOut size={13} /> {t('settings.secureAccountSignOut')}
                       </button>
@@ -812,7 +831,18 @@ export default function Settings() {
                 </h3>
                 <p className={settingsSupportCopyClass}>{t('settings.secureAccountDevicesCopy')}</p>
               </div>
-              <MonitorSmartphone size={16} className="text-slate-500 flex-shrink-0 mt-0.5" />
+              <div className="flex items-center gap-2">
+                {secureSignedIn && (
+                  <button
+                    onClick={handleSecureRefresh}
+                    disabled={loadingAccount}
+                    className="btn-ghost text-xs text-slate-300 hover:text-teal-300 disabled:opacity-60"
+                  >
+                    {loadingAccount ? `${t('settings.secureAccountRefresh')}...` : t('settings.secureAccountRefresh')}
+                  </button>
+                )}
+                <MonitorSmartphone size={16} className="text-slate-500 flex-shrink-0 mt-0.5" />
+              </div>
             </div>
 
             {secureSignedIn ? (
