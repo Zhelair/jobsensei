@@ -621,12 +621,17 @@ export default function TopBar() {
   const openSettingsFromCredits = () => {
     setActiveSection(SECTIONS.SETTINGS)
     setShowCredits(false)
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('jobsensei:open-plan-settings'))
+    }, 80)
   }
 
   const openByokFromCredits = () => {
     setActiveSection(SECTIONS.SETTINGS)
     setShowCredits(false)
-    window.dispatchEvent(new CustomEvent('jobsensei:open-byok-settings'))
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('jobsensei:open-byok-settings'))
+    }, 80)
   }
 
   return (
