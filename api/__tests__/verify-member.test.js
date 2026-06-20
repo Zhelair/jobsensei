@@ -40,6 +40,7 @@ describe('verify-member auth flow', () => {
     delete process.env.ACCESS_CODES
     delete process.env.SUPABASE_URL
     delete process.env.SUPABASE_SERVICE_ROLE_KEY
+    delete process.env.SUPABASE_ANON_KEY
   })
 
   it('returns 200 + magic-link instructions for email input', async () => {
@@ -142,5 +143,15 @@ describe('verify-member auth flow', () => {
 
     expect(res._status).toBe(503)
     expect(res._body.error).toMatch(/not configured/i)
+  })
+
+  it('rejects legacy access codes when secure-account auth is enabled on the deployment', async () => {
+    process.env.SUPABASE_ANON_KEY = 'anon-key'
+
+    const { req, res } = makeReqRes({ email: 'SUPPORTER123' })
+    await handler(req, res)
+
+    expect(res._status).toBe(409)
+    expect(res._body.error).toMatch(/secure email sign-in/i)
   })
 })

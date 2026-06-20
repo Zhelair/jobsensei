@@ -76,6 +76,9 @@ beforeEach(() => {
 afterEach(() => {
   delete process.env.JWT_SECRET
   delete process.env.DEEPSEEK_API_KEY
+  delete process.env.SUPABASE_URL
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY
+  delete process.env.SUPABASE_ANON_KEY
   vi.unstubAllGlobals()
 })
 
@@ -121,6 +124,23 @@ describe('proxy — authentication', () => {
     await handler(req, res)
 
     expect(res._status).toBe(401)
+  })
+
+  it('rejects legacy tokens when secure-account auth is enabled on the deployment', async () => {
+    process.env.SUPABASE_URL = 'https://example.supabase.co'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key'
+    process.env.SUPABASE_ANON_KEY = 'anon-key'
+
+    const token = validToken()
+    const { req, res } = makeReqRes(
+      { messages: [{ role: 'user', content: 'hi' }] },
+      { authorization: `Bearer ${token}` }
+    )
+    await handler(req, res)
+
+    expect(res._status).toBe(401)
+    expect(res._body.error).toMatch(/secure email sign-in/i)
+    expect(fetch).not.toHaveBeenCalled()
   })
 })
 
