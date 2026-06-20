@@ -362,7 +362,7 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-          <div className="text-[10px] sm:text-[11px] text-slate-500 mb-1 leading-tight min-h-[26px]">
+          <div className="text-[10px] sm:text-[11px] text-slate-500 mb-0 leading-tight min-h-[16px] sm:min-h-[18px]">
             {t('topbar.creditsMetricAllowance')}
           </div>
           <div className="text-white text-[15px] sm:text-sm font-display font-semibold leading-tight">
@@ -374,7 +374,7 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
           </div>
         </div>
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-          <div className="text-[10px] sm:text-[11px] text-slate-500 mb-1 leading-tight min-h-[26px]">
+          <div className="text-[10px] sm:text-[11px] text-slate-500 mb-0 leading-tight min-h-[16px] sm:min-h-[18px]">
             {t('topbar.creditsMetricCost')}
           </div>
           <div className="text-white text-[15px] sm:text-sm font-display font-semibold leading-tight">
@@ -386,7 +386,7 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
           </div>
         </div>
         <div className="credits-metric rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-          <div className="text-[10px] sm:text-[11px] text-slate-500 mb-1 leading-tight min-h-[26px]">
+          <div className="text-[10px] sm:text-[11px] text-slate-500 mb-0 leading-tight min-h-[16px] sm:min-h-[18px]">
             {t('topbar.creditsMetricLeft')}
           </div>
           <div className="text-white text-[15px] sm:text-sm font-display font-semibold leading-tight">
@@ -809,10 +809,17 @@ export default function TopBar() {
                 {help && (
                   <button
                     onClick={() => { openGuide(); setShowMore(false) }}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs w-full text-left transition-colors ${showHelp ? 'text-teal-400 bg-teal-500/10' : 'text-slate-400 hover:text-white hover:bg-navy-700'}`}
+                    className={`flex items-center justify-between gap-2.5 px-3 py-2 rounded-lg text-xs w-full text-left transition-colors ${showHelp || !guideSeen ? 'text-teal-300 bg-teal-500/10 ring-1 ring-teal-500/30' : 'text-slate-400 hover:text-white hover:bg-navy-700'}`}
                   >
-                    <HelpCircle size={14} />
-                    {t('topbar.guide')}
+                    <span className="flex items-center gap-2.5">
+                      <HelpCircle size={14} />
+                      {t('topbar.guide')}
+                    </span>
+                    {!guideSeen && (
+                      <span className="rounded-full bg-yellow-400 px-1.5 py-0.5 text-[10px] font-bold text-navy-950">
+                        {t('topbar.start')}
+                      </span>
+                    )}
                   </button>
                 )}
               </div>
