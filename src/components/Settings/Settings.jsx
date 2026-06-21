@@ -971,6 +971,14 @@ export default function Settings() {
 
             {legalExpanded && (
               <div className="space-y-3 pt-1">
+                <div className="space-y-2 text-slate-300 text-sm leading-relaxed">
+                  {[1, 2, 3]
+                    .map(index => t(`settings.privacyTermsBullet${index}`))
+                    .filter(Boolean)
+                    .map((bullet, index) => (
+                      <p key={index}>{bullet}</p>
+                    ))}
+                </div>
                 <div className="text-slate-300 text-sm leading-relaxed">
                   {t('settings.privacyTermsAgreement')}
                 </div>

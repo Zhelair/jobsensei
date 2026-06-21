@@ -28,7 +28,7 @@ Works in Chrome/Edge/Safari on mobile. Voice input is supported on Chrome and Ed
 
 - **Your data lives in your browser.** localStorage only.
 - **Your API key** is only ever sent to the AI provider you configure.
-- **No analytics, no tracking, no cookies.**
+- **Traffic analytics and performance monitoring are enabled on deployed builds.** JobSensei uses Vercel Web Analytics and Speed Insights; according to Vercel, Web Analytics stores anonymized data and does not use cookies for analytics tracking.
 - Tip: use a professional summary for your profile. Avoid pasting your full legal name, address, or ID numbers into the app.
 
 ---
