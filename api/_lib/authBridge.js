@@ -329,6 +329,43 @@ function getBmacWebhookSecret() {
   )
 }
 
+function getLemonSqueezyApiKey() {
+  return firstNonEmpty(
+    process.env.LEMONSQUEEZY_API_KEY,
+    process.env.LEMON_SQUEEZY_API_KEY,
+  )
+}
+
+function getLemonSqueezyStoreId() {
+  return firstNonEmpty(
+    process.env.LEMONSQUEEZY_STORE_ID,
+    process.env.LEMON_SQUEEZY_STORE_ID,
+  )
+}
+
+function getDefaultLemonSqueezyVariantId() {
+  return firstNonEmpty(
+    process.env.LEMONSQUEEZY_VARIANT_ID,
+    process.env.LEMON_SQUEEZY_VARIANT_ID,
+  )
+}
+
+function getLemonSqueezyWebhookSecret() {
+  return firstNonEmpty(
+    process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
+    process.env.LEMON_SQUEEZY_WEBHOOK_SECRET,
+  )
+}
+
+function getAllowedLemonSqueezyIdentifiers() {
+  return new Set([
+    ...parseAllowedList(process.env.LEMONSQUEEZY_ALLOWED_PRODUCT_IDS),
+    ...parseAllowedList(process.env.LEMONSQUEEZY_ALLOWED_VARIANT_IDS),
+    ...parseAllowedList(process.env.LEMONSQUEEZY_ALLOWED_PRODUCT_NAMES),
+    ...parseAllowedList(process.env.LEMONSQUEEZY_ALLOWED_VARIANT_NAMES),
+  ])
+}
+
 function getAuthEmailSender() {
   return firstNonEmpty(process.env.AUTH_EMAIL_FROM, process.env.RESEND_FROM_EMAIL)
 }
@@ -539,6 +576,29 @@ export function canSendCustomAuthEmails() {
 
 export function isBmacWebhookConfigured() {
   return Boolean(getBmacWebhookSecret())
+}
+
+export function isLemonSqueezyCheckoutConfigured() {
+  return Boolean(getLemonSqueezyApiKey() && getLemonSqueezyStoreId() && getDefaultLemonSqueezyVariantId())
+}
+
+export function isLemonSqueezyWebhookConfigured() {
+  return Boolean(getLemonSqueezyWebhookSecret())
+}
+
+export function getLemonSqueezyCheckoutConfig() {
+  return {
+    apiKey: getLemonSqueezyApiKey(),
+    storeId: getLemonSqueezyStoreId(),
+    defaultVariantId: getDefaultLemonSqueezyVariantId(),
+    webhookSecret: getLemonSqueezyWebhookSecret(),
+    checkoutTestMode: String(
+      process.env.LEMONSQUEEZY_CHECKOUT_TEST_MODE
+      || process.env.LEMON_SQUEEZY_CHECKOUT_TEST_MODE
+      || '',
+    ).trim().toLowerCase() === 'true',
+    allowedIdentifiers: [...getAllowedLemonSqueezyIdentifiers()],
+  }
 }
 
 export function createSupabaseAdminClient() {
@@ -760,6 +820,26 @@ export function verifyBmacWebhookSignature({ payload, signature, secret }) {
   return crypto.timingSafeEqual(normalizedExpected, normalizedSignature)
 }
 
+export function getLemonSqueezySignatureHeader(req) {
+  return firstNonEmpty(
+    req.headers['x-signature'],
+    req.headers['X-Signature'],
+  )
+}
+
+export function verifyLemonSqueezyWebhookSignature({ payload, signature, secret }) {
+  if (!payload || !signature || !secret) return false
+
+  const digest = Buffer.from(
+    crypto.createHmac('sha256', secret).update(payload).digest('hex'),
+    'utf8',
+  )
+  const provided = Buffer.from(String(signature).trim(), 'utf8')
+
+  if (digest.length !== provided.length) return false
+  return crypto.timingSafeEqual(digest, provided)
+}
+
 function extractBmacLifecycle(eventType = '', payload = {}) {
   const normalizedEvent = String(eventType || '').trim().toLowerCase()
   const normalizedStatus = String(
@@ -800,6 +880,45 @@ function extractBmacIdentifiers(payload = {}) {
 
 function isAllowedBmacGrant(identifiers = []) {
   const allowedIdentifiers = getAllowedBmacGrantIdentifiers()
+  if (!allowedIdentifiers.size) return true
+
+  return identifiers.some(identifier => allowedIdentifiers.has(identifier.toLowerCase()))
+}
+
+function extractLemonSqueezyLifecycle(eventName = '', attributes = {}) {
+  const event = String(eventName || '').trim().toLowerCase()
+  const status = String(attributes?.status || '').trim().toLowerCase()
+  const endsAt = toIsoOrNull(attributes?.ends_at)
+  const endsAtMs = endsAt ? new Date(endsAt).getTime() : 0
+  const hasFutureEnd = Number.isFinite(endsAtMs) && endsAtMs > Date.now()
+
+  if (event === 'order_refunded' || attributes?.refunded || attributes?.refunded_at) return 'revoked'
+  if (event === 'subscription_expired' || status === 'expired') return 'expired'
+
+  if (event === 'subscription_cancelled' || status === 'cancelled' || status === 'canceled') {
+    return hasFutureEnd ? 'active' : 'expired'
+  }
+
+  return 'active'
+}
+
+function extractLemonSqueezyIdentifiers(attributes = {}) {
+  return [
+    attributes?.product_id,
+    attributes?.variant_id,
+    attributes?.product_name,
+    attributes?.variant_name,
+    attributes?.first_order_item?.product_id,
+    attributes?.first_order_item?.variant_id,
+    attributes?.first_order_item?.product_name,
+    attributes?.first_order_item?.variant_name,
+  ]
+    .map(value => String(value || '').trim())
+    .filter(Boolean)
+}
+
+function isAllowedLemonSqueezyGrant(identifiers = []) {
+  const allowedIdentifiers = getAllowedLemonSqueezyIdentifiers()
   if (!allowedIdentifiers.size) return true
 
   return identifiers.some(identifier => allowedIdentifiers.has(identifier.toLowerCase()))
@@ -846,6 +965,91 @@ export function extractBmacGrantDetails(payload = {}, rawBody = '') {
       currency: firstNonEmpty(envelope.currency, envelope.currency_code),
       identifiers,
       rawEvent: payload,
+    },
+  }
+}
+
+export function extractLemonSqueezyGrantDetails(payload = {}, rawBody = '') {
+  const data = payload?.data && typeof payload.data === 'object'
+    ? payload.data
+    : payload
+  const attributes = data?.attributes && typeof data.attributes === 'object'
+    ? data.attributes
+    : {}
+  const customData = (
+    attributes?.custom_data && typeof attributes.custom_data === 'object'
+      ? attributes.custom_data
+      : payload?.meta?.custom_data && typeof payload.meta.custom_data === 'object'
+        ? payload.meta.custom_data
+        : {}
+  )
+
+  const eventType = firstNonEmpty(payload?.meta?.event_name, payload?.event_name, payload?.type).toLowerCase()
+  const objectType = String(data?.type || '').trim().toLowerCase()
+  const email = normalizeEmail(firstNonEmpty(
+    attributes?.user_email,
+    attributes?.email,
+    attributes?.customer_email,
+  ))
+  const identifiers = extractLemonSqueezyIdentifiers(attributes)
+  const status = extractLemonSqueezyLifecycle(eventType, attributes)
+  const stableId = firstNonEmpty(
+    attributes?.subscription_id,
+    objectType === 'subscriptions' ? data?.id : '',
+    attributes?.order_id,
+    data?.id,
+  )
+  const refPrefix = attributes?.subscription_id
+    ? 'subscription'
+    : objectType === 'subscriptions'
+      ? 'subscription'
+      : objectType === 'orders'
+        ? 'order'
+        : objectType || 'event'
+  const externalRef = stableId
+    ? `${refPrefix}:${stableId}`
+    : hashValue(rawBody || JSON.stringify(payload))
+  const explicitExpiry = toIsoOrNull(
+    attributes?.ends_at
+    || attributes?.renews_at
+    || customData?.expiresAt
+    || customData?.expires_at,
+  )
+
+  return {
+    email,
+    eventType,
+    externalRef,
+    identifiers,
+    status,
+    shouldGrantAccess: status === 'active' && isAllowedLemonSqueezyGrant(identifiers),
+    metadata: {
+      source: 'lemonsqueezy_webhook',
+      eventType,
+      storeId: firstNonEmpty(attributes?.store_id, customData?.store_id),
+      productId: firstNonEmpty(attributes?.product_id, attributes?.first_order_item?.product_id),
+      variantId: firstNonEmpty(attributes?.variant_id, attributes?.first_order_item?.variant_id),
+      productName: firstNonEmpty(attributes?.product_name, attributes?.first_order_item?.product_name),
+      variantName: firstNonEmpty(attributes?.variant_name, attributes?.first_order_item?.variant_name),
+      customerId: firstNonEmpty(attributes?.customer_id),
+      orderId: firstNonEmpty(attributes?.order_id),
+      subscriptionId: firstNonEmpty(attributes?.subscription_id, objectType === 'subscriptions' ? data?.id : ''),
+      userName: firstNonEmpty(attributes?.user_name, attributes?.name),
+      amount: firstNonEmpty(attributes?.total, attributes?.subtotal, attributes?.subtotal_usd, attributes?.total_usd),
+      currency: firstNonEmpty(attributes?.currency, attributes?.currency_code),
+      identifiers,
+      customerPortalUrl: firstNonEmpty(attributes?.urls?.customer_portal),
+      updatePaymentMethodUrl: firstNonEmpty(attributes?.urls?.update_payment_method),
+      planTier: String(customData?.planTier || customData?.plan_tier || 'pro').toLowerCase() === 'free' ? 'free' : 'pro',
+      planSource: 'lemonsqueezy_webhook',
+      periodStartedAt: firstNonEmpty(
+        attributes?.created_at,
+        attributes?.updated_at,
+      ),
+      ...(explicitExpiry ? { expiresAt: explicitExpiry } : {}),
+      customData,
+      rawEvent: payload,
+      testMode: Boolean(attributes?.test_mode),
     },
   }
 }
@@ -1173,16 +1377,19 @@ export async function refundHostedCredits({
   return Array.isArray(data) ? data[0] : data
 }
 
-export async function upsertBmacPlanGrant({
+async function upsertPlanGrantFromPaymentProvider({
   supabase,
   email,
   externalRef,
   status,
   metadata,
+  grantType,
+  defaultPlanSource,
+  defaultPlanTier = 'pro',
 }) {
   const normalizedEmail = normalizeEmail(email)
   if (!normalizedEmail) {
-    throw new Error('BMAC webhook payload did not include a purchaser email.')
+    throw new Error('Payment webhook payload did not include a purchaser email.')
   }
 
   const now = new Date().toISOString()
@@ -1197,7 +1404,7 @@ export async function upsertBmacPlanGrant({
   const { data: existingGrant, error: existingGrantError } = await supabase
     .from('plan_grants')
     .select('id, status')
-    .eq('grant_type', 'bmac_webhook')
+    .eq('grant_type', grantType)
     .eq('external_ref', externalRef)
     .maybeSingle()
 
@@ -1216,14 +1423,14 @@ export async function upsertBmacPlanGrant({
 
   const grantPayload = {
     user_id: existingAccount?.user_id || null,
-    grant_type: 'bmac_webhook',
+    grant_type: grantType,
     external_ref: externalRef,
     claim_email: normalizedEmail,
     status,
     metadata: {
       ...metadata,
-      planTier: metadata?.planTier || metadata?.tier || 'pro',
-      planSource: metadata?.planSource || metadata?.source || 'bmac_webhook',
+      planTier: metadata?.planTier || metadata?.tier || defaultPlanTier,
+      planSource: metadata?.planSource || metadata?.source || defaultPlanSource,
       durationDays: parsePositiveInteger(metadata?.durationDays || metadata?.duration_days) || CREDIT_PERIOD_DAYS,
       ...(nextGrantExpiry ? { expiresAt: nextGrantExpiry } : {}),
     },
@@ -1252,7 +1459,7 @@ export async function upsertBmacPlanGrant({
     if (currentAccountError) throw currentAccountError
 
     if (status === 'active') {
-      const planTier = derivePlanTierFromGrant(grant, 'pro')
+      const planTier = derivePlanTierFromGrant(grant, defaultPlanTier)
       const planAnchor = firstNonEmpty(
         grant?.metadata?.periodStartedAt,
         grant?.metadata?.period_started_at,
@@ -1278,7 +1485,7 @@ export async function upsertBmacPlanGrant({
           anchor: planAnchor,
         },
       })
-    } else if (String(currentAccount?.plan_source || '').toLowerCase() === 'bmac_webhook') {
+    } else if ([grantType, defaultPlanSource].includes(String(currentAccount?.plan_source || '').toLowerCase())) {
       await persistAccountState({
         supabase,
         account: currentAccount,
@@ -1302,6 +1509,44 @@ export async function upsertBmacPlanGrant({
     created: !existingGrant,
     statusChanged: existingGrant ? existingGrant.status !== grant.status : true,
   }
+}
+
+export async function upsertBmacPlanGrant({
+  supabase,
+  email,
+  externalRef,
+  status,
+  metadata,
+}) {
+  return upsertPlanGrantFromPaymentProvider({
+    supabase,
+    email,
+    externalRef,
+    status,
+    metadata,
+    grantType: 'bmac_webhook',
+    defaultPlanSource: 'bmac_webhook',
+    defaultPlanTier: 'pro',
+  })
+}
+
+export async function upsertLemonSqueezyPlanGrant({
+  supabase,
+  email,
+  externalRef,
+  status,
+  metadata,
+}) {
+  return upsertPlanGrantFromPaymentProvider({
+    supabase,
+    email,
+    externalRef,
+    status,
+    metadata,
+    grantType: 'lemonsqueezy_webhook',
+    defaultPlanSource: 'lemonsqueezy_webhook',
+    defaultPlanTier: 'pro',
+  })
 }
 
 export async function logSecureAuditEvent({ userId, deviceId = null, action, metadata = {} }) {

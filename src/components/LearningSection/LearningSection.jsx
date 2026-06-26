@@ -319,7 +319,7 @@ export default function LearningSection() {
             />
             <textarea
               className="textarea-field h-24"
-              placeholder="Topic / what to learn *"
+              placeholder={t('learning.topicSubjectPlaceholder')}
               value={newTopic.subject}
               onChange={event => setNewTopic(prev => ({ ...prev, subject: event.target.value }))}
             />
@@ -355,10 +355,15 @@ export default function LearningSection() {
               <button onClick={() => setEditingTopic(null)}><X size={16} className="text-slate-400" /></button>
             </div>
             <div className="space-y-3 mb-4">
-              <input className="input-field" value={editingTopic.title} onChange={event => setEditingTopic(topic => ({ ...topic, title: event.target.value }))} />
+              <input
+                className="input-field"
+                placeholder={t('learning.topicTitlePlaceholder')}
+                value={editingTopic.title}
+                onChange={event => setEditingTopic(topic => ({ ...topic, title: event.target.value }))}
+              />
               <textarea
                 className="textarea-field h-24"
-                placeholder="Topic / what to learn *"
+                placeholder={t('learning.topicSubjectPlaceholder')}
                 value={editingTopic.subject || ''}
                 onChange={event => setEditingTopic(topic => ({ ...topic, subject: event.target.value }))}
               />
