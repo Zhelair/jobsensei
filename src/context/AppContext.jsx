@@ -44,6 +44,7 @@ export function AppProvider({ children }) {
   const [activeSection, setActiveSectionState] = useState(() => getSectionFromLocation())
   const [drillMode, setDrillMode] = useState(false) // false = Sensei, true = Drill Sergeant
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [onboardingMode, setOnboardingMode] = useState('access')
   const [profile, setProfile] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
@@ -72,7 +73,10 @@ export function AppProvider({ children }) {
 
     if (parsedProfile) setProfile(parsedProfile)
     if (parsedStats) setStats(parsedStats)
-    if (!onboardingDone) setShowOnboarding(true)
+    if (!onboardingDone) {
+      setOnboardingMode('access')
+      setShowOnboarding(true)
+    }
 
     // Update streak
     const today = new Date().toDateString()
@@ -148,11 +152,22 @@ export function AppProvider({ children }) {
     })
   }, [pushAppHistory])
 
+  function openOnboarding(mode = 'access') {
+    setOnboardingMode(mode === 'profile' ? 'profile' : 'access')
+    setShowOnboarding(true)
+  }
+
+  function closeOnboarding() {
+    setShowOnboarding(false)
+    setOnboardingMode('access')
+  }
+
   function saveProfile(data) {
     setProfile(data)
     localStorage.setItem('js_profile', JSON.stringify(data))
     localStorage.setItem('js_onboarding_done', 'true')
     setShowOnboarding(false)
+    setOnboardingMode('access')
   }
 
   function updateStats(updates) {
@@ -200,6 +215,7 @@ export function AppProvider({ children }) {
       pushAppHistory, replaceAppHistory,
       drillMode, setDrillMode,
       showOnboarding, setShowOnboarding,
+      onboardingMode, openOnboarding, closeOnboarding,
       profile, saveProfile,
       stats, updateStats,
       sidebarOpen, setSidebarOpen,
