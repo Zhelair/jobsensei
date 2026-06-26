@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { useAI } from '../../context/AIContext'
 import { SECTIONS, useApp } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
-import { Coffee, X, Check, ExternalLink } from 'lucide-react'
-import { BMAC_PRO_URL } from '../../lib/billing'
+import { CreditCard, X, Check, ExternalLink } from 'lucide-react'
+import { openProCheckout } from '../../lib/billing'
 
 export default function PaywallModal() {
   const { showPaywall, closePaywall, unlockAccess } = useAI()
@@ -40,6 +40,16 @@ export default function PaywallModal() {
     setLoading(false)
   }
 
+  async function handleCheckout() {
+    try {
+      await openProCheckout({
+        email: email.trim(),
+      })
+    } catch (e) {
+      setError(e.message || 'Unable to open Paddle checkout right now.')
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in">
       <div className="relative w-full max-w-sm bg-navy-800 border border-white/10 rounded-2xl shadow-2xl p-6">
@@ -52,22 +62,20 @@ export default function PaywallModal() {
 
         <div className="flex flex-col items-center text-center mb-6">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-500/30 to-yellow-600/10 border border-yellow-500/20 flex items-center justify-center mb-3">
-            <Coffee size={28} className="text-yellow-400" />
+            <CreditCard size={28} className="text-yellow-400" />
           </div>
           <h2 className="font-display font-bold text-white text-xl mb-1">{t('paywall.title')}</h2>
           <p className="text-slate-400 text-sm leading-relaxed">{t('paywall.copy')}</p>
         </div>
 
-        <a
-          href={BMAC_PRO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={handleCheckout}
           className="btn-primary w-full justify-center mb-4 bg-yellow-500 hover:bg-yellow-400 text-black border-0"
         >
-          <Coffee size={16} />
+          <CreditCard size={16} />
           {t('paywall.cta')}
           <ExternalLink size={13} className="opacity-60" />
-        </a>
+        </button>
 
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-white/10" />
@@ -95,7 +103,7 @@ export default function PaywallModal() {
               disabled={!email.trim() || loading}
               className="btn-secondary w-full justify-center"
             >
-              <Coffee size={14} />
+              <CreditCard size={14} />
               {loading ? t('paywall.verifying') : t('paywall.activate')}
             </button>
             {notice && <p className="text-green-400 text-xs text-center">{notice}</p>}

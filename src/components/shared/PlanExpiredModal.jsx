@@ -1,9 +1,9 @@
 import React from 'react'
-import { Coffee, X } from 'lucide-react'
+import { CreditCard, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { SECTIONS, useApp } from '../../context/AppContext'
-import { BMAC_PRO_URL } from '../../lib/billing'
+import { openProCheckout } from '../../lib/billing'
 
 function formatNoticeDate(value) {
   if (!value) return ''
@@ -20,7 +20,7 @@ function formatNoticeDate(value) {
 }
 
 export default function PlanExpiredModal() {
-  const { planExpiredNotice, dismissPlanExpiredNotice } = useAuth()
+  const { planExpiredNotice, dismissPlanExpiredNotice, secureUser } = useAuth()
   const { t } = useLanguage()
   const { setActiveSection } = useApp()
 
@@ -40,7 +40,7 @@ export default function PlanExpiredModal() {
 
         <div className="flex flex-col items-center text-center mb-5">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-500/30 to-yellow-600/10 border border-yellow-500/20 flex items-center justify-center mb-3">
-            <Coffee size={28} className="text-yellow-400" />
+            <CreditCard size={28} className="text-yellow-400" />
           </div>
           <h2 className="font-display font-bold text-white text-xl mb-1">{t('planExpiredModal.title')}</h2>
           <p className="text-slate-300 text-sm leading-relaxed">
@@ -55,15 +55,17 @@ export default function PlanExpiredModal() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
-          <a
-            href={BMAC_PRO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => {
+              openProCheckout({
+                email: secureUser?.email || planExpiredNotice?.email || '',
+              }).catch(() => {})
+            }}
             className="btn-primary flex-1 justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0"
           >
-            <Coffee size={15} />
+            <CreditCard size={15} />
             {t('planExpiredModal.renew')}
-          </a>
+          </button>
           <button
             onClick={() => {
               dismissPlanExpiredNotice()

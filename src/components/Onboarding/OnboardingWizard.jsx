@@ -3,7 +3,8 @@ import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
-import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Languages } from 'lucide-react'
+import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, CreditCard, Languages } from 'lucide-react'
+import { openProCheckout } from '../../lib/billing'
 
 /* const ONBOARDING_COPY = {
   en: {
@@ -32,9 +33,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     resumeReadError: '[Could not read the file. Please paste your resume below.]',
     activateTitle: 'Activate JobSensei AI',
     activateSubtitle: 'Choose how you want to power the AI features.',
-    supporter: 'Buy Me a Coffee supporter',
+    supporter: 'Paddle supporter',
     verified: 'Verified. AI is powered by JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Already have access? Enter your email or tester code below.',
     accessPlaceholder: 'Enter your email or tester code...',
     activateAccess: 'Unlock app',
@@ -71,9 +72,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     resumeReadError: '[Не удалось прочитать файл. Пожалуйста, вставьте резюме ниже.]',
     activateTitle: 'Активируйте JobSensei AI',
     activateSubtitle: 'Выберите, как включить AI-функции.',
-    supporter: 'Поддержка через Buy Me a Coffee',
+    supporter: 'Поддержка через Paddle',
     verified: 'Проверено. AI работает через JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Уже есть доступ? Введите email или тестовый код ниже.',
     accessPlaceholder: 'Введите email или тестовый код...',
     activateAccess: 'Открыть доступ',
@@ -110,9 +111,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     resumeReadError: '[Файлът не можа да бъде прочетен. Моля, постави резюмето си по-долу.]',
     activateTitle: 'Активирай JobSensei AI',
     activateSubtitle: 'Избери как да включиш AI функциите.',
-    supporter: 'Поддръжник през Buy Me a Coffee',
+    supporter: 'Поддръжник през Paddle',
     verified: 'Потвърдено. AI работи чрез JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Вече имаш достъп? Въведи имейл или тестов код по-долу.',
     accessPlaceholder: 'Въведи имейл или тестов код...',
     activateAccess: 'Отключи приложението',
@@ -149,9 +150,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     resumeReadError: '[No se pudo leer el archivo. Pega tu CV abajo.]',
     activateTitle: 'Activa JobSensei AI',
     activateSubtitle: 'Elige cómo activar las funciones de AI.',
-    supporter: 'Soporte por Buy Me a Coffee',
+    supporter: 'Soporte por Paddle',
     verified: 'Verificado. La AI funciona con JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: '¿Ya tienes acceso? Introduce tu email o código de prueba abajo.',
     accessPlaceholder: 'Introduce tu email o código de prueba...',
     activateAccess: 'Desbloquear app',
@@ -188,9 +189,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     resumeReadError: '[Impossible de lire le fichier. Veuillez coller votre CV ci-dessous.]',
     activateTitle: 'Activez JobSensei AI',
     activateSubtitle: 'Choisissez comment alimenter les fonctionnalités AI.',
-    supporter: 'Soutien via Buy Me a Coffee',
+    supporter: 'Soutien via Paddle',
     verified: 'Vérifié. L’AI fonctionne avec JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Vous avez déjà un accès ? Saisissez votre email ou code test ci-dessous.',
     accessPlaceholder: 'Saisissez votre email ou code test...',
     activateAccess: 'Déverrouiller l’app',
@@ -227,9 +228,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     resumeReadError: '[Impossibile leggere il file. Incolla qui sotto il tuo CV.]',
     activateTitle: 'Attiva JobSensei AI',
     activateSubtitle: 'Scegli come alimentare le funzioni AI.',
-    supporter: 'Supporto tramite Buy Me a Coffee',
+    supporter: 'Supporto tramite Paddle',
     verified: 'Verificato. L’AI funziona con JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Hai già accesso? Inserisci qui sotto la tua email o il codice tester.',
     accessPlaceholder: 'Inserisci email o codice tester...',
     activateAccess: 'Sblocca app',
@@ -266,9 +267,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     resumeReadError: '[Não foi possível ler o ficheiro. Cole o seu CV abaixo.]',
     activateTitle: 'Ativar JobSensei AI',
     activateSubtitle: 'Escolha como quer alimentar as funcionalidades de AI.',
-    supporter: 'Apoio via Buy Me a Coffee',
+    supporter: 'Apoio via Paddle',
     verified: 'Verificado. A AI funciona com o JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Já tens acesso? Introduz abaixo o email ou código de teste.',
     accessPlaceholder: 'Introduz o email ou código de teste...',
     activateAccess: 'Desbloquear app',
@@ -305,9 +306,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     resumeReadError: '[Nie udało się odczytać pliku. Wklej swoje CV poniżej.]',
     activateTitle: 'Aktywuj JobSensei AI',
     activateSubtitle: 'Wybierz, jak chcesz uruchomić funkcje AI.',
-    supporter: 'Wsparcie przez Buy Me a Coffee',
+    supporter: 'Wsparcie przez Paddle',
     verified: 'Zweryfikowano. AI działa przez JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Masz już dostęp? Wpisz poniżej email lub kod testowy.',
     accessPlaceholder: 'Wpisz email lub kod testowy...',
     activateAccess: 'Odblokuj aplikację',
@@ -344,9 +345,9 @@ import { GraduationCap, ChevronRight, ChevronLeft, Check, Upload, Coffee, Langua
     resumeReadError: '[Die Datei konnte nicht gelesen werden. Bitte fügen Sie Ihren Lebenslauf unten ein.]',
     activateTitle: 'JobSensei AI aktivieren',
     activateSubtitle: 'Wählen Sie, wie Sie die AI-Funktionen aktivieren möchten.',
-    supporter: 'Unterstützung über Buy Me a Coffee',
+    supporter: 'Unterstützung über Paddle',
     verified: 'Verifiziert. Die AI läuft über JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Haben Sie bereits Zugriff? Geben Sie unten Ihre E-Mail oder einen Testcode ein.',
     accessPlaceholder: 'E-Mail oder Testcode eingeben...',
     activateAccess: 'App entsperren',
@@ -386,9 +387,9 @@ const ONBOARDING_COPY = {
     resumeReadError: '[Could not read the file. Please paste your resume below.]',
     activateTitle: 'Activate JobSensei AI',
     activateSubtitle: 'Choose how you want to power the AI features.',
-    supporter: 'Buy Me a Coffee supporter',
+    supporter: 'Paddle supporter',
     verified: 'Verified. AI is powered by JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Enter your email below to start on Free or link Pro access.',
     accessPlaceholder: 'Enter your email...',
     activateAccess: 'Register now',
@@ -425,9 +426,9 @@ const ONBOARDING_COPY = {
     resumeReadError: '[Не удалось прочитать файл. Пожалуйста, вставьте ваше резюме ниже.]',
     activateTitle: 'Активируйте JobSensei AI',
     activateSubtitle: 'Выберите, как включить AI-функции.',
-    supporter: 'Поддержка через Buy Me a Coffee',
+    supporter: 'Поддержка через Paddle',
     verified: 'Проверено. AI работает через JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Введите email ниже, чтобы начать с Free или привязать Pro.',
     accessPlaceholder: 'Введите свой email...',
     activateAccess: 'Зарегистрироваться',
@@ -464,9 +465,9 @@ const ONBOARDING_COPY = {
     resumeReadError: '[Файлът не можа да бъде прочетен. Моля, постави резюмето си по-долу.]',
     activateTitle: 'Активирай JobSensei AI',
     activateSubtitle: 'Избери как да включиш AI функциите.',
-    supporter: 'Поддръжник чрез Buy Me a Coffee',
+    supporter: 'Поддръжник чрез Paddle',
     verified: 'Потвърдено. AI работи чрез JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Въведи имейла си по-долу, за да започнеш с Free или да свържеш Pro.',
     accessPlaceholder: 'Въведи своя имейл...',
     activateAccess: 'Регистрирай се',
@@ -503,9 +504,9 @@ const ONBOARDING_COPY = {
     resumeReadError: '[No se pudo leer el archivo. Pega tu CV abajo.]',
     activateTitle: 'Activa JobSensei AI',
     activateSubtitle: 'Elige cómo activar las funciones de AI.',
-    supporter: 'Soporte por Buy Me a Coffee',
+    supporter: 'Soporte por Paddle',
     verified: 'Verificado. La AI funciona con JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Introduce tu email abajo para empezar en Free o vincular Pro.',
     accessPlaceholder: 'Introduce tu email...',
     activateAccess: 'Registrarme',
@@ -542,9 +543,9 @@ const ONBOARDING_COPY = {
     resumeReadError: '[Impossible de lire le fichier. Veuillez coller votre CV ci-dessous.]',
     activateTitle: 'Activez JobSensei AI',
     activateSubtitle: 'Choisissez comment alimenter les fonctionnalités AI.',
-    supporter: 'Soutien via Buy Me a Coffee',
+    supporter: 'Soutien via Paddle',
     verified: 'Vérifié. L’AI fonctionne avec JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Entrez votre email ci-dessous pour commencer en Free ou lier Pro.',
     accessPlaceholder: 'Entrez votre email...',
     activateAccess: 'M’inscrire',
@@ -581,9 +582,9 @@ const ONBOARDING_COPY = {
     resumeReadError: '[Impossibile leggere il file. Incolla qui sotto il tuo CV.]',
     activateTitle: 'Attiva JobSensei AI',
     activateSubtitle: 'Scegli come alimentare le funzioni AI.',
-    supporter: 'Supporto tramite Buy Me a Coffee',
+    supporter: 'Supporto tramite Paddle',
     verified: 'Verificato. L’AI funziona con JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Inserisci la tua email qui sotto per iniziare con Free o collegare Pro.',
     accessPlaceholder: 'Inserisci la tua email...',
     activateAccess: 'Registrami',
@@ -620,9 +621,9 @@ const ONBOARDING_COPY = {
     resumeReadError: '[Não foi possível ler o ficheiro. Cole o seu CV abaixo.]',
     activateTitle: 'Ativar JobSensei AI',
     activateSubtitle: 'Escolha como quer alimentar as funcionalidades de AI.',
-    supporter: 'Apoio via Buy Me a Coffee',
+    supporter: 'Apoio via Paddle',
     verified: 'Verificado. A AI funciona com o JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Introduza o seu email abaixo para começar no Free ou ligar o Pro.',
     accessPlaceholder: 'Introduza o seu email...',
     activateAccess: 'Registar-me',
@@ -659,9 +660,9 @@ const ONBOARDING_COPY = {
     resumeReadError: '[Nie udało się odczytać pliku. Wklej swoje CV poniżej.]',
     activateTitle: 'Aktywuj JobSensei AI',
     activateSubtitle: 'Wybierz, jak chcesz uruchomić funkcje AI.',
-    supporter: 'Wsparcie przez Buy Me a Coffee',
+    supporter: 'Wsparcie przez Paddle',
     verified: 'Zweryfikowano. AI działa przez JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Wpisz poniżej swój email, aby zacząć od Free lub podpiąć Pro.',
     accessPlaceholder: 'Wpisz swój email...',
     activateAccess: 'Zarejestruj mnie',
@@ -698,9 +699,9 @@ const ONBOARDING_COPY = {
     resumeReadError: '[Die Datei konnte nicht gelesen werden. Bitte fügen Sie Ihren Lebenslauf unten ein.]',
     activateTitle: 'JobSensei AI aktivieren',
     activateSubtitle: 'Wählen Sie, wie Sie die AI-Funktionen aktivieren möchten.',
-    supporter: 'Unterstützung über Buy Me a Coffee',
+    supporter: 'Unterstützung über Paddle',
     verified: 'Verifiziert. Die AI läuft über JobSensei.',
-    buy: 'Buy Me a Coffee',
+    buy: 'Paddle',
     already: 'Geben Sie unten Ihre E-Mail ein, um im Free-Plan zu starten oder Pro zu verknüpfen.',
     accessPlaceholder: 'Geben Sie Ihre E-Mail ein...',
     activateAccess: 'Jetzt registrieren',
@@ -763,6 +764,19 @@ export default function OnboardingWizard() {
       setBmacError(e.message)
     }
     setBmacLoading(false)
+  }
+
+  async function handleCheckoutOpen() {
+    setBmacError('')
+    setUnlockNotice('')
+
+    try {
+      await openProCheckout({
+        email: bmacInput.trim(),
+      })
+    } catch (error) {
+      setBmacError(error.message || 'Unable to open Paddle checkout right now.')
+    }
   }
 
   function update(k, v) { setData(d => ({ ...d, [k]: v })) }
@@ -887,7 +901,7 @@ export default function OnboardingWizard() {
         <div className="space-y-4">
           <div className={`rounded-xl border p-4 space-y-3 ${bmacVerified ? 'border-green-500/30 bg-green-500/5' : 'border-teal-500/20'}`}>
             <div className="flex items-center gap-2">
-              <Coffee size={15} className="text-yellow-400" />
+              <CreditCard size={15} className="text-yellow-400" />
               <span className="font-display font-semibold text-white text-sm">{tt('supporter')}</span>
             </div>
             {bmacVerified ? (
@@ -896,14 +910,12 @@ export default function OnboardingWizard() {
               </div>
             ) : (
               <>
-                <a
-                  href="https://buymeacoffee.com/niksales73l/e/515014"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={handleCheckoutOpen}
                   className="btn-primary w-full justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0"
                 >
-                  <Coffee size={14}/> {tt('buy')}
-                </a>
+                  <CreditCard size={14}/> {tt('buy')}
+                </button>
                 <p className="text-slate-400 text-xs text-center">{tt('already')}</p>
                 <input
                   className="input-field text-sm"
@@ -917,7 +929,7 @@ export default function OnboardingWizard() {
                   disabled={!bmacInput.trim() || bmacLoading}
                   className="btn-primary w-full justify-center"
                 >
-                  <Coffee size={14}/> {bmacLoading ? tt('verifying') : tt('activateAccess')}
+                  <Check size={14}/> {bmacLoading ? tt('verifying') : tt('activateAccess')}
                 </button>
                 {unlockNotice && <p className="text-green-400 text-xs">{unlockNotice}</p>}
                 {bmacError && <p className="text-red-400 text-xs">{bmacError}</p>}
@@ -971,3 +983,4 @@ export default function OnboardingWizard() {
     </div>
   )
 }
+

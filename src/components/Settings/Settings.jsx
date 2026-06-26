@@ -6,12 +6,12 @@ import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
 import {
   Zap, Check, Trash2, Eye, EyeOff, FileText, Upload, Download, X,
-  Coffee, ChevronDown, ChevronUp, LogOut, ExternalLink, Puzzle, FolderArchive,
+  Coffee, CreditCard, ChevronDown, ChevronUp, LogOut, ExternalLink, Puzzle, FolderArchive,
   Globe, Volume2, Shield, MonitorSmartphone,
 } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
 import { getCreditSnapshot, HOSTED_REQUEST_CREDITS, PRO_MONTHLY_CREDITS } from '../../lib/credits'
-import { BMAC_PRO_URL } from '../../lib/billing'
+import { openProCheckout } from '../../lib/billing'
 
 export default function Settings() {
   const {
@@ -218,6 +218,20 @@ export default function Settings() {
       setBmacError(e.message)
     }
     setBmacLoading(false)
+  }
+
+  async function handleProCheckout(prefillEmail = '') {
+    setBmacError('')
+    setBmacNotice('')
+
+    try {
+      await openProCheckout({
+        email: prefillEmail || secureUser?.email || bmacInput.trim(),
+        userId: secureUser?.id || '',
+      })
+    } catch (error) {
+      setBmacError(error.message || 'Unable to open Paddle checkout right now.')
+    }
   }
 
   function saveResume() {
@@ -686,22 +700,20 @@ export default function Settings() {
                 </div>
               </div>
 
-              <a
-                href={BMAC_PRO_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => handleProCheckout()}
                 className="btn-secondary w-full justify-center mt-3 text-slate-200 border-slate-600/80 bg-slate-700/40 hover:bg-slate-700/60"
               >
-                <Coffee size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
-              </a>
+                <CreditCard size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
+              </button>
             </div>
           </div>
         )}
 
         <div className="grid xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] gap-5 mt-4 items-start">
-          <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-5 py-5 h-full">
+            <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-5 py-5 h-full">
             <h4 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-              <Coffee size={15} className="text-yellow-400" /> {t('settings.jobsenseiAccessTitle')}
+              <CreditCard size={15} className="text-yellow-400" /> {t('settings.jobsenseiAccessTitle')}
             </h4>
             <p className={`${settingsSupportCopyClass} mb-4`}>
               {t('settings.jobsenseiAccessCopy')}
@@ -737,14 +749,12 @@ export default function Settings() {
               </div>
             ) : (
               <div className="space-y-3">
-                <a
-                  href={BMAC_PRO_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => handleProCheckout()}
                   className="btn-primary w-full justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0 text-sm"
                 >
-                  <Coffee size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
-                </a>
+                  <CreditCard size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
+                </button>
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-px bg-white/10" />
                   <span className="text-slate-600 text-xs">{t('settings.alreadyHaveAccess')}</span>
@@ -767,7 +777,7 @@ export default function Settings() {
                   disabled={!bmacInput.trim() || bmacLoading || unlockMatchesSignedIn || magicLinkCooldownActive}
                   className="btn-primary w-full justify-center"
                 >
-                  <Coffee size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
+                  <Check size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
                 </button>
                 <p className={settingsMutedCopyClass}>{t('settings.unlockInputHint')}</p>
                 {bmacNotice && <p className="text-green-400 text-sm leading-relaxed">{bmacNotice}</p>}

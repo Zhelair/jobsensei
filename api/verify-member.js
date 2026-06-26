@@ -56,7 +56,7 @@ export default async function handler(req, res) {
 
     if (!validCodes.includes(normalizedCode)) {
       return res.status(403).json({
-        error: 'Invalid access code. Check the code you received after supporting on Buy Me a Coffee.',
+        error: 'Invalid access code. Check the tester code you received for this deployment.',
       })
     }
 
@@ -73,3 +73,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server error. Please try again.' })
   }
 }
+
