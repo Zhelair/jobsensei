@@ -11320,6 +11320,66 @@ const hostedPlanClarityPatches = {
   },
 }
 
+const paddleUxPatches = {
+  en: {
+    'settings.jobsenseiAccessCopy': 'Start on Free with your email, unlock Pro through Paddle, and keep using the same JobSensei account for credits and approved devices.',
+    'settings.upgradeViaBmac': 'Unlock Pro with Paddle',
+    'settings.unlockInputHint': 'Enter your email to receive a magic link. Free starts on this email, and Pro links automatically when the same purchase email is used.',
+    'settings.legacyBmacNotice': 'Legacy Buy Me a Coffee supporters can still sign in with the same email used for their original access.',
+    'settings.manageBillingButton': 'Manage Billing',
+    'settings.manageBillingCopy': 'Paddle handles invoices, payment methods, renewals, and cancellations for your Pro subscription.',
+    'settings.pricingLink': 'Pricing',
+    'settings.refundPolicyLink': 'Refund Policy',
+    'settings.privacyTermsSummary': 'Quick links to pricing, refunds, and the main legal pages for JobSensei.',
+    'paywall.copy': 'Start on Free with your email, or unlock Pro through Paddle.',
+    'onboarding.badge': 'JobSensei access',
+    'onboarding.welcome': 'Welcome to JobSensei',
+    'onboarding.tagline': 'AI-powered job-search prep with Free and Pro access.',
+    'onboarding.accessTitle': 'Choose your access',
+    'onboarding.accessSubtitle': 'Start with Free by email, or open Pro through Paddle before setting up your workspace.',
+    'onboarding.freePlan': 'Free',
+    'onboarding.proPlan': 'Pro',
+    'onboarding.freePrice': 'EUR 0',
+    'onboarding.proPrice': 'EUR 5',
+    'onboarding.perMonth': 'per month',
+    'onboarding.freeCopy': 'Light hosted usage, up to 2 approved devices, and BYOK still available later in Settings.',
+    'onboarding.proCopy': 'Built for heavier prep with 53,000 hosted credits every 31 days and billing managed through Paddle.',
+    'onboarding.emailLabel': 'Email address',
+    'onboarding.emailPlaceholder': 'you@example.com',
+    'onboarding.freeCta': 'Start with Free',
+    'onboarding.proCta': 'Open Pro checkout',
+    'onboarding.sameEmailHint': 'Use the same email for JobSensei sign-in and Paddle checkout so Pro can link automatically.',
+    'onboarding.legacySupportNote': 'Legacy Buy Me a Coffee access is still honored when you sign in with the same email.',
+    'onboarding.accessReady': 'Access ready',
+    'onboarding.accessReadyCopy': 'Your account is active. Continue to finish your profile and resume setup.',
+    'onboarding.legalLinksTitle': 'Review before purchase',
+    'onboarding.continue': 'Continue',
+    'onboarding.completeAccessFirst': 'Activate Free or Pro before continuing.',
+    'onboarding.profileTitle': 'Set up your workspace',
+    'onboarding.profileSubtitle': 'Add the basics JobSensei should remember across guided prep.',
+    'onboarding.languageLabel': 'Interface language',
+    'onboarding.nameLabel': 'Your name',
+    'onboarding.namePlaceholder': 'Ivan',
+    'onboarding.currentRoleLabel': 'Current role',
+    'onboarding.currentRolePlaceholder': 'Marketing Manager',
+    'onboarding.targetRoleLabel': 'Target role',
+    'onboarding.targetRolePlaceholder': 'Financial Crime Analyst',
+    'onboarding.resumeTitle': 'Upload your resume / CV',
+    'onboarding.resumeSubtitle': 'One upload helps prefill interview prep, gap analysis, and the rest of the app.',
+    'onboarding.upload': 'Upload .txt or .pdf',
+    'onboarding.reading': 'Reading...',
+    'onboarding.resumePlaceholder': 'Or paste your resume / CV text here...',
+    'onboarding.resumeCapturedWithCount': 'Resume captured: {count} characters',
+    'onboarding.resumeLater': 'You can leave this empty and add it later in Settings.',
+    'onboarding.back': 'Back',
+    'onboarding.finish': 'Finish setup',
+    'onboarding.close': 'Close',
+    'onboarding.stepAccess': 'Access',
+    'onboarding.stepProfile': 'Profile',
+    'onboarding.stepResume': 'Resume',
+  },
+}
+
 Object.entries(creditsUxPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
@@ -11333,6 +11393,10 @@ Object.entries(creditsCopyTighteningPatches).forEach(([locale, patch]) => {
 })
 
 Object.entries(hostedPlanClarityPatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
+Object.entries(paddleUxPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 

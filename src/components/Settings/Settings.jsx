@@ -22,8 +22,9 @@ export default function Settings() {
     secureUser, secureAccount, statusError, accountError, signOutSecure,
     magicLinkSentTo,
     revokeSecureDevice, revokingDeviceId, loadingAccount, refreshSecureAccount,
+    secureSession, secureDevice,
   } = useAuth()
-  const { profile, setShowOnboarding } = useApp()
+  const { profile, openOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData, exportProject, exportAll, importProjects } = useProject()
   const {
     t, language, setLanguage, languageOption, languages,
@@ -43,7 +44,8 @@ export default function Settings() {
   const [bmacNotice, setBmacNotice] = useState('')
   const [magicLinkCooldownUntil, setMagicLinkCooldownUntil] = useState(0)
   const [secureError, setSecureError] = useState('')
-  const [legalExpanded, setLegalExpanded] = useState(false)
+  const [billingPortalLoading, setBillingPortalLoading] = useState(false)
+  const [billingPortalError, setBillingPortalError] = useState('')
   const [importingProjects, setImportingProjects] = useState(false)
   const [projectTransferMessage, setProjectTransferMessage] = useState('')
 
@@ -234,6 +236,47 @@ export default function Settings() {
     }
   }
 
+  async function handleManageBilling() {
+    if (!secureSession?.access_token) {
+      setBillingPortalError('Sign in to your JobSensei account first.')
+      return
+    }
+
+    const popup = window.open('', '_blank', 'noopener,noreferrer')
+    setBillingPortalLoading(true)
+    setBillingPortalError('')
+
+    try {
+      const response = await fetch('/api/paddle-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${secureSession.access_token}`,
+          'X-JobSensei-Device-Id': secureDevice?.deviceId || '',
+          'X-JobSensei-Device-Name': secureDevice?.deviceName || '',
+        },
+      })
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok || !payload.url) {
+        throw new Error(payload.error || 'Unable to open Paddle billing right now.')
+      }
+
+      if (popup) {
+        popup.location.href = payload.url
+      } else {
+        window.open(payload.url, '_blank', 'noopener,noreferrer')
+      }
+    } catch (error) {
+      if (popup) {
+        popup.close()
+      }
+      setBillingPortalError(error.message || 'Unable to open Paddle billing right now.')
+    } finally {
+      setBillingPortalLoading(false)
+    }
+  }
+
   function saveResume() {
     updateProjectData('resume', resumeText)
     setResumeSaved(true)
@@ -394,6 +437,13 @@ export default function Settings() {
   const settingsSupportCopyClass = 'text-slate-400 text-sm leading-relaxed'
   const settingsMutedCopyClass = 'text-slate-500 text-sm leading-relaxed'
   const secureSignedIn = !!secureUser
+  const hasPaddleBilling = Boolean(
+    secureSignedIn
+    && secureSession?.access_token
+    && secureAccount?.planActive
+    && secureAccount?.planTier === 'pro'
+    && String(secureAccount?.planSource || '').toLowerCase() === 'paddle_webhook',
+  )
   const approvedDevices = (secureAccount?.devices || []).filter(device => device.isApproved)
   const replacementCooldownUntil = secureAccount?.replacementCooldownUntil || ''
   const normalizedUnlockInput = bmacInput.trim().toLowerCase()
@@ -744,8 +794,21 @@ export default function Settings() {
                         <LogOut size={13} /> {t('settings.secureAccountSignOut')}
                       </button>
                     )}
+                    {hasPaddleBilling && (
+                      <button
+                        onClick={handleManageBilling}
+                        disabled={billingPortalLoading}
+                        className="btn-ghost text-xs text-slate-300 hover:text-teal-300 disabled:opacity-60"
+                      >
+                        <CreditCard size={13} /> {billingPortalLoading ? `${t('settings.manageBillingButton')}...` : t('settings.manageBillingButton')}
+                      </button>
+                    )}
                   </div>
                 )}
+                {hasPaddleBilling && (
+                  <p className={settingsMutedCopyClass}>{t('settings.manageBillingCopy')}</p>
+                )}
+                {billingPortalError && <p className="text-red-400 text-sm leading-relaxed">{billingPortalError}</p>}
               </div>
             ) : (
               <div className="space-y-3">
@@ -780,6 +843,7 @@ export default function Settings() {
                   <Check size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
                 </button>
                 <p className={settingsMutedCopyClass}>{t('settings.unlockInputHint')}</p>
+                <p className="text-slate-500 text-sm leading-relaxed">{t('settings.legacyBmacNotice')}</p>
                 {bmacNotice && <p className="text-green-400 text-sm leading-relaxed">{bmacNotice}</p>}
                 {bmacError && <p className="text-red-400 text-sm leading-relaxed">{bmacError}</p>}
               </div>
@@ -807,7 +871,7 @@ export default function Settings() {
                   <h5 className="font-display font-semibold text-white">{t('settings.profile')}</h5>
                   <p className={`${settingsSupportCopyClass} mt-1`}>{t('settings.profilePlanCopy')}</p>
                 </div>
-                <button onClick={() => setShowOnboarding(true)} className="btn-secondary text-xs sm:text-sm justify-center">
+                <button onClick={() => openOnboarding('profile')} className="btn-secondary text-xs sm:text-sm justify-center">
                   {profileActionLabel}
                 </button>
               </div>
@@ -967,44 +1031,27 @@ export default function Settings() {
         <div className={`${pairedCardClass} border-red-500/20`}>
           <h3 className="font-display font-semibold text-white mb-1">{t('settings.dataManagementTitle')}</h3>
           <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
-            <button
-              onClick={() => setLegalExpanded(current => !current)}
-              className="w-full flex items-center justify-between gap-3 text-left"
-              aria-expanded={legalExpanded}
-            >
-              <div>
-                <div className="text-white text-sm font-display font-semibold">{t('settings.privacyTermsTitle')}</div>
-                <p className="text-slate-400 text-sm leading-relaxed mt-1">{t('settings.privacyTermsSummary')}</p>
-              </div>
-              {legalExpanded ? <ChevronUp size={15} className="text-slate-400" /> : <ChevronDown size={15} className="text-slate-400" />}
-            </button>
-
-            {legalExpanded && (
-              <div className="space-y-3 pt-1">
-                <div className="space-y-2 text-slate-300 text-sm leading-relaxed">
-                  {[1, 2, 3]
-                    .map(index => t(`settings.privacyTermsBullet${index}`))
-                    .filter(Boolean)
-                    .map((bullet, index) => (
-                      <p key={index}>{bullet}</p>
-                    ))}
-                </div>
-                <div className="text-slate-300 text-sm leading-relaxed">
-                  {t('settings.privacyTermsAgreement')}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                    <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
-                  </a>
-                  <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                    <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
-                  </a>
-                  <a href={`/cookie-storage-notice.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                    <ExternalLink size={13} /> {t('settings.cookieNoticeLink')}
-                  </a>
-                </div>
-              </div>
-            )}
+            <div>
+              <div className="text-white text-sm font-display font-semibold">{t('settings.privacyTermsTitle')}</div>
+              <p className="text-slate-400 text-sm leading-relaxed mt-1">{t('settings.privacyTermsSummary')}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
+              </a>
+              <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
+              </a>
+              <a href={`/cookie-storage-notice.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.cookieNoticeLink')}
+              </a>
+              <a href={`/pricing.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.pricingLink')}
+              </a>
+              <a href={`/refund-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.refundPolicyLink')}
+              </a>
+            </div>
           </div>
 
           <div className="space-y-2.5 text-slate-400 text-sm leading-relaxed mb-3">
