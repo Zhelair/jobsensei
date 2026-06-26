@@ -11372,6 +11372,7 @@ const paddleUxPatches = {
     'onboarding.resumeCapturedWithCount': 'Resume captured: {count} characters',
     'onboarding.resumeLater': 'You can leave this empty and add it later in Settings.',
     'onboarding.back': 'Back',
+    'onboarding.skip': 'Skip for now',
     'onboarding.finish': 'Finish setup',
     'onboarding.close': 'Close',
     'onboarding.stepAccess': 'Access',
