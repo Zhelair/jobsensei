@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { generateId } from '../utils/helpers'
 import { makeTrackerApplication, normalizeApplicationUrl } from '../utils/jobIntake'
+import { createLearningTopic } from '../utils/learningTopics'
 
 const ProjectContext = createContext(null)
 
@@ -48,6 +49,9 @@ function normalizeProject(project) {
     ...project,
     data: {
       ...data,
+      topics: Array.isArray(data.topics)
+        ? data.topics.map(topic => createLearningTopic(topic))
+        : [],
       applications: Array.isArray(data.applications)
         ? data.applications.map(normalizeApplicationEntry)
         : [],
@@ -187,8 +191,8 @@ export function ProjectProvider({ children }) {
     const p = makeProject(name)
     // Copy starter topics into new project
     const starterTopics = [
-      { id: generateId(), title: 'B2B vs B2C Fraud: Key Differences', category: 'FRAML', difficulty: 'Intermediate', status: 'Not Started', messages: [], quizScores: [], repetitions: 0, easeFactor: 2.5, interval: 0, nextReview: null },
-      { id: generateId(), title: 'Merchant Risk Assessment & Onboarding', category: 'FRAML', difficulty: 'Intermediate', status: 'Not Started', messages: [], quizScores: [], repetitions: 0, easeFactor: 2.5, interval: 0, nextReview: null },
+      createLearningTopic({ id: generateId(), title: 'B2B vs B2C Fraud: Key Differences', category: 'FRAML', difficulty: 'Intermediate', status: 'Not Started', messages: [], quizScores: [], repetitions: 0, easeFactor: 2.5, interval: 0, nextReview: null }),
+      createLearningTopic({ id: generateId(), title: 'Merchant Risk Assessment & Onboarding', category: 'FRAML', difficulty: 'Intermediate', status: 'Not Started', messages: [], quizScores: [], repetitions: 0, easeFactor: 2.5, interval: 0, nextReview: null }),
     ]
     p.data.topics = starterTopics
     const updated = [...projects, p]

@@ -5,8 +5,9 @@ import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, matchColor, generateId } from '../../utils/helpers'
+import { createLearningTopic, getLearningTopicTitle } from '../../utils/learningTopics'
 import ScoreRing from '../shared/ScoreRing'
-import { Search, AlertTriangle, Zap, Save, Clock, Trash2, ArrowLeft } from 'lucide-react'
+import { Search, AlertTriangle, Zap, Clock, Trash2, ArrowLeft } from 'lucide-react'
 
 const TAB_KEYS = [
   'gapAnalysis.tabs.gapAnalysis',
@@ -45,7 +46,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
   const { language, t } = useLanguage()
 
   const resume = getProjectData('resume')
-  const savedResults = getProjectData('gapResults')
+  const savedResults = getProjectData('gapResults') || []
   const topics = getProjectData('topics') || []
   const persistedJD = getProjectData('currentJD')
   const activeContextJD = activeApplication ? (activeApplication.jdText || '') : persistedJD
@@ -72,15 +73,43 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
   const [redFlags, setRedFlags] = useState(null)
   const [error, setError] = useState('')
   const [studyMsg, setStudyMsg] = useState('')
+  const [saveMsg, setSaveMsg] = useState('')
   const [showHistory, setShowHistory] = useState(false)
 
   React.useEffect(() => {
     if (resume && !background) setBackground(resume)
   }, [resume])
 
+  function flashSavedMessage() {
+    setSaveMsg(t('applications.workspace.saved'))
+    window.clearTimeout(flashSavedMessage.timeoutId)
+    flashSavedMessage.timeoutId = window.setTimeout(() => setSaveMsg(''), 2200)
+  }
+
+  function saveResultForTab(nextTab, payload = {}) {
+    if (!payload.gapResult && !payload.scoreResult && !payload.redFlags) return
+
+    const entry = {
+      id: generateId(),
+      date: new Date().toISOString(),
+      tab: t(TAB_KEYS[nextTab]),
+      jdSnippet: (payload.jd || jd).slice(0, 120),
+      gapResult: nextTab === 0 ? payload.gapResult || null : null,
+      scoreResult: nextTab === 1 ? payload.scoreResult || null : null,
+      redFlags: nextTab === 2 ? payload.redFlags || null : null,
+      applicationId: activeApplication?.id || null,
+      applicationLabel: activeApplication
+        ? `${activeApplication.company}${activeApplication.role ? ` - ${activeApplication.role}` : ''}`
+        : null,
+    }
+
+    updateProjectData('gapResults', [...savedResults, entry])
+    flashSavedMessage()
+  }
+
   async function runGapAnalysis() {
     if (!jd.trim() || !background.trim()) return
-    setLoading(true); setError(''); setGapResult('')
+    setLoading(true); setError(''); setGapResult(''); setSaveMsg('')
     try {
       let full = ''
       await callAI({
@@ -89,17 +118,21 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
         temperature: 0.6,
         onChunk: (_, acc) => { full = acc; setGapResult(acc) },
       })
+      if (full.trim()) saveResultForTab(0, { gapResult: full, jd })
     } catch (e) { setError(e.message) }
     setLoading(false)
   }
 
   async function runScoring() {
     if (!jd.trim() || !background.trim()) return
-    setLoading(true); setError(''); setScoreResult(null)
+    setLoading(true); setError(''); setScoreResult(null); setSaveMsg('')
     try {
       const raw = await callAI({ systemPrompt: prompts.applicationScoring(background, jd, language), messages: [{ role: 'user', content: 'Score.' }], temperature: 0.3 })
       const parsed = tryParseJSON(raw)
-      if (parsed) setScoreResult(parsed)
+      if (parsed) {
+        setScoreResult(parsed)
+        saveResultForTab(1, { scoreResult: parsed, jd })
+      }
       else setError(t('gapAnalysis.errors.parseScore'))
     } catch (e) { setError(e.message) }
     setLoading(false)
@@ -107,32 +140,17 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
 
   async function runRedFlags() {
     if (!jd.trim()) return
-    setLoading(true); setError(''); setRedFlags(null)
+    setLoading(true); setError(''); setRedFlags(null); setSaveMsg('')
     try {
       const raw = await callAI({ systemPrompt: prompts.redFlagDetector(jd, language), messages: [{ role: 'user', content: 'Analyze.' }], temperature: 0.4 })
       const parsed = tryParseJSON(raw)
-      if (parsed) setRedFlags(parsed)
+      if (parsed) {
+        setRedFlags(parsed)
+        saveResultForTab(2, { redFlags: parsed, jd })
+      }
       else setError(t('gapAnalysis.errors.parseRedFlags'))
     } catch (e) { setError(e.message) }
     setLoading(false)
-  }
-
-  function saveResult() {
-    if (!gapResult && !scoreResult) return
-    const entry = {
-      id: generateId(),
-      date: new Date().toISOString(),
-      tab: t(TAB_KEYS[tab]),
-      jdSnippet: jd.slice(0, 120),
-      gapResult: tab === 0 ? gapResult : null,
-      scoreResult: tab === 1 ? scoreResult : null,
-      redFlags: tab === 2 ? redFlags : null,
-      applicationId: activeApplication?.id || null,
-      applicationLabel: activeApplication
-        ? `${activeApplication.company}${activeApplication.role ? ` - ${activeApplication.role}` : ''}`
-        : null,
-    }
-    updateProjectData('gapResults', [...savedResults, entry])
   }
 
   function deleteResult(id) {
@@ -147,10 +165,14 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
   }
 
   function addStudyTopic(topicLabel) {
-    const normalizedTitle = normalizeStudyTopic(topicLabel)
+    const nextTopic = createLearningTopic({
+      title: normalizeStudyTopic(topicLabel),
+      subject: normalizeStudyTopic(topicLabel),
+    })
+    const normalizedTitle = getLearningTopicTitle(nextTopic)
     if (!normalizedTitle) return
 
-    const existingTopic = topics.find(topic => topic.title.toLowerCase() === normalizedTitle.toLowerCase())
+    const existingTopic = topics.find(topic => getLearningTopicTitle(topic).toLowerCase() === normalizedTitle.toLowerCase())
     if (existingTopic) {
       if (existingTopic.status === 'Not Started') {
         updateProjectData(
@@ -163,9 +185,8 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
       return
     }
 
-    const newTopic = {
+    const newTopic = createLearningTopic({
       id: generateId(),
-      title: normalizedTitle,
       category: 'Career',
       difficulty: 'Intermediate',
       status: 'In Progress',
@@ -180,7 +201,9 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
       applicationLabel: activeApplication
         ? `${activeApplication.company}${activeApplication.role ? ` - ${activeApplication.role}` : ''}`
         : '',
-    }
+      title: normalizedTitle,
+      subject: nextTopic.subject,
+    })
 
     updateProjectData('topics', [...topics, newTopic])
     openLearningTopic(newTopic.id, 'tutor')
@@ -283,12 +306,10 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
           {tab === 0 ? <Search size={16} /> : tab === 1 ? <Zap size={16} /> : <AlertTriangle size={16} />}
           {loading ? t('gapAnalysis.actions.analyzing') : tab === 0 ? t('gapAnalysis.actions.analyzeGap') : tab === 1 ? t('gapAnalysis.actions.scoreApplication') : t('gapAnalysis.actions.detectRedFlags')}
         </button>
-        {(gapResult || scoreResult || redFlags) && (
-          <button onClick={saveResult} className="btn-secondary"><Save size={14} /> {t('gapAnalysis.actions.saveToProject')}</button>
-        )}
       </div>
 
       {error && <div className="badge-red mb-4 py-2 px-3 rounded-xl">{error}</div>}
+      {saveMsg && <div className="badge-green mb-4 py-2 px-3 rounded-xl">{saveMsg}</div>}
       {studyMsg && <div className="badge-green mb-4 py-2 px-3 rounded-xl">{studyMsg}</div>}
 
       {tab === 0 && gapResult && (
