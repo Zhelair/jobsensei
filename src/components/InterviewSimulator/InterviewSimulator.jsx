@@ -300,7 +300,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
                 ))}
               </div>
 
-              <button onClick={startSession} disabled={!isConnected} className="btn-primary w-full justify-center py-3 lg:py-4 text-base lg:text-lg mt-auto">
+              <button onClick={startSession} className="btn-primary w-full justify-center py-3 lg:py-4 text-base lg:text-lg mt-auto">
                 <Play size={18} /> {t('interview.startButton')}
               </button>
               {!isConnected && (

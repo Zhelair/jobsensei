@@ -551,7 +551,7 @@ export default function JobTracker() {
                   }
                 </div>
               </div>
-              <button onClick={researchForAdd} disabled={researchLoading || !isConnected}
+              <button onClick={researchForAdd} disabled={researchLoading}
                 className={`ai-research-button ${pendingResearch ? 'is-ready' : ''}`}>
                 <Search size={15}/> {researchLoading ? t('applications.add.researching') : pendingResearch ? t('applications.add.rerun') : t('applications.add.research')}
               </button>
@@ -1422,7 +1422,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           : t('applications.workspace.steps.research.summaryMissing'),
         actions: [
           { label: hasResearch ? t('applications.workspace.steps.research.actionReview') : t('applications.workspace.steps.research.actionOpen'), onClick: () => navigateWorkspaceTab('research'), variant: 'primary' },
-          { label: researching ? t('applications.workspace.steps.research.actionResearching') : t('applications.workspace.steps.research.actionAutofill'), onClick: () => runResearch(), variant: 'secondary', disabled: !isConnected || researching },
+          { label: researching ? t('applications.workspace.steps.research.actionResearching') : t('applications.workspace.steps.research.actionAutofill'), onClick: () => runResearch(), variant: 'secondary', disabled: researching },
         ],
       },
       {
@@ -1712,14 +1712,14 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
           <div className="grid sm:grid-cols-2 gap-2 mb-4">
             <button
               onClick={generateWorkspaceSummary}
-              disabled={!isConnected || workspaceSummaryLoading || noteCount === 0}
+              disabled={workspaceSummaryLoading || noteCount === 0}
               className="btn-secondary flex-1 justify-center text-xs"
             >
               <FileText size={13} /> {workspaceSummaryLoading ? t('applications.workspace.research.summarizing') : t('applications.workspace.research.summarize')}
             </button>
             <button
               onClick={runResearch}
-              disabled={!isConnected || researching}
+              disabled={researching}
               className="btn-primary flex-1 justify-center text-xs"
             >
               <Search size={13} /> {researching ? t('applications.workspace.research.researching') : t('applications.workspace.research.researchCompany')}
@@ -1798,7 +1798,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
               </div>
               <div className="text-slate-400 text-xs">{t('applications.workspace.prep.cheatSheetSubtitle')}</div>
             </div>
-            <button onClick={generateCheatSheet} disabled={!isConnected || cheatLoading} className="btn-primary text-xs flex-shrink-0">
+            <button onClick={generateCheatSheet} disabled={cheatLoading} className="btn-primary text-xs flex-shrink-0">
               {cheatLoading ? t('applications.workspace.prep.generating') : cheatSheet ? t('applications.workspace.prep.regenerate') : t('applications.workspace.prep.generate')}
             </button>
           </div>
@@ -2065,7 +2065,7 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
             <div className="text-white text-sm font-display font-semibold">{t('applications.offer.aiAdvisorTitle')}</div>
             <div className="text-slate-400 text-xs">{t('applications.offer.aiAdvisorCopy')}</div>
           </div>
-          <button onClick={getAdvice} disabled={loadingAdvice || !isConnected || offerApps.length < 1}
+          <button onClick={getAdvice} disabled={loadingAdvice || offerApps.length < 1}
             className="btn-primary text-xs">
             {loadingAdvice ? t('applications.offer.analyzing') : t('applications.offer.getAdvice')}
           </button>

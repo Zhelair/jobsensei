@@ -301,7 +301,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
 
       <div className="flex gap-2 mb-5">
         <button onClick={tab === 0 ? runGapAnalysis : tab === 1 ? runScoring : runRedFlags}
-          disabled={loading || !isConnected || !jd.trim()}
+          disabled={loading || !jd.trim()}
           className="btn-primary">
           {tab === 0 ? <Search size={16} /> : tab === 1 ? <Zap size={16} /> : <AlertTriangle size={16} />}
           {loading ? t('gapAnalysis.actions.analyzing') : tab === 0 ? t('gapAnalysis.actions.analyzeGap') : tab === 1 ? t('gapAnalysis.actions.scoreApplication') : t('gapAnalysis.actions.detectRedFlags')}

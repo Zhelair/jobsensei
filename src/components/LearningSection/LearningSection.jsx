@@ -637,7 +637,7 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
   const topicTitle = getLearningTopicTitle(topic)
   const topicSubject = getLearningTopicSubject(topic)
 
-  React.useEffect(() => { if (isConnected) loadQuiz() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  React.useEffect(() => { loadQuiz() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadQuiz() {
     setLoading(true)
@@ -1031,10 +1031,10 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
               </span>
             </h4>
             <div className="flex gap-2 mb-4">
-              <button onClick={() => runAI('summarize')} disabled={aiLoading || !isConnected} className="btn-secondary flex-1 justify-center text-xs">
+              <button onClick={() => runAI('summarize')} disabled={aiLoading} className="btn-secondary flex-1 justify-center text-xs">
                 <FileText size={13} /> {aiLoading && aiMode === 'summarize' ? t('learning.summarizing') : t('learning.summarizeNotes')}
               </button>
-              <button onClick={() => runAI('cheatcard')} disabled={aiLoading || !isConnected} className="btn-primary flex-1 justify-center text-xs">
+              <button onClick={() => runAI('cheatcard')} disabled={aiLoading} className="btn-primary flex-1 justify-center text-xs">
                 <StickyNote size={13} /> {aiLoading && aiMode === 'cheatcard' ? t('learning.generating') : t('learning.generateCheatCard')}
               </button>
             </div>

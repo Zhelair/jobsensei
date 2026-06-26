@@ -153,7 +153,7 @@ export default function STARBuilder({ onBack, backLabel }) {
         />
       </div>
 
-      <button onClick={buildStar} disabled={loading || !isConnected || !situation.trim()} className="btn-primary mb-5">
+      <button onClick={buildStar} disabled={loading || !situation.trim()} className="btn-primary mb-5">
         <Wand2 size={16} /> {loading ? t('starBuilder.building') : t('starBuilder.buildStarAnswer')}
       </button>
 

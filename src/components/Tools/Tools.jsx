@@ -937,7 +937,7 @@ function TransferableSkillsTool({ onBack, hubLabel = 'Back', resume, saveHistory
           <input className="input-field" placeholder={t('tools.transferable.targetRolePlaceholder')} value={targetRole} onChange={e => setTargetRole(e.target.value)} />
         </div>
       </div>
-      <button onClick={analyze} disabled={loading || !isConnected || !experience.trim() || !targetRole.trim()} className="btn-primary mb-5">
+      <button onClick={analyze} disabled={loading || !experience.trim() || !targetRole.trim()} className="btn-primary mb-5">
         <Zap size={16}/> {loading ? t('tools.transferable.analyzing') : t('tools.transferable.analyze')}
       </button>
       {result && (
@@ -997,7 +997,7 @@ function QuestionPredictor({ onBack, hubLabel = 'Back', resume, activeContext, s
         <textarea className="textarea-field h-28" placeholder={t('tools.predictor.jdPlaceholder')} value={jd} onChange={e => setJd(e.target.value)} />
         <input className="input-field" placeholder={t('tools.predictor.backgroundPlaceholder')} value={background} onChange={e => setBackground(e.target.value)} />
       </div>
-      <button onClick={predict} disabled={loading || !isConnected || !jd.trim()} className="btn-primary mb-5">
+      <button onClick={predict} disabled={loading || !jd.trim()} className="btn-primary mb-5">
         <Target size={16} /> {loading ? t('tools.predictor.predicting') : t('tools.predictor.predict')}
       </button>
       {result?.questions && (
@@ -1059,7 +1059,7 @@ function ToneAnalyzer({ onBack, hubLabel = 'Back', saveHistory, history, onDelet
       <h2 className="section-title mb-1">{t('tools.tone.title')}</h2>
       <p className="section-sub mb-5">{t('tools.tone.subtitle')}</p>
       <textarea className="textarea-field h-32 mb-4" placeholder={t('tools.tone.answerPlaceholder')} value={answer} onChange={e => setAnswer(e.target.value)} />
-      <button onClick={analyze} disabled={loading || !isConnected || !answer.trim()} className="btn-primary mb-5">
+      <button onClick={analyze} disabled={loading || !answer.trim()} className="btn-primary mb-5">
         <Gauge size={16} /> {loading ? t('tools.tone.analyzing') : t('tools.tone.analyze')}
       </button>
       {result && (
@@ -1163,7 +1163,7 @@ function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, 
           ))}
         </div>
       </div>
-      <button onClick={generate} disabled={loading || !isConnected || !company.trim()} className="btn-primary mb-5">
+      <button onClick={generate} disabled={loading || !company.trim()} className="btn-primary mb-5">
         <Mail size={16} /> {loading ? t('tools.followup.writing') : t('tools.followup.generate')}
       </button>
       {result && (
@@ -1219,7 +1219,7 @@ function ElevatorPitch({ onBack, hubLabel = 'Back', resume, saveHistory, history
         <input className="input-field" placeholder={t('tools.pitch.rolePlaceholder')} value={role} onChange={e => setRole(e.target.value)} />
         <textarea className="textarea-field h-24" placeholder={t('tools.pitch.strengthsPlaceholder')} value={strengths} onChange={e => setStrengths(e.target.value)} />
       </div>
-      <button onClick={generate} disabled={loading || !isConnected || !role.trim() || !strengths.trim()} className="btn-primary mb-5">
+      <button onClick={generate} disabled={loading || !role.trim() || !strengths.trim()} className="btn-primary mb-5">
         <Megaphone size={16} /> {loading ? t('tools.followup.writing') : t('tools.pitch.build')}
       </button>
       {result && (
@@ -1290,7 +1290,7 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
         <textarea className="textarea-field h-28" placeholder={t('gapAnalysis.placeholders.jobDescription')} value={jd} onChange={e => setJd(e.target.value)} />
         <textarea className="textarea-field h-28" placeholder={t('tools.coverletter.resumePlaceholder')} value={resumeText} onChange={e => setResumeText(e.target.value)} />
       </div>
-      <button onClick={generate} disabled={loading || !isConnected || !jd.trim() || !resumeText.trim()} className="btn-primary mb-5">
+      <button onClick={generate} disabled={loading || !jd.trim() || !resumeText.trim()} className="btn-primary mb-5">
         <FileText size={16} /> {loading ? t('tools.coverletter.generating') : t('tools.coverletter.generate')}
       </button>
       {result && (
@@ -1378,7 +1378,7 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
         <textarea className="textarea-field h-40" placeholder={t('tools.resumechecker.resumePlaceholder')} value={resumeText} onChange={e => setResumeText(e.target.value)} />
         <textarea className="textarea-field h-20" placeholder={t('tools.resumechecker.optionalJdPlaceholder')} value={jd} onChange={e => setJd(e.target.value)} />
       </div>
-      <button onClick={analyze} disabled={loading || !isConnected || !resumeText.trim()} className="btn-primary mb-5">
+      <button onClick={analyze} disabled={loading || !resumeText.trim()} className="btn-primary mb-5">
         <ClipboardCheck size={16} /> {loading ? t('tools.transferable.analyzing') : t('tools.resumechecker.check')}
       </button>
       {result && (
@@ -1529,7 +1529,7 @@ function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, o
           </div>
         </div>
       )}
-      <button onClick={analyze} disabled={!imageData || analyzing || !isConnected || isDeepSeekActive} className="btn-primary w-full justify-center mb-5">
+      <button onClick={analyze} disabled={!imageData || analyzing || isDeepSeekActive} className="btn-primary w-full justify-center mb-5">
         <Camera size={16} /> {analyzing ? t('tools.visualreview.analyzing') : t('tools.visualreview.analyze')}
       </button>
       {result && (
@@ -1576,7 +1576,7 @@ function LinkedInAuditor({ onBack, hubLabel = 'Back', saveHistory, history, onDe
       <h2 className="section-title mb-1">{t('tools.linkedin.title')}</h2>
       <p className="section-sub mb-5">{t('tools.linkedin.subtitle')}</p>
       <textarea className="textarea-field h-40 mb-4" placeholder={t('tools.linkedin.placeholder')} value={profileText} onChange={e => setProfileText(e.target.value)} />
-      <button onClick={audit} disabled={loading || !isConnected || !profileText.trim()} className="btn-primary mb-5">
+      <button onClick={audit} disabled={loading || !profileText.trim()} className="btn-primary mb-5">
         <Globe size={16} /> {loading ? t('tools.linkedin.auditing') : t('tools.linkedin.audit')}
       </button>
       {result && (
