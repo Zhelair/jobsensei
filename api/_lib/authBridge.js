@@ -329,40 +329,42 @@ function getBmacWebhookSecret() {
   )
 }
 
-function getLemonSqueezyApiKey() {
+function getPaddleApiKey() {
   return firstNonEmpty(
-    process.env.LEMONSQUEEZY_API_KEY,
-    process.env.LEMON_SQUEEZY_API_KEY,
+    process.env.PADDLE_API_KEY,
+    process.env.PADDLE_BEARER_TOKEN,
   )
 }
 
-function getLemonSqueezyStoreId() {
+function getPaddleWebhookSecret() {
   return firstNonEmpty(
-    process.env.LEMONSQUEEZY_STORE_ID,
-    process.env.LEMON_SQUEEZY_STORE_ID,
+    process.env.PADDLE_WEBHOOK_SECRET_KEY,
+    process.env.PADDLE_NOTIFICATION_WEBHOOK_SECRET,
+    process.env.PADDLE_WEBHOOK_SECRET,
   )
 }
 
-function getDefaultLemonSqueezyVariantId() {
-  return firstNonEmpty(
-    process.env.LEMONSQUEEZY_VARIANT_ID,
-    process.env.LEMON_SQUEEZY_VARIANT_ID,
-  )
+function getPaddleEnvironment() {
+  const explicit = String(process.env.PADDLE_ENV || '').trim().toLowerCase()
+  if (explicit === 'sandbox') return 'sandbox'
+  if (explicit === 'live') return 'live'
+
+  const apiKey = getPaddleApiKey().toLowerCase()
+  return apiKey.includes('sdbx') || apiKey.includes('sandbox') ? 'sandbox' : 'live'
 }
 
-function getLemonSqueezyWebhookSecret() {
-  return firstNonEmpty(
-    process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
-    process.env.LEMON_SQUEEZY_WEBHOOK_SECRET,
-  )
+function getPaddleApiBaseUrl() {
+  return getPaddleEnvironment() === 'sandbox'
+    ? 'https://sandbox-api.paddle.com'
+    : 'https://api.paddle.com'
 }
 
-function getAllowedLemonSqueezyIdentifiers() {
+function getAllowedPaddleIdentifiers() {
   return new Set([
-    ...parseAllowedList(process.env.LEMONSQUEEZY_ALLOWED_PRODUCT_IDS),
-    ...parseAllowedList(process.env.LEMONSQUEEZY_ALLOWED_VARIANT_IDS),
-    ...parseAllowedList(process.env.LEMONSQUEEZY_ALLOWED_PRODUCT_NAMES),
-    ...parseAllowedList(process.env.LEMONSQUEEZY_ALLOWED_VARIANT_NAMES),
+    ...parseAllowedList(process.env.PADDLE_ALLOWED_PRODUCT_IDS),
+    ...parseAllowedList(process.env.PADDLE_ALLOWED_PRICE_IDS),
+    ...parseAllowedList(process.env.PADDLE_ALLOWED_PRODUCT_NAMES),
+    ...parseAllowedList(process.env.PADDLE_ALLOWED_PRICE_NAMES),
   ])
 }
 
@@ -578,26 +580,17 @@ export function isBmacWebhookConfigured() {
   return Boolean(getBmacWebhookSecret())
 }
 
-export function isLemonSqueezyCheckoutConfigured() {
-  return Boolean(getLemonSqueezyApiKey() && getLemonSqueezyStoreId() && getDefaultLemonSqueezyVariantId())
+export function isPaddleWebhookConfigured() {
+  return Boolean(getPaddleApiKey() && getPaddleWebhookSecret())
 }
 
-export function isLemonSqueezyWebhookConfigured() {
-  return Boolean(getLemonSqueezyWebhookSecret())
-}
-
-export function getLemonSqueezyCheckoutConfig() {
+export function getPaddleWebhookConfig() {
   return {
-    apiKey: getLemonSqueezyApiKey(),
-    storeId: getLemonSqueezyStoreId(),
-    defaultVariantId: getDefaultLemonSqueezyVariantId(),
-    webhookSecret: getLemonSqueezyWebhookSecret(),
-    checkoutTestMode: String(
-      process.env.LEMONSQUEEZY_CHECKOUT_TEST_MODE
-      || process.env.LEMON_SQUEEZY_CHECKOUT_TEST_MODE
-      || '',
-    ).trim().toLowerCase() === 'true',
-    allowedIdentifiers: [...getAllowedLemonSqueezyIdentifiers()],
+    apiKey: getPaddleApiKey(),
+    apiBaseUrl: getPaddleApiBaseUrl(),
+    webhookSecret: getPaddleWebhookSecret(),
+    environment: getPaddleEnvironment(),
+    allowedIdentifiers: [...getAllowedPaddleIdentifiers()],
   }
 }
 
@@ -820,24 +813,46 @@ export function verifyBmacWebhookSignature({ payload, signature, secret }) {
   return crypto.timingSafeEqual(normalizedExpected, normalizedSignature)
 }
 
-export function getLemonSqueezySignatureHeader(req) {
+export function getPaddleSignatureHeader(req) {
   return firstNonEmpty(
-    req.headers['x-signature'],
-    req.headers['X-Signature'],
+    req.headers['paddle-signature'],
+    req.headers.PaddleSignature,
+    req.headers['Paddle-Signature'],
   )
 }
 
-export function verifyLemonSqueezyWebhookSignature({ payload, signature, secret }) {
+export function verifyPaddleWebhookSignature({ payload, signature, secret, toleranceMs = 30_000 }) {
   if (!payload || !signature || !secret) return false
 
-  const digest = Buffer.from(
-    crypto.createHmac('sha256', secret).update(payload).digest('hex'),
-    'utf8',
-  )
-  const provided = Buffer.from(String(signature).trim(), 'utf8')
+  const parts = String(signature)
+    .split(';')
+    .map(part => part.trim())
+    .filter(Boolean)
+    .map(part => part.split('='))
+    .filter(([key, value]) => key && value)
 
-  if (digest.length !== provided.length) return false
-  return crypto.timingSafeEqual(digest, provided)
+  const timestamp = parts.find(([key]) => key === 'ts')?.[1] || ''
+  const signatures = parts
+    .filter(([key]) => key === 'h1')
+    .map(([, value]) => String(value || '').trim())
+    .filter(Boolean)
+
+  if (!timestamp || !signatures.length) return false
+
+  const timestampMs = Number.parseInt(timestamp, 10) * 1000
+  if (!Number.isFinite(timestampMs)) return false
+  if (Math.abs(Date.now() - timestampMs) > toleranceMs) return false
+
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(`${timestamp}:${payload}`, 'utf8')
+    .digest('hex')
+
+  return signatures.some(candidate => {
+    const digest = Buffer.from(expected, 'utf8')
+    const provided = Buffer.from(candidate, 'utf8')
+    return digest.length === provided.length && crypto.timingSafeEqual(digest, provided)
+  })
 }
 
 function extractBmacLifecycle(eventType = '', payload = {}) {
@@ -885,40 +900,34 @@ function isAllowedBmacGrant(identifiers = []) {
   return identifiers.some(identifier => allowedIdentifiers.has(identifier.toLowerCase()))
 }
 
-function extractLemonSqueezyLifecycle(eventName = '', attributes = {}) {
+function extractPaddleLifecycle(eventName = '', entity = {}) {
   const event = String(eventName || '').trim().toLowerCase()
-  const status = String(attributes?.status || '').trim().toLowerCase()
-  const endsAt = toIsoOrNull(attributes?.ends_at)
-  const endsAtMs = endsAt ? new Date(endsAt).getTime() : 0
-  const hasFutureEnd = Number.isFinite(endsAtMs) && endsAtMs > Date.now()
+  const status = String(entity?.status || '').trim().toLowerCase()
 
-  if (event === 'order_refunded' || attributes?.refunded || attributes?.refunded_at) return 'revoked'
-  if (event === 'subscription_expired' || status === 'expired') return 'expired'
-
-  if (event === 'subscription_cancelled' || status === 'cancelled' || status === 'canceled') {
-    return hasFutureEnd ? 'active' : 'expired'
-  }
+  if (event === 'subscription.canceled' || status === 'canceled') return 'revoked'
+  if (event === 'subscription.paused' || status === 'paused') return 'revoked'
+  if (event === 'subscription.past_due' || status === 'past_due') return 'expired'
 
   return 'active'
 }
 
-function extractLemonSqueezyIdentifiers(attributes = {}) {
-  return [
-    attributes?.product_id,
-    attributes?.variant_id,
-    attributes?.product_name,
-    attributes?.variant_name,
-    attributes?.first_order_item?.product_id,
-    attributes?.first_order_item?.variant_id,
-    attributes?.first_order_item?.product_name,
-    attributes?.first_order_item?.variant_name,
-  ]
+function extractPaddleIdentifiers(entity = {}) {
+  const items = Array.isArray(entity?.items) ? entity.items : []
+
+  return items
+    .flatMap(item => ([
+      item?.price?.id,
+      item?.price?.name,
+      item?.price?.product_id,
+      item?.product?.id,
+      item?.product?.name,
+    ]))
     .map(value => String(value || '').trim())
     .filter(Boolean)
 }
 
-function isAllowedLemonSqueezyGrant(identifiers = []) {
-  const allowedIdentifiers = getAllowedLemonSqueezyIdentifiers()
+function isAllowedPaddleGrant(identifiers = []) {
+  const allowedIdentifiers = getAllowedPaddleIdentifiers()
   if (!allowedIdentifiers.size) return true
 
   return identifiers.some(identifier => allowedIdentifiers.has(identifier.toLowerCase()))
@@ -969,49 +978,50 @@ export function extractBmacGrantDetails(payload = {}, rawBody = '') {
   }
 }
 
-export function extractLemonSqueezyGrantDetails(payload = {}, rawBody = '') {
+export async function fetchPaddleCustomerEmail({ customerId = '' } = {}) {
+  const normalizedCustomerId = String(customerId || '').trim()
+  const config = getPaddleWebhookConfig()
+  if (!normalizedCustomerId || !config.apiKey) return ''
+
+  try {
+    const response = await fetch(`${config.apiBaseUrl}/customers/${normalizedCustomerId}`, {
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        Accept: 'application/json',
+      },
+    })
+
+    if (!response.ok) return ''
+
+    const data = await response.json().catch(() => ({}))
+    return normalizeEmail(firstNonEmpty(
+      data?.data?.email,
+      data?.data?.email_address,
+    ))
+  } catch {
+    return ''
+  }
+}
+
+export function extractPaddleGrantDetails(payload = {}, { customerEmail = '' } = {}) {
   const data = payload?.data && typeof payload.data === 'object'
     ? payload.data
-    : payload
-  const attributes = data?.attributes && typeof data.attributes === 'object'
-    ? data.attributes
     : {}
-  const customData = (
-    attributes?.custom_data && typeof attributes.custom_data === 'object'
-      ? attributes.custom_data
-      : payload?.meta?.custom_data && typeof payload.meta.custom_data === 'object'
-        ? payload.meta.custom_data
-        : {}
-  )
-
-  const eventType = firstNonEmpty(payload?.meta?.event_name, payload?.event_name, payload?.type).toLowerCase()
-  const objectType = String(data?.type || '').trim().toLowerCase()
+  const customData = data?.custom_data && typeof data.custom_data === 'object'
+    ? data.custom_data
+    : {}
+  const eventType = firstNonEmpty(payload?.event_type, payload?.type).toLowerCase()
+  const identifiers = extractPaddleIdentifiers(data)
+  const status = extractPaddleLifecycle(eventType, data)
   const email = normalizeEmail(firstNonEmpty(
-    attributes?.user_email,
-    attributes?.email,
-    attributes?.customer_email,
+    customData?.email,
+    customData?.customerEmail,
+    customerEmail,
   ))
-  const identifiers = extractLemonSqueezyIdentifiers(attributes)
-  const status = extractLemonSqueezyLifecycle(eventType, attributes)
-  const stableId = firstNonEmpty(
-    attributes?.subscription_id,
-    objectType === 'subscriptions' ? data?.id : '',
-    attributes?.order_id,
-    data?.id,
-  )
-  const refPrefix = attributes?.subscription_id
-    ? 'subscription'
-    : objectType === 'subscriptions'
-      ? 'subscription'
-      : objectType === 'orders'
-        ? 'order'
-        : objectType || 'event'
-  const externalRef = stableId
-    ? `${refPrefix}:${stableId}`
-    : hashValue(rawBody || JSON.stringify(payload))
+  const subscriptionId = firstNonEmpty(data?.id)
   const explicitExpiry = toIsoOrNull(
-    attributes?.ends_at
-    || attributes?.renews_at
+    data?.current_billing_period?.ends_at
+    || data?.next_billed_at
     || customData?.expiresAt
     || customData?.expires_at,
   )
@@ -1019,37 +1029,33 @@ export function extractLemonSqueezyGrantDetails(payload = {}, rawBody = '') {
   return {
     email,
     eventType,
-    externalRef,
+    externalRef: subscriptionId ? `subscription:${subscriptionId}` : hashValue(JSON.stringify(payload)),
     identifiers,
     status,
-    shouldGrantAccess: status === 'active' && isAllowedLemonSqueezyGrant(identifiers),
+    shouldGrantAccess: status === 'active' && isAllowedPaddleGrant(identifiers),
     metadata: {
-      source: 'lemonsqueezy_webhook',
+      source: 'paddle_webhook',
       eventType,
-      storeId: firstNonEmpty(attributes?.store_id, customData?.store_id),
-      productId: firstNonEmpty(attributes?.product_id, attributes?.first_order_item?.product_id),
-      variantId: firstNonEmpty(attributes?.variant_id, attributes?.first_order_item?.variant_id),
-      productName: firstNonEmpty(attributes?.product_name, attributes?.first_order_item?.product_name),
-      variantName: firstNonEmpty(attributes?.variant_name, attributes?.first_order_item?.variant_name),
-      customerId: firstNonEmpty(attributes?.customer_id),
-      orderId: firstNonEmpty(attributes?.order_id),
-      subscriptionId: firstNonEmpty(attributes?.subscription_id, objectType === 'subscriptions' ? data?.id : ''),
-      userName: firstNonEmpty(attributes?.user_name, attributes?.name),
-      amount: firstNonEmpty(attributes?.total, attributes?.subtotal, attributes?.subtotal_usd, attributes?.total_usd),
-      currency: firstNonEmpty(attributes?.currency, attributes?.currency_code),
+      subscriptionId,
+      transactionId: firstNonEmpty(data?.transaction_id),
+      customerId: firstNonEmpty(data?.customer_id),
+      productId: firstNonEmpty(data?.items?.[0]?.product?.id, data?.items?.[0]?.price?.product_id),
+      priceId: firstNonEmpty(data?.items?.[0]?.price?.id),
+      productName: firstNonEmpty(data?.items?.[0]?.product?.name),
+      priceName: firstNonEmpty(data?.items?.[0]?.price?.name),
+      currency: firstNonEmpty(data?.currency_code),
       identifiers,
-      customerPortalUrl: firstNonEmpty(attributes?.urls?.customer_portal),
-      updatePaymentMethodUrl: firstNonEmpty(attributes?.urls?.update_payment_method),
       planTier: String(customData?.planTier || customData?.plan_tier || 'pro').toLowerCase() === 'free' ? 'free' : 'pro',
-      planSource: 'lemonsqueezy_webhook',
+      planSource: 'paddle_webhook',
       periodStartedAt: firstNonEmpty(
-        attributes?.created_at,
-        attributes?.updated_at,
+        data?.current_billing_period?.starts_at,
+        data?.started_at,
+        data?.created_at,
       ),
       ...(explicitExpiry ? { expiresAt: explicitExpiry } : {}),
       customData,
       rawEvent: payload,
-      testMode: Boolean(attributes?.test_mode),
+      environment: getPaddleEnvironment(),
     },
   }
 }
@@ -1530,7 +1536,7 @@ export async function upsertBmacPlanGrant({
   })
 }
 
-export async function upsertLemonSqueezyPlanGrant({
+export async function upsertPaddlePlanGrant({
   supabase,
   email,
   externalRef,
@@ -1543,8 +1549,8 @@ export async function upsertLemonSqueezyPlanGrant({
     externalRef,
     status,
     metadata,
-    grantType: 'lemonsqueezy_webhook',
-    defaultPlanSource: 'lemonsqueezy_webhook',
+    grantType: 'paddle_webhook',
+    defaultPlanSource: 'paddle_webhook',
     defaultPlanTier: 'pro',
   })
 }
