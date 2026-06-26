@@ -5,6 +5,7 @@ import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
+import { createLearningTopic, getLearningTopicPreview, getLearningTopicSubject, getLearningTopicTitle } from '../../utils/learningTopics'
 import { sm2, getNextReviewDate, isDueToday } from '../../utils/spacedRepetition'
 import ChatWindow from '../shared/ChatWindow'
 import { BookOpen, Plus, Brain, Check, ArrowLeft, Edit3, Trash2, X, ChevronRight, History, FileText, Copy, Download, Printer, Save, StickyNote, Sparkles, Image } from 'lucide-react'
@@ -75,7 +76,7 @@ function categoryLabel(t, value) {
 }
 
 function starterTopicsForLanguage(t) {
-  return STARTER_TOPIC_BLUEPRINTS.map(topic => ({
+  return STARTER_TOPIC_BLUEPRINTS.map(topic => createLearningTopic({
     title: t(`learning.starter.${topic.key}`),
     category: topic.category,
     difficulty: topic.difficulty,
@@ -99,7 +100,7 @@ export default function LearningSection() {
   const [selectedTopic, setSelectedTopic] = useState(historyTopic)
   const [showAdd, setShowAdd] = useState(false)
   const [editingTopic, setEditingTopic] = useState(null)
-  const [newTopic, setNewTopic] = useState({ title: '', category: 'Custom', difficulty: 'Intermediate' })
+  const [newTopic, setNewTopic] = useState({ title: '', subject: '', category: 'Custom', difficulty: 'Intermediate' })
   const [customCategory, setCustomCategory] = useState('')
   const [filterCategory, setFilterCategory] = useState('All')
   const [filterStatus, setFilterStatus] = useState('All')
@@ -141,13 +142,14 @@ export default function LearningSection() {
   }
 
   function addTopic() {
-    if (!newTopic.title.trim()) return
+    const draft = createLearningTopic(newTopic)
+    if (!getLearningTopicSubject(draft)) return
     const resolvedCategory = newTopic.category === 'Custom' && customCategory.trim()
       ? customCategory.trim()
       : newTopic.category
-    const topic = {
+    const topic = createLearningTopic({
       id: generateId(),
-      ...newTopic,
+      ...draft,
       category: resolvedCategory,
       status: 'Not Started',
       messages: [],
@@ -156,16 +158,16 @@ export default function LearningSection() {
       easeFactor: 2.5,
       interval: 0,
       nextReview: null,
-    }
+    })
     setTopics(prev => [...prev, topic])
-    setNewTopic({ title: '', category: 'Custom', difficulty: 'Intermediate' })
+    setNewTopic({ title: '', subject: '', category: 'Custom', difficulty: 'Intermediate' })
     setCustomCategory('')
     setShowAdd(false)
   }
 
   function updateTopic(id, updates) {
-    setTopics(prev => prev.map(topic => (topic.id === id ? { ...topic, ...updates } : topic)))
-    if (selectedTopic?.id === id) setSelectedTopic(topic => ({ ...topic, ...updates }))
+    setTopics(prev => prev.map(topic => (topic.id === id ? createLearningTopic({ ...topic, ...updates }) : topic)))
+    if (selectedTopic?.id === id) setSelectedTopic(topic => createLearningTopic({ ...topic, ...updates }))
   }
 
   function saveQuizHistory(data) {
@@ -180,9 +182,11 @@ export default function LearningSection() {
   }
 
   function saveEdit() {
-    if (!editingTopic || !editingTopic.title.trim()) return
+    const draft = createLearningTopic(editingTopic || {})
+    if (!editingTopic || !getLearningTopicSubject(draft)) return
     updateTopic(editingTopic.id, {
-      title: editingTopic.title,
+      title: draft.title,
+      subject: draft.subject,
       category: editingTopic.category,
       difficulty: editingTopic.difficulty,
     })
@@ -190,9 +194,9 @@ export default function LearningSection() {
   }
 
   function addStarterTopics() {
-    const existing = topics.map(topic => topic.title)
-    const topicsToAdd = starterTopics.filter(topic => !existing.includes(topic.title))
-    const newTopics = topicsToAdd.map(topic => ({
+    const existing = topics.map(topic => getLearningTopicTitle(topic))
+    const topicsToAdd = starterTopics.filter(topic => !existing.includes(getLearningTopicTitle(topic)))
+    const newTopics = topicsToAdd.map(topic => createLearningTopic({
       ...topic,
       id: generateId(),
       status: 'Not Started',
@@ -235,7 +239,7 @@ export default function LearningSection() {
         profile={profile}
         callAI={callAI}
         isConnected={isConnected}
-        onSaveNote={(content) => saveNote(selectedTopic.id, selectedTopic.title, content)}
+        onSaveNote={(content) => saveNote(selectedTopic.id, getLearningTopicTitle(selectedTopic), content)}
       />
     )
   }
@@ -313,6 +317,12 @@ export default function LearningSection() {
               onKeyDown={event => event.key === 'Enter' && addTopic()}
               autoFocus
             />
+            <textarea
+              className="textarea-field h-24"
+              placeholder="Topic / what to learn *"
+              value={newTopic.subject}
+              onChange={event => setNewTopic(prev => ({ ...prev, subject: event.target.value }))}
+            />
             <div className="grid grid-cols-2 gap-2">
               <select className="input-field" value={newTopic.category} onChange={event => setNewTopic(prev => ({ ...prev, category: event.target.value }))}>
                 {CATEGORIES.map(category => <option key={category} value={category}>{categoryLabel(t, category)}</option>)}
@@ -331,7 +341,7 @@ export default function LearningSection() {
             )}
           </div>
           <div className="flex gap-2">
-            <button onClick={addTopic} disabled={!newTopic.title.trim()} className="btn-primary">{t('learning.addTopic')}</button>
+            <button onClick={addTopic} disabled={!newTopic.title.trim() && !newTopic.subject.trim()} className="btn-primary">{t('learning.addTopic')}</button>
             <button onClick={() => setShowAdd(false)} className="btn-ghost">{t('common.cancel')}</button>
           </div>
         </div>
@@ -346,6 +356,12 @@ export default function LearningSection() {
             </div>
             <div className="space-y-3 mb-4">
               <input className="input-field" value={editingTopic.title} onChange={event => setEditingTopic(topic => ({ ...topic, title: event.target.value }))} />
+              <textarea
+                className="textarea-field h-24"
+                placeholder="Topic / what to learn *"
+                value={editingTopic.subject || ''}
+                onChange={event => setEditingTopic(topic => ({ ...topic, subject: event.target.value }))}
+              />
               <div className="grid grid-cols-2 gap-2">
                 <select className="input-field" value={editingTopic.category} onChange={event => setEditingTopic(topic => ({ ...topic, category: event.target.value }))}>
                   {CATEGORIES.map(category => <option key={category} value={category}>{categoryLabel(t, category)}</option>)}
@@ -371,7 +387,7 @@ export default function LearningSection() {
           <div className="space-y-2">
             {dueTopics.map(topic => (
               <div key={topic.id} className="flex items-center justify-between bg-yellow-500/5 border border-yellow-500/15 rounded-xl px-3 py-2 gap-2">
-                <span className="text-yellow-200 text-sm font-body truncate flex-1">{topic.title}</span>
+                <span className="text-yellow-200 text-sm font-body truncate flex-1">{getLearningTopicTitle(topic)}</span>
                 <div className="flex gap-1.5 flex-shrink-0">
                   <button onClick={() => navigateLearningView('tutor', topic)} className="btn-secondary text-xs py-1 px-2">
                     <BookOpen size={12} /> {t('learning.study')}
@@ -414,7 +430,7 @@ export default function LearningSection() {
               return (
                 <div key={topic.id} className="flex items-center gap-4 py-1">
                   <div className="flex-1 min-w-0">
-                    <div className="text-slate-300 text-sm truncate mb-1.5">{topic.title}</div>
+                    <div className="text-slate-300 text-sm truncate mb-1.5">{getLearningTopicTitle(topic)}</div>
                     <div className="flex gap-1 mt-1">
                       {scores.slice(-10).map((score, index) => (
                         <div
@@ -468,10 +484,15 @@ export default function LearningSection() {
         {filteredTopics.map(topic => {
           const due = isDueToday(topic.nextReview) && topic.status === 'In Progress'
           const noteCount = topicNotes.filter(note => note.topicId === topic.id).length
+          const title = getLearningTopicTitle(topic)
+          const preview = getLearningTopicPreview(topic)
           return (
             <div key={topic.id} data-guide="learning-topic-card" className="card flex flex-col gap-3 group">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="text-white text-sm font-body font-medium leading-snug flex-1">{topic.title}</h3>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-white text-sm font-body font-medium leading-snug">{title}</h3>
+                  {preview && <p className="text-slate-500 text-xs mt-1 leading-relaxed line-clamp-3">{preview}</p>}
+                </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                   {due && <span className="badge-yellow">{t('learning.due')}</span>}
                   <button onClick={() => setEditingTopic({ ...topic })} className="text-slate-500 hover:text-teal-400 p-0.5"><Edit3 size={13} /></button>
@@ -515,6 +536,9 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
   const [loading, setLoading] = useState(false)
   const [depth, setDepth] = useState('basics')
   const [noteSaved, setNoteSaved] = useState(false)
+  const topicTitle = getLearningTopicTitle(topic)
+  const topicSubject = getLearningTopicSubject(topic)
+  const topicPreview = getLearningTopicPreview(topic)
 
   async function sendMessage(text) {
     if (!text.trim() || loading) return
@@ -526,7 +550,7 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
       let full = ''
       setMessages([...newMessages, { role: 'assistant', content: '' }])
       await callAI({
-        systemPrompt: prompts.topicTutor(topic.title, depth, profile?.currentRole, drillMode, language),
+        systemPrompt: prompts.topicTutor(topicSubject || topicTitle, depth, profile?.currentRole, drillMode, language),
         messages: newMessages,
         temperature: 0.7,
         onChunk: (_, acc) => {
@@ -556,7 +580,8 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /></button>
           <div>
-            <div className="text-white text-sm font-body font-medium">{topic.title}</div>
+            <div className="text-white text-sm font-body font-medium">{topicTitle}</div>
+            {topicPreview && <div className="text-slate-500 text-xs mt-0.5 max-w-xl line-clamp-2">{topicPreview}</div>}
             <div className="flex gap-1.5 mt-0.5">
               {DEPTH_VALUES.map(value => (
                 <button
@@ -583,7 +608,7 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
           onSend={sendMessage}
           isLoading={loading}
           lastAiMessage={lastAiMsg}
-          placeholder={t('learning.tutor.placeholder', { title: topic.title })}
+          placeholder={t('learning.typeYourAnswer')}
         />
         {lastAiMsg && (
           <button onClick={handleSaveNote} className={`save-note-cta ${noteSaved ? 'is-saved' : ''}`}>
@@ -604,6 +629,8 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
   const [feedback, setFeedback] = useState({})
   const [loading, setLoading] = useState(false)
   const [openAnswer, setOpenAnswer] = useState('')
+  const topicTitle = getLearningTopicTitle(topic)
+  const topicSubject = getLearningTopicSubject(topic)
 
   React.useEffect(() => { if (isConnected) loadQuiz() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -611,7 +638,7 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
     setLoading(true)
     try {
       const raw = await callAI({
-        systemPrompt: prompts.quizGenerator(topic.title, topic.difficulty, language),
+        systemPrompt: prompts.quizGenerator(topicSubject || topicTitle, topic.difficulty, language),
         messages: [{ role: 'user', content: 'Generate.' }],
         temperature: 0.6,
       })
@@ -662,7 +689,7 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
     const correct = Object.values(feedback).filter(item => item.correct !== false && (item.score === undefined || item.score >= 6)).length
     onQuizComplete?.({
       topicId: topic.id,
-      topicTitle: topic.title,
+      topicTitle,
       score: avg,
       correct,
       total: Object.values(feedback).length,
@@ -722,7 +749,7 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
         <div className="flex-1">
           <div className="flex justify-between text-xs text-slate-400 mb-1">
             <span>{t('learning.questionCounter', { current: current + 1, total: questions.length })}</span>
-            <span>{topic.title}</span>
+            <span>{topicTitle}</span>
           </div>
           <div className="h-1.5 bg-navy-700 rounded-full overflow-hidden">
             <div className="h-full bg-teal-500 rounded-full transition-all" style={{ width: `${((current + 1) / questions.length) * 100}%` }} />
@@ -796,7 +823,7 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
   function addNote() {
     if (!newContent.trim() || !newTopicId) return
     const topic = topics.find(entry => entry.id === newTopicId)
-    onSaveNote(newTopicId, topic?.title || t('learning.unknownTopic'), newContent.trim())
+    onSaveNote(newTopicId, topic ? getLearningTopicTitle(topic) : t('learning.unknownTopic'), newContent.trim())
     setNewContent('')
     setShowAdd(false)
   }
@@ -806,7 +833,7 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
     setAiLoading(true)
     setAiResult('')
     setAiMode(mode)
-    const topicTitle = currentTopic?.title || t('learning.selectedTopics')
+    const topicTitle = currentTopic ? getLearningTopicTitle(currentTopic) : t('learning.selectedTopics')
     try {
       let full = ''
       const systemPrompt = mode === 'summarize'
@@ -939,7 +966,7 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
           <h3 className="font-display font-semibold text-white text-sm mb-3">{t('learning.newNote')}</h3>
           <div className="space-y-2 mb-3">
             <select className="input-field" value={newTopicId} onChange={event => setNewTopicId(event.target.value)}>
-              {topics.map(topic => <option key={topic.id} value={topic.id}>{topic.title}</option>)}
+              {topics.map(topic => <option key={topic.id} value={topic.id}>{getLearningTopicTitle(topic)}</option>)}
             </select>
             <textarea className="textarea-field h-28" placeholder={t('learning.noteContentPlaceholder')} value={newContent} onChange={event => setNewContent(event.target.value)} autoFocus />
           </div>
@@ -956,9 +983,10 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
         </button>
         {topics.filter(topic => topicNotes.some(note => note.topicId === topic.id)).map(topic => {
           const count = topicNotes.filter(note => note.topicId === topic.id).length
+          const title = getLearningTopicTitle(topic)
           return (
             <button key={topic.id} onClick={() => setSelectedTopicId(topic.id)} className={`px-3 py-1 rounded-full text-xs font-body transition-all ${selectedTopicId === topic.id ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'bg-navy-800 text-slate-400 border border-navy-600 hover:border-slate-500'}`}>
-              {(topic.title.length > 24 ? `${topic.title.slice(0, 22)}...` : topic.title)} ({count})
+              {(title.length > 24 ? `${title.slice(0, 22)}...` : title)} ({count})
             </button>
           )
         })}
@@ -994,7 +1022,7 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
             <h4 className="font-display font-semibold text-white text-sm mb-3 flex items-center gap-2">
               <Sparkles size={14} className="text-teal-400" /> {t('learning.aiActions')}
               <span className="text-slate-500 text-xs font-normal">
-                - {selectedTopicId === 'all' ? t('learning.allNotes') : currentTopic?.title}
+                - {selectedTopicId === 'all' ? t('learning.allNotes') : (currentTopic ? getLearningTopicTitle(currentTopic) : '')}
               </span>
             </h4>
             <div className="flex gap-2 mb-4">
@@ -1016,17 +1044,17 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
                     <button onClick={() => navigator.clipboard?.writeText(aiResult)} className="btn-ghost text-xs">
                       <Copy size={12} /> {t('learning.copy')}
                     </button>
-                    <button onClick={() => downloadTxt(aiResult, `${(currentTopic?.title || 'notes').replace(/\s+/g, '_')}_${aiMode}.txt`)} className="btn-ghost text-xs">
+                    <button onClick={() => downloadTxt(aiResult, `${(currentTopic ? getLearningTopicTitle(currentTopic) : 'notes').replace(/\s+/g, '_')}_${aiMode}.txt`)} className="btn-ghost text-xs">
                       <Download size={12} /> .txt
                     </button>
-                    <button onClick={() => printCheatCard(currentTopic?.title || t('notes.title'), aiResult)} className="btn-ghost text-xs">
+                    <button onClick={() => printCheatCard(currentTopic ? getLearningTopicTitle(currentTopic) : t('notes.title'), aiResult)} className="btn-ghost text-xs">
                       <Printer size={12} /> PDF
                     </button>
                     <button
                       onClick={() => downloadAsImage(
-                        `${aiMode === 'cheatcard' ? t('learning.cheatCard') : t('learning.summary')}: ${currentTopic?.title || t('notes.title')}`,
+                        `${aiMode === 'cheatcard' ? t('learning.cheatCard') : t('learning.summary')}: ${currentTopic ? getLearningTopicTitle(currentTopic) : t('notes.title')}`,
                         aiResult,
-                        `${(currentTopic?.title || 'notes').replace(/\s+/g, '_')}_${aiMode}`,
+                        `${(currentTopic ? getLearningTopicTitle(currentTopic) : 'notes').replace(/\s+/g, '_')}_${aiMode}`,
                       )}
                       className="btn-secondary text-xs"
                     >

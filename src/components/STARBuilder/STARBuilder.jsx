@@ -27,21 +27,26 @@ export default function STARBuilder({ onBack, backLabel }) {
   const [editingId, setEditingId] = useState(null)
   const [editContent, setEditContent] = useState('')
   const [viewingStory, setViewingStory] = useState(null)
+  const [autoSavedStoryId, setAutoSavedStoryId] = useState(null)
 
   async function buildStar() {
     if (!situation.trim()) return
-    setLoading(true); setResult(null)
+    setLoading(true); setResult(null); setAutoSavedStoryId(null)
     try {
       const raw = await callAI({ systemPrompt: prompts.starBuilder(situation, drillMode, language), messages: [{ role: 'user', content: 'Build STAR.' }], temperature: 0.7 })
       const parsed = tryParseJSON(raw)
-      if (parsed) setResult(parsed)
+      if (parsed) {
+        setResult(parsed)
+        const savedStory = saveStory(parsed)
+        setAutoSavedStoryId(savedStory?.id || null)
+      }
     } catch {}
     setLoading(false)
   }
 
-  function saveStory() {
-    if (!result) return
-    setStories(prev => [...prev, {
+  function saveStory(storyResult = result) {
+    if (!storyResult) return null
+    const story = {
       id: generateId(),
       date: new Date().toISOString(),
       situation: situation.slice(0, 100),
@@ -49,9 +54,10 @@ export default function STARBuilder({ onBack, backLabel }) {
       applicationLabel: activeApplication
         ? `${activeApplication.company}${activeApplication.role ? ` - ${activeApplication.role}` : ''}`
         : null,
-      ...result,
-    }])
-    setResult(null); setSituation(''); setView('bank')
+      ...storyResult,
+    }
+    setStories(prev => [...prev, story])
+    return story
   }
 
   function deleteStory(id) { setStories(prev => prev.filter(s => s.id !== id)) }
@@ -183,8 +189,22 @@ export default function STARBuilder({ onBack, backLabel }) {
             <div className="text-slate-400 text-xs mb-1">{t('starBuilder.answersQuestionsLike')}</div>
             {result.targetQuestions?.map((question, index) => <p key={index} className="text-slate-300 text-xs">- {question}</p>)}
           </div>
-
-          <button onClick={saveStory} className="btn-primary w-full justify-center"><Star size={16}/> {t('starBuilder.saveToStoryBank')}</button>
+          {autoSavedStoryId && (
+            <div className="card border-green-500/20 bg-green-500/5 text-center">
+              <div className="text-green-300 text-sm font-body font-medium">{t('applications.workspace.saved')}</div>
+              <button
+                onClick={() => {
+                  const story = stories.find(entry => entry.id === autoSavedStoryId)
+                  if (!story) return
+                  setViewingStory(story)
+                  setView('detail')
+                }}
+                className="btn-ghost text-xs mx-auto mt-2"
+              >
+                <Eye size={13}/> {t('starBuilder.storyBank')}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
