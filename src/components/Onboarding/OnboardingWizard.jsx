@@ -19,7 +19,7 @@ function buildInitialProfile(profile = {}, resume = '') {
 }
 
 export default function OnboardingWizard() {
-  const { saveProfile, profile, onboardingMode, closeOnboarding } = useApp()
+  const { saveProfile, profile, onboardingMode, closeOnboarding, skipOnboarding } = useApp()
   const { unlockAccess } = useAI()
   const { secureUser, secureAccount, secureAccountsEnabled } = useAuth()
   const { getProjectData, updateProjectData } = useProject()
@@ -439,6 +439,10 @@ export default function OnboardingWizard() {
             <button onClick={goBack} className="btn-ghost">
               <ChevronLeft size={16} />
               {step > 0 ? t('onboarding.back') : t('onboarding.close')}
+            </button>
+          ) : accessFirstMode ? (
+            <button onClick={skipOnboarding} className="btn-ghost text-slate-400 hover:text-white">
+              {t('onboarding.skip')}
             </button>
           ) : (
             <div />

@@ -162,6 +162,13 @@ export function AppProvider({ children }) {
     setOnboardingMode('access')
   }
 
+  function skipOnboarding() {
+    localStorage.setItem('js_onboarding_done', 'true')
+    setShowOnboarding(false)
+    setOnboardingMode('access')
+    setActiveSection(SECTIONS.TODAY)
+  }
+
   function saveProfile(data) {
     setProfile(data)
     localStorage.setItem('js_profile', JSON.stringify(data))
@@ -215,7 +222,7 @@ export function AppProvider({ children }) {
       pushAppHistory, replaceAppHistory,
       drillMode, setDrillMode,
       showOnboarding, setShowOnboarding,
-      onboardingMode, openOnboarding, closeOnboarding,
+      onboardingMode, openOnboarding, closeOnboarding, skipOnboarding,
       profile, saveProfile,
       stats, updateStats,
       sidebarOpen, setSidebarOpen,
