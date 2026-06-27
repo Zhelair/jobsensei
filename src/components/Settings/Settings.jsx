@@ -435,8 +435,9 @@ export default function Settings({ mode = 'settings' }) {
   const pageTitle = isAccountMode ? t('account.title') : t('settings.title')
   const pageSubtitle = isAccountMode ? t('account.subtitle') : t('settings.subtitle')
 
-  const pairedCardClass = 'card h-full flex flex-col'
-  const railCardClass = 'card h-full flex flex-col border-indigo-500/10 bg-navy-800/90'
+  const pairedCardClass = 'card flex flex-col'
+  const railCardClass = 'card flex flex-col border-indigo-500/10 bg-navy-800/90'
+  const compactAccountCardClass = 'rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-4'
   const settingsSupportCopyClass = 'text-slate-400 text-sm leading-relaxed'
   const settingsMutedCopyClass = 'text-slate-500 text-sm leading-relaxed'
   const secureSignedIn = !!secureUser
@@ -766,114 +767,125 @@ export default function Settings({ mode = 'settings' }) {
           </div>
         )}
 
-        <div className="grid xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] gap-5 mt-4 items-start">
-            <div className="rounded-2xl border border-navy-600 bg-navy-950/70 px-5 py-5 h-full">
-            <h4 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-              <CreditCard size={15} className="text-yellow-400" /> {t('settings.jobsenseiAccessTitle')}
-            </h4>
-            <p className={`${settingsSupportCopyClass} mb-4`}>
-              {t('settings.jobsenseiAccessCopy')}
-            </p>
+        <div className="grid xl:grid-cols-[minmax(0,0.88fr)_minmax(340px,1.12fr)] gap-4 mt-4 items-start">
+          <div className="space-y-4 min-w-0">
+            <div className={compactAccountCardClass}>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0">
+                  <h4 className="font-display font-semibold text-white flex items-center gap-2">
+                    <CreditCard size={15} className="text-yellow-400" /> {t('settings.jobsenseiAccessTitle')}
+                  </h4>
+                  <p className={`${settingsSupportCopyClass} mt-1`}>
+                    {t('settings.jobsenseiAccessCopy')}
+                  </p>
+                </div>
+                {hasPlanAccess && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] border border-green-500/20 bg-green-500/10 text-green-300 flex-shrink-0">
+                    {t('settings.planActive')}
+                  </span>
+                )}
+              </div>
 
-            {hasPlanAccess ? (
-              <div className="space-y-3">
-                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex items-center gap-2">
-                  <Check size={16} className="text-green-400 flex-shrink-0" />
-                  <div>
-                    <div className="text-green-400 text-sm font-display font-semibold">{t('settings.planActive')}</div>
-                    <div className="text-slate-400 text-sm leading-relaxed">{hostedPlanIdentity || t('settings.secureAccountStatusLinked')}</div>
-                  </div>
-                </div>
-                {(bmacToken || secureSignedIn) && (
-                  <div className="flex flex-wrap gap-2">
-                    {secureSignedIn && (
-                      <button
-                        onClick={handleSecureRefresh}
-                        disabled={loadingAccount}
-                        className="btn-ghost text-xs text-slate-300 hover:text-teal-300 disabled:opacity-60"
-                      >
-                        {loadingAccount ? `${t('settings.secureAccountRefresh')}...` : t('settings.secureAccountRefresh')}
-                      </button>
-                    )}
-                    {secureSignedIn && (
-                      <button onClick={handleSecureSignOut} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
-                        <LogOut size={13} /> {t('settings.secureAccountSignOut')}
-                      </button>
-                    )}
-                    {hasPaddleBilling && (
-                      <button
-                        onClick={handleManageBilling}
-                        disabled={billingPortalLoading}
-                        className="btn-ghost text-xs text-slate-300 hover:text-teal-300 disabled:opacity-60"
-                      >
-                        <CreditCard size={13} /> {billingPortalLoading ? `${t('settings.manageBillingButton')}...` : t('settings.manageBillingButton')}
-                      </button>
-                    )}
-                  </div>
-                )}
-                {hasPaddleBilling && (
-                  <p className={settingsMutedCopyClass}>{t('settings.manageBillingCopy')}</p>
-                )}
-                {billingPortalError && <p className="text-red-400 text-sm leading-relaxed">{billingPortalError}</p>}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <button
-                  onClick={() => handleProCheckout()}
-                  className="btn-primary w-full justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0 text-sm"
-                >
-                  <CreditCard size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
-                </button>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-white/10" />
-                  <span className="text-slate-600 text-xs">{t('settings.alreadyHaveAccess')}</span>
-                  <div className="flex-1 h-px bg-white/10" />
-                </div>
-                <input
-                  className="input-field text-sm"
-                  type="email"
-                  placeholder={t('settings.accessCodePlaceholder')}
-                  value={bmacInput}
-                  onChange={e => {
-                    setBmacInput(e.target.value)
-                    setBmacError('')
-                    setBmacNotice('')
-                  }}
-                  onKeyDown={e => e.key === 'Enter' && handleUnlockAccess()}
-                />
-                <button
-                  onClick={handleUnlockAccess}
-                  disabled={!bmacInput.trim() || bmacLoading || unlockMatchesSignedIn || magicLinkCooldownActive}
-                  className="btn-primary w-full justify-center"
-                >
-                  <Check size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
-                </button>
-                <p className={settingsMutedCopyClass}>{t('settings.unlockInputHint')}</p>
-                <p className="text-slate-500 text-sm leading-relaxed">{t('settings.legacyBmacNotice')}</p>
-                {bmacNotice && <p className="text-green-400 text-sm leading-relaxed">{bmacNotice}</p>}
-                {bmacError && <p className="text-red-400 text-sm leading-relaxed">{bmacError}</p>}
-              </div>
-            )}
-            {(secureSignedIn || secureError || statusError || accountError) && (
-              <div className="mt-4 pt-4 border-t border-navy-700/80 space-y-3">
-                {secureSignedIn && (
-                  <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-3">
-                    <div className="text-teal-300 text-sm font-display font-semibold">
-                      {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
+              {hasPlanAccess ? (
+                <div className="space-y-3">
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-3">
+                    <div className="flex items-start gap-2">
+                      <Check size={15} className="text-green-400 flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <div className="text-green-300 text-sm font-display font-semibold">{hostedPlanIdentity || t('settings.secureAccountStatusLinked')}</div>
+                        <div className="text-slate-300 text-sm leading-relaxed mt-1">{t('settings.secureAccountStatusLinked')}</div>
+                      </div>
                     </div>
-                    <div className="text-slate-400 text-sm leading-relaxed mt-1">{t('settings.secureAccountStatusLinked')}</div>
                   </div>
-                )}
-                {(secureError || statusError || accountError) && (
-                  <p className="text-red-400 text-sm leading-relaxed">{secureError || statusError || accountError}</p>
-                )}
-              </div>
-            )}
+                  {(bmacToken || secureSignedIn) && (
+                    <div className="flex flex-wrap gap-2">
+                      {secureSignedIn && (
+                        <button
+                          onClick={handleSecureRefresh}
+                          disabled={loadingAccount}
+                          className="btn-ghost text-xs text-slate-300 hover:text-teal-300 disabled:opacity-60"
+                        >
+                          {loadingAccount ? `${t('settings.secureAccountRefresh')}...` : t('settings.secureAccountRefresh')}
+                        </button>
+                      )}
+                      {secureSignedIn && (
+                        <button onClick={handleSecureSignOut} className="btn-ghost text-xs text-slate-400 hover:text-red-400">
+                          <LogOut size={13} /> {t('settings.secureAccountSignOut')}
+                        </button>
+                      )}
+                      {hasPaddleBilling && (
+                        <button
+                          onClick={handleManageBilling}
+                          disabled={billingPortalLoading}
+                          className="btn-secondary text-xs justify-center"
+                        >
+                          <CreditCard size={13} /> {billingPortalLoading ? `${t('settings.manageBillingButton')}...` : t('settings.manageBillingButton')}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {hasPaddleBilling && (
+                    <p className={settingsMutedCopyClass}>{t('settings.manageBillingCopy')}</p>
+                  )}
+                  {billingPortalError && <p className="text-red-400 text-sm leading-relaxed">{billingPortalError}</p>}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <button
+                    onClick={() => handleProCheckout()}
+                    className="btn-primary w-full justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0 text-sm"
+                  >
+                    <CreditCard size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-white/10" />
+                    <span className="text-slate-600 text-xs">{t('settings.alreadyHaveAccess')}</span>
+                    <div className="flex-1 h-px bg-white/10" />
+                  </div>
+                  <input
+                    className="input-field text-sm"
+                    type="email"
+                    placeholder={t('settings.accessCodePlaceholder')}
+                    value={bmacInput}
+                    onChange={e => {
+                      setBmacInput(e.target.value)
+                      setBmacError('')
+                      setBmacNotice('')
+                    }}
+                    onKeyDown={e => e.key === 'Enter' && handleUnlockAccess()}
+                  />
+                  <button
+                    onClick={handleUnlockAccess}
+                    disabled={!bmacInput.trim() || bmacLoading || unlockMatchesSignedIn || magicLinkCooldownActive}
+                    className="btn-primary w-full justify-center"
+                  >
+                    <Check size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
+                  </button>
+                  <p className={settingsMutedCopyClass}>{t('settings.unlockInputHint')}</p>
+                  <p className="text-slate-500 text-sm leading-relaxed">{t('settings.legacyBmacNotice')}</p>
+                  {secureSignedIn && (
+                    <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-3 py-2.5">
+                      <div className="text-teal-300 text-sm font-display font-semibold">
+                        {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
+                      </div>
+                    </div>
+                  )}
+                  {bmacNotice && <p className="text-green-400 text-sm leading-relaxed">{bmacNotice}</p>}
+                  {bmacError && <p className="text-red-400 text-sm leading-relaxed">{bmacError}</p>}
+                </div>
+              )}
 
-            <div className="mt-5 pt-5 border-t border-navy-700/80">
+              {(secureError || statusError || accountError) && (
+                <div className="mt-3 pt-3 border-t border-navy-700/80">
+                  <p className="text-red-400 text-sm leading-relaxed">{secureError || statusError || accountError}</p>
+                </div>
+              )}
+            </div>
+
+            <div className={compactAccountCardClass}>
               <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
                 <div className="min-w-0">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 font-display mb-2">{t('settings.profile')}</div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 font-display mb-1.5">{t('settings.profile')}</div>
                   <h5 className="font-display font-semibold text-white">{t('settings.profile')}</h5>
                   <p className={`${settingsSupportCopyClass} mt-1`}>{t('settings.profilePlanCopy')}</p>
                 </div>
@@ -927,14 +939,14 @@ export default function Settings({ mode = 'settings' }) {
 
             {secureSignedIn ? (
               <div className="space-y-3">
-                <div className={`rounded-2xl border p-3.5 ${currentDeviceStatusClass}`}>
+                <div className={`rounded-2xl border px-3 py-3 ${currentDeviceStatusClass}`}>
                   <div className="text-sm font-display font-semibold break-all">
                     {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
                   </div>
                   <div className="text-sm mt-1.5 leading-relaxed opacity-90">{currentDeviceStatusCopy}</div>
                 </div>
 
-                <div className="rounded-2xl border border-navy-600 bg-navy-950/70 p-3.5 space-y-3.5">
+                <div className="rounded-2xl border border-navy-600 bg-navy-950/70 p-3 space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-white text-sm font-display font-semibold">
@@ -964,7 +976,7 @@ export default function Settings({ mode = 'settings' }) {
                   {approvedDevices.length ? (
                     <div className="space-y-2">
                       {approvedDevices.map(device => (
-                        <div key={device.deviceId} className="rounded-2xl border border-navy-600 bg-navy-900/70 p-3.5">
+                        <div key={device.deviceId} className="rounded-2xl border border-navy-600 bg-navy-900/70 p-3">
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               <div className="text-white text-sm font-display font-semibold leading-snug break-words">
@@ -1006,8 +1018,8 @@ export default function Settings({ mode = 'settings' }) {
       </div>
       )}
 
-      {!isAccountMode && (
-      <div className="grid xl:grid-cols-2 gap-4 items-stretch">
+      {isAccountMode && (
+      <div className="grid xl:grid-cols-2 gap-4 items-start">
         <div className={pairedCardClass}>
           <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
             <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
@@ -1036,111 +1048,7 @@ export default function Settings({ mode = 'settings' }) {
           <p className="text-slate-600 text-sm leading-relaxed mt-2">{t('settings.resumeVisualNote')}</p>
         </div>
 
-        <div className={`${pairedCardClass} border-red-500/20`}>
-          <h3 className="font-display font-semibold text-white mb-1">{t('settings.dataManagementTitle')}</h3>
-          <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
-            <div>
-              <div className="text-white text-sm font-display font-semibold">{t('settings.privacyTermsTitle')}</div>
-              <p className="text-slate-400 text-sm leading-relaxed mt-1">{t('settings.privacyTermsSummary')}</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
-              </a>
-              <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
-              </a>
-              <a href={`/cookie-storage-notice.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                <ExternalLink size={13} /> {t('settings.cookieNoticeLink')}
-              </a>
-              <a href={`/pricing.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                <ExternalLink size={13} /> {t('settings.pricingLink')}
-              </a>
-              <a href={`/refund-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                <ExternalLink size={13} /> {t('settings.refundPolicyLink')}
-              </a>
-            </div>
-          </div>
-
-          <div className="space-y-2.5 text-slate-400 text-sm leading-relaxed mb-3">
-            {[
-              t('settings.dataBullet2'),
-              t('settings.dataBullet4'),
-              t('settings.dataBullet5'),
-            ].map(line => (
-              <p key={line} className="flex items-start gap-2">
-                <span className="text-slate-500">-</span>
-                <span>{line}</span>
-              </p>
-            ))}
-          </div>
-
-          <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
-            <div className="text-white text-sm font-display font-semibold">{t('settings.projectBackupsTitle')}</div>
-            <p className={settingsSupportCopyClass}>{t('settings.projectBackupsCopy')}</p>
-            <div className="grid sm:grid-cols-3 gap-2">
-              <button onClick={exportAll} className="btn-secondary text-xs justify-center">
-                <FolderArchive size={13} /> {t('projects.exportAllProjects')}
-              </button>
-              <button
-                onClick={() => activeProject && exportProject(activeProject.id)}
-                disabled={!activeProject}
-                className="btn-secondary text-xs justify-center"
-              >
-                <Download size={13} /> {t('projects.exportCurrentProject')}
-              </button>
-              <button onClick={() => projectImportRef.current?.click()} className="btn-secondary text-xs justify-center">
-                <Upload size={13} /> {importingProjects ? t('projects.importing') : t('projects.importProject')}
-              </button>
-            </div>
-            <input ref={projectImportRef} type="file" accept=".json" className="hidden" onChange={handleProjectImport} />
-            {projectTransferMessage && (
-              <p className={`text-sm leading-relaxed ${projectTransferMessage.includes('Invalid') || projectTransferMessage.includes('❌') ? 'text-red-400' : 'text-teal-300'}`}>
-                {projectTransferMessage}
-              </p>
-            )}
-          </div>
-
-          <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm mt-auto">
-            <Trash2 size={14} /> {t('settings.clearAllData')}
-          </button>
-        </div>
-
-        <div className={`${pairedCardClass} border-teal-500/20`}>
-          <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-            <Puzzle size={16} className="text-teal-400" /> {t('settings.chromeExtensionTitle')}
-          </h3>
-          <p className={`${settingsSupportCopyClass} mb-3`}>
-            {t('settings.chromeExtensionCopy')}
-          </p>
-          <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3 space-y-1.5">
-            {[
-              t('settings.chromeExtensionStep1'),
-              t('settings.chromeExtensionStep2'),
-              t('settings.chromeExtensionStep3'),
-            ].map((step, i) => (
-              <div key={step} className="flex gap-2 text-sm text-slate-300 leading-relaxed">
-                <span className="text-teal-400 font-mono">{i + 1}</span>
-                <span>{step}</span>
-              </div>
-            ))}
-          </div>
-          <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 mb-3">
-            <p className={`${settingsSupportCopyClass} text-sm leading-relaxed`}>
-              {t('settings.chromeExtensionDisclaimer')}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-auto pt-1">
-            <a href="/jobsensei-capture-extension.zip" download className="btn-secondary text-xs">
-              <Download size={13} /> {t('settings.downloadZip')}
-            </a>
-            <button disabled className="btn-ghost text-xs opacity-60 cursor-not-allowed">
-              <ExternalLink size={13} /> {t('settings.chromeStoreSoon')}
-            </button>
-          </div>
-        </div>
-
-      <div ref={byokCardRef} className={pairedCardClass}>
+        <div ref={byokCardRef} className={pairedCardClass}>
           <button
             onClick={() => setShowOwnKey(o => !o)}
             className="w-full flex items-center justify-between gap-3"
@@ -1253,6 +1161,114 @@ export default function Settings({ mode = 'settings' }) {
               )}
             </div>
           )}
+        </div>
+      </div>
+      )}
+
+      {!isAccountMode && (
+      <div className="grid xl:grid-cols-2 gap-4 items-stretch">
+        <div className={`${pairedCardClass} border-red-500/20`}>
+          <h3 className="font-display font-semibold text-white mb-1">{t('settings.dataManagementTitle')}</h3>
+          <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
+            <div>
+              <div className="text-white text-sm font-display font-semibold">{t('settings.privacyTermsTitle')}</div>
+              <p className="text-slate-400 text-sm leading-relaxed mt-1">{t('settings.privacyTermsSummary')}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
+              </a>
+              <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
+              </a>
+              <a href={`/cookie-storage-notice.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.cookieNoticeLink')}
+              </a>
+              <a href={`/pricing.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.pricingLink')}
+              </a>
+              <a href={`/refund-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.refundPolicyLink')}
+              </a>
+            </div>
+          </div>
+
+          <div className="space-y-2.5 text-slate-400 text-sm leading-relaxed mb-3">
+            {[
+              t('settings.dataBullet2'),
+              t('settings.dataBullet4'),
+              t('settings.dataBullet5'),
+            ].map(line => (
+              <p key={line} className="flex items-start gap-2">
+                <span className="text-slate-500">-</span>
+                <span>{line}</span>
+              </p>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
+            <div className="text-white text-sm font-display font-semibold">{t('settings.projectBackupsTitle')}</div>
+            <p className={settingsSupportCopyClass}>{t('settings.projectBackupsCopy')}</p>
+            <div className="grid sm:grid-cols-3 gap-2">
+              <button onClick={exportAll} className="btn-secondary text-xs justify-center">
+                <FolderArchive size={13} /> {t('projects.exportAllProjects')}
+              </button>
+              <button
+                onClick={() => activeProject && exportProject(activeProject.id)}
+                disabled={!activeProject}
+                className="btn-secondary text-xs justify-center"
+              >
+                <Download size={13} /> {t('projects.exportCurrentProject')}
+              </button>
+              <button onClick={() => projectImportRef.current?.click()} className="btn-secondary text-xs justify-center">
+                <Upload size={13} /> {importingProjects ? t('projects.importing') : t('projects.importProject')}
+              </button>
+            </div>
+            <input ref={projectImportRef} type="file" accept=".json" className="hidden" onChange={handleProjectImport} />
+            {projectTransferMessage && (
+              <p className={`text-sm leading-relaxed ${projectTransferMessage.includes('Invalid') || projectTransferMessage.includes('❌') ? 'text-red-400' : 'text-teal-300'}`}>
+                {projectTransferMessage}
+              </p>
+            )}
+          </div>
+
+          <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm mt-auto">
+            <Trash2 size={14} /> {t('settings.clearAllData')}
+          </button>
+        </div>
+
+        <div className={`${pairedCardClass} border-teal-500/20`}>
+          <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+            <Puzzle size={16} className="text-teal-400" /> {t('settings.chromeExtensionTitle')}
+          </h3>
+          <p className={`${settingsSupportCopyClass} mb-3`}>
+            {t('settings.chromeExtensionCopy')}
+          </p>
+          <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3 space-y-1.5">
+            {[
+              t('settings.chromeExtensionStep1'),
+              t('settings.chromeExtensionStep2'),
+              t('settings.chromeExtensionStep3'),
+            ].map((step, i) => (
+              <div key={step} className="flex gap-2 text-sm text-slate-300 leading-relaxed">
+                <span className="text-teal-400 font-mono">{i + 1}</span>
+                <span>{step}</span>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 mb-3">
+            <p className={`${settingsSupportCopyClass} text-sm leading-relaxed`}>
+              {t('settings.chromeExtensionDisclaimer')}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-auto pt-1">
+            <a href="/jobsensei-capture-extension.zip" download className="btn-secondary text-xs">
+              <Download size={13} /> {t('settings.downloadZip')}
+            </a>
+            <button disabled className="btn-ghost text-xs opacity-60 cursor-not-allowed">
+              <ExternalLink size={13} /> {t('settings.chromeStoreSoon')}
+            </button>
+          </div>
         </div>
       </div>
       )}
