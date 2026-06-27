@@ -47,7 +47,7 @@ const SECTION_HELP = {
   applications: {
     titleKey: 'guide.applications.title',
     descKey: 'guide.applications.desc',
-    tipKeys: [],
+    tipKeys: ['guide.tracker.tip.add', 'guide.tracker.tip.openCard', 'guide.tracker.tip.active'],
   },
   dashboard: {
     titleKey: 'guide.dashboard.title',
@@ -94,6 +94,11 @@ const SECTION_HELP = {
     descKey: 'guide.settings.desc',
     tipKeys: [],
   },
+  account: {
+    titleKey: 'guide.account.title',
+    descKey: 'guide.account.desc',
+    tipKeys: ['guide.account.tip.plan', 'guide.account.tip.devices', 'guide.account.tip.profile'],
+  },
 }
 
 const GUIDE_DETAILS = {
@@ -105,6 +110,7 @@ const GUIDE_DETAILS = {
   tools: ['guide.tools.detail.gap', 'guide.tools.detail.resume', 'guide.tools.detail.coverLetter', 'guide.tools.detail.linkedin', 'guide.tools.detail.visual', 'guide.tools.detail.transferable'],
   tracker: ['guide.tracker.detail.add', 'guide.tracker.detail.workspace', 'guide.tracker.detail.offers'],
   settings: ['guide.settings.detail.connect', 'guide.settings.detail.resume', 'guide.settings.detail.backups', 'guide.settings.detail.byok'],
+  account: ['guide.account.detail.access', 'guide.account.detail.billing', 'guide.account.detail.devices', 'guide.account.detail.profile'],
 }
 
 function TopBarLanguageSelect({ compact = false, onChangeComplete = null }) {
