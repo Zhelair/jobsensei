@@ -13,7 +13,7 @@ import DeepSeekGuide from './DeepSeekGuide'
 import { getCreditSnapshot, HOSTED_REQUEST_CREDITS, PRO_MONTHLY_CREDITS } from '../../lib/credits'
 import { openProCheckout } from '../../lib/billing'
 
-export default function Settings() {
+export default function Settings({ mode = 'settings' }) {
   const {
     provider, model, apiKey, customBaseUrl, saveConfig, PROVIDERS, PROVIDER_CONFIGS,
     bmacToken, unlockAccess, restoreToProxy, isConnected,
@@ -37,6 +37,7 @@ export default function Settings() {
   const [testResult, setTestResult] = useState(null)
   const [saved, setSaved] = useState(false)
   const [showOwnKey, setShowOwnKey] = useState(false)
+  const isAccountMode = mode === 'account'
 
   const [bmacInput, setBmacInput] = useState('')
   const [bmacLoading, setBmacLoading] = useState(false)
@@ -431,6 +432,8 @@ export default function Settings() {
       ? t('settings.planCopyHosted')
       : t('settings.planCopyNone')
   const profileActionLabel = profile ? t('settings.editProfile') : t('settings.setupProfile')
+  const pageTitle = isAccountMode ? t('account.title') : t('settings.title')
+  const pageSubtitle = isAccountMode ? t('account.subtitle') : t('settings.subtitle')
 
   const pairedCardClass = 'card h-full flex flex-col'
   const railCardClass = 'card h-full flex flex-col border-indigo-500/10 bg-navy-800/90'
@@ -560,9 +563,10 @@ export default function Settings() {
 
   return (
     <div className="p-4 md:p-6 max-w-4xl md:max-w-5xl xl:max-w-[72rem] mx-auto animate-in space-y-4">
-      <h2 className="section-title mb-1">{t('settings.title')}</h2>
-      <p className="section-sub">{t('settings.subtitle')}</p>
+      <h2 className="section-title mb-1">{pageTitle}</h2>
+      <p className="section-sub">{pageSubtitle}</p>
 
+      {!isAccountMode && (
       <div className="card border-indigo-500/20 bg-indigo-500/5">
         <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
           <div className="min-w-0 max-w-3xl">
@@ -604,7 +608,9 @@ export default function Settings() {
           <div className="text-white text-xs font-display font-semibold leading-relaxed">{voiceSupportCopy}</div>
         </div>
       </div>
+      )}
 
+      {isAccountMode && (
       <div ref={planAccessRef} className="card border-teal-500/20 bg-teal-500/5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0 max-w-3xl">
@@ -998,7 +1004,9 @@ export default function Settings() {
           </div>
         </div>
       </div>
+      )}
 
+      {!isAccountMode && (
       <div className="grid xl:grid-cols-2 gap-4 items-stretch">
         <div className={pairedCardClass}>
           <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
@@ -1247,6 +1255,7 @@ export default function Settings() {
           )}
         </div>
       </div>
+      )}
 
     </div>
   )

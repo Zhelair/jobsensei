@@ -69,7 +69,7 @@ export default function PlanExpiredModal() {
           <button
             onClick={() => {
               dismissPlanExpiredNotice()
-              setActiveSection(SECTIONS.SETTINGS)
+              setActiveSection(SECTIONS.ACCOUNT)
             }}
             className="btn-secondary flex-1 justify-center"
           >

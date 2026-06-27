@@ -11,6 +11,7 @@ export const SECTIONS = {
   LEARNING: 'learning',
   TOOLS: 'tools',
   TRACKER: 'tracker',
+  ACCOUNT: 'account',
   SETTINGS: 'settings',
 }
 

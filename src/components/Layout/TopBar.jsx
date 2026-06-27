@@ -33,6 +33,7 @@ const SECTION_TITLES = {
   star: 'guide.star.title',
   tools: 'guide.tools.title',
   tracker: 'nav.applications',
+  account: 'nav.account',
   notes: 'guide.notes.title',
   settings: 'nav.settings',
 }
@@ -574,9 +575,11 @@ export default function TopBar() {
       ? t('nav.applications')
       : activeSection === SECTIONS.LEARNING
         ? t('nav.learning')
-        : activeSection === SECTIONS.SETTINGS
-          ? t('nav.settings')
-          : t(SECTION_TITLES[activeSection] || '') || ''
+        : activeSection === SECTIONS.ACCOUNT
+          ? t('nav.account')
+          : activeSection === SECTIONS.SETTINGS
+            ? t('nav.settings')
+            : t(SECTION_TITLES[activeSection] || '') || ''
 
   useEffect(() => {
     if (showOnboarding || guideSeen || !help) return
@@ -624,8 +627,8 @@ export default function TopBar() {
     setShowTour(false)
   }
 
-  const openSettingsFromCredits = () => {
-    setActiveSection(SECTIONS.SETTINGS)
+  const openAccountFromCredits = () => {
+    setActiveSection(SECTIONS.ACCOUNT)
     setShowCredits(false)
     window.setTimeout(() => {
       window.dispatchEvent(new CustomEvent('jobsensei:open-plan-settings'))
@@ -784,6 +787,16 @@ export default function TopBar() {
                 <TopBarLanguageSelect compact onChangeComplete={() => setShowMore(false)} />
                 <button
                   onClick={() => {
+                    setActiveSection(SECTIONS.SETTINGS)
+                    setShowMore(false)
+                  }}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-navy-700 w-full text-left transition-colors"
+                >
+                  <Settings size={14} />
+                  {t('nav.settings')}
+                </button>
+                <button
+                  onClick={() => {
                     const next = !visualsEnabled
                     setVisualsEnabled(next)
                     if (next) triggerConfetti(70)
@@ -845,7 +858,7 @@ export default function TopBar() {
               t={t}
               snapshot={creditSnapshot}
               tone={creditTone}
-              onPrimaryAction={openSettingsFromCredits}
+              onPrimaryAction={openAccountFromCredits}
               onSecondaryAction={openByokFromCredits}
               onClose={() => setShowCredits(false)}
             />
@@ -856,7 +869,7 @@ export default function TopBar() {
               t={t}
               snapshot={creditSnapshot}
               tone={creditTone}
-              onPrimaryAction={openSettingsFromCredits}
+              onPrimaryAction={openAccountFromCredits}
               onSecondaryAction={openByokFromCredits}
               onClose={() => setShowCredits(false)}
             />

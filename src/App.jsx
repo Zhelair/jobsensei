@@ -21,6 +21,7 @@ import TodayPage from './components/Today/TodayPage'
 import LearningSection from './components/LearningSection/LearningSection'
 import Tools from './components/Tools/Tools'
 import JobTracker from './components/JobTracker/JobTracker'
+import Account from './components/Account/Account'
 import Settings from './components/Settings/Settings'
 
 const APPLICATION_REQUIRED_SECTIONS = new Set([
@@ -37,6 +38,7 @@ const SECTION_ANALYTICS_LABELS = {
   [SECTIONS.LEARNING]: 'learning',
   [SECTIONS.TOOLS]: 'tools',
   [SECTIONS.TRACKER]: 'tracker',
+  [SECTIONS.ACCOUNT]: 'account',
   [SECTIONS.SETTINGS]: 'settings',
 }
 
@@ -95,6 +97,7 @@ function AppContent() {
     [SECTIONS.LEARNING]: LearningSection,
     [SECTIONS.TOOLS]: PrepToolsSection,
     [SECTIONS.TRACKER]: JobTracker,
+    [SECTIONS.ACCOUNT]: Account,
     [SECTIONS.SETTINGS]: Settings,
   }
 
