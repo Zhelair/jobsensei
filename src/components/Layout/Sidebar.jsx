@@ -3,7 +3,7 @@ import { useApp, SECTIONS } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
 import {
   LayoutDashboard, BookOpen,
-  Briefcase, Settings, ChevronLeft, ChevronRight
+  Briefcase, Shield, Settings, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import ProjectSwitcher from '../Projects/ProjectSwitcher'
 import BrandMark from '../shared/BrandMark'
@@ -65,6 +65,13 @@ export default function Sidebar() {
       {/* Bottom */}
       <div className="px-3 py-4 border-t border-navy-700 space-y-2">
         <ProjectSwitcher collapsed={!sidebarOpen} />
+        <button
+          onClick={() => setActiveSection(SECTIONS.ACCOUNT)}
+          className={`nav-item w-full ${activeSection === SECTIONS.ACCOUNT ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-0' : ''}`}
+        >
+          <Shield size={18} className="flex-shrink-0" />
+          {sidebarOpen && <span>{t('nav.account')}</span>}
+        </button>
         <button
           onClick={() => setActiveSection(SECTIONS.SETTINGS)}
           className={`nav-item w-full ${activeSection === SECTIONS.SETTINGS ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-0' : ''}`}

@@ -4,7 +4,7 @@ import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
 import {
   LayoutDashboard, BookOpen, Briefcase,
-  Settings, FolderOpen, Plus, Check, X, Edit3, Download, Trash2, Upload, FolderArchive
+  Shield, FolderOpen, Plus, Check, X, Edit3, Download, Trash2, Upload, FolderArchive
 } from 'lucide-react'
 
 const MOBILE_NAV = [
@@ -238,16 +238,16 @@ export default function BottomNav() {
           <span className="font-body">{t('nav.projects')}</span>
         </button>
 
-        {/* Settings */}
+        {/* Account */}
         <button
-          data-guide="mobile-settings"
-          onClick={() => handleNavClick(SECTIONS.SETTINGS)}
+          data-guide="mobile-account"
+          onClick={() => handleNavClick(SECTIONS.ACCOUNT)}
           className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs transition-colors ${
-            activeSection === SECTIONS.SETTINGS && !showProjects ? 'text-teal-400' : 'text-slate-500'
+            activeSection === SECTIONS.ACCOUNT && !showProjects ? 'text-teal-400' : 'text-slate-500'
           }`}
         >
-          <Settings size={19} />
-          <span className="font-body">{t('nav.settings')}</span>
+          <Shield size={19} />
+          <span className="font-body">{t('nav.account')}</span>
         </button>
       </div>
     </nav>

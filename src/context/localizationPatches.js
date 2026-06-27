@@ -11381,6 +11381,55 @@ const paddleUxPatches = {
   },
 }
 
+const accountNavPatches = {
+  en: {
+    'nav.account': 'Account',
+    'account.title': 'Account',
+    'account.subtitle': 'Manage your plan, AI access, billing, devices, and linked profile.',
+    'settings.subtitle': 'Manage resume, language, voice, BYOK, extension, and local data.',
+  },
+  ru: {
+    'nav.account': 'Аккаунт',
+    'account.title': 'Аккаунт',
+    'account.subtitle': 'Управляйте планом, AI-доступом, оплатой, устройствами и связанным профилем.',
+  },
+  bg: {
+    'nav.account': 'Акаунт',
+    'account.title': 'Акаунт',
+    'account.subtitle': 'Управлявай плана, AI достъпа, плащането, устройствата и свързания профил.',
+  },
+  'es-ES': {
+    'nav.account': 'Cuenta',
+    'account.title': 'Cuenta',
+    'account.subtitle': 'Gestiona tu plan, acceso AI, facturación, dispositivos y perfil vinculado.',
+  },
+  fr: {
+    'nav.account': 'Compte',
+    'account.title': 'Compte',
+    'account.subtitle': 'Gérez votre plan, l’accès AI, la facturation, les appareils et le profil lié.',
+  },
+  it: {
+    'nav.account': 'Account',
+    'account.title': 'Account',
+    'account.subtitle': 'Gestisci piano, accesso AI, fatturazione, dispositivi e profilo collegato.',
+  },
+  'pt-BR': {
+    'nav.account': 'Conta',
+    'account.title': 'Conta',
+    'account.subtitle': 'Gerencie seu plano, acesso AI, faturamento, dispositivos e perfil vinculado.',
+  },
+  pl: {
+    'nav.account': 'Konto',
+    'account.title': 'Konto',
+    'account.subtitle': 'Zarządzaj planem, dostępem AI, rozliczeniami, urządzeniami i powiązanym profilem.',
+  },
+  de: {
+    'nav.account': 'Konto',
+    'account.title': 'Konto',
+    'account.subtitle': 'Verwalte Plan, AI-Zugang, Abrechnung, Geräte und verknüpftes Profil.',
+  },
+}
+
 Object.entries(creditsUxPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
@@ -11398,6 +11447,10 @@ Object.entries(hostedPlanClarityPatches).forEach(([locale, patch]) => {
 })
 
 Object.entries(paddleUxPatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
+Object.entries(accountNavPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 
