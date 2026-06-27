@@ -3,16 +3,17 @@ import { useApp } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
+import { THEMES, useTheme } from '../../context/ThemeContext'
 import {
   ArrowRight, Briefcase, CheckCircle2, CreditCard, ExternalLink,
-  FileText, Search, Sparkles,
+  Search, Sparkles,
 } from 'lucide-react'
 import { openProCheckout } from '../../lib/billing'
 
-function OutcomeCard({ icon: Icon, title, copy, accent }) {
+function OutcomeCard({ icon: Icon, title, copy, accent, iconTone }) {
   return (
-    <div className={`card border ${accent}`}>
-      <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center mb-3">
+    <div className={`card h-full border ${accent}`}>
+      <div className={`w-11 h-11 rounded-2xl border border-white/5 flex items-center justify-center mb-4 ${iconTone}`}>
         <Icon size={18} className="text-white" />
       </div>
       <h3 className="font-display font-semibold text-white text-lg mb-2">{title}</h3>
@@ -23,7 +24,7 @@ function OutcomeCard({ icon: Icon, title, copy, accent }) {
 
 function StepCard({ number, title, copy }) {
   return (
-    <div className="rounded-2xl border border-navy-600 bg-navy-900/60 px-4 py-4">
+    <div className="rounded-2xl border border-navy-600 bg-navy-900/60 px-4 py-4 h-full">
       <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-[0.18em] mb-2">
         {number}
       </div>
@@ -33,9 +34,24 @@ function StepCard({ number, title, copy }) {
   )
 }
 
-function PreviewPanel({ title, copy, chips = [] }) {
+function PreviewPanel({ title, copy, chips = [], steps = [], isDaylight = false }) {
+  const shellStyle = isDaylight
+    ? {
+        background: 'linear-gradient(160deg, rgba(255,255,255,0.72), rgba(240,248,245,0.92))',
+        boxShadow: '0 18px 40px rgba(80, 60, 40, 0.10)',
+      }
+    : undefined
+  const previewStyle = isDaylight
+    ? {
+        background: 'linear-gradient(160deg, rgba(253,251,248,0.98), rgba(240,248,245,0.94))',
+      }
+    : undefined
+
   return (
-    <div className="rounded-3xl border border-navy-600 bg-navy-900/65 p-4">
+    <div
+      className={`rounded-3xl border p-4 ${isDaylight ? 'border-teal-500/20 bg-navy-900/70' : 'border-navy-600 bg-navy-900/65'}`}
+      style={shellStyle}
+    >
       <div className="flex flex-wrap gap-1.5 mb-3">
         {chips.map(chip => (
           <span key={chip} className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/20 bg-teal-500/10 text-teal-200">
@@ -43,25 +59,26 @@ function PreviewPanel({ title, copy, chips = [] }) {
           </span>
         ))}
       </div>
-      <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-navy-950 via-navy-900 to-teal-950/60 p-4 min-h-[180px] flex flex-col justify-between">
+      <div
+        className={`rounded-2xl border p-4 min-h-[190px] flex flex-col justify-between ${
+          isDaylight
+            ? 'border-teal-500/15 bg-navy-900/90'
+            : 'border-white/5 bg-gradient-to-br from-navy-950 via-navy-900 to-teal-950/60'
+        }`}
+        style={previewStyle}
+      >
         <div>
           <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-2">Flow preview</div>
           <h3 className="font-display font-semibold text-white text-lg mb-2">{title}</h3>
           <p className="text-slate-300 text-sm leading-relaxed">{copy}</p>
         </div>
         <div className="grid grid-cols-3 gap-2 mt-5">
-          <div className="rounded-xl border border-white/5 bg-white/[0.04] px-3 py-3">
-            <div className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Step 1</div>
-            <div className="text-white text-xs font-display">Add job</div>
-          </div>
-          <div className="rounded-xl border border-white/5 bg-white/[0.04] px-3 py-3">
-            <div className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Step 2</div>
-            <div className="text-white text-xs font-display">Research</div>
-          </div>
-          <div className="rounded-xl border border-white/5 bg-white/[0.04] px-3 py-3">
-            <div className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Step 3</div>
-            <div className="text-white text-xs font-display">Prep</div>
-          </div>
+          {steps.map((step, index) => (
+            <div key={step} className="rounded-xl border border-white/5 bg-white/[0.04] px-3 py-3">
+              <div className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Step {index + 1}</div>
+              <div className="text-white text-xs font-display">{step}</div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -73,6 +90,7 @@ export default function WelcomePage() {
   const { unlockAccess } = useAI()
   const { secureUser, secureAccount, secureAccountsEnabled } = useAuth()
   const { language, t } = useLanguage()
+  const { theme } = useTheme()
 
   const accessSectionRef = useRef(null)
   const emailInputRef = useRef(null)
@@ -84,6 +102,19 @@ export default function WelcomePage() {
   const accessReady = secureAccountsEnabled
     ? Boolean(secureUser && secureAccount?.planActive)
     : legacyUnlocked
+  const isDaylight = theme === THEMES.DAYLIGHT
+
+  const heroStyle = isDaylight
+    ? {
+        background: 'linear-gradient(135deg, rgba(240,248,245,0.98), rgba(252,248,243,0.98))',
+        boxShadow: '0 24px 56px rgba(80, 60, 40, 0.12)',
+      }
+    : undefined
+  const heroGlowStyle = isDaylight
+    ? {
+        background: 'radial-gradient(circle at top right, rgba(13,148,136,0.14), transparent 32%), radial-gradient(circle at bottom left, rgba(226,114,91,0.12), transparent 28%)',
+      }
+    : undefined
 
   useEffect(() => {
     const nextEmail = String(secureUser?.email || secureAccount?.email || '').trim()
@@ -137,8 +168,21 @@ export default function WelcomePage() {
 
   return (
     <div className="p-4 md:p-6 xl:p-8 max-w-6xl mx-auto animate-in space-y-6">
-      <section className="relative overflow-hidden rounded-[32px] border border-teal-500/20 bg-gradient-to-br from-navy-900 via-navy-950 to-teal-950/40 p-6 md:p-8 xl:p-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.16),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(250,204,21,0.12),transparent_28%)] pointer-events-none" />
+      <section
+        className={`relative overflow-hidden rounded-[32px] border p-6 md:p-8 xl:p-10 ${
+          isDaylight
+            ? 'border-teal-500/20 bg-navy-900/90'
+            : 'border-teal-500/20 bg-gradient-to-br from-navy-900 via-navy-950 to-teal-950/40'
+        }`}
+        style={heroStyle}
+      >
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={heroGlowStyle}
+        />
+        {!isDaylight && (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.16),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(250,204,21,0.12),transparent_28%)] pointer-events-none" />
+        )}
         <div className="relative grid xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] gap-6 items-center">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-500/10 text-teal-200 text-xs font-display font-semibold uppercase tracking-[0.18em]">
@@ -167,7 +211,9 @@ export default function WelcomePage() {
           <PreviewPanel
             title={t('welcome.previewPrimaryTitle')}
             copy={t('welcome.previewPrimaryCopy')}
-            chips={[t('welcome.previewSecondaryResearch'), t('welcome.previewSecondaryPrep'), 'Today']}
+            chips={[t('welcome.previewChipRole'), t('welcome.previewChipNotes'), t('welcome.previewChipTracker')]}
+            steps={[t('welcome.previewStepRole'), t('welcome.previewStepResearch'), t('welcome.previewStepPrep')]}
+            isDaylight={isDaylight}
           />
         </div>
       </section>
@@ -178,18 +224,21 @@ export default function WelcomePage() {
           title={t('welcome.outcomeTailorTitle')}
           copy={t('welcome.outcomeTailorCopy')}
           accent="border-teal-500/20 bg-teal-500/6"
+          iconTone="bg-teal-500/10"
         />
         <OutcomeCard
           icon={Search}
           title={t('welcome.outcomePrepTitle')}
           copy={t('welcome.outcomePrepCopy')}
           accent="border-indigo-500/20 bg-indigo-500/6"
+          iconTone="bg-indigo-500/10"
         />
         <OutcomeCard
           icon={Briefcase}
           title={t('welcome.outcomeTrackTitle')}
           copy={t('welcome.outcomeTrackCopy')}
           accent="border-yellow-500/20 bg-yellow-500/6"
+          iconTone="bg-yellow-500/10"
         />
       </section>
 
