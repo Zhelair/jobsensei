@@ -97,7 +97,7 @@ const SECTION_HELP = {
   account: {
     titleKey: 'guide.account.title',
     descKey: 'guide.account.desc',
-    tipKeys: ['guide.account.tip.plan', 'guide.account.tip.devices', 'guide.account.tip.profile'],
+    tipKeys: [],
   },
 }
 

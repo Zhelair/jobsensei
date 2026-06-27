@@ -11432,7 +11432,6 @@ const accountNavPatches = {
 
 const welcomePagePatches = {
   en: {
-    'welcome.badge': 'Free to start',
     'welcome.title': 'Stop preparing every application from scratch.',
     'welcome.subtitle': 'Keep your resume, target roles, company research, and interview prep in one place so every application moves faster.',
     'welcome.ctaFree': 'Start free',
@@ -11463,16 +11462,29 @@ const welcomePagePatches = {
     'welcome.previewStepPrep': 'Prep',
     'welcome.accessKicker': 'Plans and access',
     'welcome.accessTitle': 'Start free or go Pro',
-    'welcome.accessCopy': 'Use one email for sign-in, credits, and upgrades.',
+    'welcome.accessCopy': 'Use one email for sign-in, 2 approved devices, credits, and upgrades.',
     'welcome.accessWaysKicker': 'Choose a path',
     'welcome.accessWayFreeTitle': 'Free',
-    'welcome.accessWayFreeCopy': 'Magic link access with light hosted AI and up to 2 approved devices.',
+    'welcome.accessWayFreeCopy': '531 credits every month.',
     'welcome.accessWayPaddleTitle': 'Pro',
-    'welcome.accessWayPaddleCopy': '53,000 hosted credits with billing, invoices, and renewals through Paddle.',
-    'welcome.accessWayBmacTitle': 'BMAC',
-    'welcome.accessWayBmacCopy': 'Keep the legacy founder-support route available while Paddle is still being finalized.',
-    'welcome.ctaBmac': 'Open BMAC checkout',
+    'welcome.accessWayPaddleCopy': '53,000 credits every month.',
+    'welcome.accessWayByokTitle': 'BYOK',
+    'welcome.accessWayByokCopy': 'Your API key stays on this device only, is stored locally, and is not shared with JobSensei.',
+    'welcome.accessWayByokPrice': 'BYOK',
+    'welcome.ctaByok': 'Use BYOK in Settings',
     'welcome.footerCopy': 'Pricing, refunds, terms, and privacy stay one click away.',
+  },
+  ru: {
+    'welcome.accessWayByokTitle': 'BYOK',
+    'welcome.accessWayByokCopy': 'Ваш API-ключ остается только на этом устройстве, хранится локально и не передается JobSensei.',
+    'welcome.accessWayByokPrice': 'BYOK',
+    'welcome.ctaByok': 'Открыть BYOK в Settings',
+  },
+  bg: {
+    'welcome.accessWayByokTitle': 'BYOK',
+    'welcome.accessWayByokCopy': 'Твоят API ключ остава само на това устройство, пази се локално и не се споделя с JobSensei.',
+    'welcome.accessWayByokPrice': 'BYOK',
+    'welcome.ctaByok': 'Отвори BYOK в Settings',
   },
 }
 
