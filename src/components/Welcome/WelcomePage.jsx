@@ -5,22 +5,10 @@ import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { THEMES, useTheme } from '../../context/ThemeContext'
 import {
-  ArrowRight, Briefcase, CheckCircle2, Coffee, CreditCard, ExternalLink,
-  Image as ImageIcon, PlayCircle, Search, Sparkles,
+  ArrowRight, CheckCircle2, Coffee, CreditCard, ExternalLink,
+  Image as ImageIcon, PlayCircle,
 } from 'lucide-react'
 import { BMAC_ENABLED, openBmacCheckout, openProCheckout } from '../../lib/billing'
-
-function OutcomeCard({ icon: Icon, title, copy, accent, iconTone }) {
-  return (
-    <div className={`card h-full border ${accent}`}>
-      <div className={`w-11 h-11 rounded-2xl border border-white/5 flex items-center justify-center mb-4 ${iconTone}`}>
-        <Icon size={18} className="text-white" />
-      </div>
-      <h3 className="font-display font-semibold text-white text-lg mb-2">{title}</h3>
-      <p className="text-slate-300 text-sm leading-relaxed">{copy}</p>
-    </div>
-  )
-}
 
 function StepCard({ number, title, copy }) {
   return (
@@ -41,11 +29,6 @@ function PreviewPanel({ title, copy, chips = [], steps = [], isDaylight = false 
         boxShadow: '0 18px 40px rgba(80, 60, 40, 0.10)',
       }
     : undefined
-  const previewStyle = isDaylight
-    ? {
-        background: 'linear-gradient(160deg, rgba(253,251,248,0.98), rgba(240,248,245,0.94))',
-      }
-    : undefined
 
   return (
     <div
@@ -59,12 +42,12 @@ function PreviewPanel({ title, copy, chips = [], steps = [], isDaylight = false 
           </span>
         ))}
       </div>
-      <div className={`rounded-2xl border mb-3 overflow-hidden ${
+      <div className={`rounded-[28px] border overflow-hidden ${
         isDaylight
           ? 'border-teal-500/15 bg-white/80'
           : 'border-white/5 bg-white/[0.03]'
       }`}>
-        <div className="aspect-[16/10] px-4 py-4 flex flex-col justify-between">
+        <div className="aspect-[16/10] px-4 py-4 md:px-5 md:py-5 flex flex-col">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">Product preview</div>
@@ -75,42 +58,28 @@ function PreviewPanel({ title, copy, chips = [], steps = [], isDaylight = false 
               <ImageIcon size={16} />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-xl border border-white/5 bg-white/[0.04] h-20 flex items-center justify-center text-[11px] text-slate-400 text-center px-2">
-              Save role
+          <div className={`mt-4 flex-1 rounded-2xl border p-4 md:p-5 flex flex-col justify-between ${
+            isDaylight
+              ? 'border-teal-500/15 bg-white/75'
+              : 'border-white/5 bg-white/[0.03]'
+          }`}>
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-2">Flow preview</div>
+              <h3 className="font-display font-semibold text-white text-xl mb-2">{title}</h3>
+              <p className="text-slate-300 text-sm leading-relaxed">{copy}</p>
             </div>
-            <div className="rounded-xl border border-white/5 bg-white/[0.04] h-20 flex items-center justify-center text-[11px] text-slate-400 text-center px-2">
-              Check fit
-            </div>
-            <div className="rounded-xl border border-white/5 bg-white/[0.04] h-20 flex items-center justify-center text-[11px] text-slate-400 text-center px-2">
-              Prep notes
+
+            <div className="grid grid-cols-3 gap-2 mt-4">
+              {steps.map((step, index) => (
+                <div key={step} className="rounded-xl border border-white/5 bg-white/[0.04] h-20 px-3 py-3 flex flex-col justify-between">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500 font-display">
+                    Step {index + 1}
+                  </div>
+                  <div className="text-sm text-white font-display font-semibold">{step}</div>
+                </div>
+              ))}
             </div>
           </div>
-          <p className="text-slate-400 text-xs leading-relaxed">
-            Best first loop: save one role, run a fit check, then show the prep workspace.
-          </p>
-        </div>
-      </div>
-      <div
-        className={`rounded-2xl border p-4 min-h-[190px] flex flex-col justify-between ${
-          isDaylight
-            ? 'border-teal-500/15 bg-navy-900/90'
-            : 'border-white/5 bg-gradient-to-br from-navy-950 via-navy-900 to-teal-950/60'
-        }`}
-        style={previewStyle}
-      >
-        <div>
-          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-2">Flow preview</div>
-          <h3 className="font-display font-semibold text-white text-lg mb-2">{title}</h3>
-          <p className="text-slate-300 text-sm leading-relaxed">{copy}</p>
-        </div>
-        <div className="grid grid-cols-3 gap-2 mt-5">
-          {steps.map((step, index) => (
-            <div key={step} className="rounded-xl border border-white/5 bg-white/[0.04] px-3 py-3">
-              <div className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Step {index + 1}</div>
-              <div className="text-white text-xs font-display">{step}</div>
-            </div>
-          ))}
         </div>
       </div>
     </div>
@@ -135,6 +104,37 @@ export default function WelcomePage() {
     ? Boolean(secureUser && secureAccount?.planActive)
     : legacyUnlocked
   const isDaylight = theme === THEMES.DAYLIGHT
+  const accessRoutes = [
+    {
+      key: 'free',
+      title: t('welcome.accessWayFreeTitle'),
+      copy: t('welcome.accessWayFreeCopy'),
+      accent: 'text-teal-200 border-teal-500/20 bg-teal-500/10',
+      badge: `${t('onboarding.freePlan')} ${t('onboarding.freePrice')}`,
+    },
+    {
+      key: 'paddle',
+      title: t('welcome.accessWayPaddleTitle'),
+      copy: t('welcome.accessWayPaddleCopy'),
+      accent: 'text-yellow-200 border-yellow-500/20 bg-yellow-500/10',
+      badge: `${t('onboarding.proPlan')} ${t('onboarding.proPrice')}`,
+    },
+    ...(BMAC_ENABLED
+      ? [{
+          key: 'bmac',
+          title: t('welcome.accessWayBmacTitle'),
+          copy: t('welcome.accessWayBmacCopy'),
+          accent: 'text-indigo-200 border-indigo-500/20 bg-indigo-500/10',
+          badge: 'Legacy support',
+        }]
+      : []),
+  ]
+  const legalLinks = [
+    { href: `/pricing.html?lang=${language}`, label: t('settings.pricingLink') },
+    { href: `/refund-policy.html?lang=${language}`, label: t('settings.refundPolicyLink') },
+    { href: `/terms-and-conditions.html?lang=${language}`, label: t('settings.termsConditionsLink') },
+    { href: `/privacy-policy.html?lang=${language}`, label: t('settings.privacyPolicyLink') },
+  ]
 
   const heroStyle = isDaylight
     ? {
@@ -240,7 +240,7 @@ export default function WelcomePage() {
             </p>
 
             <div className="flex flex-wrap gap-3 mt-6">
-              <button onClick={handleAccessStart} className="btn-primary text-sm md:text-base">
+              <button onClick={focusAccess} className="btn-primary text-sm md:text-base">
                 <CheckCircle2 size={16} /> {t('welcome.ctaFree')}
               </button>
               <button onClick={handleCheckoutOpen} className="btn-secondary text-sm md:text-base border-yellow-500/30 bg-yellow-500/10 text-yellow-100 hover:bg-yellow-500/20">
@@ -262,30 +262,6 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      <section className="grid md:grid-cols-3 gap-4">
-        <OutcomeCard
-          icon={Sparkles}
-          title={t('welcome.outcomeTailorTitle')}
-          copy={t('welcome.outcomeTailorCopy')}
-          accent="border-teal-500/20 bg-teal-500/6"
-          iconTone="bg-teal-500/10"
-        />
-        <OutcomeCard
-          icon={Search}
-          title={t('welcome.outcomePrepTitle')}
-          copy={t('welcome.outcomePrepCopy')}
-          accent="border-indigo-500/20 bg-indigo-500/6"
-          iconTone="bg-indigo-500/10"
-        />
-        <OutcomeCard
-          icon={Briefcase}
-          title={t('welcome.outcomeTrackTitle')}
-          copy={t('welcome.outcomeTrackCopy')}
-          accent="border-yellow-500/20 bg-yellow-500/6"
-          iconTone="bg-yellow-500/10"
-        />
-      </section>
-
       <section className="card">
         <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-[0.18em] mb-2">
           {t('welcome.howKicker')}
@@ -298,145 +274,110 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      <section ref={accessSectionRef} className="grid xl:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(360px,1.2fr)] gap-4 items-start">
-        <div className="card border-white/8">
-          <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-[0.16em]">
-            {t('onboarding.freePlan')}
-          </div>
-          <div className="flex items-baseline gap-2 mt-3">
-            <div className="text-white text-3xl font-display font-bold">{t('onboarding.freePrice')}</div>
-            <div className="text-slate-500 text-sm">{t('onboarding.perMonth')}</div>
-          </div>
-          <p className="text-slate-300 text-sm leading-relaxed mt-3">{t('onboarding.freeCopy')}</p>
-          <button onClick={handleAccessStart} className="btn-secondary w-full justify-center mt-4">
-            <CheckCircle2 size={14} /> {t('welcome.ctaFree')}
-          </button>
-        </div>
+      <section ref={accessSectionRef} className="card border-indigo-500/15 bg-navy-900/90">
+        <div className="grid xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] gap-5 items-start">
+          <div>
+            <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-[0.16em] mb-2">
+              {t('welcome.accessKicker')}
+            </div>
+            <h2 className="font-display font-semibold text-white text-2xl">{t('welcome.accessTitle')}</h2>
+            <p className="text-slate-300 text-sm leading-relaxed mt-2 max-w-2xl">{t('welcome.accessCopy')}</p>
 
-        <div className="card border-teal-500/20 bg-teal-500/6">
-          <div className="text-teal-200 text-xs font-display font-semibold uppercase tracking-[0.16em]">
-            {t('onboarding.proPlan')}
-          </div>
-          <div className="flex items-baseline gap-2 mt-3">
-            <div className="text-white text-3xl font-display font-bold">{t('onboarding.proPrice')}</div>
-            <div className="text-slate-500 text-sm">{t('onboarding.perMonth')}</div>
-          </div>
-          <p className="text-slate-300 text-sm leading-relaxed mt-3">{t('onboarding.proCopy')}</p>
-          <button onClick={handleCheckoutOpen} className="btn-primary w-full justify-center mt-4 bg-yellow-500 hover:bg-yellow-400 text-black border-0">
-            <CreditCard size={14} /> {t('welcome.ctaPro')}
-          </button>
-        </div>
-
-        <div className="card border-indigo-500/15 bg-navy-900/90">
-          <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-[0.16em] mb-2">
-            {t('welcome.accessKicker')}
-          </div>
-          <h2 className="font-display font-semibold text-white text-xl">{t('welcome.accessTitle')}</h2>
-          <p className="text-slate-300 text-sm leading-relaxed mt-2">{t('welcome.accessCopy')}</p>
-
-          <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-3 mt-4">
-            <div className="text-slate-400 text-[11px] uppercase tracking-[0.16em] font-display mb-2">
+            <div className="text-slate-500 text-xs font-display font-semibold uppercase tracking-[0.16em] mt-5 mb-2">
               {t('welcome.accessWaysKicker')}
             </div>
-            <div className="grid gap-2">
-              <div className="rounded-xl border border-teal-500/15 bg-teal-500/8 px-3 py-2.5">
-                <div className="text-white text-sm font-display font-semibold">{t('welcome.accessWayFreeTitle')}</div>
-                <div className="text-slate-400 text-xs leading-relaxed mt-1">{t('welcome.accessWayFreeCopy')}</div>
-              </div>
-              <div className="rounded-xl border border-yellow-500/15 bg-yellow-500/5 px-3 py-2.5">
-                <div className="text-white text-sm font-display font-semibold">{t('welcome.accessWayPaddleTitle')}</div>
-                <div className="text-slate-400 text-xs leading-relaxed mt-1">{t('welcome.accessWayPaddleCopy')}</div>
-              </div>
-              {BMAC_ENABLED && (
-                <div className="rounded-xl border border-indigo-500/15 bg-indigo-500/5 px-3 py-2.5">
-                  <div className="text-white text-sm font-display font-semibold">{t('welcome.accessWayBmacTitle')}</div>
-                  <div className="text-slate-400 text-xs leading-relaxed mt-1">{t('welcome.accessWayBmacCopy')}</div>
+            <div className="space-y-3">
+              {accessRoutes.map(route => (
+                <div key={route.key} className="rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-white text-base font-display font-semibold">{route.title}</div>
+                    <span className={`px-2.5 py-1 rounded-full text-[11px] border ${route.accent}`}>
+                      {route.badge}
+                    </span>
+                  </div>
+                  <p className="text-slate-400 text-sm leading-relaxed mt-2 max-w-2xl">{route.copy}</p>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/5 bg-white/[0.03] p-4">
+            <div className="text-slate-500 text-xs font-display font-semibold uppercase tracking-[0.16em] mb-3">
+              {t('welcome.accessWaysKicker')}
+            </div>
+            <label className="text-sm text-slate-400 mb-1.5 block">{t('onboarding.emailLabel')}</label>
+            <input
+              ref={emailInputRef}
+              className="input-field text-sm"
+              type="email"
+              placeholder={t('onboarding.emailPlaceholder')}
+              value={accessInput}
+              onChange={event => {
+                setAccessInput(event.target.value)
+                setAccessError('')
+                setAccessNotice('')
+              }}
+              onKeyDown={event => {
+                if (event.key === 'Enter') handleAccessStart()
+              }}
+            />
+
+            <div className="grid gap-2 mt-3 sm:grid-cols-2">
+              <button
+                onClick={handleAccessStart}
+                disabled={accessLoading}
+                className="btn-primary justify-center"
+              >
+                <CheckCircle2 size={14} /> {accessLoading ? t('settings.activating') : t('onboarding.freeCta')}
+              </button>
+              <button
+                onClick={handleCheckoutOpen}
+                className="btn-secondary justify-center border-yellow-500/30 bg-yellow-500/10 text-yellow-100 hover:bg-yellow-500/20"
+              >
+                <CreditCard size={14} /> {t('onboarding.proCta')}
+              </button>
+              {BMAC_ENABLED && (
+                <button
+                  onClick={handleBmacCheckout}
+                  className="btn-secondary justify-center border-indigo-500/25 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20 sm:col-span-2"
+                >
+                  <Coffee size={14} /> {t('welcome.ctaBmac')}
+                </button>
               )}
             </div>
+
+            <p className="text-slate-500 text-sm leading-relaxed mt-3">{t('onboarding.sameEmailHint')}</p>
+            <p className="text-slate-500 text-sm leading-relaxed mt-2">{t('onboarding.legacySupportNote')}</p>
+
+            {accessReady && (
+              <div className="mt-4 rounded-2xl border border-green-500/20 bg-green-500/10 p-4">
+                <div className="flex items-center gap-2 text-green-300 text-sm font-display font-semibold">
+                  <CheckCircle2 size={15} /> {t('onboarding.accessReady')}
+                </div>
+                <div className="text-slate-200 text-sm leading-relaxed mt-1">
+                  {secureUser?.email || secureAccount?.email || accessInput}
+                </div>
+                <div className="text-slate-400 text-sm leading-relaxed mt-1">
+                  {t('onboarding.accessReadyCopy')}
+                </div>
+                <button onClick={() => openOnboarding('profile')} className="btn-primary mt-4 justify-center">
+                  {t('welcome.ctaContinue')} <ArrowRight size={14} />
+                </button>
+              </div>
+            )}
+
+            {accessNotice && <p className="text-green-400 text-sm leading-relaxed mt-3">{accessNotice}</p>}
+            {accessError && <p className="text-red-400 text-sm leading-relaxed mt-3">{accessError}</p>}
           </div>
-
-          <label className="text-sm text-slate-400 mb-1.5 block mt-4">{t('onboarding.emailLabel')}</label>
-          <input
-            ref={emailInputRef}
-            className="input-field text-sm"
-            type="email"
-            placeholder={t('onboarding.emailPlaceholder')}
-            value={accessInput}
-            onChange={event => {
-              setAccessInput(event.target.value)
-              setAccessError('')
-              setAccessNotice('')
-            }}
-            onKeyDown={event => {
-              if (event.key === 'Enter') handleAccessStart()
-            }}
-          />
-
-          <div className="grid sm:grid-cols-2 gap-2 mt-3">
-            <button
-              onClick={handleAccessStart}
-              disabled={accessLoading}
-              className="btn-primary justify-center"
-            >
-              <CheckCircle2 size={14} /> {accessLoading ? t('settings.activating') : t('onboarding.freeCta')}
-            </button>
-            <button
-              onClick={handleCheckoutOpen}
-              className="btn-secondary justify-center border-yellow-500/30 bg-yellow-500/10 text-yellow-100 hover:bg-yellow-500/20"
-            >
-              <CreditCard size={14} /> {t('onboarding.proCta')}
-            </button>
-          </div>
-
-          {BMAC_ENABLED && (
-            <button
-              onClick={handleBmacCheckout}
-              className="btn-secondary justify-center w-full mt-2 border-indigo-500/25 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20"
-            >
-              <Coffee size={14} /> {t('welcome.ctaBmac')}
-            </button>
-          )}
-
-          {accessReady && (
-            <div className="mt-4 rounded-2xl border border-green-500/20 bg-green-500/10 p-4">
-              <div className="flex items-center gap-2 text-green-300 text-sm font-display font-semibold">
-                <CheckCircle2 size={15} /> {t('onboarding.accessReady')}
-              </div>
-              <div className="text-slate-200 text-sm leading-relaxed mt-1">
-                {secureUser?.email || secureAccount?.email || accessInput}
-              </div>
-              <div className="text-slate-400 text-sm leading-relaxed mt-1">
-                {t('onboarding.accessReadyCopy')}
-              </div>
-              <button onClick={() => openOnboarding('profile')} className="btn-primary mt-4 justify-center">
-                {t('welcome.ctaContinue')} <ArrowRight size={14} />
-              </button>
-            </div>
-          )}
-
-          <p className="text-slate-500 text-sm leading-relaxed mt-3">{t('onboarding.sameEmailHint')}</p>
-          <p className="text-slate-500 text-sm leading-relaxed mt-2">{t('onboarding.legacySupportNote')}</p>
-          {accessNotice && <p className="text-green-400 text-sm leading-relaxed mt-3">{accessNotice}</p>}
-          {accessError && <p className="text-red-400 text-sm leading-relaxed mt-3">{accessError}</p>}
         </div>
-      </section>
 
-      <section className="card flex flex-wrap items-center justify-between gap-3">
-        <div className="text-slate-400 text-sm">{t('welcome.footerCopy')}</div>
-        <div className="flex flex-wrap gap-2">
-          <a href={`/pricing.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-            <ExternalLink size={13} /> {t('settings.pricingLink')}
-          </a>
-          <a href={`/refund-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-            <ExternalLink size={13} /> {t('settings.refundPolicyLink')}
-          </a>
-          <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-            <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
-          </a>
-          <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-            <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
-          </a>
+        <div className="flex flex-wrap items-center gap-2 mt-5 pt-4 border-t border-white/5">
+          <div className="text-slate-500 text-sm mr-2">{t('welcome.footerCopy')}</div>
+          {legalLinks.map(link => (
+            <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+              <ExternalLink size={13} /> {link.label}
+            </a>
+          ))}
         </div>
       </section>
     </div>
