@@ -75,7 +75,8 @@ export default function OnboardingWizard() {
     try {
       const result = await unlockAccess(accessInput.trim())
       if (result?.mode === 'magic_link') {
-        setAccessNotice(t('settings.unlockMagicLinkSent', { email: result.email }))
+        skipOnboarding()
+        return
       } else {
         setLegacyUnlocked(true)
         setAccessNotice(t('settings.unlockCodeAccepted'))

@@ -6,8 +6,11 @@ const PADDLE_ENV = String(import.meta.env.VITE_PADDLE_ENV || 'live').trim().toLo
 const PADDLE_PRO_PRICE_ID = String(import.meta.env.VITE_PADDLE_PRO_PRICE_ID || '').trim()
 const PADDLE_MANUAL_PRICING_URL = String(import.meta.env.VITE_PADDLE_MANUAL_PRICING_URL || '/pricing.html').trim() || '/pricing.html'
 const PADDLE_SUCCESS_URL = String(import.meta.env.VITE_PADDLE_SUCCESS_URL || '').trim()
+const DEFAULT_BMAC_SUPPORT_URL = 'https://buymeacoffee.com/niksales73l/e/515014'
+const BMAC_SUPPORT_URL = String(import.meta.env.VITE_BMAC_SUPPORT_URL || DEFAULT_BMAC_SUPPORT_URL).trim()
 
 export const PADDLE_ENABLED = Boolean(PADDLE_CLIENT_TOKEN && PADDLE_PRO_PRICE_ID)
+export const BMAC_ENABLED = Boolean(BMAC_SUPPORT_URL)
 
 let paddleLoadPromise = null
 let paddleInitialized = false
@@ -69,6 +72,13 @@ async function ensurePaddle() {
 
 export function openPricingPage() {
   window.open(PADDLE_MANUAL_PRICING_URL, '_blank', 'noopener,noreferrer')
+}
+
+export function openBmacCheckout() {
+  if (!BMAC_ENABLED) {
+    throw new Error('Buy Me a Coffee checkout is not configured on this deployment yet.')
+  }
+  window.open(BMAC_SUPPORT_URL, '_blank', 'noopener,noreferrer')
 }
 
 export async function openProCheckout({
