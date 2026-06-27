@@ -766,7 +766,7 @@ export default function Settings({ mode = 'settings' }) {
           </div>
         )}
 
-        <div className="grid xl:grid-cols-[minmax(0,0.88fr)_minmax(340px,1.12fr)] gap-4 mt-4 items-start">
+        <div className="grid xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4 mt-4 items-start">
           <div className="space-y-4 min-w-0">
             <div className={compactAccountCardClass}>
               <div className="flex items-start justify-between gap-3 mb-3">
@@ -915,6 +915,34 @@ export default function Settings({ mode = 'settings' }) {
           </div>
 
           <div className="space-y-4 min-w-0">
+            <div className={pairedCardClass}>
+              <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+                <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
+              </h3>
+              <p className={`${settingsSupportCopyClass} mb-3`}>{t('settings.resumeCopy')}</p>
+              <div className="flex gap-2 mb-3">
+                <button onClick={() => fileRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
+                  <Upload size={13} /> {extracting ? t('settings.reading') : t('settings.resumeUpload')}
+                </button>
+                <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.rtf" className="hidden" onChange={handleResumeFile} />
+                {resumeText && (
+                  <button onClick={clearResume} className="btn-ghost text-xs text-red-400 hover:text-red-300 px-2">
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <textarea
+                className="textarea-field h-32 text-sm mb-3"
+                placeholder={t('settings.resumePastePlaceholder')}
+                value={resumeText}
+                onChange={e => setResumeText(e.target.value)}
+              />
+              <button onClick={saveResume} className={`btn-primary text-sm ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
+                {resumeSaved ? <><Check size={14} /> {t('settings.saved')}</> : t('settings.resumeSave')}
+              </button>
+              <p className="text-slate-600 text-sm leading-relaxed mt-2">{t('settings.resumeVisualNote')}</p>
+            </div>
+
             <div className={compactAccountCardClass}>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0">
@@ -1010,34 +1038,6 @@ export default function Settings({ mode = 'settings' }) {
                   {t('settings.secureAccountCopy')}
                 </div>
               )}
-            </div>
-
-            <div className={pairedCardClass}>
-              <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-                <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
-              </h3>
-              <p className={`${settingsSupportCopyClass} mb-3`}>{t('settings.resumeCopy')}</p>
-              <div className="flex gap-2 mb-3">
-                <button onClick={() => fileRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
-                  <Upload size={13} /> {extracting ? t('settings.reading') : t('settings.resumeUpload')}
-                </button>
-                <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.rtf" className="hidden" onChange={handleResumeFile} />
-                {resumeText && (
-                  <button onClick={clearResume} className="btn-ghost text-xs text-red-400 hover:text-red-300 px-2">
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-              <textarea
-                className="textarea-field h-36 text-sm mb-3"
-                placeholder={t('settings.resumePastePlaceholder')}
-                value={resumeText}
-                onChange={e => setResumeText(e.target.value)}
-              />
-              <button onClick={saveResume} className={`btn-primary text-sm ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-                {resumeSaved ? <><Check size={14} /> {t('settings.saved')}</> : t('settings.resumeSave')}
-              </button>
-              <p className="text-slate-600 text-sm leading-relaxed mt-2">{t('settings.resumeVisualNote')}</p>
             </div>
           </div>
         </div>
