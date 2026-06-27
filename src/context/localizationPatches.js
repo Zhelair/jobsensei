@@ -11462,17 +11462,53 @@ const welcomePagePatches = {
     'welcome.previewStepResearch': 'Check fit',
     'welcome.previewStepPrep': 'Prep',
     'welcome.accessKicker': 'Plans and access',
-    'welcome.accessTitle': 'Pick your starting point',
-    'welcome.accessCopy': 'Explore first, start on Free, or open Pro before you begin. The same email keeps everything connected.',
-    'welcome.accessWaysKicker': 'Ways to start',
-    'welcome.accessWayFreeTitle': 'Free by email',
-    'welcome.accessWayFreeCopy': 'Get a magic link and start exploring without paying first.',
-    'welcome.accessWayPaddleTitle': 'Pro via Paddle',
-    'welcome.accessWayPaddleCopy': 'Use the new subscription route for hosted credits, invoices, and renewals.',
-    'welcome.accessWayBmacTitle': 'BMAC supporter route',
-    'welcome.accessWayBmacCopy': 'Keep the founder-support path live while Paddle is still being finalized.',
+    'welcome.accessTitle': 'Start free or go Pro',
+    'welcome.accessCopy': 'Use one email for sign-in, credits, and upgrades.',
+    'welcome.accessWaysKicker': 'Choose a path',
+    'welcome.accessWayFreeTitle': 'Free',
+    'welcome.accessWayFreeCopy': 'Magic link access with light hosted AI and up to 2 approved devices.',
+    'welcome.accessWayPaddleTitle': 'Pro',
+    'welcome.accessWayPaddleCopy': '53,000 hosted credits with billing, invoices, and renewals through Paddle.',
+    'welcome.accessWayBmacTitle': 'BMAC',
+    'welcome.accessWayBmacCopy': 'Keep the legacy founder-support route available while Paddle is still being finalized.',
     'welcome.ctaBmac': 'Open BMAC checkout',
     'welcome.footerCopy': 'Pricing, refunds, terms, and privacy stay one click away.',
+  },
+}
+
+const accountGuidePatches = {
+  en: {
+    'guide.account.title': 'Account',
+    'guide.account.desc': 'Manage plan access, billing, approved devices, resume, and the profile JobSensei reuses across prep.',
+    'guide.account.tip.plan': 'Use this page first when AI is locked or you need to upgrade.',
+    'guide.account.tip.devices': 'Check approved devices here before switching browsers or phones.',
+    'guide.account.tip.profile': 'Resume and profile here help JobSensei stay consistent across tools.',
+    'guide.account.detail.access': 'Plan and AI Access shows whether this browser is on Free, Pro, or still locked.',
+    'guide.account.detail.billing': 'Use Manage Billing or the Pro buttons here for renewals, invoices, and upgrades.',
+    'guide.account.detail.devices': 'Devices and secure access let you review approved browsers and revoke one if you hit the limit.',
+    'guide.account.detail.profile': 'Resume and Your Profile keep your background, role, and target ready for tailored prep.',
+  },
+  ru: {
+    'guide.account.title': 'Аккаунт',
+    'guide.account.desc': 'Управляйте доступом к плану, оплатой, одобренными устройствами, резюме и профилем, который JobSensei использует в подготовке.',
+    'guide.account.tip.plan': 'Открывайте эту страницу первой, если AI заблокирован или нужно обновить план.',
+    'guide.account.tip.devices': 'Проверяйте одобренные устройства здесь перед сменой браузера или телефона.',
+    'guide.account.tip.profile': 'Резюме и профиль здесь помогают JobSensei сохранять единый контекст во всех инструментах.',
+    'guide.account.detail.access': 'План и AI Access показывают, работает ли этот браузер на Free, Pro или всё ещё заблокирован.',
+    'guide.account.detail.billing': 'Используйте Manage Billing или кнопки Pro здесь для продления, счетов и апгрейдов.',
+    'guide.account.detail.devices': 'Devices and secure access позволяют просмотреть одобренные браузеры и отозвать один, если достигнут лимит.',
+    'guide.account.detail.profile': 'Resume и Your Profile хранят ваш опыт, роль и цель для персонализированной подготовки.',
+  },
+  bg: {
+    'guide.account.title': 'Акаунт',
+    'guide.account.desc': 'Управлявай достъпа до плана, плащането, одобрените устройства, резюмето и профила, който JobSensei ползва в подготовката.',
+    'guide.account.tip.plan': 'Отвори тази страница първо, ако AI е заключен или искаш upgrade.',
+    'guide.account.tip.devices': 'Проверявай одобрените устройства тук преди да сменяш браузър или телефон.',
+    'guide.account.tip.profile': 'Резюмето и профилът тук помагат на JobSensei да пази един и същ контекст във всички инструменти.',
+    'guide.account.detail.access': 'Plan and AI Access показва дали този браузър е на Free, Pro или още е заключен.',
+    'guide.account.detail.billing': 'Използвай Manage Billing или Pro бутоните тук за подновяване, фактури и upgrade.',
+    'guide.account.detail.devices': 'Devices and secure access ти позволява да видиш одобрените браузъри и да махнеш един, ако стигнеш лимита.',
+    'guide.account.detail.profile': 'Resume и Your Profile пазят опита, ролята и целта ти готови за персонализирана подготовка.',
   },
 }
 
@@ -11501,6 +11537,10 @@ Object.entries(accountNavPatches).forEach(([locale, patch]) => {
 })
 
 Object.entries(welcomePagePatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
+Object.entries(accountGuidePatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 
