@@ -11430,6 +11430,40 @@ const accountNavPatches = {
   },
 }
 
+const welcomePagePatches = {
+  en: {
+    'welcome.badge': 'Welcome to JobSensei',
+    'welcome.title': 'Prepare each job application with focus, not chaos.',
+    'welcome.subtitle': 'JobSensei helps you tailor faster, prep smarter, and track every opportunity in one workflow.',
+    'welcome.ctaFree': 'Start free',
+    'welcome.ctaPro': 'Go Pro',
+    'welcome.ctaSkip': 'Skip for now',
+    'welcome.ctaContinue': 'Continue setup',
+    'welcome.outcomeTailorTitle': 'Tailor faster',
+    'welcome.outcomeTailorCopy': 'Run gap analysis, check your resume, and shape role-fit stories without starting from scratch each time.',
+    'welcome.outcomePrepTitle': 'Prep smarter',
+    'welcome.outcomePrepCopy': 'Research companies, predict interview questions, and practice STAR answers with one shared job context.',
+    'welcome.outcomeTrackTitle': 'Track everything',
+    'welcome.outcomeTrackCopy': 'Keep applications, notes, next steps, follow-ups, and prep history in one place instead of scattered tabs.',
+    'welcome.howKicker': 'How it works',
+    'welcome.howTitle': 'One clean workflow from job post to interview prep',
+    'welcome.stepResumeTitle': 'Add your resume',
+    'welcome.stepResumeCopy': 'Save your background once so JobSensei can reuse it across tailoring, prep, and coaching.',
+    'welcome.stepJobTitle': 'Add a job you care about',
+    'welcome.stepJobCopy': 'Capture the company, role, and JD so all tools stay aligned to the same application.',
+    'welcome.stepAiTitle': 'Use AI when you need it',
+    'welcome.stepAiCopy': 'Unlock hosted AI on Free or Pro, or keep BYOK later in Settings when you want your own provider.',
+    'welcome.previewPrimaryTitle': 'See the real workflow before you type anything',
+    'welcome.previewPrimaryCopy': 'Add a job, research the company, run gap analysis, then move straight into prep notes and interview practice.',
+    'welcome.previewSecondaryResearch': 'Company research',
+    'welcome.previewSecondaryPrep': 'Interview prep',
+    'welcome.accessKicker': 'Access',
+    'welcome.accessTitle': 'Choose how you want to start',
+    'welcome.accessCopy': 'Start on Free with your email, unlock heavier usage with Pro, or skip for now and explore the product first.',
+    'welcome.footerCopy': 'Review pricing, refunds, and policies before you buy. You can still skip and explore first.',
+  },
+}
+
 Object.entries(creditsUxPatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
@@ -11451,6 +11485,10 @@ Object.entries(paddleUxPatches).forEach(([locale, patch]) => {
 })
 
 Object.entries(accountNavPatches).forEach(([locale, patch]) => {
+  mergeFlattenedLocalizationPatch(locale, patch)
+})
+
+Object.entries(welcomePagePatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
 

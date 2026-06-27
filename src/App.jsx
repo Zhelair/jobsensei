@@ -15,6 +15,7 @@ import Sidebar from './components/Layout/Sidebar'
 import TopBar from './components/Layout/TopBar'
 import BottomNav from './components/Layout/BottomNav'
 import OnboardingWizard from './components/Onboarding/OnboardingWizard'
+import WelcomePage from './components/Welcome/WelcomePage'
 import ExtensionCaptureBridge from './components/shared/ExtensionCaptureBridge'
 import Dashboard from './components/Dashboard/Dashboard'
 import TodayPage from './components/Today/TodayPage'
@@ -40,6 +41,7 @@ const SECTION_ANALYTICS_LABELS = {
   [SECTIONS.TRACKER]: 'tracker',
   [SECTIONS.ACCOUNT]: 'account',
   [SECTIONS.SETTINGS]: 'settings',
+  welcome: 'welcome',
 }
 
 function ApplicationRequiredGate({ sectionLabel }) {
@@ -84,10 +86,11 @@ function PrepToolsSection() {
 }
 
 function AppContent() {
-  const { activeSection, showOnboarding, navKey } = useApp()
+  const { activeSection, showOnboarding, onboardingMode, navKey } = useApp()
   const { getProjectData } = useProject()
   const applications = getProjectData('applications') || []
   const previousTrackedSectionRef = useRef('')
+  const showingWelcome = showOnboarding && onboardingMode !== 'profile'
 
   const sections = {
     [SECTIONS.TODAY]: TodayPage,
@@ -101,7 +104,7 @@ function AppContent() {
     [SECTIONS.SETTINGS]: Settings,
   }
 
-  const ActiveSection = sections[activeSection] || Dashboard
+  const ActiveSection = showingWelcome ? WelcomePage : (sections[activeSection] || Dashboard)
   const requiresApplication = APPLICATION_REQUIRED_SECTIONS.has(activeSection) && applications.length === 0
 
   // Sections that use full height (chat interfaces)
@@ -109,25 +112,28 @@ function AppContent() {
   const isFullHeight = fullHeightSections.includes(activeSection)
 
   useEffect(() => {
-    if (previousTrackedSectionRef.current === activeSection) return
+    const trackedSection = showingWelcome ? 'welcome' : activeSection
+    if (previousTrackedSectionRef.current === trackedSection) return
 
-    previousTrackedSectionRef.current = activeSection
+    previousTrackedSectionRef.current = trackedSection
     track('section_view', {
-      section: SECTION_ANALYTICS_LABELS[activeSection] || String(activeSection || 'unknown'),
+      section: SECTION_ANALYTICS_LABELS[trackedSection] || String(trackedSection || 'unknown'),
       has_applications: applications.length > 0,
       application_count: applications.length,
     })
-  }, [activeSection, applications.length])
+  }, [activeSection, applications.length, showingWelcome])
 
   return (
     <div className="flex h-screen overflow-hidden bg-mesh">
-      {showOnboarding && <OnboardingWizard />}
+      {showOnboarding && onboardingMode === 'profile' && <OnboardingWizard />}
       <ExtensionCaptureBridge />
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0">
         <TopBar />
         <main className={`flex-1 ${isFullHeight ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'} pb-16 md:pb-0`}>
-          {requiresApplication ? (
+          {showingWelcome ? (
+            <ActiveSection key="welcome" />
+          ) : requiresApplication ? (
             <ApplicationRequiredGate sectionLabel={activeSection === SECTIONS.INTERVIEW ? 'Interview Prep' : activeSection === SECTIONS.TOOLS ? 'Prep Tools' : 'Dashboard'} />
           ) : (
             <ActiveSection key={navKey} />

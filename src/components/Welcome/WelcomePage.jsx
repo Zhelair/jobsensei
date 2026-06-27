@@ -1,0 +1,320 @@
+import React, { useEffect, useRef, useState } from 'react'
+import { useApp } from '../../context/AppContext'
+import { useAI } from '../../context/AIContext'
+import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
+import {
+  ArrowRight, Briefcase, CheckCircle2, CreditCard, ExternalLink,
+  FileText, Search, Sparkles,
+} from 'lucide-react'
+import { openProCheckout } from '../../lib/billing'
+
+function OutcomeCard({ icon: Icon, title, copy, accent }) {
+  return (
+    <div className={`card border ${accent}`}>
+      <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center mb-3">
+        <Icon size={18} className="text-white" />
+      </div>
+      <h3 className="font-display font-semibold text-white text-lg mb-2">{title}</h3>
+      <p className="text-slate-300 text-sm leading-relaxed">{copy}</p>
+    </div>
+  )
+}
+
+function StepCard({ number, title, copy }) {
+  return (
+    <div className="rounded-2xl border border-navy-600 bg-navy-900/60 px-4 py-4">
+      <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-[0.18em] mb-2">
+        {number}
+      </div>
+      <h3 className="font-display font-semibold text-white mb-1">{title}</h3>
+      <p className="text-slate-400 text-sm leading-relaxed">{copy}</p>
+    </div>
+  )
+}
+
+function PreviewPanel({ title, copy, chips = [] }) {
+  return (
+    <div className="rounded-3xl border border-navy-600 bg-navy-900/65 p-4">
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {chips.map(chip => (
+          <span key={chip} className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/20 bg-teal-500/10 text-teal-200">
+            {chip}
+          </span>
+        ))}
+      </div>
+      <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-navy-950 via-navy-900 to-teal-950/60 p-4 min-h-[180px] flex flex-col justify-between">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-2">Flow preview</div>
+          <h3 className="font-display font-semibold text-white text-lg mb-2">{title}</h3>
+          <p className="text-slate-300 text-sm leading-relaxed">{copy}</p>
+        </div>
+        <div className="grid grid-cols-3 gap-2 mt-5">
+          <div className="rounded-xl border border-white/5 bg-white/[0.04] px-3 py-3">
+            <div className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Step 1</div>
+            <div className="text-white text-xs font-display">Add job</div>
+          </div>
+          <div className="rounded-xl border border-white/5 bg-white/[0.04] px-3 py-3">
+            <div className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Step 2</div>
+            <div className="text-white text-xs font-display">Research</div>
+          </div>
+          <div className="rounded-xl border border-white/5 bg-white/[0.04] px-3 py-3">
+            <div className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Step 3</div>
+            <div className="text-white text-xs font-display">Prep</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function WelcomePage() {
+  const { skipOnboarding, openOnboarding } = useApp()
+  const { unlockAccess } = useAI()
+  const { secureUser, secureAccount, secureAccountsEnabled } = useAuth()
+  const { language, t } = useLanguage()
+
+  const accessSectionRef = useRef(null)
+  const emailInputRef = useRef(null)
+  const [accessInput, setAccessInput] = useState(String(secureUser?.email || secureAccount?.email || '').trim())
+  const [accessLoading, setAccessLoading] = useState(false)
+  const [accessError, setAccessError] = useState('')
+  const [accessNotice, setAccessNotice] = useState('')
+  const [legacyUnlocked, setLegacyUnlocked] = useState(false)
+  const accessReady = secureAccountsEnabled
+    ? Boolean(secureUser && secureAccount?.planActive)
+    : legacyUnlocked
+
+  useEffect(() => {
+    const nextEmail = String(secureUser?.email || secureAccount?.email || '').trim()
+    if (nextEmail) setAccessInput(nextEmail)
+  }, [secureAccount?.email, secureUser?.email])
+
+  function focusAccess() {
+    accessSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    window.setTimeout(() => {
+      emailInputRef.current?.focus()
+    }, 220)
+  }
+
+  async function handleAccessStart() {
+    if (!accessInput.trim()) {
+      focusAccess()
+      return
+    }
+
+    setAccessLoading(true)
+    setAccessError('')
+    setAccessNotice('')
+    try {
+      const result = await unlockAccess(accessInput.trim())
+      if (result?.mode === 'magic_link') {
+        setAccessNotice(t('settings.unlockMagicLinkSent', { email: result.email }))
+      } else {
+        setLegacyUnlocked(true)
+        setAccessNotice(t('settings.unlockCodeAccepted'))
+      }
+    } catch (error) {
+      setAccessError(error.message || 'Unable to activate access right now.')
+    } finally {
+      setAccessLoading(false)
+    }
+  }
+
+  async function handleCheckoutOpen() {
+    setAccessError('')
+    setAccessNotice('')
+
+    try {
+      await openProCheckout({
+        email: accessInput.trim(),
+        userId: secureUser?.id || '',
+      })
+    } catch (error) {
+      setAccessError(error.message || 'Unable to open Paddle checkout right now.')
+    }
+  }
+
+  return (
+    <div className="p-4 md:p-6 xl:p-8 max-w-6xl mx-auto animate-in space-y-6">
+      <section className="relative overflow-hidden rounded-[32px] border border-teal-500/20 bg-gradient-to-br from-navy-900 via-navy-950 to-teal-950/40 p-6 md:p-8 xl:p-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.16),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(250,204,21,0.12),transparent_28%)] pointer-events-none" />
+        <div className="relative grid xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] gap-6 items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-500/10 text-teal-200 text-xs font-display font-semibold uppercase tracking-[0.18em]">
+              {t('welcome.badge')}
+            </div>
+            <h1 className="font-display font-bold text-white text-3xl md:text-5xl leading-tight mt-4">
+              {t('welcome.title')}
+            </h1>
+            <p className="text-slate-300 text-base md:text-lg leading-relaxed mt-4 max-w-3xl">
+              {t('welcome.subtitle')}
+            </p>
+
+            <div className="flex flex-wrap gap-3 mt-6">
+              <button onClick={handleAccessStart} className="btn-primary text-sm md:text-base">
+                <CheckCircle2 size={16} /> {t('welcome.ctaFree')}
+              </button>
+              <button onClick={handleCheckoutOpen} className="btn-secondary text-sm md:text-base border-yellow-500/30 bg-yellow-500/10 text-yellow-100 hover:bg-yellow-500/20">
+                <CreditCard size={16} /> {t('welcome.ctaPro')}
+              </button>
+              <button onClick={skipOnboarding} className="btn-ghost text-sm md:text-base">
+                {t('welcome.ctaSkip')}
+              </button>
+            </div>
+          </div>
+
+          <PreviewPanel
+            title={t('welcome.previewPrimaryTitle')}
+            copy={t('welcome.previewPrimaryCopy')}
+            chips={[t('welcome.previewSecondaryResearch'), t('welcome.previewSecondaryPrep'), 'Today']}
+          />
+        </div>
+      </section>
+
+      <section className="grid md:grid-cols-3 gap-4">
+        <OutcomeCard
+          icon={Sparkles}
+          title={t('welcome.outcomeTailorTitle')}
+          copy={t('welcome.outcomeTailorCopy')}
+          accent="border-teal-500/20 bg-teal-500/6"
+        />
+        <OutcomeCard
+          icon={Search}
+          title={t('welcome.outcomePrepTitle')}
+          copy={t('welcome.outcomePrepCopy')}
+          accent="border-indigo-500/20 bg-indigo-500/6"
+        />
+        <OutcomeCard
+          icon={Briefcase}
+          title={t('welcome.outcomeTrackTitle')}
+          copy={t('welcome.outcomeTrackCopy')}
+          accent="border-yellow-500/20 bg-yellow-500/6"
+        />
+      </section>
+
+      <section className="card">
+        <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-[0.18em] mb-2">
+          {t('welcome.howKicker')}
+        </div>
+        <h2 className="font-display font-semibold text-white text-2xl mb-4">{t('welcome.howTitle')}</h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          <StepCard number="1" title={t('welcome.stepResumeTitle')} copy={t('welcome.stepResumeCopy')} />
+          <StepCard number="2" title={t('welcome.stepJobTitle')} copy={t('welcome.stepJobCopy')} />
+          <StepCard number="3" title={t('welcome.stepAiTitle')} copy={t('welcome.stepAiCopy')} />
+        </div>
+      </section>
+
+      <section ref={accessSectionRef} className="grid xl:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(340px,1.2fr)] gap-4 items-start">
+        <div className="card border-white/8">
+          <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-[0.16em]">
+            {t('onboarding.freePlan')}
+          </div>
+          <div className="flex items-baseline gap-2 mt-3">
+            <div className="text-white text-3xl font-display font-bold">{t('onboarding.freePrice')}</div>
+            <div className="text-slate-500 text-sm">{t('onboarding.perMonth')}</div>
+          </div>
+          <p className="text-slate-300 text-sm leading-relaxed mt-3">{t('onboarding.freeCopy')}</p>
+          <button onClick={handleAccessStart} className="btn-secondary w-full justify-center mt-4">
+            <CheckCircle2 size={14} /> {t('welcome.ctaFree')}
+          </button>
+        </div>
+
+        <div className="card border-teal-500/20 bg-teal-500/6">
+          <div className="text-teal-200 text-xs font-display font-semibold uppercase tracking-[0.16em]">
+            {t('onboarding.proPlan')}
+          </div>
+          <div className="flex items-baseline gap-2 mt-3">
+            <div className="text-white text-3xl font-display font-bold">{t('onboarding.proPrice')}</div>
+            <div className="text-slate-500 text-sm">{t('onboarding.perMonth')}</div>
+          </div>
+          <p className="text-slate-300 text-sm leading-relaxed mt-3">{t('onboarding.proCopy')}</p>
+          <button onClick={handleCheckoutOpen} className="btn-primary w-full justify-center mt-4 bg-yellow-500 hover:bg-yellow-400 text-black border-0">
+            <CreditCard size={14} /> {t('welcome.ctaPro')}
+          </button>
+        </div>
+
+        <div className="card border-indigo-500/15 bg-navy-900/90">
+          <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-[0.16em] mb-2">
+            {t('welcome.accessKicker')}
+          </div>
+          <h2 className="font-display font-semibold text-white text-xl">{t('welcome.accessTitle')}</h2>
+          <p className="text-slate-300 text-sm leading-relaxed mt-2">{t('welcome.accessCopy')}</p>
+
+          <label className="text-sm text-slate-400 mb-1.5 block mt-4">{t('onboarding.emailLabel')}</label>
+          <input
+            ref={emailInputRef}
+            className="input-field text-sm"
+            type="email"
+            placeholder={t('onboarding.emailPlaceholder')}
+            value={accessInput}
+            onChange={event => {
+              setAccessInput(event.target.value)
+              setAccessError('')
+              setAccessNotice('')
+            }}
+            onKeyDown={event => {
+              if (event.key === 'Enter') handleAccessStart()
+            }}
+          />
+
+          <div className="grid sm:grid-cols-2 gap-2 mt-3">
+            <button
+              onClick={handleAccessStart}
+              disabled={accessLoading}
+              className="btn-primary justify-center"
+            >
+              <CheckCircle2 size={14} /> {accessLoading ? t('settings.activating') : t('onboarding.freeCta')}
+            </button>
+            <button
+              onClick={handleCheckoutOpen}
+              className="btn-secondary justify-center border-yellow-500/30 bg-yellow-500/10 text-yellow-100 hover:bg-yellow-500/20"
+            >
+              <CreditCard size={14} /> {t('onboarding.proCta')}
+            </button>
+          </div>
+
+          {accessReady && (
+            <div className="mt-4 rounded-2xl border border-green-500/20 bg-green-500/10 p-4">
+              <div className="flex items-center gap-2 text-green-300 text-sm font-display font-semibold">
+                <CheckCircle2 size={15} /> {t('onboarding.accessReady')}
+              </div>
+              <div className="text-slate-200 text-sm leading-relaxed mt-1">
+                {secureUser?.email || secureAccount?.email || accessInput}
+              </div>
+              <div className="text-slate-400 text-sm leading-relaxed mt-1">
+                {t('onboarding.accessReadyCopy')}
+              </div>
+              <button onClick={() => openOnboarding('profile')} className="btn-primary mt-4 justify-center">
+                {t('welcome.ctaContinue')} <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
+
+          <p className="text-slate-500 text-sm leading-relaxed mt-3">{t('onboarding.sameEmailHint')}</p>
+          <p className="text-slate-500 text-sm leading-relaxed mt-2">{t('onboarding.legacySupportNote')}</p>
+          {accessNotice && <p className="text-green-400 text-sm leading-relaxed mt-3">{accessNotice}</p>}
+          {accessError && <p className="text-red-400 text-sm leading-relaxed mt-3">{accessError}</p>}
+        </div>
+      </section>
+
+      <section className="card flex flex-wrap items-center justify-between gap-3">
+        <div className="text-slate-400 text-sm">{t('welcome.footerCopy')}</div>
+        <div className="flex flex-wrap gap-2">
+          <a href={`/pricing.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+            <ExternalLink size={13} /> {t('settings.pricingLink')}
+          </a>
+          <a href={`/refund-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+            <ExternalLink size={13} /> {t('settings.refundPolicyLink')}
+          </a>
+          <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+            <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
+          </a>
+          <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+            <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
+          </a>
+        </div>
+      </section>
+    </div>
+  )
+}
