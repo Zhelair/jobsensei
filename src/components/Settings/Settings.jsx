@@ -766,9 +766,8 @@ export default function Settings({ mode = 'settings' }) {
           </div>
         )}
 
-        <div className="grid xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4 mt-4 items-start">
-          <div className="space-y-4 min-w-0">
-            <div className={compactAccountCardClass}>
+        <div className="grid xl:grid-cols-2 gap-4 mt-4 items-stretch">
+          <div className={`${compactAccountCardClass} h-full min-w-0`}>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0">
                   <h4 className="font-display font-semibold text-white flex items-center gap-2">
@@ -881,7 +880,35 @@ export default function Settings({ mode = 'settings' }) {
               )}
             </div>
 
-            <div className={compactAccountCardClass}>
+          <div className={`${compactAccountCardClass} h-full min-w-0`}>
+              <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+                <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
+              </h3>
+              <p className={`${settingsSupportCopyClass} mb-3`}>{t('settings.resumeCopy')}</p>
+              <div className="flex gap-2 mb-3">
+                <button onClick={() => fileRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
+                  <Upload size={13} /> {extracting ? t('settings.reading') : t('settings.resumeUpload')}
+                </button>
+                <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.rtf" className="hidden" onChange={handleResumeFile} />
+                {resumeText && (
+                  <button onClick={clearResume} className="btn-ghost text-xs text-red-400 hover:text-red-300 px-2">
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <textarea
+                className="textarea-field h-28 text-sm mb-3"
+                placeholder={t('settings.resumePastePlaceholder')}
+                value={resumeText}
+                onChange={e => setResumeText(e.target.value)}
+              />
+              <button onClick={saveResume} className={`btn-primary text-sm self-start ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
+                {resumeSaved ? <><Check size={14} /> {t('settings.saved')}</> : t('settings.resumeSave')}
+              </button>
+              <p className="text-slate-600 text-sm leading-relaxed mt-2">{t('settings.resumeVisualNote')}</p>
+            </div>
+
+          <div className={`${compactAccountCardClass} h-full min-w-0`}>
               <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
                 <div className="min-w-0">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 font-display mb-1.5">{t('settings.profile')}</div>
@@ -912,44 +939,14 @@ export default function Settings({ mode = 'settings' }) {
                 <p className={`${settingsMutedCopyClass} mt-3`}>{t('settings.noProfile')}</p>
               )}
             </div>
-          </div>
 
-          <div className="space-y-4 min-w-0">
-            <div className={pairedCardClass}>
-              <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-                <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
-              </h3>
-              <p className={`${settingsSupportCopyClass} mb-3`}>{t('settings.resumeCopy')}</p>
-              <div className="flex gap-2 mb-3">
-                <button onClick={() => fileRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
-                  <Upload size={13} /> {extracting ? t('settings.reading') : t('settings.resumeUpload')}
-                </button>
-                <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.rtf" className="hidden" onChange={handleResumeFile} />
-                {resumeText && (
-                  <button onClick={clearResume} className="btn-ghost text-xs text-red-400 hover:text-red-300 px-2">
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-              <textarea
-                className="textarea-field h-32 text-sm mb-3"
-                placeholder={t('settings.resumePastePlaceholder')}
-                value={resumeText}
-                onChange={e => setResumeText(e.target.value)}
-              />
-              <button onClick={saveResume} className={`btn-primary text-sm ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-                {resumeSaved ? <><Check size={14} /> {t('settings.saved')}</> : t('settings.resumeSave')}
-              </button>
-              <p className="text-slate-600 text-sm leading-relaxed mt-2">{t('settings.resumeVisualNote')}</p>
-            </div>
-
-            <div className={compactAccountCardClass}>
+          <div className={`${compactAccountCardClass} h-full min-w-0`}>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0">
                   <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
                     <Shield size={16} className="text-indigo-300 flex-shrink-0" /> {t('settings.secureAccountTitle')}
                   </h3>
-                  <p className={settingsSupportCopyClass}>{t('settings.secureAccountDevicesCopy')}</p>
+                  <p className={`${settingsSupportCopyClass} text-xs sm:text-sm`}>{t('settings.secureAccountDevicesCopy')}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {secureSignedIn && (
@@ -971,7 +968,7 @@ export default function Settings({ mode = 'settings' }) {
                     <div className="text-sm font-display font-semibold break-all">
                       {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
                     </div>
-                    <div className="text-xs sm:text-sm mt-1 leading-relaxed opacity-90">{currentDeviceStatusCopy}</div>
+                    <div className="text-xs mt-1 leading-relaxed opacity-90">{currentDeviceStatusCopy}</div>
                   </div>
 
                   <div className="flex items-center justify-between gap-3">
@@ -1000,7 +997,7 @@ export default function Settings({ mode = 'settings' }) {
                   {approvedDevices.length ? (
                     <div className="space-y-2">
                       {approvedDevices.map(device => (
-                        <div key={device.deviceId} className="rounded-xl border border-navy-600 bg-navy-900/70 px-3 py-2.5">
+                        <div key={device.deviceId} className="rounded-xl border border-navy-600 bg-navy-900/70 px-3 py-2">
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               <div className="text-white text-sm font-display font-semibold leading-snug break-words">
@@ -1034,12 +1031,11 @@ export default function Settings({ mode = 'settings' }) {
                   )}
                 </div>
               ) : (
-                <div className="rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-3 text-slate-500 text-sm leading-relaxed">
+                  <div className="rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-3 text-slate-500 text-sm leading-relaxed">
                   {t('settings.secureAccountCopy')}
                 </div>
               )}
             </div>
-          </div>
         </div>
       </div>
       )}
