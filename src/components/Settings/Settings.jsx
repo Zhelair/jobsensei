@@ -436,7 +436,6 @@ export default function Settings({ mode = 'settings' }) {
   const pageSubtitle = isAccountMode ? t('account.subtitle') : t('settings.subtitle')
 
   const pairedCardClass = 'card flex flex-col'
-  const railCardClass = 'card flex flex-col border-indigo-500/10 bg-navy-800/90'
   const compactAccountCardClass = 'rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-4'
   const settingsSupportCopyClass = 'text-slate-400 text-sm leading-relaxed'
   const settingsMutedCopyClass = 'text-slate-500 text-sm leading-relaxed'
@@ -915,38 +914,38 @@ export default function Settings({ mode = 'settings' }) {
             </div>
           </div>
 
-          <div className={`${railCardClass} min-w-0`}>
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="min-w-0">
-                <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-                  <Shield size={16} className="text-indigo-300 flex-shrink-0" /> {t('settings.secureAccountTitle')}
-                </h3>
-                <p className={settingsSupportCopyClass}>{t('settings.secureAccountDevicesCopy')}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {secureSignedIn && (
-                  <button
-                    onClick={handleSecureRefresh}
-                    disabled={loadingAccount}
-                    className="btn-ghost text-xs text-slate-300 hover:text-teal-300 disabled:opacity-60"
-                  >
-                    {loadingAccount ? `${t('settings.secureAccountRefresh')}...` : t('settings.secureAccountRefresh')}
-                  </button>
-                )}
-                <MonitorSmartphone size={16} className="text-slate-500 flex-shrink-0 mt-0.5" />
-              </div>
-            </div>
-
-            {secureSignedIn ? (
-              <div className="space-y-3">
-                <div className={`rounded-2xl border px-3 py-3 ${currentDeviceStatusClass}`}>
-                  <div className="text-sm font-display font-semibold break-all">
-                    {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
-                  </div>
-                  <div className="text-sm mt-1.5 leading-relaxed opacity-90">{currentDeviceStatusCopy}</div>
+          <div className="space-y-4 min-w-0">
+            <div className={compactAccountCardClass}>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0">
+                  <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+                    <Shield size={16} className="text-indigo-300 flex-shrink-0" /> {t('settings.secureAccountTitle')}
+                  </h3>
+                  <p className={settingsSupportCopyClass}>{t('settings.secureAccountDevicesCopy')}</p>
                 </div>
+                <div className="flex items-center gap-2">
+                  {secureSignedIn && (
+                    <button
+                      onClick={handleSecureRefresh}
+                      disabled={loadingAccount}
+                      className="btn-ghost text-xs text-slate-300 hover:text-teal-300 disabled:opacity-60"
+                    >
+                      {loadingAccount ? `${t('settings.secureAccountRefresh')}...` : t('settings.secureAccountRefresh')}
+                    </button>
+                  )}
+                  <MonitorSmartphone size={16} className="text-slate-500 flex-shrink-0 mt-0.5" />
+                </div>
+              </div>
 
-                <div className="rounded-2xl border border-navy-600 bg-navy-950/70 p-3 space-y-3">
+              {secureSignedIn ? (
+                <div className="space-y-3">
+                  <div className={`rounded-xl border px-3 py-2.5 ${currentDeviceStatusClass}`}>
+                    <div className="text-sm font-display font-semibold break-all">
+                      {t('settings.secureAccountStatusSignedIn', { email: secureUser?.email || secureAccount?.email || '' })}
+                    </div>
+                    <div className="text-xs sm:text-sm mt-1 leading-relaxed opacity-90">{currentDeviceStatusCopy}</div>
+                  </div>
+
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-white text-sm font-display font-semibold">
@@ -955,16 +954,13 @@ export default function Settings({ mode = 'settings' }) {
                           limit: secureAccount?.deviceLimit || 2,
                         })}
                       </div>
+                      <div className="text-slate-500 text-xs break-all mt-1">
+                        {secureUser?.email || secureAccount?.email || '-'}
+                      </div>
                     </div>
                     <span className="px-2.5 py-1 rounded-full text-[11px] border border-indigo-500/20 bg-indigo-500/10 text-indigo-200 flex-shrink-0">
                       {secureAccount?.approvedDeviceCount || 0}/{secureAccount?.deviceLimit || 2}
                     </span>
-                  </div>
-
-                  <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-                    <div className="text-slate-200 text-sm break-all leading-relaxed">
-                      {secureUser?.email || secureAccount?.email || '-'}
-                    </div>
                   </div>
 
                   {replacementCooldownUntil && (
@@ -976,13 +972,13 @@ export default function Settings({ mode = 'settings' }) {
                   {approvedDevices.length ? (
                     <div className="space-y-2">
                       {approvedDevices.map(device => (
-                        <div key={device.deviceId} className="rounded-2xl border border-navy-600 bg-navy-900/70 p-3">
+                        <div key={device.deviceId} className="rounded-xl border border-navy-600 bg-navy-900/70 px-3 py-2.5">
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               <div className="text-white text-sm font-display font-semibold leading-snug break-words">
                                 {device.displayName}
                               </div>
-                              <div className="text-slate-300 text-sm mt-1 leading-relaxed break-words">
+                              <div className="text-slate-400 text-xs mt-1 leading-relaxed break-words">
                                 {localizedDeviceStatus.last_seen.replace('{date}', formatDeviceTimestamp(device.lastSeenAt || device.createdAt) || '-')}
                               </div>
                             </div>
@@ -993,13 +989,15 @@ export default function Settings({ mode = 'settings' }) {
                             )}
                           </div>
 
-                          <button
-                            onClick={() => handleRevokeDevice(device)}
-                            disabled={revokingDeviceId === device.deviceId}
-                            className="btn-ghost text-xs text-red-300 hover:text-red-200 hover:bg-red-500/10 mt-3 px-0"
-                          >
-                            {revokingDeviceId === device.deviceId ? t('settings.activating') : t('settings.secureAccountRevokeButton')}
-                          </button>
+                          <div className="flex items-center justify-end mt-2">
+                            <button
+                              onClick={() => handleRevokeDevice(device)}
+                              disabled={revokingDeviceId === device.deviceId}
+                              className="btn-ghost text-xs text-red-300 hover:text-red-200 hover:bg-red-500/10 px-0"
+                            >
+                              {revokingDeviceId === device.deviceId ? t('settings.activating') : t('settings.secureAccountRevokeButton')}
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1007,45 +1005,149 @@ export default function Settings({ mode = 'settings' }) {
                     <div className="text-slate-500 text-sm leading-relaxed">{localizedDeviceStatus.no_devices}</div>
                   )}
                 </div>
+              ) : (
+                <div className="rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-3 text-slate-500 text-sm leading-relaxed">
+                  {t('settings.secureAccountCopy')}
+                </div>
+              )}
+            </div>
+
+            <div className={pairedCardClass}>
+              <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+                <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
+              </h3>
+              <p className={`${settingsSupportCopyClass} mb-3`}>{t('settings.resumeCopy')}</p>
+              <div className="flex gap-2 mb-3">
+                <button onClick={() => fileRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
+                  <Upload size={13} /> {extracting ? t('settings.reading') : t('settings.resumeUpload')}
+                </button>
+                <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.rtf" className="hidden" onChange={handleResumeFile} />
+                {resumeText && (
+                  <button onClick={clearResume} className="btn-ghost text-xs text-red-400 hover:text-red-300 px-2">
+                    <X size={14} />
+                  </button>
+                )}
               </div>
-            ) : (
-              <div className="rounded-xl border border-navy-600 bg-navy-950/60 px-3 py-3 text-slate-500 text-sm leading-relaxed">
-                {t('settings.secureAccountCopy')}
-              </div>
-            )}
+              <textarea
+                className="textarea-field h-36 text-sm mb-3"
+                placeholder={t('settings.resumePastePlaceholder')}
+                value={resumeText}
+                onChange={e => setResumeText(e.target.value)}
+              />
+              <button onClick={saveResume} className={`btn-primary text-sm ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
+                {resumeSaved ? <><Check size={14} /> {t('settings.saved')}</> : t('settings.resumeSave')}
+              </button>
+              <p className="text-slate-600 text-sm leading-relaxed mt-2">{t('settings.resumeVisualNote')}</p>
+            </div>
           </div>
         </div>
       </div>
       )}
 
-      {isAccountMode && (
-      <div className="grid xl:grid-cols-2 gap-4 items-start">
-        <div className={pairedCardClass}>
-          <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-            <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
-          </h3>
-          <p className={`${settingsSupportCopyClass} mb-3`}>{t('settings.resumeCopy')}</p>
-          <div className="flex gap-2 mb-3">
-            <button onClick={() => fileRef.current?.click()} className="btn-secondary text-xs flex-1 justify-center">
-              <Upload size={13} /> {extracting ? t('settings.reading') : t('settings.resumeUpload')}
-            </button>
-            <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.rtf" className="hidden" onChange={handleResumeFile} />
-            {resumeText && (
-              <button onClick={clearResume} className="btn-ghost text-xs text-red-400 hover:text-red-300 px-2">
-                <X size={14} />
+      {!isAccountMode && (
+      <div className="grid xl:grid-cols-2 gap-4 items-stretch">
+        <div className={`${pairedCardClass} border-red-500/20`}>
+          <h3 className="font-display font-semibold text-white mb-1">{t('settings.dataManagementTitle')}</h3>
+          <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
+            <div>
+              <div className="text-white text-sm font-display font-semibold">{t('settings.privacyTermsTitle')}</div>
+              <p className="text-slate-400 text-sm leading-relaxed mt-1">{t('settings.privacyTermsSummary')}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
+              </a>
+              <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
+              </a>
+              <a href={`/cookie-storage-notice.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.cookieNoticeLink')}
+              </a>
+              <a href={`/pricing.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.pricingLink')}
+              </a>
+              <a href={`/refund-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+                <ExternalLink size={13} /> {t('settings.refundPolicyLink')}
+              </a>
+            </div>
+          </div>
+
+          <div className="space-y-2.5 text-slate-400 text-sm leading-relaxed mb-3">
+            {[
+              t('settings.dataBullet2'),
+              t('settings.dataBullet4'),
+              t('settings.dataBullet5'),
+            ].map(line => (
+              <p key={line} className="flex items-start gap-2">
+                <span className="text-slate-500">-</span>
+                <span>{line}</span>
+              </p>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
+            <div className="text-white text-sm font-display font-semibold">{t('settings.projectBackupsTitle')}</div>
+            <p className={settingsSupportCopyClass}>{t('settings.projectBackupsCopy')}</p>
+            <div className="grid sm:grid-cols-3 gap-2">
+              <button onClick={exportAll} className="btn-secondary text-xs justify-center">
+                <FolderArchive size={13} /> {t('projects.exportAllProjects')}
               </button>
+              <button
+                onClick={() => activeProject && exportProject(activeProject.id)}
+                disabled={!activeProject}
+                className="btn-secondary text-xs justify-center"
+              >
+                <Download size={13} /> {t('projects.exportCurrentProject')}
+              </button>
+              <button onClick={() => projectImportRef.current?.click()} className="btn-secondary text-xs justify-center">
+                <Upload size={13} /> {importingProjects ? t('projects.importing') : t('projects.importProject')}
+              </button>
+            </div>
+            <input ref={projectImportRef} type="file" accept=".json" className="hidden" onChange={handleProjectImport} />
+            {projectTransferMessage && (
+              <p className={`text-sm leading-relaxed ${projectTransferMessage.includes('Invalid') || projectTransferMessage.includes('❌') ? 'text-red-400' : 'text-teal-300'}`}>
+                {projectTransferMessage}
+              </p>
             )}
           </div>
-          <textarea
-            className="textarea-field h-36 text-sm mb-3"
-            placeholder={t('settings.resumePastePlaceholder')}
-            value={resumeText}
-            onChange={e => setResumeText(e.target.value)}
-          />
-          <button onClick={saveResume} className={`btn-primary text-sm ${resumeSaved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
-            {resumeSaved ? <><Check size={14} /> {t('settings.saved')}</> : t('settings.resumeSave')}
+
+          <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm mt-auto">
+            <Trash2 size={14} /> {t('settings.clearAllData')}
           </button>
-          <p className="text-slate-600 text-sm leading-relaxed mt-2">{t('settings.resumeVisualNote')}</p>
+        </div>
+
+        <div className={`${pairedCardClass} border-teal-500/20`}>
+          <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
+            <Puzzle size={16} className="text-teal-400" /> {t('settings.chromeExtensionTitle')}
+          </h3>
+          <p className={`${settingsSupportCopyClass} mb-3`}>
+            {t('settings.chromeExtensionCopy')}
+          </p>
+          <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3 space-y-1.5">
+            {[
+              t('settings.chromeExtensionStep1'),
+              t('settings.chromeExtensionStep2'),
+              t('settings.chromeExtensionStep3'),
+            ].map((step, i) => (
+              <div key={step} className="flex gap-2 text-sm text-slate-300 leading-relaxed">
+                <span className="text-teal-400 font-mono">{i + 1}</span>
+                <span>{step}</span>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 mb-3">
+            <p className={`${settingsSupportCopyClass} text-sm leading-relaxed`}>
+              {t('settings.chromeExtensionDisclaimer')}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-auto pt-1">
+            <a href="/jobsensei-capture-extension.zip" download className="btn-secondary text-xs">
+              <Download size={13} /> {t('settings.downloadZip')}
+            </a>
+            <button disabled className="btn-ghost text-xs opacity-60 cursor-not-allowed">
+              <ExternalLink size={13} /> {t('settings.chromeStoreSoon')}
+            </button>
+          </div>
         </div>
 
         <div ref={byokCardRef} className={pairedCardClass}>
@@ -1161,114 +1263,6 @@ export default function Settings({ mode = 'settings' }) {
               )}
             </div>
           )}
-        </div>
-      </div>
-      )}
-
-      {!isAccountMode && (
-      <div className="grid xl:grid-cols-2 gap-4 items-stretch">
-        <div className={`${pairedCardClass} border-red-500/20`}>
-          <h3 className="font-display font-semibold text-white mb-1">{t('settings.dataManagementTitle')}</h3>
-          <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
-            <div>
-              <div className="text-white text-sm font-display font-semibold">{t('settings.privacyTermsTitle')}</div>
-              <p className="text-slate-400 text-sm leading-relaxed mt-1">{t('settings.privacyTermsSummary')}</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
-              </a>
-              <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
-              </a>
-              <a href={`/cookie-storage-notice.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                <ExternalLink size={13} /> {t('settings.cookieNoticeLink')}
-              </a>
-              <a href={`/pricing.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                <ExternalLink size={13} /> {t('settings.pricingLink')}
-              </a>
-              <a href={`/refund-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
-                <ExternalLink size={13} /> {t('settings.refundPolicyLink')}
-              </a>
-            </div>
-          </div>
-
-          <div className="space-y-2.5 text-slate-400 text-sm leading-relaxed mb-3">
-            {[
-              t('settings.dataBullet2'),
-              t('settings.dataBullet4'),
-              t('settings.dataBullet5'),
-            ].map(line => (
-              <p key={line} className="flex items-start gap-2">
-                <span className="text-slate-500">-</span>
-                <span>{line}</span>
-              </p>
-            ))}
-          </div>
-
-          <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
-            <div className="text-white text-sm font-display font-semibold">{t('settings.projectBackupsTitle')}</div>
-            <p className={settingsSupportCopyClass}>{t('settings.projectBackupsCopy')}</p>
-            <div className="grid sm:grid-cols-3 gap-2">
-              <button onClick={exportAll} className="btn-secondary text-xs justify-center">
-                <FolderArchive size={13} /> {t('projects.exportAllProjects')}
-              </button>
-              <button
-                onClick={() => activeProject && exportProject(activeProject.id)}
-                disabled={!activeProject}
-                className="btn-secondary text-xs justify-center"
-              >
-                <Download size={13} /> {t('projects.exportCurrentProject')}
-              </button>
-              <button onClick={() => projectImportRef.current?.click()} className="btn-secondary text-xs justify-center">
-                <Upload size={13} /> {importingProjects ? t('projects.importing') : t('projects.importProject')}
-              </button>
-            </div>
-            <input ref={projectImportRef} type="file" accept=".json" className="hidden" onChange={handleProjectImport} />
-            {projectTransferMessage && (
-              <p className={`text-sm leading-relaxed ${projectTransferMessage.includes('Invalid') || projectTransferMessage.includes('❌') ? 'text-red-400' : 'text-teal-300'}`}>
-                {projectTransferMessage}
-              </p>
-            )}
-          </div>
-
-          <button onClick={clearAllData} className="btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm mt-auto">
-            <Trash2 size={14} /> {t('settings.clearAllData')}
-          </button>
-        </div>
-
-        <div className={`${pairedCardClass} border-teal-500/20`}>
-          <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-            <Puzzle size={16} className="text-teal-400" /> {t('settings.chromeExtensionTitle')}
-          </h3>
-          <p className={`${settingsSupportCopyClass} mb-3`}>
-            {t('settings.chromeExtensionCopy')}
-          </p>
-          <div className="rounded-xl border border-navy-600 bg-navy-900/60 p-3 mb-3 space-y-1.5">
-            {[
-              t('settings.chromeExtensionStep1'),
-              t('settings.chromeExtensionStep2'),
-              t('settings.chromeExtensionStep3'),
-            ].map((step, i) => (
-              <div key={step} className="flex gap-2 text-sm text-slate-300 leading-relaxed">
-                <span className="text-teal-400 font-mono">{i + 1}</span>
-                <span>{step}</span>
-              </div>
-            ))}
-          </div>
-          <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 mb-3">
-            <p className={`${settingsSupportCopyClass} text-sm leading-relaxed`}>
-              {t('settings.chromeExtensionDisclaimer')}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-auto pt-1">
-            <a href="/jobsensei-capture-extension.zip" download className="btn-secondary text-xs">
-              <Download size={13} /> {t('settings.downloadZip')}
-            </a>
-            <button disabled className="btn-ghost text-xs opacity-60 cursor-not-allowed">
-              <ExternalLink size={13} /> {t('settings.chromeStoreSoon')}
-            </button>
-          </div>
         </div>
       </div>
       )}
