@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { THEMES, useTheme } from '../../context/ThemeContext'
 import {
-  ArrowRight, CheckCircle2, Coffee, CreditCard, ExternalLink,
+  ArrowRight, CheckCircle2, CreditCard, ExternalLink,
   Image as ImageIcon, PlayCircle, Briefcase, Search, Sparkles,
 } from 'lucide-react'
-import { BMAC_ENABLED, openBmacCheckout, openProCheckout } from '../../lib/billing'
+import { openProCheckout } from '../../lib/billing'
 
 function OutcomeCard({ icon: Icon, title, copy, accent, iconTone }) {
   return (
@@ -99,7 +99,7 @@ function PreviewPanel({ title, copy, chips = [], steps = [], isDaylight = false 
 }
 
 export default function WelcomePage() {
-  const { skipOnboarding, openOnboarding } = useApp()
+  const { skipOnboarding, openOnboarding, setActiveSection } = useApp()
   const { unlockAccess } = useAI()
   const { secureUser, secureAccount, secureAccountsEnabled } = useAuth()
   const { language, t } = useLanguage()
@@ -133,16 +133,14 @@ export default function WelcomePage() {
       price: t('onboarding.proPrice'),
       suffix: t('onboarding.perMonth'),
     },
-    ...(BMAC_ENABLED
-      ? [{
-          key: 'bmac',
-          title: t('welcome.accessWayBmacTitle'),
-          copy: t('welcome.accessWayBmacCopy'),
-          accent: 'text-indigo-200 border-indigo-500/20 bg-indigo-500/10',
-          price: 'BMAC',
-          suffix: '',
-        }]
-      : []),
+    {
+      key: 'byok',
+      title: t('welcome.accessWayByokTitle'),
+      copy: t('welcome.accessWayByokCopy'),
+      accent: 'text-indigo-200 border-indigo-500/20 bg-indigo-500/10',
+      price: t('welcome.accessWayByokPrice'),
+      suffix: '',
+    },
   ]
   const legalLinks = [
     { href: `/pricing.html?lang=${language}`, label: t('settings.pricingLink') },
@@ -214,15 +212,12 @@ export default function WelcomePage() {
     }
   }
 
-  function handleBmacCheckout() {
-    setAccessError('')
-    setAccessNotice('')
-
-    try {
-      openBmacCheckout()
-    } catch (error) {
-      setAccessError(error.message || 'Unable to open Buy Me a Coffee right now.')
-    }
+  function handleByokOpen() {
+    skipOnboarding()
+    window.setTimeout(() => {
+      setActiveSection(SECTIONS.SETTINGS)
+      window.dispatchEvent(new CustomEvent('jobsensei:open-byok-settings'))
+    }, 80)
   }
 
   return (
@@ -242,12 +237,9 @@ export default function WelcomePage() {
         {!isDaylight && (
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.16),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(250,204,21,0.12),transparent_28%)] pointer-events-none" />
         )}
-        <div className="relative grid xl:grid-cols-[minmax(0,1.02fr)_minmax(360px,0.98fr)] gap-6 items-center">
+        <div className="relative grid xl:grid-cols-[minmax(0,1.02fr)_minmax(360px,0.98fr)] gap-6 items-start">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-500/10 text-teal-200 text-xs font-display font-semibold uppercase tracking-[0.18em]">
-              {t('welcome.badge')}
-            </div>
-            <h1 className="font-display font-bold text-white text-3xl md:text-5xl leading-tight mt-4">
+            <h1 className="font-display font-bold text-white text-3xl md:text-5xl leading-tight">
               {t('welcome.title')}
             </h1>
             <p className="text-slate-300 text-base md:text-lg leading-relaxed mt-4 max-w-3xl">
@@ -255,13 +247,7 @@ export default function WelcomePage() {
             </p>
 
             <div className="flex flex-wrap gap-3 mt-6">
-              <button onClick={focusAccess} className="btn-primary text-sm md:text-base">
-                <CheckCircle2 size={16} /> {t('welcome.ctaFree')}
-              </button>
-              <button onClick={handleCheckoutOpen} className="btn-secondary text-sm md:text-base border-yellow-500/30 bg-yellow-500/10 text-yellow-100 hover:bg-yellow-500/20">
-                <CreditCard size={16} /> {t('welcome.ctaPro')}
-              </button>
-              <button onClick={skipOnboarding} className="btn-ghost text-sm md:text-base">
+              <button onClick={skipOnboarding} className="btn-primary text-sm md:text-base">
                 {t('welcome.ctaSkip')}
               </button>
             </div>
@@ -291,7 +277,7 @@ export default function WelcomePage() {
               }}
             />
 
-            <div className="grid gap-2 mt-3 sm:grid-cols-2">
+            <div className="grid gap-2 mt-3 md:grid-cols-3">
               <button
                 onClick={handleAccessStart}
                 disabled={accessLoading}
@@ -305,38 +291,24 @@ export default function WelcomePage() {
               >
                 <CreditCard size={14} /> {t('onboarding.proCta')}
               </button>
-              {BMAC_ENABLED && (
-                <button
-                  onClick={handleBmacCheckout}
-                  className="btn-secondary justify-center border-indigo-500/25 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20 sm:col-span-2"
-                >
-                  <Coffee size={14} /> {t('welcome.ctaBmac')}
-                </button>
-              )}
+              <button
+                onClick={handleByokOpen}
+                className="btn-secondary justify-center border-indigo-500/25 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20"
+              >
+                {t('welcome.ctaByok')}
+              </button>
             </div>
 
-            <div className="space-y-3 mt-5">
+            <div className="grid gap-3 mt-5 md:grid-cols-3">
               {accessRoutes.map(route => (
                 <div key={route.key} className="rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-white text-base font-display font-semibold">{route.title}</div>
-                      <p className="text-slate-400 text-sm leading-relaxed mt-1">{route.copy}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className={`px-2.5 py-1 rounded-full text-[11px] border inline-flex ${route.accent}`}>
-                        {route.title}
-                      </div>
-                      <div className="text-white text-2xl font-display font-bold mt-2 leading-none">{route.price}</div>
-                      {route.suffix && <div className="text-slate-500 text-xs mt-1">{route.suffix}</div>}
-                    </div>
-                  </div>
+                  <div className="text-white text-base font-display font-semibold mb-3">{route.title}</div>
+                  <div className="text-white text-[32px] font-display font-bold leading-none">{route.price}</div>
+                  {route.suffix && <div className="text-slate-500 text-xs mt-1">{route.suffix}</div>}
+                  <p className="text-slate-400 text-sm leading-relaxed mt-3">{route.copy}</p>
                 </div>
               ))}
             </div>
-
-            <p className="text-slate-500 text-sm leading-relaxed mt-4">{t('onboarding.sameEmailHint')}</p>
-            <p className="text-slate-500 text-sm leading-relaxed mt-2">{t('onboarding.legacySupportNote')}</p>
 
             {accessReady && (
               <div className="mt-4 rounded-2xl border border-green-500/20 bg-green-500/10 p-4">
