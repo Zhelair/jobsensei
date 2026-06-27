@@ -5,10 +5,10 @@ import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { THEMES, useTheme } from '../../context/ThemeContext'
 import {
-  ArrowRight, Briefcase, CheckCircle2, CreditCard, ExternalLink,
-  Search, Sparkles,
+  ArrowRight, Briefcase, CheckCircle2, Coffee, CreditCard, ExternalLink,
+  Image as ImageIcon, PlayCircle, Search, Sparkles,
 } from 'lucide-react'
-import { openProCheckout } from '../../lib/billing'
+import { BMAC_ENABLED, openBmacCheckout, openProCheckout } from '../../lib/billing'
 
 function OutcomeCard({ icon: Icon, title, copy, accent, iconTone }) {
   return (
@@ -58,6 +58,38 @@ function PreviewPanel({ title, copy, chips = [], steps = [], isDaylight = false 
             {chip}
           </span>
         ))}
+      </div>
+      <div className={`rounded-2xl border mb-3 overflow-hidden ${
+        isDaylight
+          ? 'border-teal-500/15 bg-white/80'
+          : 'border-white/5 bg-white/[0.03]'
+      }`}>
+        <div className="aspect-[16/10] px-4 py-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">Product preview</div>
+              <div className="text-white text-sm font-display font-semibold">Ready for one short GIF or three screenshots</div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-400">
+              <PlayCircle size={16} />
+              <ImageIcon size={16} />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl border border-white/5 bg-white/[0.04] h-20 flex items-center justify-center text-[11px] text-slate-400 text-center px-2">
+              Save role
+            </div>
+            <div className="rounded-xl border border-white/5 bg-white/[0.04] h-20 flex items-center justify-center text-[11px] text-slate-400 text-center px-2">
+              Check fit
+            </div>
+            <div className="rounded-xl border border-white/5 bg-white/[0.04] h-20 flex items-center justify-center text-[11px] text-slate-400 text-center px-2">
+              Prep notes
+            </div>
+          </div>
+          <p className="text-slate-400 text-xs leading-relaxed">
+            Best first loop: save one role, run a fit check, then show the prep workspace.
+          </p>
+        </div>
       </div>
       <div
         className={`rounded-2xl border p-4 min-h-[190px] flex flex-col justify-between ${
@@ -140,7 +172,8 @@ export default function WelcomePage() {
     try {
       const result = await unlockAccess(accessInput.trim())
       if (result?.mode === 'magic_link') {
-        setAccessNotice(t('settings.unlockMagicLinkSent', { email: result.email }))
+        skipOnboarding()
+        return
       } else {
         setLegacyUnlocked(true)
         setAccessNotice(t('settings.unlockCodeAccepted'))
@@ -163,6 +196,17 @@ export default function WelcomePage() {
       })
     } catch (error) {
       setAccessError(error.message || 'Unable to open Paddle checkout right now.')
+    }
+  }
+
+  function handleBmacCheckout() {
+    setAccessError('')
+    setAccessNotice('')
+
+    try {
+      openBmacCheckout()
+    } catch (error) {
+      setAccessError(error.message || 'Unable to open Buy Me a Coffee right now.')
     }
   }
 
@@ -254,7 +298,7 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      <section ref={accessSectionRef} className="grid xl:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(340px,1.2fr)] gap-4 items-start">
+      <section ref={accessSectionRef} className="grid xl:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(360px,1.2fr)] gap-4 items-start">
         <div className="card border-white/8">
           <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-[0.16em]">
             {t('onboarding.freePlan')}
@@ -290,6 +334,28 @@ export default function WelcomePage() {
           <h2 className="font-display font-semibold text-white text-xl">{t('welcome.accessTitle')}</h2>
           <p className="text-slate-300 text-sm leading-relaxed mt-2">{t('welcome.accessCopy')}</p>
 
+          <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-3 mt-4">
+            <div className="text-slate-400 text-[11px] uppercase tracking-[0.16em] font-display mb-2">
+              {t('welcome.accessWaysKicker')}
+            </div>
+            <div className="grid gap-2">
+              <div className="rounded-xl border border-teal-500/15 bg-teal-500/8 px-3 py-2.5">
+                <div className="text-white text-sm font-display font-semibold">{t('welcome.accessWayFreeTitle')}</div>
+                <div className="text-slate-400 text-xs leading-relaxed mt-1">{t('welcome.accessWayFreeCopy')}</div>
+              </div>
+              <div className="rounded-xl border border-yellow-500/15 bg-yellow-500/5 px-3 py-2.5">
+                <div className="text-white text-sm font-display font-semibold">{t('welcome.accessWayPaddleTitle')}</div>
+                <div className="text-slate-400 text-xs leading-relaxed mt-1">{t('welcome.accessWayPaddleCopy')}</div>
+              </div>
+              {BMAC_ENABLED && (
+                <div className="rounded-xl border border-indigo-500/15 bg-indigo-500/5 px-3 py-2.5">
+                  <div className="text-white text-sm font-display font-semibold">{t('welcome.accessWayBmacTitle')}</div>
+                  <div className="text-slate-400 text-xs leading-relaxed mt-1">{t('welcome.accessWayBmacCopy')}</div>
+                </div>
+              )}
+            </div>
+          </div>
+
           <label className="text-sm text-slate-400 mb-1.5 block mt-4">{t('onboarding.emailLabel')}</label>
           <input
             ref={emailInputRef}
@@ -322,6 +388,15 @@ export default function WelcomePage() {
               <CreditCard size={14} /> {t('onboarding.proCta')}
             </button>
           </div>
+
+          {BMAC_ENABLED && (
+            <button
+              onClick={handleBmacCheckout}
+              className="btn-secondary justify-center w-full mt-2 border-indigo-500/25 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20"
+            >
+              <Coffee size={14} /> {t('welcome.ctaBmac')}
+            </button>
+          )}
 
           {accessReady && (
             <div className="mt-4 rounded-2xl border border-green-500/20 bg-green-500/10 p-4">

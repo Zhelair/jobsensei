@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
 import { getCreditSnapshot, HOSTED_REQUEST_CREDITS, PRO_MONTHLY_CREDITS } from '../../lib/credits'
-import { openProCheckout } from '../../lib/billing'
+import { BMAC_ENABLED, openBmacCheckout, openProCheckout } from '../../lib/billing'
 
 export default function Settings({ mode = 'settings' }) {
   const {
@@ -234,6 +234,17 @@ export default function Settings({ mode = 'settings' }) {
       })
     } catch (error) {
       setBmacError(error.message || 'Unable to open Paddle checkout right now.')
+    }
+  }
+
+  function handleBmacCheckout() {
+    setBmacError('')
+    setBmacNotice('')
+
+    try {
+      openBmacCheckout()
+    } catch (error) {
+      setBmacError(error.message || 'Unable to open Buy Me a Coffee right now.')
     }
   }
 
@@ -835,6 +846,14 @@ export default function Settings({ mode = 'settings' }) {
                   >
                     <CreditCard size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
                   </button>
+                  {BMAC_ENABLED && (
+                    <button
+                      onClick={handleBmacCheckout}
+                      className="btn-secondary w-full justify-center text-sm border-indigo-500/25 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20"
+                    >
+                      <Coffee size={14} /> {t('welcome.ctaBmac')}
+                    </button>
+                  )}
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-px bg-white/10" />
                     <span className="text-slate-600 text-xs">{t('settings.alreadyHaveAccess')}</span>

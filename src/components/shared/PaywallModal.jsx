@@ -25,7 +25,9 @@ export default function PaywallModal() {
     try {
       const result = await unlockAccess(email.trim())
       if (result?.mode === 'magic_link') {
-        setNotice(t('settings.unlockMagicLinkSent', { email: result.email }))
+        closePaywall()
+        setEmail('')
+        return
       } else {
         setDone(true)
         setTimeout(() => {

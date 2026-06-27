@@ -98,6 +98,32 @@
         gap: 12px;
       }
 
+      .cta-row {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .cta-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 18px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: var(--panel-soft);
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .cta-link.featured {
+        border-color: var(--border-strong);
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
       .links a {
         color: var(--accent-2);
         text-decoration: none;
@@ -256,6 +282,14 @@
           Free and Pro allowances are currently based on the live credit model inside the app. If the
           hosted request cost or included monthly credits change later, this page will be updated.
         </p>
+        <div class="cta-row">
+          <a class="cta-link featured" href="https://buymeacoffee.com/niksales73l/e/515014" target="_blank" rel="noopener noreferrer">
+            Buy Me a Coffee checkout
+          </a>
+          <a class="cta-link" href="/#today">
+            Return to the app
+          </a>
+        </div>
       </section>
 
       <nav class="links" aria-label="Legal links">
