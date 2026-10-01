@@ -6,8 +6,8 @@ const RESEND_API_URL = 'https://api.resend.com/emails'
 export const MAX_APPROVED_DEVICES = 2
 export const DEVICE_REPLACEMENT_COOLDOWN_MS = 8 * 60 * 60 * 1000
 export const HOSTED_REQUEST_CREDITS = 31
-export const FREE_MONTHLY_CREDITS = 531
-export const PRO_MONTHLY_CREDITS = 53000
+export const FREE_MONTHLY_CREDITS = 465
+export const PRO_MONTHLY_CREDITS = 25110
 export const CREDIT_PERIOD_DAYS = 31
 
 export const ACTIVE_PLAN_STATUSES = new Set(['active', 'grace'])
@@ -708,7 +708,7 @@ export async function createMagicLinkForEmail({ email, redirectTo, data = {} }) 
   return response.properties.action_link
 }
 
-export async function sendTransactionalEmail({ to, subject, html, text = '' }) {
+export async function sendTransactionalEmail({ to, subject, html, text = '', replyTo, idempotencyKey }) {
   if (!canSendCustomAuthEmails()) {
     throw new Error('Custom auth email delivery is not configured yet.')
   }
@@ -718,6 +718,7 @@ export async function sendTransactionalEmail({ to, subject, html, text = '' }) {
     headers: {
       Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       'Content-Type': 'application/json',
+      ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
     },
     body: JSON.stringify({
       from: getAuthEmailSender(),
@@ -725,6 +726,7 @@ export async function sendTransactionalEmail({ to, subject, html, text = '' }) {
       subject,
       html,
       text,
+      ...(replyTo ? { reply_to: replyTo } : {}),
     }),
   })
 

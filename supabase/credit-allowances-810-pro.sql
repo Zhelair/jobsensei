@@ -1,22 +1,7 @@
--- JobSensei hosted credits migration
--- Run this on an existing Supabase project that already has secure-auth-bridge.sql applied.
-
-create extension if not exists pgcrypto;
-
-alter table public.accounts
-  add column if not exists plan_tier text check (plan_tier in ('free', 'pro'));
-
-alter table public.accounts
-  add column if not exists credit_balance integer check (credit_balance >= 0);
-
-alter table public.accounts
-  add column if not exists credit_period_started_at timestamptz;
-
-alter table public.accounts
-  add column if not exists credit_period_ends_at timestamptz;
-
-alter table public.accounts
-  add column if not exists plan_expires_at timestamptz;
+-- Existing-project migration: Free 465 / Pro 25,110 credits; 31 per request.
+-- Preserves current balances; new grants and future refills use the new allowances.
+-- Requires the existing hosted credits schema. No account balances are reset here.
+begin;
 
 create or replace function public.normalize_account_plan_state()
 returns trigger
@@ -90,34 +75,6 @@ begin
   return new;
 end;
 $$;
-
-drop trigger if exists normalize_account_plan_state_before_write on public.accounts;
-create trigger normalize_account_plan_state_before_write
-before insert or update on public.accounts
-for each row
-execute function public.normalize_account_plan_state();
-
-create table if not exists public.hosted_credit_events (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  device_id text,
-  route text not null default 'proxy',
-  provider text,
-  model text,
-  event_type text not null check (event_type in ('charge', 'refund')),
-  credits_delta integer not null,
-  reason text,
-  metadata jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default timezone('utc', now())
-);
-
-create index if not exists hosted_credit_events_user_id_idx
-  on public.hosted_credit_events (user_id, created_at desc);
-
-create index if not exists hosted_credit_events_event_type_idx
-  on public.hosted_credit_events (event_type, created_at desc);
-
-alter table public.hosted_credit_events enable row level security;
 
 create or replace function public.consume_hosted_credits(
   p_user_id uuid,
@@ -342,7 +299,4 @@ begin
 end;
 $$;
 
-revoke all on function public.consume_hosted_credits(uuid, text, text, text, text, integer) from public;
-revoke all on function public.refund_hosted_credits(uuid, text, text, text, text, integer, text) from public;
-grant execute on function public.consume_hosted_credits(uuid, text, text, text, text, integer) to service_role;
-grant execute on function public.refund_hosted_credits(uuid, text, text, text, text, integer, text) to service_role;
+commit;

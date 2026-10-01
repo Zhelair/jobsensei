@@ -26,12 +26,12 @@ Best sequence:
 Current in-app values from `src/lib/credits.js`:
 
 - Hosted AI cost: `31 credits` per request
-- Free allowance: `531 credits` every `31 days`
-- Pro allowance: `53,000 credits` every `31 days`
+- Free allowance: `465 credits` every `31 days`
+- Pro allowance: `25,110 credits` every `31 days`
 
 Plain-English explanation:
 
-- `Free` gives about `17 hosted AI requests` every 31 days.
+- `Free` gives `15 hosted AI requests` every 31 days.
 - `Pro` gives about `1,709 hosted AI requests` every 31 days.
 - `BYOK` means users can connect their own API key and not use hosted JobSensei credits.
 
@@ -85,8 +85,8 @@ Recommended full body:
 `What Free already includes:`
 
 - `Email sign-in with magic link`
-- `531 hosted AI credits every 31 days`
-- `About 17 hosted AI requests per month`
+- `465 hosted AI credits every 31 days`
+- `15 hosted AI requests every 31 days`
 - `Up to 2 approved devices`
 - `Optional BYOK if you want to use your own API key instead`
 
@@ -99,8 +99,8 @@ Recommended full body:
 `How credits work:`
 
 - `Each hosted AI request currently costs 31 credits.`
-- `Free includes 531 credits every 31 days.`
-- `Pro includes 53,000 credits every 31 days.`
+- `Free includes 465 credits every 31 days.`
+- `Pro includes 25,110 credits every 31 days.`
 - `If you use your own API key, JobSensei hosted credits are not used.`
 
 `Important: use the same email here and in JobSensei so Pro can link to your account cleanly.`
@@ -123,7 +123,7 @@ Recommended post body:
 
 `You can start on Free now.`
 
-`Free currently includes 531 hosted AI credits every 31 days, which works out to about 17 hosted AI requests a month. For a lot of job seekers, that is enough to seriously prep for one real opportunity.`
+`Free currently includes 465 hosted AI credits every 31 days, which works out to 15 hosted AI requests a month. For a lot of job seekers, that is enough to seriously prep for one real opportunity.`
 
 `If you want more usage or the simplest no-setup version, Pro is available here on Buy Me a Coffee.`
 
@@ -137,9 +137,9 @@ Use this anywhere you need a compact version:
 
 `JobSensei has three paths: Free, Pro, and BYOK.`
 
-`Free includes 531 hosted AI credits every 31 days, which is about 17 hosted AI requests at the current 31-credit cost per request.`
+`Free includes 465 hosted AI credits every 31 days, which is 15 hosted AI requests at the current 31-credit cost per request.`
 
-`Pro raises that allowance significantly to 53,000 credits every 31 days.`
+`Pro raises that allowance significantly to 25,110 credits every 31 days.`
 
 `BYOK lets you use your own API key, so hosted JobSensei credits are not used.`
 

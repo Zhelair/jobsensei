@@ -336,7 +336,7 @@ export default function Settings({ mode = 'settings' }) {
   }
 
   function clearAllData() {
-    if (confirm(t('settings.clearAllDataConfirm'))) {
+    if (confirm('This permanently removes local projects, resumes, applications, stories, notes and practice history from this browser. Export All Projects first if you want a backup. This does not delete your hosted account, replenish credits, or cancel paid access. Clear local data?')) {
       ['js_profile', 'js_stats', 'js_ai_config', 'js_onboarding_done', 'js_projects', 'js_active_project',
         'js_interview_sessions', 'js_topics', 'js_applications', 'js_star_stories', 'js_company_notes'].forEach(k => localStorage.removeItem(k))
       window.location.reload()
@@ -623,6 +623,7 @@ export default function Settings({ mode = 'settings' }) {
 
       {isAccountMode && (
       <div ref={planAccessRef} className="card border-teal-500/20 bg-teal-500/5">
+        <p className="text-slate-300 text-sm mb-4">Your workspace is saved in this browser. Signing in on another device restores account access and credits, but does not transfer resumes, applications, stories or notes. Use Export and Import in Settings to move a backup.</p>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0 max-w-3xl">
             <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">{t('settings.planAccess')}</div>
@@ -1063,6 +1064,7 @@ export default function Settings({ mode = 'settings' }) {
       <div className="grid xl:grid-cols-2 gap-4 items-stretch">
         <div className={`${pairedCardClass} border-red-500/20`}>
           <h3 className="font-display font-semibold text-white mb-1">{t('settings.dataManagementTitle')}</h3>
+          <p className="text-slate-300 text-sm mb-3">Workspace data stays in this browser. Clearing browser storage can remove it permanently. Export a backup before clearing local data; signing in elsewhere does not sync your workspace.</p>
           <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
             <div>
               <div className="text-white text-sm font-display font-semibold">{t('settings.privacyTermsTitle')}</div>
