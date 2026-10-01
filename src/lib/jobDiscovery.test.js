@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { jobIdentity, shortlist, discoveryDraft, discoveryQuery, discoveryDate } from './jobDiscovery'
+import { jobIdentity, shortlist, discoveryDraft, discoveryQuery, discoveryDate, matchesDiscovery, discoverySignature } from './jobDiscovery'
 
 it('deduplicates LinkedIn country and tracking URLs without accepting lookalikes or search pages', () => {
   expect(jobIdentity('https://bg.linkedin.com/jobs/view/risk-analyst-123456?trackingId=x')).toBe('linkedin:123456')
@@ -7,6 +7,18 @@ it('deduplicates LinkedIn country and tracking URLs without accepting lookalikes
   expect(jobIdentity('https://linkedin.com.evil.test/jobs/view/123456')).toBeNull()
   expect(jobIdentity('https://linkedin.com/jobs/search/')).toBeNull()
   expect(jobIdentity('javascript:alert(1)')).toBeNull()
+})
+it('rejects the Brussels moderator result even when its related-job snippet mentions Sofia and analyst', () => {
+  const result = { title: 'Hospitaliti hiring Junior Web Moderator in Brussels ...', snippet: 'Analyst – Work In Sofia, Bulgaria French Speaking Digital Trust and Safety Analyst' }
+  expect(matchesDiscovery(result, 'Fraud Analyst, Investigations, Compliance, AML, Fraud', 'Sofia, Bulgaria or remote')).toBe(false)
+  expect(matchesDiscovery({ title: 'Fraud Analyst in Brussels', snippet: 'Related jobs in Sofia' }, 'Fraud analyst', 'Sofia, Bulgaria or remote')).toBe(false)
+  expect(matchesDiscovery({ title: 'AML Investigations Analyst in Sofia', snippet: 'Bulgaria' }, 'Fraud Analyst, Investigations, Compliance, AML', 'Sofia, Bulgaria or remote')).toBe(true)
+  expect(matchesDiscovery({ title: 'Senior Fraud Analyst', snippet: 'Remote Europe' }, 'Fraud analyst', 'Sofia, Bulgaria or remote')).toBe(true)
+})
+it('reuses equivalent search signatures without conflating different filters', () => {
+  const p = { keywords: ' Fraud  analyst ', location: ' SOFIA ', source: 'linkedin', recency: '' }
+  expect(discoverySignature(p)).toBe(discoverySignature({ ...p, keywords: 'fraud analyst', location: 'sofia' }))
+  expect(discoverySignature(p)).not.toBe(discoverySignature({ ...p, recency: 'week' }))
 })
 it('prefills reviewable company/role hints without mistaking snippets for a full JD', () => {
   const draft = discoveryDraft({ title: 'Risk and Fraud Specialist - INSTASOFT', url: 'https://linkedin.com/jobs/view/123', snippet: 'Hybrid in Sofia' })

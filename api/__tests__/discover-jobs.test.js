@@ -14,7 +14,7 @@ beforeEach(() => {
   auth.authenticateSupabaseUser.mockResolvedValue({ user: { id: 'user' } })
   limits.reserveServiceRequest.mockResolvedValue('reserved')
   limits.finishServiceRequest.mockResolvedValue()
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [{ title: 'Risk analyst', url: 'https://linkedin.com/jobs/view/123', content: 'SQL' }, { url: 'https://linkedin.com/jobs/search/' }, { url: 'javascript:alert(1)' }] }) }))
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [{ title: 'Risk analyst', url: 'https://linkedin.com/jobs/view/123', content: 'SQL Sofia' }, { url: 'https://linkedin.com/jobs/search/' }, { url: 'javascript:alert(1)' }] }) }))
 })
 afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals() })
 it('requires authentication and validates sources before spending', async () => {
