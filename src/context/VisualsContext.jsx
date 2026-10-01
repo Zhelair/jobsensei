@@ -34,7 +34,26 @@ const EMOJI_SETS = [
   ['🎰', '🎲', '🃏'],
 ]
 
-function spawnConfetti(count = 120) {
+let activeConfetti = null
+const temporaryEffects = new Set()
+const effectTimers = new Set()
+
+function later(callback, delay) {
+  const timer = setTimeout(() => { effectTimers.delete(timer); callback() }, delay)
+  effectTimers.add(timer)
+  return timer
+}
+
+export function clearEffects() {
+  activeConfetti?.()
+  temporaryEffects.forEach(el => el.remove())
+  temporaryEffects.clear()
+  effectTimers.forEach(clearTimeout)
+  effectTimers.clear()
+}
+
+export function spawnConfetti(count = 120) {
+  if (activeConfetti || document.visibilityState === 'hidden') return false
   const canvas = document.createElement('canvas')
   canvas.style.cssText =
     'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999'
@@ -43,7 +62,8 @@ function spawnConfetti(count = 120) {
   document.body.appendChild(canvas)
 
   const ctx = canvas.getContext('2d')
-  const particles = Array.from({ length: count }, () => ({
+  if (!ctx) { canvas.remove(); return false }
+  const particles = Array.from({ length: Math.max(0, Math.min(120, Math.floor(Number(count) || 0))) }, () => ({
     x: Math.random() * canvas.width,
     y: -20 - Math.random() * canvas.height * 0.3,
     vx: (Math.random() - 0.5) * 10,
@@ -56,8 +76,15 @@ function spawnConfetti(count = 120) {
     isStar: Math.random() > 0.8,
   }))
 
-  let frame = 0
-  const total = 180
+  const started = performance.now()
+  let previous = started
+  let animationId
+  const finish = () => {
+    cancelAnimationFrame(animationId)
+    canvas.remove()
+    if (activeConfetti === finish) activeConfetti = null
+  }
+  activeConfetti = finish
 
   function drawStar(ctx, r) {
     ctx.beginPath()
@@ -72,16 +99,20 @@ function spawnConfetti(count = 120) {
     ctx.fill()
   }
 
-  function draw() {
+  function draw(now) {
+    const elapsed = now - started
+    if (elapsed >= 3000 || document.visibilityState === 'hidden') { finish(); return }
+    const step = Math.min(3, Math.max(0, (now - previous) / (1000 / 60)))
+    previous = now
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     particles.forEach(p => {
-      p.x += p.vx
-      p.y += p.vy
-      p.vy += 0.1
-      p.vx *= 0.99
-      p.rotation += p.rotVel
+      p.x += p.vx * step
+      p.y += p.vy * step
+      p.vy += 0.1 * step
+      p.vx *= 0.99 ** step
+      p.rotation += p.rotVel * step
       ctx.save()
-      ctx.globalAlpha = Math.max(0, 1 - frame / total)
+      ctx.globalAlpha = Math.max(0, 1 - elapsed / 3000)
       ctx.fillStyle = p.color
       ctx.translate(p.x, p.y)
       ctx.rotate(p.rotation)
@@ -96,12 +127,11 @@ function spawnConfetti(count = 120) {
       }
       ctx.restore()
     })
-    frame++
-    if (frame < total) requestAnimationFrame(draw)
-    else canvas.remove()
+    animationId = requestAnimationFrame(draw)
   }
 
-  requestAnimationFrame(draw)
+  animationId = requestAnimationFrame(draw)
+  return true
 }
 
 function spawnEmojiFloat() {
@@ -120,7 +150,8 @@ function spawnEmojiFloat() {
       animation-delay:${i * 0.18}s;
     `
     document.body.appendChild(el)
-    setTimeout(() => el.remove(), 2800)
+    temporaryEffects.add(el)
+    later(() => { el.remove(); temporaryEffects.delete(el) }, 2800)
   })
 }
 
@@ -130,59 +161,70 @@ export function VisualsProvider({ children }) {
   const [enabled, setEnabled] = useState(() => localStorage.getItem('js_visuals') === 'true')
   const [toasts, setToasts] = useState([])
   const [bigWin, setBigWin] = useState(null)
+  const [visible, setVisible] = useState(() => document.visibilityState !== 'hidden')
   const msgIdxRef = useRef(0)
+
+  useEffect(() => {
+    function visibilityChanged() {
+      const next = document.visibilityState !== 'hidden'
+      setVisible(next)
+      if (!next) { clearEffects(); setToasts([]); setBigWin(null) }
+    }
+    document.addEventListener('visibilitychange', visibilityChanged)
+    return () => { document.removeEventListener('visibilitychange', visibilityChanged); clearEffects() }
+  }, [])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-visuals', enabled ? 'on' : 'off')
     localStorage.setItem('js_visuals', enabled)
+    if (!enabled) { clearEffects(); setToasts([]); setBigWin(null) }
   }, [enabled])
 
   const addToast = useCallback((msg) => {
+    if (document.visibilityState === 'hidden') return
     const id = Date.now() + Math.random()
     setToasts(t => [...t.slice(-3), { id, msg }])
-    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 7200)
+    later(() => setToasts(t => t.filter(x => x.id !== id)), 7200)
   }, [])
 
   const triggerConfetti = useCallback((count = 120) => {
-    if (!enabled) return
-    spawnConfetti(count)
+    if (!enabled || !visible || !spawnConfetti(count)) return
     spawnEmojiFloat()
     // 40% chance of big win flash
     if (Math.random() > 0.6) {
       const msg = WIN_MSGS[Math.floor(Math.random() * WIN_MSGS.length)]
       setBigWin(msg)
-      setTimeout(() => setBigWin(null), 3800)
+      later(() => setBigWin(null), 2800)
     }
-  }, [enabled])
+  }, [enabled, visible])
 
   const showToast = useCallback((msg) => {
-    if (!enabled) return
+    if (!enabled || !visible) return
     addToast(msg)
-  }, [enabled, addToast])
+  }, [enabled, visible, addToast])
 
   // Auto toasts every 2.5 minutes
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled || !visible) return
     const id = setInterval(() => {
       const idx = msgIdxRef.current % MOTIVATION_MSGS.length
       addToast(MOTIVATION_MSGS[idx])
       msgIdxRef.current++
     }, 2.5 * 60 * 1000)
     return () => clearInterval(id)
-  }, [enabled, addToast])
+  }, [enabled, visible, addToast])
 
-  // Random confetti + emoji burst every 6 minutes
+  // Restart the countdown on return; never replay background celebrations.
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled || !visible) return
     const id = setInterval(() => {
-      spawnConfetti(60)
-      spawnEmojiFloat()
-    }, 6 * 60 * 1000)
+      if (spawnConfetti(80)) spawnEmojiFloat()
+    }, 3 * 60 * 1000)
     return () => clearInterval(id)
-  }, [enabled])
+  }, [enabled, visible])
 
   return (
-    <VisualsContext.Provider value={{ enabled, setEnabled, triggerConfetti, showToast, toasts, bigWin }}>
+    <VisualsContext.Provider value={{ enabled, visible, setEnabled, triggerConfetti, showToast, toasts, bigWin }}>
       {children}
     </VisualsContext.Provider>
   )

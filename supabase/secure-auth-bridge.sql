@@ -120,7 +120,7 @@ begin
     end if;
   end if;
 
-  v_allowance := case when new.plan_tier = 'free' then 531 else 53000 end;
+  v_allowance := case when new.plan_tier = 'free' then 465 else 25110 end;
   if tg_op = 'INSERT' then
     v_should_reset := true;
   else
@@ -242,7 +242,7 @@ begin
     return;
   end if;
 
-  v_allowance := case when coalesce(v_account.plan_tier, 'pro') = 'free' then 531 else 53000 end;
+  v_allowance := case when coalesce(v_account.plan_tier, 'pro') = 'free' then 465 else 25110 end;
   v_period_start := coalesce(v_account.credit_period_started_at, v_account.linked_at, v_account.created_at, v_now);
   v_period_end := coalesce(v_account.credit_period_ends_at, v_period_start + make_interval(days => 31));
   v_balance := greatest(coalesce(v_account.credit_balance, v_allowance), 0);
@@ -326,6 +326,7 @@ as $$
 declare
   v_account public.accounts%rowtype;
   v_allowance integer;
+  v_refund_limit integer;
   v_balance integer;
   v_period_start timestamptz;
   v_period_end timestamptz;
@@ -353,7 +354,7 @@ begin
     return;
   end if;
 
-  v_allowance := case when coalesce(v_account.plan_tier, 'pro') = 'free' then 531 else 53000 end;
+  v_allowance := case when coalesce(v_account.plan_tier, 'pro') = 'free' then 465 else 25110 end;
   v_period_start := coalesce(v_account.credit_period_started_at, v_account.linked_at, v_account.created_at, v_now);
   v_period_end := coalesce(v_account.credit_period_ends_at, v_period_start + make_interval(days => 31));
   v_balance := greatest(coalesce(v_account.credit_balance, v_allowance), 0);
@@ -364,7 +365,15 @@ begin
     v_balance := v_allowance;
   end loop;
 
-  v_balance := least(v_allowance, v_balance + v_amount);
+  -- Recover the current period's allowance from its balance and ledger.
+  -- This preserves previously granted credits when the new allowance is lower.
+  select greatest(v_allowance, v_balance - coalesce(sum(credits_delta), 0))
+  into v_refund_limit
+  from public.hosted_credit_events
+  where user_id = p_user_id
+    and (metadata->>'period_started_at')::timestamptz = v_period_start;
+
+  v_balance := least(v_refund_limit, v_balance + v_amount);
 
   update public.accounts
   set

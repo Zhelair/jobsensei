@@ -1,6 +1,6 @@
 export const HOSTED_REQUEST_CREDITS = 31
-export const FREE_MONTHLY_CREDITS = 531
-export const PRO_MONTHLY_CREDITS = 53000
+export const FREE_MONTHLY_CREDITS = 465
+export const PRO_MONTHLY_CREDITS = 25110
 export const CREDIT_PERIOD_DAYS = 31
 
 function toFiniteNumber(value) {

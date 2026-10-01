@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { track } from '@vercel/analytics'
 import { useAuth } from './AuthContext'
+import { readAIStream } from '../lib/aiStream'
 
 const AIContext = createContext(null)
 
@@ -76,32 +77,7 @@ async function readProxyResponse(res, { onChunk, onUnauthorized } = {}) {
     return data.content
   }
 
-  const reader = res.body.getReader()
-  const decoder = new TextDecoder()
-  let full = ''
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    const chunk = decoder.decode(value)
-    const lines = chunk.split('\n').filter(line => line.startsWith('data: '))
-    for (const line of lines) {
-      const data = line.slice(6)
-      if (data === '[DONE]') continue
-      try {
-        const parsed = JSON.parse(data)
-        const delta = parsed.choices?.[0]?.delta?.content || ''
-        if (delta) {
-          full += delta
-          onChunk(delta, full)
-        }
-      } catch {
-        // Ignore malformed stream chunks and keep reading.
-      }
-    }
-  }
-
-  return full
+  return readAIStream(res.body, onChunk)
 }
 
 export function AIProvider({ children }) {
@@ -348,30 +324,7 @@ export function AIProvider({ children }) {
       return data.choices[0].message.content
     }
 
-    const reader = res.body.getReader()
-    const decoder = new TextDecoder()
-    let full = ''
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n').filter(line => line.startsWith('data: '))
-      for (const line of lines) {
-        const data = line.slice(6)
-        if (data === '[DONE]') continue
-        try {
-          const parsed = JSON.parse(data)
-          const delta = parsed.choices?.[0]?.delta?.content || ''
-          if (delta) {
-            full += delta
-            onChunk(delta, full)
-          }
-        } catch {
-          // Ignore malformed stream chunks and keep reading.
-        }
-      }
-    }
-    return full
+    return readAIStream(res.body, onChunk)
   }
 
   async function callAnthropic({ baseUrl, systemPrompt, messages, temperature, onChunk, signal }) {
@@ -405,30 +358,7 @@ export function AIProvider({ children }) {
       return data.content[0].text
     }
 
-    const reader = res.body.getReader()
-    const decoder = new TextDecoder()
-    let full = ''
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n').filter(line => line.startsWith('data: '))
-      for (const line of lines) {
-        try {
-          const parsed = JSON.parse(line.slice(6))
-          if (parsed.type === 'content_block_delta') {
-            const delta = parsed.delta?.text || ''
-            if (delta) {
-              full += delta
-              onChunk(delta, full)
-            }
-          }
-        } catch {
-          // Ignore malformed stream chunks and keep reading.
-        }
-      }
-    }
-    return full
+    return readAIStream(res.body, onChunk, event => event.type === 'content_block_delta' ? event.delta?.text || '' : '')
   }
 
   return (

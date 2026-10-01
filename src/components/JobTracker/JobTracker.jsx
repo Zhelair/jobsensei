@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useProject } from '../../context/ProjectContext'
 import { useAI } from '../../context/AIContext'
+import { useAuth } from '../../context/AuthContext'
+import { fetchCompanyResearch } from '../../lib/research'
+import ResearchSources from '../shared/ResearchSources'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
@@ -124,6 +127,7 @@ export default function JobTracker() {
   }
 
   const { callAI, isConnected } = useAI()
+  const { secureSession } = useAuth()
 
   const [tab, setTab] = useState(0)
   const [showAdd, setShowAdd] = useState(false)
@@ -218,20 +222,8 @@ export default function JobTracker() {
     if (!newApp.company.trim()) return
     setResearchLoading(true)
     try {
-      let searchContext = null
-      try {
-        const searchRes = await fetch('/api/research', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ company: newApp.company, role: newApp.role }),
-        })
-        const searchData = await searchRes.json()
-        if (!searchData.fallback && searchData.snippets) {
-          searchContext = searchData.answer
-            ? `Summary: ${searchData.answer}\n\n${searchData.snippets}`
-            : searchData.snippets
-        }
-      } catch {}
+      const webResearch = await fetchCompanyResearch(newApp.company, newApp.role, secureSession?.access_token)
+      const searchContext = webResearch.context || null
       const raw = await callAI({
         systemPrompt: prompts.companyResearch(newApp.company, newApp.role, searchContext, language),
         messages: [{ role: 'user', content: 'Research this company.' }],
@@ -239,7 +231,7 @@ export default function JobTracker() {
       })
       const parsed = tryParseJSON(raw)
       if (parsed) {
-        setPendingResearch({ ...parsed, _liveData: !!searchContext })
+        setPendingResearch({ ...parsed, _liveData: !!searchContext, _research: { fallback: !searchContext, reason: webResearch.reason, sources: webResearch.sources || [], checkedAt: webResearch.checkedAt } })
         if (parsed.prepNotes) setNewApp(p => ({ ...p, notes: parsed.prepNotes }))
       }
     } catch {}
@@ -558,6 +550,7 @@ export default function JobTracker() {
             </div>
           )}
 
+          <ResearchSources metadata={pendingResearch?._research} />
           <div className="mb-3">
             <label className="text-sm text-slate-400 mb-1.5 block">{t('applications.fields.initialPrepNote')}</label>
             <AutoTextarea className="textarea-field mb-1" placeholder={t('applications.placeholders.initialPrepNote')}
@@ -873,6 +866,7 @@ function TrackerStats({ applications }) {
 // ── Company Notes View ──────────────────────────────────────────────────────
 function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveNotes, onBack, onUpdateApp }) {
   const { callAI, isConnected } = useAI()
+  const { secureSession } = useAuth()
   const { getProjectData } = useProject()
   const { launchTool, pushAppHistory } = useApp()
   const { language, t } = useLanguage()
@@ -1061,20 +1055,8 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     setResearchMsg('')
     setResearchMsgTone('info')
     try {
-      let searchContext = null
-      try {
-        const searchRes = await fetch('/api/research', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ company: app.company, role: app.role }),
-        })
-        const searchData = await searchRes.json()
-        if (!searchData.fallback && searchData.snippets) {
-          searchContext = searchData.answer
-            ? `Summary: ${searchData.answer}\n\n${searchData.snippets}`
-            : searchData.snippets
-        }
-      } catch {}
+      const webResearch = await fetchCompanyResearch(app.company, app.role, secureSession?.access_token)
+      const searchContext = webResearch.context || null
       const raw = await callAI({
         systemPrompt: prompts.companyResearch(app.company, app.role, searchContext, language),
         messages: [{ role: 'user', content: 'Research this company.' }],
@@ -1084,6 +1066,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
       if (parsed) {
         setForm(prev => ({
           ...prev,
+          _research: { fallback: !searchContext, reason: webResearch.reason, sources: webResearch.sources || [], checkedAt: webResearch.checkedAt },
           wowFacts: parsed.wowFacts || prev.wowFacts,
           techStack: parsed.techStack || prev.techStack,
           culture: parsed.culture || prev.culture,
@@ -1732,6 +1715,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
             </p>
           )}
 
+          <ResearchSources metadata={form._research} />
           {noteCount === 0 && (
             <p className="text-slate-500 text-xs">{t('applications.workspace.research.emptySummaryHint')}</p>
           )}

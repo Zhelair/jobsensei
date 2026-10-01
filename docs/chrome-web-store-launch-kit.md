@@ -66,7 +66,7 @@ Recommended summary:
 `How JobSensei access works:`
 
 - `Free accounts can start with email sign-in and a magic link.`
-- `Free currently includes 531 hosted AI credits every 31 days.`
+- `Free currently includes 465 hosted AI credits every 31 days.`
 - `Users can also bring their own API key (BYOK) inside JobSensei.`
 - `Pro access can be unlocked separately through Buy Me a Coffee.`
 

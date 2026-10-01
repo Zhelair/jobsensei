@@ -26,7 +26,7 @@ describe('proxy secure-account mode', () => {
     delete process.env.JWT_SECRET
 
     consumeHostedCreditsMock = vi.fn().mockResolvedValue({ charged: true, balance: 52969 })
-    refundHostedCreditsMock = vi.fn().mockResolvedValue({ refunded: true, balance: 53000 })
+    refundHostedCreditsMock = vi.fn().mockResolvedValue({ refunded: true, balance: 25110 })
 
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,

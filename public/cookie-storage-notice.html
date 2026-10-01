@@ -399,6 +399,7 @@
       document.getElementById("intro").textContent = copy.intro;
 
       const sections = document.getElementById("sections");
+      copy.sections.push({"title": "Local workspace and backups", "items": ["Your workspace is saved in this browser. Signing in on another device restores account access and credits, but does not transfer resumes, applications, stories or notes. Use Export and Import in Settings to move a backup.", "Clearing browser storage can permanently remove local workspace data. Clearing local data does not delete your hosted account, replenish credits, or cancel paid access."]});
       copy.sections.forEach((section) => {
         const wrap = document.createElement("section");
         const h2 = document.createElement("h2");

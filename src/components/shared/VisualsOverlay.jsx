@@ -39,9 +39,9 @@ function ParticleLayer() {
 }
 
 export default function VisualsOverlay() {
-  const { toasts, bigWin, enabled } = useVisuals()
+  const { toasts, bigWin, enabled, visible } = useVisuals()
 
-  if (!enabled) return null
+  if (!enabled || !visible) return null
 
   return (
     <>
@@ -49,7 +49,7 @@ export default function VisualsOverlay() {
 
       {/* Big win flash */}
       {bigWin && (
-        <div key={bigWin + Date.now()} className="visuals-bigwin">
+        <div key={bigWin} className="visuals-bigwin">
           {bigWin}
         </div>
       )}

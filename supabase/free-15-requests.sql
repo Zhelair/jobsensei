@@ -1,22 +1,7 @@
--- JobSensei hosted credits migration
--- Run this on an existing Supabase project that already has secure-auth-bridge.sql applied.
-
-create extension if not exists pgcrypto;
-
-alter table public.accounts
-  add column if not exists plan_tier text check (plan_tier in ('free', 'pro'));
-
-alter table public.accounts
-  add column if not exists credit_balance integer check (credit_balance >= 0);
-
-alter table public.accounts
-  add column if not exists credit_period_started_at timestamptz;
-
-alter table public.accounts
-  add column if not exists credit_period_ends_at timestamptz;
-
-alter table public.accounts
-  add column if not exists plan_expires_at timestamptz;
+-- Existing-project migration: 465 Free credits, 31 credits per request.
+-- Preserves current balances; new accounts and future refills use 465.
+-- Pro allowance is unchanged. Requires the existing hosted credits schema.
+begin;
 
 create or replace function public.normalize_account_plan_state()
 returns trigger
@@ -50,7 +35,7 @@ begin
     end if;
   end if;
 
-  v_allowance := case when new.plan_tier = 'free' then 465 else 25110 end;
+  v_allowance := case when new.plan_tier = 'free' then 465 else 53000 end;
   if tg_op = 'INSERT' then
     v_should_reset := true;
   else
@@ -90,34 +75,6 @@ begin
   return new;
 end;
 $$;
-
-drop trigger if exists normalize_account_plan_state_before_write on public.accounts;
-create trigger normalize_account_plan_state_before_write
-before insert or update on public.accounts
-for each row
-execute function public.normalize_account_plan_state();
-
-create table if not exists public.hosted_credit_events (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  device_id text,
-  route text not null default 'proxy',
-  provider text,
-  model text,
-  event_type text not null check (event_type in ('charge', 'refund')),
-  credits_delta integer not null,
-  reason text,
-  metadata jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default timezone('utc', now())
-);
-
-create index if not exists hosted_credit_events_user_id_idx
-  on public.hosted_credit_events (user_id, created_at desc);
-
-create index if not exists hosted_credit_events_event_type_idx
-  on public.hosted_credit_events (event_type, created_at desc);
-
-alter table public.hosted_credit_events enable row level security;
 
 create or replace function public.consume_hosted_credits(
   p_user_id uuid,
@@ -172,7 +129,7 @@ begin
     return;
   end if;
 
-  v_allowance := case when coalesce(v_account.plan_tier, 'pro') = 'free' then 465 else 25110 end;
+  v_allowance := case when coalesce(v_account.plan_tier, 'pro') = 'free' then 465 else 53000 end;
   v_period_start := coalesce(v_account.credit_period_started_at, v_account.linked_at, v_account.created_at, v_now);
   v_period_end := coalesce(v_account.credit_period_ends_at, v_period_start + make_interval(days => 31));
   v_balance := greatest(coalesce(v_account.credit_balance, v_allowance), 0);
@@ -256,7 +213,6 @@ as $$
 declare
   v_account public.accounts%rowtype;
   v_allowance integer;
-  v_refund_limit integer;
   v_balance integer;
   v_period_start timestamptz;
   v_period_end timestamptz;
@@ -284,7 +240,7 @@ begin
     return;
   end if;
 
-  v_allowance := case when coalesce(v_account.plan_tier, 'pro') = 'free' then 465 else 25110 end;
+  v_allowance := case when coalesce(v_account.plan_tier, 'pro') = 'free' then 465 else 53000 end;
   v_period_start := coalesce(v_account.credit_period_started_at, v_account.linked_at, v_account.created_at, v_now);
   v_period_end := coalesce(v_account.credit_period_ends_at, v_period_start + make_interval(days => 31));
   v_balance := greatest(coalesce(v_account.credit_balance, v_allowance), 0);
@@ -295,15 +251,7 @@ begin
     v_balance := v_allowance;
   end loop;
 
-  -- Recover the current period's allowance from its balance and ledger.
-  -- This preserves previously granted credits when the new allowance is lower.
-  select greatest(v_allowance, v_balance - coalesce(sum(credits_delta), 0))
-  into v_refund_limit
-  from public.hosted_credit_events
-  where user_id = p_user_id
-    and (metadata->>'period_started_at')::timestamptz = v_period_start;
-
-  v_balance := least(v_refund_limit, v_balance + v_amount);
+  v_balance := least(v_allowance, v_balance + v_amount);
 
   update public.accounts
   set
@@ -342,7 +290,4 @@ begin
 end;
 $$;
 
-revoke all on function public.consume_hosted_credits(uuid, text, text, text, text, integer) from public;
-revoke all on function public.refund_hosted_credits(uuid, text, text, text, text, integer, text) from public;
-grant execute on function public.consume_hosted_credits(uuid, text, text, text, text, integer) to service_role;
-grant execute on function public.refund_hosted_credits(uuid, text, text, text, text, integer, text) to service_role;
+commit;
