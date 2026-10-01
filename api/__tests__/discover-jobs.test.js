@@ -23,12 +23,10 @@ it('requires authentication and validates sources before spending', async () => 
   expect((await run()).code).toBe(401)
   expect(fetch).not.toHaveBeenCalled()
 })
-it('honors the shared budget and fails closed if its database is unavailable', async () => {
-  limits.reserveServiceRequest.mockResolvedValue('budget')
-  expect((await run()).code).toBe(429)
-  limits.reserveServiceRequest.mockRejectedValue(new Error('Database unavailable'))
-  expect((await run()).code).toBe(503)
-  expect(fetch).not.toHaveBeenCalled()
+it('does not apply app-added search limits even when the legacy limiter would block', async () => {
+  limits.reserveServiceRequest.mockResolvedValue('limited')
+  expect((await run()).code).toBe(200)
+  expect(limits.reserveServiceRequest).not.toHaveBeenCalled()
 })
 it('makes one bounded basic search and returns only supported vacancy links', async () => {
   const res = await run()
@@ -38,12 +36,12 @@ it('makes one bounded basic search and returns only supported vacancy links', as
   expect(payload.search_depth).toBe('basic')
   expect(payload.auto_parameters).toBe(false)
   expect(payload.max_results).toBe(20)
-  expect(limits.reserveServiceRequest.mock.calls[0][2]).toBe('research')
+  expect(limits.reserveServiceRequest).not.toHaveBeenCalled()
 })
 it('reports provider exhaustion without inventing fallback jobs', async () => {
   fetch.mockResolvedValue({ ok: false, status: 432 })
   const res = await run()
   expect(res.code).toBe(503)
-  expect(res.value.error).toContain('usage limit')
+  expect(res.value.error).toContain('Monthly job-search allowance exhausted')
   expect(res.value.results).toBeUndefined()
 })

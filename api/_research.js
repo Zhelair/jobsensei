@@ -2,9 +2,7 @@
 // Uses server-side TAVILY_API_KEY (never exposed to frontend)
 // Returns { answer, snippets, sources } on success
 // Returns { fallback: true, reason } when Tavily is unavailable
-import { randomUUID } from 'node:crypto'
 import { authenticateSupabaseUser } from './_lib/authBridge.js'
-import { reserveServiceRequest, finishServiceRequest } from './_lib/serviceRequests.js'
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
@@ -27,10 +25,7 @@ export default async function handler(req, res) {
     ? `${company} company news ${currentYear} recent developments culture work environment ${role} interview`
     : `${company} company news ${currentYear} recent developments culture work environment interview preparation`
 
-  const requestId = randomUUID()
   try {
-    const gate = await reserveServiceRequest(req, user, 'research', requestId, `${company}:${role || ''}`)
-    if (gate !== 'reserved') return res.status(200).json({ fallback: true, reason: gate === 'budget' ? 'budget_reached' : 'rate_limited' })
     const tavilyRes = await fetch('https://api.tavily.com/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -67,7 +62,5 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     return res.status(200).json({ fallback: true, reason: 'network_error' })
-  } finally {
-    await finishServiceRequest(requestId, 'sent').catch(() => {})
   }
 }

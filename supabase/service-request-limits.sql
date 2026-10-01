@@ -38,11 +38,7 @@ begin
       or (select count(*) from public.service_requests where kind=p_kind and created_at>now()-interval '1 day') >= 20
     then return 'limited'; end if;
   else
-    if (select count(*) from public.service_requests where kind=p_kind and user_id=p_user_id and created_at>now()-interval '1 hour') >= 10
-      or (select count(*) from public.service_requests where kind=p_kind and ip_hash=p_ip_hash and created_at>now()-interval '1 hour') >= 30
-    then return 'limited'; end if;
-    -- Shared basic-search budget; allow headroom below Tavily's 1,000 credits.
-    if (select count(*) from public.service_requests where kind=p_kind and created_at >= date_trunc('month', now())) >= 800 then return 'budget'; end if;
+    null; -- No app-added search rate or spending limits.
   end if;
   insert into public.service_requests(request_id,kind,user_id,ip_hash,content_hash)
   values(p_request_id,p_kind,p_user_id,p_ip_hash,p_content_hash);

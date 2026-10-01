@@ -22,10 +22,10 @@ it('requires auth before consuming search allowance',async()=>{
   expect((await run()).code).toBe(401)
   expect(fetch).not.toHaveBeenCalled()
 })
-it('does not call Tavily when the shared budget is exhausted',async()=>{
+it('does not apply app-added research search limits',async()=>{
   limits.reserveServiceRequest.mockResolvedValue('budget')
-  expect((await run()).value.reason).toBe('budget_reached')
-  expect(fetch).not.toHaveBeenCalled()
+  expect((await run()).code).toBe(200)
+  expect(limits.reserveServiceRequest).not.toHaveBeenCalled()
 })
 it('returns provenance and uses the current year with basic search',async()=>{
   const res=await run()
@@ -40,9 +40,4 @@ it('distinguishes temporary rate limits from usage limits',async()=>{
   expect((await run()).value.reason).toBe('rate_limited')
   fetch.mockResolvedValue({ok:false,status:432})
   expect((await run()).value.reason).toBe('provider_usage_limit')
-})
-it('fails closed when persistent limits are unavailable',async()=>{
-  limits.reserveServiceRequest.mockRejectedValue(new Error('Database unavailable'))
-  expect((await run()).value.fallback).toBe(true)
-  expect(fetch).not.toHaveBeenCalled()
 })
