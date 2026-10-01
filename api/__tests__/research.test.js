@@ -3,7 +3,7 @@ const auth = vi.hoisted(() => ({ authenticateSupabaseUser: vi.fn() }))
 const limits = vi.hoisted(() => ({ reserveServiceRequest: vi.fn(), finishServiceRequest: vi.fn() }))
 vi.mock('../_lib/authBridge.js', () => auth)
 vi.mock('../_lib/serviceRequests.js', () => limits)
-import handler from '../research'
+import handler from '../_research'
 async function run(body={company:'Example',role:'Analyst'}) {
   const res = { setHeader:vi.fn(), status(code) { this.code=code;return this }, json(value) {this.value=value;return this} }
   await handler({method:'POST',body,headers:{}},res)

@@ -2,6 +2,8 @@
 
 These are local changes. Commit and deploy manually when ready.
 
+Deployment packaging: Vercel Hobby allows 12 serverless functions. Feedback, company research and discovery now share `api/services.js`, with their existing public URLs preserved through `vercel.json` rewrites. Their underscore-prefixed handler files are bundled utilities, not separate endpoints. This leaves 12 deployable endpoint files. A regression test checks the routing and function budget. No SQL or environment-variable changes are needed for this packaging fix.
+
 1. Run `supabase/service-request-limits.sql` in Supabase SQL Editor.
 2. Set server-only Vercel environment variables:
    - `FEEDBACK_TO_EMAIL`: your desired recipient (not a VITE_ variable).
