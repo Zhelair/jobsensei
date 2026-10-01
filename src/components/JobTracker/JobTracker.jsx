@@ -56,7 +56,7 @@ const STAGE_COLORS = {
   Offer: 'text-green-400 bg-green-400/10 border-green-400/20',
   Rejected: 'text-red-400 bg-red-400/10 border-red-400/20',
 }
-const TABS = ['Kanban', 'Workspace', 'Offers', 'Discover']
+const TABS = ['Kanban', 'Discover', 'Workspace', 'Offers']
 const TAB_LABEL_KEYS = {
   Kanban: 'applications.tabs.kanban',
   Workspace: 'applications.tabs.workspace',
@@ -584,7 +584,7 @@ export default function JobTracker() {
         ))}
       </div>
 
-      {tab === 0 && overdueApps.length > 0 && (
+      {TABS[tab] === 'Kanban' && overdueApps.length > 0 && (
         <div className="mb-3 card border-yellow-500/20 bg-yellow-500/5">
           <div className="flex items-center gap-2 mb-2">
             <Clock size={14} className="text-yellow-400"/>
@@ -620,7 +620,7 @@ export default function JobTracker() {
         </div>
       )}
 
-      {tab === 0 && (
+      {TABS[tab] === 'Kanban' && (
         <div className="overflow-x-auto -mx-4 px-4">
           <div className="flex gap-3 min-w-max pb-4">
             {STAGES.map(stage => {
@@ -696,7 +696,7 @@ export default function JobTracker() {
         </div>
       )}
 
-      {tab === 1 && (
+      {TABS[tab] === 'Workspace' && (
         <div className="space-y-2">
           {applications.length === 0 ? (
             <div className="card text-center py-10 text-slate-500">{t('applications.empty.addFirst')}</div>
@@ -745,7 +745,7 @@ export default function JobTracker() {
         </div>
       )}
 
-      {tab === 2 && (
+      {TABS[tab] === 'Offers' && (
         <OfferComparison
           applications={applications}
           offerData={offerData}
@@ -754,12 +754,12 @@ export default function JobTracker() {
         />
       )}
 
-      {tab === 3 && <><JobDiscovery key={activeProjectId} applications={applications} onSave={job => {
+      {TABS[tab] === 'Discover' && <JobDiscovery key={activeProjectId} applications={applications} onSave={job => {
         const current = getProjectData('applications') || []
         if (current.some(app => jobIdentity(app.jdUrl) === job.id)) return
         const now = new Date().toISOString()
         updateProjectData('applications', [...current, { ...EMPTY_APPLICATION, id: generateId(), company: '', role: job.title, jdUrl: job.url, notes: `Search excerpt (not the full job description):\n${job.snippet}`, date: now, stageUpdatedAt: now }])
-      }} /><details className="mt-6"><summary className="text-slate-300 text-sm cursor-pointer">Application statistics</summary><div className="mt-3"><TrackerStats applications={applications} /></div></details></>}
+      }} />}
     </div>
   )
 }
@@ -815,57 +815,6 @@ function EditJobModal({ app, onSave, onClose }) {
           <button onClick={onClose} className="btn-ghost">{t('common.cancel')}</button>
         </div>
       </div>
-    </div>
-  )
-}
-
-// ── Stats ───────────────────────────────────────────────────────────────────
-function TrackerStats({ applications }) {
-  const { t } = useLanguage()
-  const stageLabel = (stage) => t(STAGE_LABEL_KEYS[stage] || 'applications.stage.unknown', { stage })
-  const total = applications.length
-  const byStage = STAGES.reduce((acc, s) => ({ ...acc, [s]: applications.filter(a => a.stage === s).length }), {})
-  const active = applications.filter(a => !['Offer', 'Rejected'].includes(a.stage)).length
-  return (
-    <div className="space-y-4 animate-in">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          [t('applications.stats.total'), total, 'text-white'],
-          [t('applications.stats.active'), active, 'text-teal-400'],
-          [t('applications.stats.offers'), byStage.Offer, 'text-green-400'],
-          [t('applications.stats.rejected'), byStage.Rejected, 'text-red-400'],
-        ].map(([l, v, c]) => (
-          <div key={l} className="card text-center">
-            <div className={`font-display font-bold text-2xl mb-1 ${c}`}>{v}</div>
-            <div className="text-slate-400 text-xs">{l}</div>
-          </div>
-        ))}
-      </div>
-      <div className="card">
-        <h3 className="font-display font-semibold text-white text-sm mb-3">{t('applications.stats.pipeline')}</h3>
-        <div className="space-y-2">
-          {STAGES.map(stage => {
-            const count = byStage[stage]
-            const pct = total > 0 ? (count / total) * 100 : 0
-            return (
-              <div key={stage} className="flex items-center gap-3">
-                <span className="text-slate-400 text-xs w-20 flex-shrink-0">{stageLabel(stage)}</span>
-                <div className="flex-1 h-1.5 bg-navy-700 rounded-full overflow-hidden">
-                  <div className="h-full bg-teal-500 rounded-full" style={{ width: `${pct}%` }}/>
-                </div>
-                <span className="text-slate-500 text-xs w-4">{count}</span>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-      {byStage.Offer > 0 && (
-        <div className="card border-green-500/20 bg-green-500/5 text-center py-6">
-          <div className="text-3xl mb-2">🎉</div>
-          <div className="font-display font-bold text-green-400 text-lg">{t('applications.stats.offerCount', { count: byStage.Offer })}</div>
-          <div className="text-slate-400 text-sm">{t('applications.stats.conversion', { percent: total > 0 ? Math.round((byStage.Offer / total) * 100) : 0 })}</div>
-        </div>
-      )}
     </div>
   )
 }
