@@ -3,7 +3,7 @@ import { researchNotice } from '../../lib/research'
 
 export default function ResearchSources({ metadata }) {
   if (!metadata) return null
-  const sources = (metadata.sources || []).filter(source => {
+  const sources = (Array.isArray(metadata.sources) ? metadata.sources : []).filter(source => {
     try { return ['https:', 'http:'].includes(new URL(source.url).protocol) } catch { return false }
   })
   return <div className="text-slate-300 text-xs my-3">

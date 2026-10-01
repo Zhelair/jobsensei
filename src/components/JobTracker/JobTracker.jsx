@@ -4,6 +4,7 @@ import { useAI } from '../../context/AIContext'
 import ResearchSources from '../shared/ResearchSources'
 import JobDiscovery from './JobDiscovery'
 import { discoveryDraft } from '../../lib/jobDiscovery'
+import { countCompanyNotes, normalizeCompanyNotes, noteText } from '../../lib/companyNotes'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
@@ -28,11 +29,11 @@ function applicationLabel(app) {
 }
 
 function hasResearchData(noteData = {}) {
-  return ['wowFacts', 'techStack', 'culture', 'openQ'].some(key => (noteData[key] || '').trim())
+  return ['wowFacts', 'techStack', 'culture', 'openQ'].some(key => noteText(noteData[key]).trim())
 }
 
 function hasPrepNotes(noteData = {}) {
-  return ['prepNotes', 'people', 'theyMentioned'].some(key => (noteData[key] || '').trim())
+  return ['prepNotes', 'people', 'theyMentioned'].some(key => noteText(noteData[key]).trim())
 }
 
 function getOverdueApps(apps) {
@@ -229,7 +230,8 @@ export default function JobTracker() {
         signal: AbortSignal.timeout(120000),
         temperature: 0.5,
       })
-      const parsed = tryParseJSON(raw)
+      const parsedResult = tryParseJSON(raw)
+      const parsed = parsedResult && typeof parsedResult === 'object' && !Array.isArray(parsedResult) ? normalizeCompanyNotes(parsedResult) : null
       if (parsed) {
         setPendingResearch({ ...parsed, _liveData: !!searchContext, _research: { fallback: !searchContext, reason: webResearch.reason, sources: webResearch.sources || [], checkedAt: webResearch.checkedAt } })
         if (parsed.prepNotes) setNewApp(p => ({ ...p, notes: parsed.prepNotes }))
@@ -819,7 +821,7 @@ function EditJobModal({ app, onSave, onClose }) {
 }
 
 // ── Company Notes View ──────────────────────────────────────────────────────
-function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveNotes, onBack, onUpdateApp }) {
+export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveNotes, onBack, onUpdateApp }) {
   const { callAI, isConnected } = useAI()
   const { getProjectData } = useProject()
   const { launchTool, pushAppHistory } = useApp()
@@ -834,7 +836,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     openQ: '',
     prepNotes: '',
     wowFacts: '',
-    ...notes,
+    ...normalizeCompanyNotes(notes),
   })
   const [jdText, setJdText] = useState(app.jdText || '')
   const [showJdEditor, setShowJdEditor] = useState(!(app.jdText || '').trim())
@@ -868,7 +870,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
       openQ: '',
       prepNotes: '',
       wowFacts: '',
-      ...notes,
+      ...normalizeCompanyNotes(notes),
     })
     setJdText(app.jdText || '')
     setShowJdEditor(!(app.jdText || '').trim())
@@ -877,7 +879,7 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
   const hasJd = jdText.trim().length > 0
   const hasResearch = hasResearchData(form)
   const hasPrep = hasPrepNotes(form)
-  const noteCount = Object.values(form).filter(value => (value || '').trim()).length
+  const noteCount = countCompanyNotes(form)
   const applicationLabel = `${app.company}${app.role ? ` - ${app.role}` : ''}`
   const stageLabel = (stage) => t(STAGE_LABEL_KEYS[stage] || 'applications.stage.unknown', { stage })
 
@@ -1017,7 +1019,8 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
         signal: AbortSignal.timeout(120000),
         temperature: 0.5,
       })
-      const parsed = tryParseJSON(raw)
+      const parsedResult = tryParseJSON(raw)
+      const parsed = parsedResult && typeof parsedResult === 'object' && !Array.isArray(parsedResult) ? normalizeCompanyNotes(parsedResult) : null
       if (parsed) {
         setForm(prev => ({
           ...prev,
