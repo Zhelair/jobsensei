@@ -4,6 +4,8 @@ import { useAI } from '../../context/AIContext'
 import { useAuth } from '../../context/AuthContext'
 import { fetchCompanyResearch } from '../../lib/research'
 import ResearchSources from '../shared/ResearchSources'
+import JobDiscovery from './JobDiscovery'
+import { jobIdentity } from '../../lib/jobDiscovery'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
@@ -54,7 +56,7 @@ const STAGE_COLORS = {
   Offer: 'text-green-400 bg-green-400/10 border-green-400/20',
   Rejected: 'text-red-400 bg-red-400/10 border-red-400/20',
 }
-const TABS = ['Kanban', 'Workspace', 'Offers', 'Stats']
+const TABS = ['Kanban', 'Workspace', 'Offers', 'Discover']
 const TAB_LABEL_KEYS = {
   Kanban: 'applications.tabs.kanban',
   Workspace: 'applications.tabs.workspace',
@@ -110,7 +112,7 @@ function exportToJSON(applications, notes) {
 }
 
 export default function JobTracker() {
-  const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId } = useProject()
+  const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId, activeProjectId } = useProject()
   const { pendingTrackerRequest, clearPendingTrackerRequest, pushAppHistory } = useApp()
   const { language, t } = useLanguage()
   const applications = getProjectData('applications') || []
@@ -142,7 +144,7 @@ export default function JobTracker() {
   const importRef = useRef(null)
   const selectedApp = selectedAppId ? applications.find(app => app.id === selectedAppId) || null : null
   const stageLabel = (stage) => t(STAGE_LABEL_KEYS[stage] || 'applications.stage.unknown', { stage })
-  const tabLabel = (tabName) => t(TAB_LABEL_KEYS[tabName] || 'applications.tabs.unknown', { tab: tabName })
+  const tabLabel = (tabName) => tabName === 'Discover' ? 'Discover' : t(TAB_LABEL_KEYS[tabName] || 'applications.tabs.unknown', { tab: tabName })
 
   useEffect(() => {
     if (!pendingTrackerRequest?.applicationId) return
@@ -752,7 +754,12 @@ export default function JobTracker() {
         />
       )}
 
-      {tab === 3 && <TrackerStats applications={applications} />}
+      {tab === 3 && <><JobDiscovery key={activeProjectId} applications={applications} onSave={job => {
+        const current = getProjectData('applications') || []
+        if (current.some(app => jobIdentity(app.jdUrl) === job.id)) return
+        const now = new Date().toISOString()
+        updateProjectData('applications', [...current, { ...EMPTY_APPLICATION, id: generateId(), company: '', role: job.title, jdUrl: job.url, notes: `Search excerpt (not the full job description):\n${job.snippet}`, date: now, stageUpdatedAt: now }])
+      }} /><details className="mt-6"><summary className="text-slate-300 text-sm cursor-pointer">Application statistics</summary><div className="mt-3"><TrackerStats applications={applications} /></div></details></>}
     </div>
   )
 }
