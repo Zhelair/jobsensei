@@ -22,6 +22,7 @@ export default function Feedback() {
         setSourceUrl(event.detail?.url || '')
       }
       card.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      card.current?.focus({ preventScroll: true })
     }
     window.addEventListener('jobsensei:open-feedback', open)
     const pending = sessionStorage.getItem('js_feedback_source')
@@ -52,7 +53,7 @@ export default function Feedback() {
       setNotice('Feedback copied.')
     } catch { setNotice('Copy is unavailable. Select and copy your message manually.') }
   }
-  return <section ref={card} className="card mt-6" aria-labelledby="feedback-heading">
+  return <section ref={card} tabIndex={-1} className="card mt-6" aria-labelledby="feedback-heading">
     <h2 id="feedback-heading" className="font-display font-bold text-white flex items-center gap-2"><MessageSquare size={18} className="text-teal-400" /> Feedback & support</h2>
     <p className="text-slate-300 text-sm mt-2 mb-2">Report a bug, suggest an improvement, or request a job source.</p>
     {secureUser && <button type="button" className="btn-ghost text-xs mb-3" onClick={() => { setCategory('source'); setSent(false) }}>Missing your job board? Request a source.</button>}

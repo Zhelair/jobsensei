@@ -1,5 +1,8 @@
 {
   "rewrites": [
+    { "source": "/api/feedback", "destination": "/api/services?service=feedback" },
+    { "source": "/api/research", "destination": "/api/services?service=research" },
+    { "source": "/api/discover-jobs", "destination": "/api/services?service=discover-jobs" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

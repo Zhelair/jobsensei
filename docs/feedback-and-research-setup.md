@@ -2,6 +2,8 @@
 
 These are local changes. Commit and deploy manually when ready.
 
+Deployment packaging: Vercel Hobby allows 12 serverless functions. Feedback, company research and discovery now share `api/services.js`, with their existing public URLs preserved through `vercel.json` rewrites. Their underscore-prefixed handler files are bundled utilities, not separate endpoints. This leaves 12 deployable endpoint files. A regression test checks the routing and function budget. No SQL or environment-variable changes are needed for this packaging fix.
+
 1. Run `supabase/service-request-limits.sql` in Supabase SQL Editor.
 2. Set server-only Vercel environment variables:
    - `FEEDBACK_TO_EMAIL`: your desired recipient (not a VITE_ variable).
@@ -19,4 +21,10 @@ Research requires a valid session but no Pro subscription or approved-device slo
 
 Source URLs and checked dates are saved locally with company notes. Existing notes without provenance are not retroactively labelled web-verified. An AI summary is not guaranteed to ground every sentence in a listed source.
 
-Job discovery remains a proposal. Suggested Applications navigation: Kanban / Workspace / Offers / Find jobs, with existing Stats accessible through a small secondary action. Do not remove Stats or claim LinkedIn/Jobs.bg automatic support before the source integration has been validated.
+Job discovery is now implemented locally under Applications → Discover. Existing statistics remain in a collapsed section below it. It uses the same TAVILY_API_KEY and research reservation budget (800 attempts/month shared with company research); no additional SQL migration is needed. A basic search costs one Tavily credit, regardless of whether ten valid listings are returned. Keep paid overages disabled.
+
+The pilot searches indexed public LinkedIn vacancy pages or Greenhouse/Lever company-board pages through Tavily. It does not access LinkedIn sessions, crawl LinkedIn directly, or implement a Jobs.bg connector. It retrieves up to 20 search results and shows up to ten after URL validation, local keyword ranking and deduplication. Coverage, freshness and whether a vacancy is still open require confirmation on the original listing. Search recency refers to search-index dates, not verified job posting dates.
+
+Recent results are reused locally for 15 minutes for identical preferences. Preferences, results and viewed/dismissed status are stored per project in this browser. Saved application URLs are matched by source job ID, including tracked/country-specific LinkedIn URLs. Saving records an excerpt in notes, not a full job description; company details can be added after reviewing the original page. No resume or AI request is sent by Discover.
+
+Feedback is a general Account feature, not limited to source requests. The Account top button scrolls to its form below the account panels. Production must include the commit: a commit on Codex_123 does not update a deployment configured for main. Environment-variable changes apply to new deployments, not an already running deployment. Test email delivery after manually deploying the intended commit.

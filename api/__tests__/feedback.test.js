@@ -3,7 +3,7 @@ const auth = vi.hoisted(() => ({ authenticateSupabaseUser: vi.fn(), canSendCusto
 const limits = vi.hoisted(() => ({ reserveServiceRequest: vi.fn(), finishServiceRequest: vi.fn() }))
 vi.mock('../_lib/authBridge.js', () => auth)
 vi.mock('../_lib/serviceRequests.js', () => limits)
-import handler from '../feedback'
+import handler from '../_feedback'
 const body = { category: 'source', requestId: '12345678-1234-1234-1234-123456789012', name: '<script>', message: 'Please support this website.', sourceUrl: 'https://jobs.bg', country: 'Bulgaria', email: 'attacker@example.com', to: 'attacker@example.com' }
 function run(data = body) {
   const res = { setHeader: vi.fn(), status(code) { this.code = code; return this }, json(value) { this.value = value; return this } }
