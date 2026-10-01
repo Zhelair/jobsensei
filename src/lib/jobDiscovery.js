@@ -11,16 +11,34 @@ export function jobIdentity(value) {
   return null
 }
 
-export function shortlist(results, applications, activity, keywords, hideViewed = false) {
+export function shortlist(results, applications, activity, keywords, hideViewed = false, location = '') {
   const saved = new Set(applications.map(app => jobIdentity(app.jdUrl)).filter(Boolean))
   const terms = keywords.toLocaleLowerCase().split(/[\s,]+/).filter(term => term.length > 2)
   const seen = new Set()
   return results.filter(job => {
-    if (!job.id || seen.has(job.id) || saved.has(job.id) || activity[job.id]?.dismissed || (hideViewed && activity[job.id]?.viewed)) return false
+    if (!job.id || !matchesDiscovery(job, keywords, location) || seen.has(job.id) || saved.has(job.id) || activity[job.id]?.dismissed || (hideViewed && activity[job.id]?.viewed)) return false
     seen.add(job.id); return true
   }).map(job => ({ ...job, matched: [...new Set(terms.filter(term => `${job.title} ${job.snippet}`.toLocaleLowerCase().includes(term)))] }))
     .sort((a, b) => b.matched.length - a.matched.length).slice(0, 10)
 }
+
+const words = text => String(text || '').toLowerCase().match(/[\p{L}\p{N}]+/gu) || []
+export function matchesDiscovery(job, keywords, location = '') {
+  // Related-job recommendations in search excerpts must not establish role fit.
+  const title = words(discoveryDraft(job).role)
+  const alternatives = keywords.split(',').map(words).filter(tokens => tokens.length)
+  const matchWord = (token, candidates) => candidates.some(word => word === token || word === `${token}s` || `${word}s` === token)
+  if (!alternatives.some(tokens => tokens.every(token => matchWord(token, title)))) return false
+  if (!location.trim()) return true
+  const preferred = words(location).filter(word => !['or', 'and', 'remote', 'hybrid', 'onsite', 'in'].includes(word))
+  const explicit = job.title.match(/\bin\s+([^|.…]+)$/i)?.[1]
+  const remoteAllowed = /\bremote\b/i.test(location)
+  if (explicit && preferred.length && !preferred.some(word => matchWord(word, words(explicit))) && !(remoteAllowed && /\bremote\b/i.test(explicit))) return false
+  const evidence = words(`${job.title} ${job.snippet}`)
+  return preferred.some(word => matchWord(word, evidence)) || (remoteAllowed && /\bremote\b/i.test(`${job.title} ${job.snippet}`)) || !preferred.length
+}
+
+export const discoverySignature = preferences => JSON.stringify({ ...preferences, keywords: preferences.keywords.trim().toLowerCase().replace(/\s+/g, ' '), location: preferences.location.trim().toLowerCase().replace(/\s+/g, ' ') })
 
 export function discoveryDraft(job) {
   let role = job.title.replace(/\s*\|\s*LinkedIn.*$/i, '').trim()
