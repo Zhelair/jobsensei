@@ -292,7 +292,9 @@ export function AIProvider({ children }) {
       })
     }
 
-    await refreshSecureAccount(accessToken).catch(() => {})
+    // Balance is already supplied in response headers. A status refresh must not
+    // prevent a completed AI response from reaching the caller.
+    void refreshSecureAccount(accessToken).catch(() => {})
     return content
   }
 

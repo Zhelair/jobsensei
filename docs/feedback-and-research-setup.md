@@ -4,6 +4,10 @@ These are local changes. Commit and deploy manually when ready.
 
 Deployment packaging: Vercel Hobby allows 12 serverless functions. Feedback, company research and discovery now share `api/services.js`, with their existing public URLs preserved through `vercel.json` rewrites. Their underscore-prefixed handler files are bundled utilities, not separate endpoints. This leaves 12 deployable endpoint files. A regression test checks the routing and function budget. No SQL or environment-variable changes are needed for this packaging fix.
 
+Current company-research UI uses the configured AI provider directly and no longer calls Tavily. The protected legacy research endpoint remains available for compatibility, but normal company research does not consume web-search credits. Research calls have a two-minute client timeout, hosted DeepSeek calls have a 90-second provider timeout, and account refreshes have a 15-second timeout. Completed AI replies no longer wait for an account-status refresh.
+
+Discover now opens the existing Add form instead of silently saving a company-less card. Where titles contain an explicit company cue, it prefills a reviewable company hint; otherwise the company stays blank for the user to supply. A full JD is not inferred from a search snippet. Empty searches do not overwrite previous results or receive the 15-minute successful-search cache. Source-page dates are displayed separately from unverified LinkedIn posting dates.
+
 1. Run `supabase/service-request-limits.sql` in Supabase SQL Editor.
 2. Set server-only Vercel environment variables:
    - `FEEDBACK_TO_EMAIL`: your desired recipient (not a VITE_ variable).

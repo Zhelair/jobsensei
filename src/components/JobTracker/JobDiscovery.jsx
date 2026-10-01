@@ -3,7 +3,7 @@ import { Search, ExternalLink, Plus, X } from 'lucide-react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAuth } from '../../context/AuthContext'
 import { useProject } from '../../context/ProjectContext'
-import { shortlist } from '../../lib/jobDiscovery'
+import { shortlist, discoveryDate } from '../../lib/jobDiscovery'
 
 export default function JobDiscovery({ applications, onSave }) {
   const { profile, setActiveSection } = useApp()
@@ -28,13 +28,18 @@ export default function JobDiscovery({ applications, onSave }) {
     event.preventDefault()
     if (searching.current) return
     const signature = JSON.stringify(preferences)
-    if (snapshot?.signature === signature && Date.now() - Date.parse(snapshot.checkedAt) < 15 * 60 * 1000) { setNotice('Showing your recent search. Searches refresh after 15 minutes.'); return }
+    if (snapshot?.results?.length && snapshot.signature === signature && Date.now() - Date.parse(snapshot.checkedAt) < 15 * 60 * 1000) { setNotice('Showing your recent search. Searches refresh after 15 minutes.'); return }
     if (!secureSession?.access_token) { setNotice('Sign in to find jobs.'); return }
     searching.current = true; setBusy(true); setNotice('')
     try {
       const response = await fetch('/api/discover-jobs', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secureSession.access_token}` }, body: signature, signal: AbortSignal.timeout(20000) })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Search unavailable.')
+      if (!Array.isArray(data.results)) throw new Error('Search returned an invalid response. Previous results have been kept.')
+      if (!data.results.length && snapshot?.results?.length) {
+        setNotice('No vacancy pages were found for the new search. Your previous search results are still shown below. Try fewer keywords or Any time.')
+        return
+      }
       const nextActivity = { ...activity }
       for (const job of data.results) if (!nextActivity[job.id]) nextActivity[job.id] = { firstSeen: data.checkedAt }
       const next = { ...data, signature, keywords: preferences.keywords, previousCheck: snapshot?.checkedAt || null }
@@ -62,15 +67,15 @@ export default function JobDiscovery({ applications, onSave }) {
       <button type="button" className="btn-ghost text-xs mt-2" onClick={() => { sessionStorage.setItem('js_feedback_source', 'request'); setActiveSection(SECTIONS.ACCOUNT) }}>Missing your job board? Request a source.</button>
     </section>
     {notice && <p role="status" className="card text-sm text-slate-300">{notice}</p>}
-    {snapshot && <div className="flex flex-wrap justify-between gap-3 text-sm text-slate-300"><span>Checked {new Date(snapshot.checkedAt).toLocaleString()} · {jobs.length} shown</span><label><input type="checkbox" checked={hideViewed} onChange={e => setHideViewed(e.target.checked)} /> Hide viewed jobs</label></div>}
-    {snapshot && !jobs.length && <p className="card text-sm text-slate-300">No unseen matches remain in this search. Saved, applied and dismissed listings are hidden.</p>}
+    {snapshot && <div className="flex flex-wrap justify-between gap-3 text-sm text-slate-300"><span>Results for: {snapshot.keywords} · Checked {new Date(snapshot.checkedAt).toLocaleString()} · {jobs.length} shown</span><label><input type="checkbox" checked={hideViewed} onChange={e => setHideViewed(e.target.checked)} /> Hide viewed jobs</label></div>}
+    {snapshot?.results?.length > 0 && !jobs.length && <p className="card text-sm text-slate-300">All results in this search are saved, dismissed, or hidden by your viewed-jobs filter.</p>}
     <div className="grid lg:grid-cols-2 gap-4">{jobs.map(job => <article key={job.id} className="card flex flex-col">
       {(!snapshot.previousCheck || Date.parse(activity[job.id]?.firstSeen) > Date.parse(snapshot.previousCheck)) && <span className="text-teal-400 text-xs mb-2">New since your last check</span>}
       <h3 className="font-display font-bold text-white">{job.title}</h3>
-      <p className="text-slate-300 text-xs mt-2">{new URL(job.url).hostname} · Posting date unavailable{activity[job.id]?.viewed ? ' · Viewed' : ''}</p>
+      <p className="text-slate-300 text-xs mt-2">{new URL(job.url).hostname} · {discoveryDate(job)}{activity[job.id]?.viewed ? ' · Viewed' : ''}</p>
       <p className="text-slate-300 text-sm mt-3 whitespace-pre-wrap">{job.snippet}</p>
       <p className="text-teal-400 text-xs mt-3">{job.matched.length ? `Keyword overlap: ${job.matched.join(', ')}` : 'Search result; no exact keyword overlap in the excerpt.'}</p>
-      <div className="flex flex-wrap gap-2 mt-4"><a className="btn-secondary text-xs" href={job.url} target="_blank" rel="noopener noreferrer" onClick={() => mark(job.id, 'viewed')}><ExternalLink size={14} />Open listing</a><button className="btn-primary text-xs" onClick={() => { onSave(job); setNotice('Saved to Applications. Open the listing to capture its full job description.') }}><Plus size={14} />Save to Applications</button><button className="btn-ghost text-xs" onClick={() => mark(job.id, 'dismissed')}><X size={14} />Dismiss</button></div>
+      <div className="flex flex-wrap gap-2 mt-4"><a className="btn-secondary text-xs" href={job.url} target="_blank" rel="noopener noreferrer" onClick={() => mark(job.id, 'viewed')}><ExternalLink size={14} />Open listing</a><button className="btn-primary text-xs" onClick={() => onSave(job)}><Plus size={14} />Create workspace</button><button className="btn-ghost text-xs" onClick={() => mark(job.id, 'dismissed')}><X size={14} />Dismiss</button></div>
     </article>)}</div>
   </div>
 }

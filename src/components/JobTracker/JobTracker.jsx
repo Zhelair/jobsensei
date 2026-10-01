@@ -1,11 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useProject } from '../../context/ProjectContext'
 import { useAI } from '../../context/AIContext'
-import { useAuth } from '../../context/AuthContext'
-import { fetchCompanyResearch } from '../../lib/research'
 import ResearchSources from '../shared/ResearchSources'
 import JobDiscovery from './JobDiscovery'
-import { jobIdentity } from '../../lib/jobDiscovery'
+import { discoveryDraft } from '../../lib/jobDiscovery'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
@@ -129,7 +127,6 @@ export default function JobTracker() {
   }
 
   const { callAI, isConnected } = useAI()
-  const { secureSession } = useAuth()
 
   const [tab, setTab] = useState(0)
   const [showAdd, setShowAdd] = useState(false)
@@ -224,11 +221,12 @@ export default function JobTracker() {
     if (!newApp.company.trim()) return
     setResearchLoading(true)
     try {
-      const webResearch = await fetchCompanyResearch(newApp.company, newApp.role, secureSession?.access_token)
-      const searchContext = webResearch.context || null
+      const webResearch = { reason: 'ai_only', sources: [], checkedAt: new Date().toISOString() }
+      const searchContext = null
       const raw = await callAI({
         systemPrompt: prompts.companyResearch(newApp.company, newApp.role, searchContext, language),
         messages: [{ role: 'user', content: 'Research this company.' }],
+        signal: AbortSignal.timeout(120000),
         temperature: 0.5,
       })
       const parsed = tryParseJSON(raw)
@@ -236,8 +234,9 @@ export default function JobTracker() {
         setPendingResearch({ ...parsed, _liveData: !!searchContext, _research: { fallback: !searchContext, reason: webResearch.reason, sources: webResearch.sources || [], checkedAt: webResearch.checkedAt } })
         if (parsed.prepNotes) setNewApp(p => ({ ...p, notes: parsed.prepNotes }))
       }
-    } catch {}
-    setResearchLoading(false)
+    } catch (error) {
+      setImportMsg(error.name === 'TimeoutError' ? 'Company research timed out. Please try again.' : 'Company research failed. Please try again.')
+    } finally { setResearchLoading(false) }
   }
 
   function setNotes(updater) {
@@ -755,10 +754,10 @@ export default function JobTracker() {
       )}
 
       {TABS[tab] === 'Discover' && <JobDiscovery key={activeProjectId} applications={applications} onSave={job => {
-        const current = getProjectData('applications') || []
-        if (current.some(app => jobIdentity(app.jdUrl) === job.id)) return
-        const now = new Date().toISOString()
-        updateProjectData('applications', [...current, { ...EMPTY_APPLICATION, id: generateId(), company: '', role: job.title, jdUrl: job.url, notes: `Search excerpt (not the full job description):\n${job.snippet}`, date: now, stageUpdatedAt: now }])
+        setNewApp({ ...EMPTY_APPLICATION, ...discoveryDraft(job) })
+        setPendingResearch(null)
+        setShowAdd(true)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
       }} />}
     </div>
   )
@@ -822,7 +821,6 @@ function EditJobModal({ app, onSave, onClose }) {
 // ── Company Notes View ──────────────────────────────────────────────────────
 function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveNotes, onBack, onUpdateApp }) {
   const { callAI, isConnected } = useAI()
-  const { secureSession } = useAuth()
   const { getProjectData } = useProject()
   const { launchTool, pushAppHistory } = useApp()
   const { language, t } = useLanguage()
@@ -1011,11 +1009,12 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
     setResearchMsg('')
     setResearchMsgTone('info')
     try {
-      const webResearch = await fetchCompanyResearch(app.company, app.role, secureSession?.access_token)
-      const searchContext = webResearch.context || null
+      const webResearch = { reason: 'ai_only', sources: [], checkedAt: new Date().toISOString() }
+      const searchContext = null
       const raw = await callAI({
         systemPrompt: prompts.companyResearch(app.company, app.role, searchContext, language),
         messages: [{ role: 'user', content: 'Research this company.' }],
+        signal: AbortSignal.timeout(120000),
         temperature: 0.5,
       })
       const parsed = tryParseJSON(raw)
@@ -1036,11 +1035,10 @@ function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, onSaveN
         setResearchMsg(t('applications.workspace.research.messages.parseFailed'))
         setResearchMsgTone('error')
       }
-    } catch {
-      setResearchMsg(t('applications.workspace.research.messages.failed'))
+    } catch (error) {
+      setResearchMsg(error.name === 'TimeoutError' ? 'Company research timed out. Please try again.' : t('applications.workspace.research.messages.failed'))
       setResearchMsgTone('error')
-    }
-    setResearching(false)
+    } finally { setResearching(false) }
   }
 
   async function generateCheatSheet() {

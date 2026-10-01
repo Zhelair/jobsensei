@@ -386,6 +386,7 @@ export function AuthProvider({ children }) {
     setLoadingAccount(true)
     try {
       const response = await fetch('/api/account-status', {
+        signal: AbortSignal.timeout(15000),
         cache: 'no-store',
         headers: {
           Authorization: `Bearer ${nextAccessToken}`,

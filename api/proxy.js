@@ -171,6 +171,7 @@ export default async function handler(req, res) {
     }
 
     const deepseekRes = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      signal: AbortSignal.timeout(90000),
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
