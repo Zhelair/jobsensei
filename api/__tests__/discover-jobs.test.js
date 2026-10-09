@@ -1,8 +1,10 @@
 import { beforeEach, afterEach, it, expect, vi } from 'vitest'
 const auth = vi.hoisted(() => ({ authenticateSupabaseUser: vi.fn() }))
 const limits = vi.hoisted(() => ({ reserveServiceRequest: vi.fn(), finishServiceRequest: vi.fn() }))
+const budget = vi.hoisted(() => ({ reserveDiscovery: vi.fn() }))
 vi.mock('../_lib/authBridge.js', () => auth)
 vi.mock('../_lib/serviceRequests.js', () => limits)
+vi.mock('../_lib/discoveryBudget.js', () => budget)
 import handler from '../_discover-jobs.js'
 async function run(body = { keywords: 'Risk analyst', location: 'Sofia' }) {
   const res = { setHeader: vi.fn(), status(code) { this.code = code; return this }, json(value) { this.value = value; return this } }
@@ -14,6 +16,7 @@ beforeEach(() => {
   auth.authenticateSupabaseUser.mockResolvedValue({ user: { id: 'user' } })
   limits.reserveServiceRequest.mockResolvedValue('reserved')
   limits.finishServiceRequest.mockResolvedValue()
+  budget.reserveDiscovery.mockResolvedValue({ status: 'reserved', finish: vi.fn().mockResolvedValue() })
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [{ title: 'Risk analyst', url: 'https://linkedin.com/jobs/view/123', content: 'SQL Sofia' }, { url: 'https://linkedin.com/jobs/search/' }, { url: 'javascript:alert(1)' }] }) }))
 })
 afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals() })
@@ -23,10 +26,15 @@ it('requires authentication and validates sources before spending', async () => 
   expect((await run()).code).toBe(401)
   expect(fetch).not.toHaveBeenCalled()
 })
-it('does not apply app-added search limits even when the legacy limiter would block', async () => {
-  limits.reserveServiceRequest.mockResolvedValue('limited')
-  expect((await run()).code).toBe(200)
-  expect(limits.reserveServiceRequest).not.toHaveBeenCalled()
+it('enforces the dedicated search budget before spending provider requests', async () => {
+  budget.reserveDiscovery.mockResolvedValue({ status: 'limited' })
+  expect((await run()).code).toBe(429)
+  expect(fetch).not.toHaveBeenCalled()
+})
+it('returns server-cached results without spending a provider request', async () => {
+  budget.reserveDiscovery.mockResolvedValue({ status: 'cached', result: { results: [], checkedAt: '2026-10-09' } })
+  expect((await run()).value.cached).toBe(true)
+  expect(fetch).not.toHaveBeenCalled()
 })
 it('makes one bounded basic search and returns only supported vacancy links', async () => {
   const res = await run()

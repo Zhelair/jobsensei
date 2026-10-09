@@ -23,6 +23,8 @@ export default function Settings({ mode = 'settings' }) {
     magicLinkSentTo,
     revokeSecureDevice, revokingDeviceId, loadingAccount, refreshSecureAccount,
     secureSession, secureDevice,
+    signInWithGoogle, deleteSecureAccount, deletingAccount,
+    secureAccountsEnabled,
   } = useAuth()
   const { profile, openOnboarding } = useApp()
   const { activeProject, getProjectData, updateProjectData, exportProject, exportAll, importProjects } = useProject()
@@ -47,6 +49,11 @@ export default function Settings({ mode = 'settings' }) {
   const [secureError, setSecureError] = useState('')
   const [billingPortalLoading, setBillingPortalLoading] = useState(false)
   const [billingPortalError, setBillingPortalError] = useState('')
+  const [subscriptions, setSubscriptions] = useState([])
+  const [accountAction, setAccountAction] = useState(null)
+  const [confirmEmail, setConfirmEmail] = useState('')
+  const [accountActionBusy, setAccountActionBusy] = useState(false)
+  const [deletionPending, setDeletionPending] = useState(false)
   const [importingProjects, setImportingProjects] = useState(false)
   const [projectTransferMessage, setProjectTransferMessage] = useState('')
 
@@ -58,6 +65,53 @@ export default function Settings({ mode = 'settings' }) {
   const projectImportRef = useRef(null)
   const planAccessRef = useRef(null)
   const byokCardRef = useRef(null)
+  const accountDialogRef = useRef(null)
+
+  useEffect(() => {
+    if (!secureSession?.access_token) { setSubscriptions([]); return }
+    let active = true
+    fetch('/api/billing', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secureSession.access_token}` },
+      body: JSON.stringify({ action: 'status' }),
+    }).then(response => response.json()).then(payload => {
+      if (active) setSubscriptions(payload.subscriptions || [])
+    }).catch(() => {})
+    return () => { active = false }
+  }, [secureSession?.access_token, secureAccount?.planExpiresAt])
+
+  useEffect(() => {
+    if (accountAction) accountDialogRef.current?.showModal()
+    else accountDialogRef.current?.close()
+  }, [accountAction])
+
+  useEffect(() => { setDeletionPending(Boolean(secureAccount?.deletionPending)) }, [secureAccount?.deletionPending])
+
+  async function handleGoogleSignIn() {
+    setSecureError('')
+    try { await signInWithGoogle() } catch (error) { setSecureError(error.message) }
+  }
+
+  async function handleAccountAction() {
+    setAccountActionBusy(true)
+    setSecureError('')
+    try {
+      if (accountAction === 'delete') await deleteSecureAccount(confirmEmail)
+      else {
+        const subscription = subscriptions.find(s => s.status === 'active' && s.scheduledChange?.action !== 'cancel')
+        if (!subscription) throw new Error('No active subscription is available to cancel.')
+        const response = await fetch('/api/billing', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secureSession.access_token}` },
+          body: JSON.stringify({ action: 'cancel', subscriptionId: subscription.id }),
+        })
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(payload.error || 'Unable to cancel your subscription.')
+        setSubscriptions(items => items.map(s => s.id === subscription.id ? { ...s, scheduledChange: payload.scheduledChange, status: payload.status } : s))
+      }
+      setAccountAction(null)
+      setConfirmEmail('')
+    } catch (error) { setSecureError(error.message); if (error.deletionPending) setDeletionPending(true) }
+    finally { setAccountActionBusy(false) }
+  }
 
   function formatCreditNumber(value) {
     if (!Number.isFinite(value)) return '-'
@@ -231,6 +285,7 @@ export default function Settings({ mode = 'settings' }) {
       await openProCheckout({
         email: prefillEmail || secureUser?.email || bmacInput.trim(),
         userId: secureUser?.id || '',
+        accessToken: secureSession?.access_token || '',
       })
     } catch (error) {
       setBmacError(error.message || 'Unable to open Paddle checkout right now.')
@@ -454,9 +509,7 @@ export default function Settings({ mode = 'settings' }) {
   const hasPaddleBilling = Boolean(
     secureSignedIn
     && secureSession?.access_token
-    && secureAccount?.planActive
-    && secureAccount?.planTier === 'pro'
-    && String(secureAccount?.planSource || '').toLowerCase() === 'paddle_webhook',
+    && (subscriptions.length > 0 || String(secureAccount?.planSource || '').toLowerCase() === 'paddle_webhook'),
   )
   const approvedDevices = (secureAccount?.devices || []).filter(device => device.isApproved)
   const replacementCooldownUntil = secureAccount?.replacementCooldownUntil || ''
@@ -832,11 +885,17 @@ export default function Settings({ mode = 'settings' }) {
                           <CreditCard size={13} /> {billingPortalLoading ? `${t('settings.manageBillingButton')}...` : t('settings.manageBillingButton')}
                         </button>
                       )}
+                      {subscriptions.some(s => s.status === 'active' && s.scheduledChange?.action !== 'cancel') && (
+                        <button className="btn-ghost text-xs" onClick={() => { setSecureError(''); setAccountAction('cancel') }}>{t('settings.cancelPro')}</button>
+                      )}
                     </div>
                   )}
                   {hasPaddleBilling && (
                     <p className={settingsMutedCopyClass}>{t('settings.manageBillingCopy')}</p>
                   )}
+                  {subscriptions.filter(s => s.scheduledChange?.action === 'cancel').map(s => (
+                    <p key={s.id} className={settingsSupportCopyClass}>{t('settings.switchesFree', { date: formatCreditResetDate(s.scheduledChange.effective_at || s.paidUntil) })}</p>
+                  ))}
                   {billingPortalError && <p className="text-red-400 text-sm leading-relaxed">{billingPortalError}</p>}
                 </div>
               ) : (
@@ -880,6 +939,7 @@ export default function Settings({ mode = 'settings' }) {
                     <Check size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
                   </button>
                   <p className={settingsMutedCopyClass}>{t('settings.unlockInputHint')}</p>
+                  {!secureSignedIn && secureAccountsEnabled && <button onClick={handleGoogleSignIn} className="btn-secondary w-full justify-center"><Globe size={14} /> {t('settings.googleSignIn')}</button>}
                   <p className="text-slate-500 text-sm leading-relaxed">{t('settings.legacyBmacNotice')}</p>
                   {secureSignedIn && (
                     <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-3 py-2.5">
@@ -898,6 +958,10 @@ export default function Settings({ mode = 'settings' }) {
                   <p className="text-red-400 text-sm leading-relaxed">{secureError || statusError || accountError}</p>
                 </div>
               )}
+              {secureSignedIn && <div className="flex flex-wrap gap-2 mt-3">
+                {!hasPlanAccess && <button onClick={handleSecureSignOut} className="btn-ghost text-xs"><LogOut size={13} /> {t('settings.secureAccountSignOut')}</button>}
+                <button className="btn-ghost text-xs text-red-400" onClick={() => { setSecureError(''); setAccountAction('delete') }}>{t('settings.deleteAccount')}</button>
+              </div>}
             </div>
 
           <div className={`${compactAccountCardClass} h-full min-w-0`}>
@@ -1284,6 +1348,23 @@ export default function Settings({ mode = 'settings' }) {
       </div>
       )}
 
+      <dialog ref={accountDialogRef} onCancel={event => { if (accountActionBusy) event.preventDefault(); else setAccountAction(null) }}
+        aria-labelledby="account-action-title" className="card w-[min(92vw,480px)] text-white backdrop:bg-black/70">
+        <h2 id="account-action-title" className="font-display text-xl font-semibold mb-3">{t(accountAction === 'delete' ? 'settings.deleteAccount' : 'settings.cancelPro')}</h2>
+        <p className="text-slate-300 text-sm leading-relaxed mb-4">{t(accountAction === 'delete' ? 'settings.deleteAccountCopy' : 'settings.cancelProCopy')}</p>
+        {accountAction === 'delete' && <>
+          <button className="btn-secondary mb-4" onClick={exportAll}><Download size={14} /> {t('settings.backupBeforeDelete')}</button>
+          <label htmlFor="delete-confirm-email" className="block text-sm mb-2">{t('settings.confirmAccountEmail')}</label>
+          <input id="delete-confirm-email" type="email" autoComplete="off" className="input-field w-full" value={confirmEmail} onChange={e => setConfirmEmail(e.target.value)} />
+        </>}
+        {secureError && <p role="alert" className="text-red-400 text-sm mt-3">{secureError}</p>}
+        <div className="flex flex-wrap justify-end gap-2 mt-5">
+          <button className="btn-secondary" disabled={accountActionBusy || deletingAccount} onClick={() => setAccountAction(null)}>{deletionPending ? t('common.close') : t('settings.keepAccount')}</button>
+          <button className="btn-primary" disabled={accountActionBusy || deletingAccount || (accountAction === 'delete' && confirmEmail.trim().toLowerCase() !== signedInEmail)} onClick={handleAccountAction}>
+            {accountActionBusy ? '…' : t(accountAction === 'delete' ? 'settings.deleteAccount' : 'settings.cancelPro')}
+          </button>
+        </div>
+      </dialog>
     </div>
   )
 }

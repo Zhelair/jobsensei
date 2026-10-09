@@ -10,7 +10,7 @@ export default function JobDiscovery({ applications, onSave }) {
   const { secureSession } = useAuth()
   const { getProjectData, updateProjectData } = useProject()
   const stored = getProjectData('jobDiscovery') || {}
-  const [preferences, setPreferences] = useState(stored.preferences || { keywords: profile?.targetRole || profile?.currentRole || '', location: '', source: 'linkedin', recency: '' })
+  const [preferences, setPreferences] = useState(stored.preferences || { keywords: profile?.targetRole || profile?.currentRole || '', location: '', source: 'linkedin', recency: 'week' })
   const [snapshot, setSnapshot] = useState(stored.snapshot || null)
   const [cache, setCache] = useState(stored.cache || {})
   const [activity, setActivity] = useState(stored.activity || {})
@@ -28,7 +28,7 @@ export default function JobDiscovery({ applications, onSave }) {
   async function search(event) {
     event.preventDefault()
     if (searching.current) return
-    const signature = discoverySignature(preferences)
+    const signature = discoverySignature({ ...preferences, version: 2 })
     const cached = cache[signature] || (snapshot?.signature === signature ? snapshot : null)
     if (cached && Date.now() - Date.parse(cached.checkedAt) < 15 * 60 * 1000) { setSnapshot(cached); setNotice('Showing this search’s cached results. Searches refresh after 15 minutes.'); return }
     if (!secureSession?.access_token) { setNotice('Sign in to find jobs.'); return }
@@ -40,15 +40,16 @@ export default function JobDiscovery({ applications, onSave }) {
       if (!Array.isArray(data.results)) throw new Error('Search returned an invalid response. Previous results have been kept.')
       const nextActivity = { ...activity }
       for (const job of data.results) if (!nextActivity[job.id]) nextActivity[job.id] = { firstSeen: data.checkedAt }
-      const next = { ...data, signature, keywords: preferences.keywords, location: preferences.location, previousCheck: snapshot?.checkedAt || null }
+      const next = { ...data, signature, keywords: preferences.keywords, location: preferences.location, previousCheck: cached?.checkedAt || null }
       const nextCache = Object.fromEntries(Object.entries({ ...cache, [signature]: next }).slice(-8))
       setCache(nextCache); setSnapshot(next); setActivity(nextActivity)
       updateProjectData('jobDiscovery', { preferences, snapshot: next, activity: nextActivity, cache: nextCache })
-      setNotice(data.results.length ? '' : 'No supported vacancy pages were found. Try broader keywords or another source.')
+      setNotice(data.results.length ? '' : preferences.recency ? 'No dated matches were found in this period. Undated listings are excluded; try Any time, broader keywords, or company boards.' : 'No supported vacancy pages were found. Try broader keywords or another source.')
     } catch (error) { setNotice(error.name === 'TimeoutError' ? 'Search timed out. Please try again later.' : error.message) }
     finally { searching.current = false; setBusy(false) }
   }
-  const visibleSnapshot = snapshot?.signature === discoverySignature(preferences) ? snapshot : cache[discoverySignature(preferences)]
+  const visibleSignature = discoverySignature({ ...preferences, version: 2 })
+  const visibleSnapshot = snapshot?.signature === visibleSignature ? snapshot : cache[visibleSignature]
   const jobs = shortlist(visibleSnapshot?.results || [], applications, activity, visibleSnapshot?.keywords || preferences.keywords, hideViewed, visibleSnapshot?.location || preferences.location)
   return <div className="space-y-4">
     <section className="card">
@@ -61,19 +62,19 @@ export default function JobDiscovery({ applications, onSave }) {
           <label className="text-sm text-slate-300">Source<select className="input-field w-full mt-1" value={preferences.source} onChange={e => setPreferences({ ...preferences, source: e.target.value })} disabled={busy}><option value="linkedin">LinkedIn public listings</option><option value="careers">Company boards: Greenhouse / Lever</option></select></label>
           <label className="text-sm text-slate-300">Search recency<select className="input-field w-full mt-1" value={preferences.recency} onChange={e => setPreferences({ ...preferences, recency: e.target.value })} disabled={busy}><option value="">Any time</option><option value="day">Last 24 hours</option><option value="week">Last week</option><option value="month">Last month</option></select></label>
         </div>
-        <p className="text-xs text-slate-300">Recency uses search-index dates, which may differ from vacancy posting dates. Listings can be missing or expired. Confirm details on the original website.</p>
+        <p className="text-xs text-slate-300">Recency uses source-page dates, which may differ from vacancy posting dates. Undated results are excluded when a period is selected. Confirm availability and remote eligibility on the original website.</p>
         <button className="btn-primary" disabled={busy || !preferences.keywords.trim()}><Search size={16} />{busy ? 'Finding jobs…' : 'Find jobs'}</button>
       </form>
-      <p className="text-xs text-slate-300 mt-3">Repeat searches reuse cached results for 15 minutes. Tavily’s monthly search allowance is separate from your AI credits. Only these search preferences are sent; your resume is not uploaded.</p>
+      <p className="text-xs text-slate-300 mt-3">Repeat searches reuse cached results for 15 minutes. Live searches have a safety limit of 20 per hour and 100 per day; provider allowance also applies, separately from AI credits. Only search preferences are sent; your resume is not uploaded.</p>
       <button type="button" className="btn-ghost text-xs mt-2" onClick={() => { sessionStorage.setItem('js_feedback_source', 'request'); setActiveSection(SECTIONS.ACCOUNT) }}>Missing your job board? Request a source.</button>
     </section>
     {notice && <p role="status" className="card text-sm text-slate-300">{notice}</p>}
     {visibleSnapshot && <div className="flex flex-wrap justify-between gap-3 text-sm text-slate-300"><span>Results for: {visibleSnapshot.keywords} · Checked {new Date(visibleSnapshot.checkedAt).toLocaleString()} · {jobs.length} shown</span><label><input type="checkbox" checked={hideViewed} onChange={e => setHideViewed(e.target.checked)} /> Hide viewed jobs</label></div>}
     {visibleSnapshot?.results?.length > 0 && !jobs.length && <p className="card text-sm text-slate-300">All results in this search are saved, dismissed, or hidden by your viewed-jobs filter.</p>}
     <div className="grid lg:grid-cols-2 gap-4">{jobs.map(job => <article key={job.id} className="card flex flex-col">
-      {(!visibleSnapshot.previousCheck || Date.parse(activity[job.id]?.firstSeen) > Date.parse(visibleSnapshot.previousCheck)) && <span className="text-teal-400 text-xs mb-2">New since your last check</span>}
+      {(!visibleSnapshot.previousCheck || Date.parse(activity[job.id]?.firstSeen) > Date.parse(visibleSnapshot.previousCheck)) && <span className="text-teal-400 text-xs mb-2">First found by JobSensei</span>}
       <h3 className="font-display font-bold text-white">{job.title}</h3>
-      <p className="text-slate-300 text-xs mt-2">{new URL(job.url).hostname} · {discoveryDate(job)}{activity[job.id]?.viewed ? ' · Viewed' : ''}</p>
+      <p className="text-slate-300 text-xs mt-2">{new URL(job.url).hostname} · {discoveryDate(job)} · {job.availability === 'open' ? 'Available on employer board when checked' : 'Availability unconfirmed'}{activity[job.id]?.viewed ? ' · Viewed' : ''}</p>
       <p className="text-slate-300 text-sm mt-3 whitespace-pre-wrap">{job.snippet}</p>
       <p className="text-teal-400 text-xs mt-3">{job.matched.length ? `Keyword overlap: ${job.matched.join(', ')}` : 'Search result; no exact keyword overlap in the excerpt.'}</p>
       <div className="flex flex-wrap gap-2 mt-4"><a className="btn-secondary text-xs" href={job.url} target="_blank" rel="noopener noreferrer" onClick={() => mark(job.id, 'viewed')}><ExternalLink size={14} />Open listing</a><button className="btn-primary text-xs" onClick={() => onSave(job)}><Plus size={14} />Create workspace</button><button className="btn-ghost text-xs" onClick={() => mark(job.id, 'dismissed')}><X size={14} />Dismiss</button></div>

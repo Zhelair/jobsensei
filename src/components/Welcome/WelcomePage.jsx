@@ -6,102 +6,14 @@ import { useLanguage } from '../../context/LanguageContext'
 import { THEMES, useTheme } from '../../context/ThemeContext'
 import {
   ArrowRight, CheckCircle2, CreditCard, ExternalLink,
-  Image as ImageIcon, PlayCircle, Briefcase, Search, Sparkles,
 } from 'lucide-react'
 import { openProCheckout } from '../../lib/billing'
-
-function OutcomeCard({ icon: Icon, title, copy, accent, iconTone }) {
-  return (
-    <div className={`card h-full border ${accent}`}>
-      <div className={`w-11 h-11 rounded-2xl border border-white/5 flex items-center justify-center mb-4 ${iconTone}`}>
-        <Icon size={18} className="text-white" />
-      </div>
-      <h3 className="font-display font-semibold text-white text-lg mb-2">{title}</h3>
-      <p className="text-slate-300 text-sm leading-relaxed">{copy}</p>
-    </div>
-  )
-}
-
-function StepCard({ number, title, copy }) {
-  return (
-    <div className="rounded-2xl border border-navy-600 bg-navy-900/60 px-4 py-4 h-full">
-      <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-[0.18em] mb-2">
-        {number}
-      </div>
-      <h3 className="font-display font-semibold text-white mb-1">{title}</h3>
-      <p className="text-slate-400 text-sm leading-relaxed">{copy}</p>
-    </div>
-  )
-}
-
-function PreviewPanel({ title, copy, chips = [], steps = [], isDaylight = false }) {
-  const shellStyle = isDaylight
-    ? {
-        background: 'linear-gradient(160deg, rgba(255,255,255,0.72), rgba(240,248,245,0.92))',
-        boxShadow: '0 18px 40px rgba(80, 60, 40, 0.10)',
-      }
-    : undefined
-
-  return (
-    <div
-      className={`rounded-3xl border p-4 ${isDaylight ? 'border-teal-500/20 bg-navy-900/70' : 'border-navy-600 bg-navy-900/65'}`}
-      style={shellStyle}
-    >
-      <div className="flex flex-wrap gap-1.5 mb-3">
-        {chips.map(chip => (
-          <span key={chip} className="px-2.5 py-1 rounded-full text-[11px] border border-teal-500/20 bg-teal-500/10 text-teal-200">
-            {chip}
-          </span>
-        ))}
-      </div>
-      <div className={`rounded-[28px] border overflow-hidden ${
-        isDaylight
-          ? 'border-teal-500/15 bg-white/80'
-          : 'border-white/5 bg-white/[0.03]'
-      }`}>
-        <div className="aspect-[16/10] px-4 py-4 md:px-5 md:py-5 flex flex-col">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-1">Product preview</div>
-              <div className="text-white text-sm font-display font-semibold">Ready for one short GIF or three screenshots</div>
-            </div>
-            <div className="flex items-center gap-2 text-slate-400">
-              <PlayCircle size={16} />
-              <ImageIcon size={16} />
-            </div>
-          </div>
-          <div className={`mt-4 flex-1 rounded-2xl border p-4 md:p-5 flex flex-col justify-between ${
-            isDaylight
-              ? 'border-teal-500/15 bg-white/75'
-              : 'border-white/5 bg-white/[0.03]'
-          }`}>
-            <div>
-              <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-display mb-2">Flow preview</div>
-              <h3 className="font-display font-semibold text-white text-xl mb-2">{title}</h3>
-              <p className="text-slate-300 text-sm leading-relaxed">{copy}</p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 mt-4">
-              {steps.map((step, index) => (
-                <div key={step} className="rounded-xl border border-white/5 bg-white/[0.04] h-20 px-3 py-3 flex flex-col justify-between">
-                  <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500 font-display">
-                    Step {index + 1}
-                  </div>
-                  <div className="text-sm text-white font-display font-semibold">{step}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+import ProductStory from './ProductStory'
 
 export default function WelcomePage() {
   const { skipOnboarding, openOnboarding, setActiveSection } = useApp()
   const { unlockAccess } = useAI()
-  const { secureUser, secureAccount, secureAccountsEnabled } = useAuth()
+  const { secureUser, secureAccount, secureAccountsEnabled, secureSession, signInWithGoogle } = useAuth()
   const { language, t } = useLanguage()
   const { theme } = useTheme()
 
@@ -206,6 +118,7 @@ export default function WelcomePage() {
       await openProCheckout({
         email: accessInput.trim(),
         userId: secureUser?.id || '',
+        accessToken: secureSession?.access_token || '',
       })
     } catch (error) {
       setAccessError(error.message || 'Unable to open Paddle checkout right now.')
@@ -240,19 +153,30 @@ export default function WelcomePage() {
         <div className="relative grid xl:grid-cols-[minmax(0,1.02fr)_minmax(360px,0.98fr)] gap-6 items-start">
           <div>
             <h1 className="font-display font-bold text-white text-3xl md:text-5xl leading-tight">
-              {t('welcome.title')}
+              {t('welcome.productTitle')}
             </h1>
             <p className="text-slate-300 text-base md:text-lg leading-relaxed mt-4 max-w-3xl">
-              {t('welcome.subtitle')}
+              {t('welcome.productSubtitle')}
             </p>
 
             <div className="flex flex-wrap gap-3 mt-6">
-              <button onClick={skipOnboarding} className="btn-primary text-sm md:text-base">
-                {t('welcome.ctaSkip')}
+              <button onClick={focusAccess} className="btn-primary text-sm md:text-base">
+                {t('onboarding.freeCta')}
               </button>
+              <button onClick={skipOnboarding} className="btn-secondary text-sm md:text-base">{t('welcome.exploreWorkspace')}</button>
             </div>
+            <p className="text-slate-400 text-sm leading-relaxed mt-4">{t('welcome.localPrivacy')}</p>
           </div>
 
+          <figure className="rounded-3xl border border-navy-600 bg-navy-950/50 p-3 md:p-4">
+            <img src="/product-previews/workspace.png" alt={t('welcome.chapter.roles.title')} className="w-full rounded-2xl border border-navy-600" width="1040" height="620" />
+            <figcaption className="text-slate-400 text-xs leading-relaxed mt-3">{t('welcome.sampleCaption')}</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <ProductStory />
+      <section aria-label={t('welcome.accessTitle')}>
           <div ref={accessSectionRef} className="rounded-3xl border border-white/5 bg-white/[0.03] p-5 md:p-6">
             <div className="text-slate-500 text-xs font-display font-semibold uppercase tracking-[0.16em] mb-2">
               {t('welcome.accessKicker')}
@@ -299,6 +223,10 @@ export default function WelcomePage() {
               </button>
             </div>
 
+            {!secureUser && secureAccountsEnabled && <button className="btn-secondary w-full justify-center mt-3" onClick={async () => {
+              try { await signInWithGoogle() } catch (error) { setAccessError(error.message) }
+            }}>{t('settings.googleSignIn')}</button>}
+            <p className="text-slate-400 text-sm mt-3">{t('welcome.localPrivacy')}</p>
             <div className="grid gap-3 mt-5 md:grid-cols-3">
               {accessRoutes.map(route => (
                 <div key={route.key} className="rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-4">
@@ -330,53 +258,6 @@ export default function WelcomePage() {
             {accessNotice && <p className="text-green-400 text-sm leading-relaxed mt-3">{accessNotice}</p>}
             {accessError && <p className="text-red-400 text-sm leading-relaxed mt-3">{accessError}</p>}
           </div>
-        </div>
-      </section>
-
-      <section className="grid md:grid-cols-3 gap-4">
-        <OutcomeCard
-          icon={Sparkles}
-          title={t('welcome.outcomeTailorTitle')}
-          copy={t('welcome.outcomeTailorCopy')}
-          accent="border-teal-500/20 bg-teal-500/6"
-          iconTone="bg-teal-500/10"
-        />
-        <OutcomeCard
-          icon={Search}
-          title={t('welcome.outcomePrepTitle')}
-          copy={t('welcome.outcomePrepCopy')}
-          accent="border-indigo-500/20 bg-indigo-500/6"
-          iconTone="bg-indigo-500/10"
-        />
-        <OutcomeCard
-          icon={Briefcase}
-          title={t('welcome.outcomeTrackTitle')}
-          copy={t('welcome.outcomeTrackCopy')}
-          accent="border-yellow-500/20 bg-yellow-500/6"
-          iconTone="bg-yellow-500/10"
-        />
-      </section>
-
-      <section className="card">
-        <PreviewPanel
-          title={t('welcome.previewPrimaryTitle')}
-          copy={t('welcome.previewPrimaryCopy')}
-          chips={[t('welcome.previewChipRole'), t('welcome.previewChipNotes'), t('welcome.previewChipTracker')]}
-          steps={[t('welcome.previewStepRole'), t('welcome.previewStepResearch'), t('welcome.previewStepPrep')]}
-          isDaylight={isDaylight}
-        />
-      </section>
-
-      <section className="card">
-        <div className="text-teal-300 text-[11px] font-display font-semibold uppercase tracking-[0.18em] mb-2">
-          {t('welcome.howKicker')}
-        </div>
-        <h2 className="font-display font-semibold text-white text-2xl mb-4">{t('welcome.howTitle')}</h2>
-        <div className="grid md:grid-cols-3 gap-4">
-          <StepCard number="1" title={t('welcome.stepResumeTitle')} copy={t('welcome.stepResumeCopy')} />
-          <StepCard number="2" title={t('welcome.stepJobTitle')} copy={t('welcome.stepJobCopy')} />
-          <StepCard number="3" title={t('welcome.stepAiTitle')} copy={t('welcome.stepAiCopy')} />
-        </div>
       </section>
 
       <section className="card flex flex-wrap items-center gap-2">

@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/billing", "destination": "/api/services?service=billing" },
     { "source": "/api/feedback", "destination": "/api/services?service=feedback" },
     { "source": "/api/research", "destination": "/api/services?service=research" },
     { "source": "/api/discover-jobs", "destination": "/api/services?service=discover-jobs" },

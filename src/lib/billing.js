@@ -84,7 +84,7 @@ export function openBmacCheckout() {
 export async function openProCheckout({
   email = '',
   userId = '',
-  customData = {},
+  accessToken = '',
 } = {}) {
   const normalizedEmail = String(email || '').trim()
   const normalizedUserId = String(userId || '').trim()
@@ -95,21 +95,17 @@ export async function openProCheckout({
   }
 
   const Paddle = await ensurePaddle()
+  if (!accessToken || !normalizedUserId) throw new Error('Sign in first to attach Pro to your JobSensei account.')
+  const response = await fetch('/api/billing', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ action: 'checkout' }),
+  })
+  const payload = await response.json().catch(() => ({}))
+  if (!response.ok || !payload.transactionId) throw new Error(payload.error || 'Unable to start checkout.')
 
   Paddle.Checkout.open({
-    items: [
-      {
-        priceId: PADDLE_PRO_PRICE_ID,
-        quantity: 1,
-      },
-    ],
+    transactionId: payload.transactionId,
     ...(normalizedEmail ? { customer: { email: normalizedEmail } } : {}),
-    customData: {
-      source: 'jobsensei_webapp',
-      planTier: 'pro',
-      ...(normalizedUserId ? { userId: normalizedUserId } : {}),
-      ...customData,
-    },
     settings: {
       successUrl: getSuccessUrl(),
     },

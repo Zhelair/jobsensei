@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useAI } from '../../context/AIContext'
 import { SECTIONS, useApp } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
+import { useAuth } from '../../context/AuthContext'
 import { CreditCard, X, Check, ExternalLink } from 'lucide-react'
 import { openProCheckout } from '../../lib/billing'
 
@@ -9,6 +10,7 @@ export default function PaywallModal() {
   const { showPaywall, closePaywall, unlockAccess } = useAI()
   const { setActiveSection } = useApp()
   const { t } = useLanguage()
+  const { secureUser, secureSession } = useAuth()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -46,6 +48,8 @@ export default function PaywallModal() {
     try {
       await openProCheckout({
         email: email.trim(),
+        userId: secureUser?.id,
+        accessToken: secureSession?.access_token,
       })
     } catch (e) {
       setError(e.message || 'Unable to open Paddle checkout right now.')

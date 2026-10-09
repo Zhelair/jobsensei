@@ -2,6 +2,7 @@
 -- Run this on an existing Supabase project that already has secure-auth-bridge.sql applied.
 
 create extension if not exists pgcrypto;
+alter table public.accounts add column if not exists deletion_requested_at timestamptz;
 
 alter table public.accounts
   add column if not exists plan_tier text check (plan_tier in ('free', 'pro'));
@@ -55,7 +56,7 @@ begin
     v_should_reset := true;
   else
     v_should_reset := coalesce(old.plan_tier, '') is distinct from coalesce(new.plan_tier, '')
-      or coalesce(old.plan_expires_at, 'epoch'::timestamptz) is distinct from coalesce(new.plan_expires_at, 'epoch'::timestamptz);
+      or coalesce(old.credit_period_started_at, 'epoch'::timestamptz) is distinct from coalesce(new.credit_period_started_at, 'epoch'::timestamptz);
   end if;
 
   v_anchor := coalesce(new.credit_period_started_at, new.linked_at, new.created_at, v_now);
@@ -170,6 +171,20 @@ begin
   if v_account.plan_status not in ('active', 'grace') then
     return query select false, coalesce(v_account.credit_balance, 0), 'inactive_plan', v_account.credit_period_started_at, v_account.credit_period_ends_at;
     return;
+  end if;
+
+  if v_account.deletion_requested_at is not null then
+    return query select false, coalesce(v_account.credit_balance, 0), 'account_deleting', v_account.credit_period_started_at, v_account.credit_period_ends_at;
+    return;
+  end if;
+  if v_account.plan_tier = 'pro' and (
+    v_account.plan_expires_at <= v_now or
+    (v_account.plan_expires_at is null and v_account.plan_source in ('bmac_webhook','paddle_webhook')
+      and coalesce(v_account.credit_period_ends_at, v_now) <= v_now)
+  ) then
+    update public.accounts set plan_tier='free', plan_source='free_magic_link', plan_expires_at=null,
+      credit_balance=465, credit_period_started_at=v_now, credit_period_ends_at=v_now+interval '31 days'
+      where user_id=p_user_id returning * into v_account;
   end if;
 
   v_allowance := case when coalesce(v_account.plan_tier, 'pro') = 'free' then 465 else 25110 end;

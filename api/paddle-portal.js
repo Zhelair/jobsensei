@@ -5,17 +5,6 @@ import {
   setDefaultCorsHeaders,
 } from './_lib/authBridge.js'
 
-function parseGrantMetadata(metadata) {
-  if (!metadata) return {}
-  if (typeof metadata === 'object') return metadata
-
-  try {
-    return JSON.parse(metadata)
-  } catch {
-    return {}
-  }
-}
-
 export default async function handler(req, res) {
   setDefaultCorsHeaders(req, res)
 
@@ -32,30 +21,13 @@ export default async function handler(req, res) {
 
   try {
     const supabase = createSupabaseAdminClient()
-    const { data: grants, error: grantError } = await supabase
-      .from('plan_grants')
-      .select('metadata, created_at')
-      .eq('user_id', user.id)
-      .eq('grant_type', 'paddle_webhook')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(5)
-
-    if (grantError) {
-      throw grantError
-    }
-
-    const grantMetadata = (grants || [])
-      .map(grant => parseGrantMetadata(grant.metadata))
-      .find(metadata => metadata?.customerId || metadata?.customer_id)
-
-    const customerId = String(
-      grantMetadata?.customerId
-      || grantMetadata?.customer_id
-      || '',
-    ).trim()
+    const { data: subscriptions, error: subscriptionError } = await supabase
+      .from('billing_subscriptions').select('customer_id')
+      .eq('user_id', user.id).order('last_event_at', { ascending: false }).limit(1)
+    if (subscriptionError) throw subscriptionError
+    const customerId = subscriptions?.[0]?.customer_id || ''
     if (!customerId) {
-      return res.status(404).json({ error: 'No active Paddle subscription was found for this JobSensei account.' })
+      return res.status(404).json({ error: 'No Paddle subscription was found for this JobSensei account.' })
     }
 
     const response = await fetch(`${apiBaseUrl}/customers/${customerId}/portal-sessions`, {

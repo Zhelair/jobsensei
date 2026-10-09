@@ -23,10 +23,29 @@ export function shortlist(results, applications, activity, keywords, hideViewed 
 }
 
 const words = text => String(text || '').toLowerCase().match(/[\p{L}\p{N}]+/gu) || []
+const normalizeRole = text => String(text || '').toLowerCase()
+  .replace(/anti[ -]money[ -]laundering/g, 'aml')
+  .replace(/know[ -]your[ -]customer/g, 'kyc')
+  .replace(/investigations?|investigators?|investigating/g, 'investigation')
+  .replace(/analysts?|analytics/g, 'analyst')
+  .replace(/compliance officer/g, 'compliance')
+
+export function isDiscoveryExpired(job) {
+  return /\b(no longer accepting applications|position (?:has been |is )?filled|job (?:has )?expired|vacancy (?:is )?closed)\b/i.test(`${job.title} ${job.snippet}`)
+}
+
+export function withinDiscoveryRecency(job, recency, now = Date.now()) {
+  if (!recency) return true
+  const days = { day: 1, week: 7, month: 31 }[recency]
+  const dated = Date.parse(job.postedAt || job.sourceDate)
+  // Unknown dates are not advertised as recent matches.
+  return Number.isFinite(dated) && dated <= now && dated >= now - days * 86400000
+}
 export function matchesDiscovery(job, keywords, location = '') {
   // Related-job recommendations in search excerpts must not establish role fit.
-  const title = words(discoveryDraft(job).role)
-  const alternatives = keywords.split(',').map(words).filter(tokens => tokens.length)
+  if (isDiscoveryExpired(job)) return false
+  const title = words(normalizeRole(discoveryDraft(job).role))
+  const alternatives = keywords.split(',').map(term => words(normalizeRole(term))).filter(tokens => tokens.length)
   const matchWord = (token, candidates) => candidates.some(word => word === token || word === `${token}s` || `${word}s` === token)
   if (!alternatives.some(tokens => tokens.every(token => matchWord(token, title)))) return false
   if (!location.trim()) return true
@@ -54,12 +73,15 @@ export function discoveryDraft(job) {
 
 export function discoveryQuery(keywords, location, source) {
   const roles = keywords.split(',').map(term => term.trim()).filter(Boolean).slice(0, 8)
-  const terms = roles.length > 1 ? `(${roles.map(term => `"${term.replace(/"/g, '')}"`).join(' OR ')})` : keywords.trim()
+    .flatMap(term => /investigations?/i.test(term)
+      ? [term, term.replace(/investigations?/i, 'investigator')]
+      : /^aml$/i.test(term) ? [term, 'anti money laundering'] : [term])
+  const terms = roles.length > 1 ? `(${[...new Set(roles)].map(term => `"${term.replace(/"/g, '')}"`).join(' OR ')})` : roles[0] || keywords.trim()
   return `${source === 'linkedin' ? 'site:linkedin.com/jobs/view/ ' : ''}${terms} ${location.trim()} job vacancy`
 }
 
 export function discoveryDate(job) {
   if (job.postedAt && Number.isFinite(Date.parse(job.postedAt))) return `Posted ${new Date(job.postedAt).toLocaleDateString()}`
-  if (job.sourceDate && Number.isFinite(Date.parse(job.sourceDate))) return `Source page dated ${new Date(job.sourceDate).toLocaleDateString()} · LinkedIn posting date unconfirmed`
+  if (job.sourceDate && Number.isFinite(Date.parse(job.sourceDate))) return `Source page dated ${new Date(job.sourceDate).toLocaleDateString()} · ${job.id?.startsWith('linkedin:') || !job.id ? 'LinkedIn posting date unconfirmed' : 'Posting date unconfirmed'}`
   return 'Posting date unavailable'
 }

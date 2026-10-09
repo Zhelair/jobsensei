@@ -1,21 +1,12 @@
 import {
-  canSendCustomAuthEmails,
-  createMagicLinkForEmail,
-  createSupabaseAdminClient,
-  extractPaddleGrantDetails,
-  fetchPaddleCustomerEmail,
-  getPaddleSignatureHeader,
-  getPaddleWebhookConfig,
-  getRawRequestBodyString,
-  getSecureSettingsUrl,
-  isPaddleWebhookConfigured,
-  sendMagicLinkEmail,
-  setDefaultCorsHeaders,
-  upsertPaddlePlanGrant,
+  createSupabaseAdminClient, getPaddleSignatureHeader, getPaddleWebhookConfig,
+  getRawRequestBodyString, isPaddleWebhookConfigured, setDefaultCorsHeaders,
   verifyPaddleWebhookSignature,
 } from './_lib/authBridge.js'
+import { processPaddleEvent } from './_lib/paddleBilling.js'
 
 const SUBSCRIPTION_EVENTS = new Set([
+  'transaction.completed',
   'subscription.created',
   'subscription.activated',
   'subscription.trialing',
@@ -59,64 +50,12 @@ export default async function handler(req, res) {
       })
     }
 
-    const customerEmail = await fetchPaddleCustomerEmail({
-      customerId: payload?.data?.customer_id,
-    })
-    const grantDetails = extractPaddleGrantDetails(payload, { customerEmail })
+    // Provisioning is atomic, paid-period-based and bound to a server checkout.
+    // The legacy email-matched provisioning path is deliberately not used.
+    const result = await processPaddleEvent(createSupabaseAdminClient(), payload)
+    return res.status(200).json({ ok: true, ...result })
 
-    if (!grantDetails.email) {
-      return res.status(400).json({ error: 'Webhook payload did not include a purchaser email.' })
-    }
 
-    if (!grantDetails.shouldGrantAccess && grantDetails.status === 'active') {
-      return res.status(202).json({
-        ok: true,
-        skipped: true,
-        reason: 'Webhook event did not match the configured Paddle product or price allow-list.',
-        eventType: grantDetails.eventType,
-        identifiers: grantDetails.identifiers,
-        hint: 'Update PADDLE_ALLOWED_PRODUCT_IDS / PRICE_IDS / PRODUCT_NAMES / PRICE_NAMES if this purchase should unlock JobSensei.',
-      })
-    }
-
-    const supabase = createSupabaseAdminClient()
-    const { grant, userId, created, statusChanged } = await upsertPaddlePlanGrant({
-      supabase,
-      email: grantDetails.email,
-      externalRef: grantDetails.externalRef,
-      status: grantDetails.status,
-      metadata: grantDetails.metadata,
-    })
-
-    let emailed = false
-    if (grantDetails.status === 'active' && canSendCustomAuthEmails() && (created || statusChanged)) {
-      const redirectTo = getSecureSettingsUrl(req)
-      const magicLink = await createMagicLinkForEmail({
-        email: grantDetails.email,
-        redirectTo,
-        data: {
-          auth_source: 'paddle_webhook',
-          payment_provider: 'paddle',
-        },
-      })
-
-      await sendMagicLinkEmail({
-        email: grantDetails.email,
-        magicLink,
-        redirectTo,
-        source: 'purchase_claim',
-      })
-
-      emailed = true
-    }
-
-    return res.status(200).json({
-      ok: true,
-      grantId: grant.id,
-      emailed,
-      linkedUserId: userId,
-      status: grant.status,
-    })
   } catch (err) {
     console.error('paddle webhook failed:', err)
     return res.status(500).json({ error: 'Unable to process the Paddle webhook right now.' })
