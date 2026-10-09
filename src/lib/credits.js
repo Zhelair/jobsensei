@@ -91,8 +91,8 @@ export function getCreditSnapshot({ secureAccount, bmacToken, apiKey }) {
     remainingCredits: balanceKnown ? Math.max(0, remainingCredits) : monthlyCredits,
     remainingRequests: balanceKnown ? Math.max(0, Math.floor(remainingCredits / HOSTED_REQUEST_CREDITS)) : requestsIncluded,
     resetAt,
-    statusDate: hostedTier === 'pro' ? (planExpiresAt || resetAt) : resetAt,
-    statusDateKind: hostedTier === 'pro' ? 'active_until' : 'reset',
+    statusDate: planExpiresAt || resetAt,
+    statusDateKind: hostedTier === 'pro' && planExpiresAt ? 'active_until' : 'reset',
     balanceKnown,
     upgradeRecommended: hostedTier !== 'pro',
   }

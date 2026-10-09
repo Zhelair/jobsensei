@@ -125,7 +125,7 @@ begin
     v_should_reset := true;
   else
     v_should_reset := coalesce(old.plan_tier, '') is distinct from coalesce(new.plan_tier, '')
-      or coalesce(old.plan_expires_at, 'epoch'::timestamptz) is distinct from coalesce(new.plan_expires_at, 'epoch'::timestamptz);
+      or coalesce(old.credit_period_started_at, 'epoch'::timestamptz) is distinct from coalesce(new.credit_period_started_at, 'epoch'::timestamptz);
   end if;
 
   v_anchor := coalesce(new.credit_period_started_at, new.linked_at, new.created_at, v_now);

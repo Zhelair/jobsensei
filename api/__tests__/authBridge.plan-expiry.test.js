@@ -269,4 +269,53 @@ describe('ensureSecureAccountAccess accounts-first flow', () => {
     expect(result.account).toEqual(existingAccount)
     expect(result.claimedGrantCount).toBe(0)
   })
+
+  it.each([
+    ['one millisecond before', '2026-06-19T11:59:59.999Z', 'pro'],
+    ['exactly at', '2026-06-19T12:00:00.000Z', 'free'],
+    ['one millisecond after', '2026-06-19T12:00:00.001Z', 'free'],
+  ])('enforces explicit Pro expiry %s the boundary', async (_, clock, expectedTier) => {
+    vi.setSystemTime(new Date(clock))
+    const supabase = createSecureAccountSupabaseMock({ account: {
+      email: 'buyer@example.com', plan_status: 'active', plan_source: 'bmac_webhook',
+      plan_tier: 'pro', plan_expires_at: '2026-06-19T12:00:00.000Z',
+      credit_balance: 52473,
+      linked_at: '2026-05-19T12:00:00.000Z', created_at: '2026-05-19T12:00:00.000Z',
+      credit_period_started_at: '2026-05-19T12:00:00.000Z',
+      credit_period_ends_at: '2026-06-19T12:00:00.000Z',
+    } })
+    const result = await ensureSecureAccountAccess({ supabase,
+      user: { id: 'user-1', email: 'buyer@example.com' } })
+    expect(result.account.plan_tier).toBe(expectedTier)
+    expect(result.account.credit_balance).toBe(expectedTier === 'free' ? FREE_MONTHLY_CREDITS : 52473)
+    expect(supabase.calls.accountUpserts).toHaveLength(expectedTier === 'free' ? 1 : 0)
+  })
+
+  it.each([null, 'invalid-date'])('expires finite legacy Pro with overdue credits and plan expiry %s', async expiry => {
+    vi.setSystemTime(new Date('2026-10-09T17:30:00.000Z'))
+    const existingAccount = {
+      email: 'buyer@example.com', plan_status: 'active', plan_source: 'bmac_webhook',
+      plan_tier: 'pro', plan_expires_at: expiry, credit_balance: 88888,
+      linked_at: '2026-06-27T10:08:35.713Z', created_at: '2026-06-27T10:08:35.713Z',
+      credit_period_started_at: '2026-06-27T10:08:35.713Z',
+      credit_period_ends_at: '2026-07-28T10:08:35.713Z',
+    }
+    const supabase = createSecureAccountSupabaseMock({ account: existingAccount })
+    const result = await ensureSecureAccountAccess({ supabase,
+      user: { id: 'user-1', email: 'buyer@example.com' } })
+    expect(result.account.plan_tier).toBe('free')
+    expect(result.account.credit_balance).toBe(FREE_MONTHLY_CREDITS)
+    expect(supabase.calls.accountUpserts).toHaveLength(1)
+  })
+  it('repairs a future finite legacy expiry without refilling the existing balance', async () => {
+    const supabase = createSecureAccountSupabaseMock({ account: {
+      email: 'buyer@example.com', plan_status: 'active', plan_source: 'bmac_webhook', plan_tier: 'pro',
+      plan_expires_at: null, credit_balance: 52473,
+      linked_at: '2026-06-01T12:00:00Z', created_at: '2026-06-01T12:00:00Z',
+      credit_period_started_at: '2026-06-01T12:00:00Z', credit_period_ends_at: '2026-07-02T12:00:00Z',
+    } })
+    const result = await ensureSecureAccountAccess({ supabase, user: { id: 'user-1', email: 'buyer@example.com' } })
+    expect(result.account.plan_expires_at).toBe('2026-07-02T12:00:00.000Z')
+    expect(result.account.credit_balance).toBe(52473)
+  })
 })

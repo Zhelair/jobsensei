@@ -1,3 +1,5 @@
+import launchTranslations from './launchTranslations.js'
+
 const localizationPatches = {
   en: {
     'tour.projects.body': 'Projects keep each job search separate, and saved AI results stay inside the selected project. Use New Project for a fresh workspace.',
@@ -11555,6 +11557,56 @@ Object.entries(welcomePagePatches).forEach(([locale, patch]) => {
 Object.entries(accountGuidePatches).forEach(([locale, patch]) => {
   mergeFlattenedLocalizationPatch(locale, patch)
 })
+
+const accountLifecycleCopy = {
+  'settings.googleSignIn': 'Continue with Google',
+  'settings.cancelPro': 'Cancel Pro — switch to Free',
+  'settings.deleteAccount': 'Delete account',
+  'settings.keepAccount': 'Keep account',
+  'settings.backupBeforeDelete': 'Export backup',
+  'settings.confirmAccountEmail': 'Type your signed-in email',
+  'settings.switchesFree': 'Pro switches to Free on {date}.',
+  'settings.cancelProCopy': 'Cancel renewal and keep Pro until your paid period ends. Your account and local workspaces stay.',
+  'settings.deleteAccountCopy': 'Deleting cancels Paddle subscriptions immediately and removes your account, device approvals and hosted credits. Export a backup first. Local workspaces remain in this browser; use the existing Clear data action in Settings to remove them. Required billing records may be retained. Sign in again before deleting.',
+  'welcome.localPrivacy': 'Resumes and applications stay in this browser. Sign-in manages AI access and devices; it does not sync your workspace. Export backups in Settings.',
+}
+Object.assign(localizationPatches.en, accountLifecycleCopy)
+Object.assign(localizationPatches.en, {
+  'settings.upgradeViaBmac': 'Upgrade to Pro',
+  'settings.jobsenseiAccessCopy': 'Start on Free and keep one JobSensei account for Pro access, AI credits and approved devices.',
+})
+
+Object.assign(localizationPatches.en, {
+  'welcome.productTitle': 'Prepare for your next role—from finding a job to comparing offers.',
+  'welcome.productSubtitle': 'Bring your resume, find or capture roles, check your fit, study skill gaps and practise interviews by voice or text—all in your JobSensei workspace.',
+  'welcome.exploreWorkspace': 'Explore the workspace',
+  'welcome.storyTitle': 'Your experience. Your next role. A clearer path between them.',
+  'welcome.storyIntro': 'Follow the workflow, or use the tools you need. Your preparation stays attached to each application.',
+  'welcome.screenTour': 'Inside JobSensei',
+  'welcome.playTour': 'Play screen tour',
+  'welcome.pauseTour': 'Pause tour',
+  'welcome.sampleCaption': 'Real JobSensei screens with fictional sample data. Shown in the Dark theme.',
+  'welcome.previousChapter': 'Previous chapter',
+  'welcome.nextChapter': 'Next chapter',
+  'welcome.languagesTitle': 'Prepare in your language',
+  'welcome.voiceNote': 'Nine interface languages. Voice input and playback depend on your browser and available device voices; text works alongside voice.',
+  'welcome.chapter.experience.title': 'Start with your experience',
+  'welcome.chapter.experience.copy': 'Upload your resume as TXT or PDF and keep your background in your project. Your saved resume helps the tools work with your experience and the role you are preparing for.',
+  'welcome.chapter.roles.title': 'Find roles. Keep every application in view.',
+  'welcome.chapter.roles.copy': 'Discover indexed jobs online or capture a role you already found. Save the job description, follow application stages and keep progress in a dedicated workspace. Always confirm listing availability on the original site.',
+  'welcome.chapter.research.title': 'Go into the conversation prepared',
+  'welcome.chapter.research.copy': 'Keep company notes, people you spoke to and questions to ask beside the job. AI can draft company research and summarise your notes; verify current company facts before relying on them.',
+  'welcome.chapter.application.title': 'Understand your fit. Strengthen your application.',
+  'welcome.chapter.application.copy': 'Use gap analysis, application scoring and red-flag checks. Review your resume through ATS and recruiter lenses, tailor cover letters, audit LinkedIn and explain transferable skills. Visual design review uses a compatible vision-capable BYOK model.',
+  'welcome.chapter.learning.title': 'Turn a missing skill into a learning plan',
+  'welcome.chapter.learning.copy': 'Move from a gap analysis into a study topic. Ask the tutor questions by text or voice, practise with quizzes, save notes and cheat cards, and revisit topics with scheduled reviews.',
+  'welcome.chapter.interview.title': 'Practise a real interview conversation',
+  'welcome.chapter.interview.copy': 'Talk to the AI interviewer or type your answers. Practise HR, technical, competency and stress interviews in Sensei or Drill mode. Prepare predicted questions, STAR stories and your pitch, then review feedback and saved sessions.',
+  'welcome.chapter.offers.title': 'Follow through. Compare what comes next.',
+  'welcome.chapter.offers.copy': 'Draft your post-interview follow-up and return to saved preparation. Compare offers across salary, growth, culture, work-life balance, benefits and flexibility, with your own weights and AI-assisted advice.',
+})
+
+Object.entries(launchTranslations).forEach(([locale, patch]) => Object.assign(localizationPatches[locale], patch))
 
 export default localizationPatches
 

@@ -1,5 +1,20 @@
 import { expect, it } from 'vitest'
-import { jobIdentity, shortlist, discoveryDraft, discoveryQuery, discoveryDate, matchesDiscovery, discoverySignature } from './jobDiscovery'
+import { jobIdentity, shortlist, discoveryDraft, discoveryQuery, discoveryDate, matchesDiscovery, discoverySignature, withinDiscoveryRecency } from './jobDiscovery'
+
+it('matches investigation and AML title variants without borrowing role fit from snippets', () => {
+  expect(matchesDiscovery({ title: 'German Speaking Fraud Investigator' }, 'Investigations')).toBe(true)
+  expect(matchesDiscovery({ title: 'Anti-Money Laundering Analyst' }, 'AML')).toBe(true)
+  expect(matchesDiscovery({ title: 'Sales Manager', snippet: 'AML jobs nearby' }, 'AML')).toBe(false)
+  expect(matchesDiscovery({ title: 'Fraud Analyst', snippet: 'No longer accepting applications' }, 'Fraud')).toBe(false)
+})
+it('excludes old, unknown and future dates from recent searches', () => {
+  const now = Date.parse('2026-10-09T12:00:00Z')
+  expect(withinDiscoveryRecency({ sourceDate: '2026-10-08' }, 'week', now)).toBe(true)
+  expect(withinDiscoveryRecency({ sourceDate: '2026-06-08' }, 'week', now)).toBe(false)
+  expect(withinDiscoveryRecency({}, 'week', now)).toBe(false)
+  expect(withinDiscoveryRecency({ sourceDate: '2027-01-01' }, 'week', now)).toBe(false)
+  expect(withinDiscoveryRecency({}, '', now)).toBe(true)
+})
 
 it('deduplicates LinkedIn country and tracking URLs without accepting lookalikes or search pages', () => {
   expect(jobIdentity('https://bg.linkedin.com/jobs/view/risk-analyst-123456?trackingId=x')).toBe('linkedin:123456')
@@ -29,7 +44,7 @@ it('prefills reviewable company/role hints without mistaking snippets for a full
   expect(discoveryDraft({ title: 'Financial Crime Analyst', url: '', snippet: '' }).company).toBe('')
 })
 it('treats comma-separated roles as alternatives and does not invent posting dates', () => {
-  expect(discoveryQuery('Fraud analyst, Compliance, AML,', 'Sofia', 'linkedin')).toContain('("Fraud analyst" OR "Compliance" OR "AML")')
+  expect(discoveryQuery('Fraud analyst, Compliance, AML,', 'Sofia', 'linkedin')).toContain('"Fraud analyst" OR "Compliance" OR "AML" OR "anti money laundering"')
   expect(discoveryDate({ sourceDate: '2026-10-01' })).toContain('LinkedIn posting date unconfirmed')
   expect(discoveryDate({ sourceDate: 'invalid' })).toBe('Posting date unavailable')
 })

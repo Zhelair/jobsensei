@@ -237,7 +237,10 @@ export function AuthProvider({ children }) {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        // bootstrapSession below owns callback exchange. Automatic detection
+        // would race it and attempt to consume a one-use PKCE code twice.
+        detectSessionInUrl: false,
+        flowType: 'pkce',
       },
     })
     setSupabase(client)
@@ -524,6 +527,15 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function signInWithGoogle() {
+    if (!supabase) throw new Error('Secure sign-in is not enabled yet.')
+    rememberPostAuthSection('account')
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google', options: { redirectTo: getMagicLinkRedirectUrl(), scopes: 'openid email profile' },
+    })
+    if (error) throw error
+  }
+
   async function signOutSecure() {
     if (!supabase) return
     await supabase.auth.signOut()
@@ -553,7 +565,9 @@ export function AuthProvider({ children }) {
       const payload = await parseJsonSafe(response)
 
       if (!response.ok) {
-        throw new Error(payload.error || 'Unable to delete this account right now.')
+        const error = new Error(payload.error || 'Unable to delete this account right now.')
+        error.deletionPending = Boolean(payload.deletionPending)
+        throw error
       }
 
       try {
@@ -662,6 +676,7 @@ export function AuthProvider({ children }) {
     planExpiredNotice,
     secureDevice,
     sendMagicLink,
+    signInWithGoogle,
     signOutSecure,
     refreshSecureAccount,
     patchSecureAccount,

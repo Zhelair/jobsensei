@@ -3,6 +3,13 @@ import { FREE_MONTHLY_CREDITS, PRO_MONTHLY_CREDITS, HOSTED_REQUEST_CREDITS, getC
 import { FREE_MONTHLY_CREDITS as serverFree, PRO_MONTHLY_CREDITS as serverPro, HOSTED_REQUEST_CREDITS as serverCost } from '../../api/_lib/authBridge'
 
 describe('hosted credit allowances', () => {
+  it('labels a credit reset as a reset when actual Pro expiry is absent', () => {
+    const snapshot = getCreditSnapshot({ secureAccount: {
+      planActive: true, planTier: 'pro', creditPeriodEndsAt: '2026-10-20T12:00:00Z',
+    } })
+    expect(snapshot.statusDateKind).toBe('reset')
+    expect(snapshot.statusDate).toBe('2026-10-20T12:00:00Z')
+  })
   it('keeps server and displayed allowances aligned at 15 Free / 810 Pro requests', () => {
     expect([serverFree, serverPro, serverCost]).toEqual([FREE_MONTHLY_CREDITS, PRO_MONTHLY_CREDITS, HOSTED_REQUEST_CREDITS])
     expect(FREE_MONTHLY_CREDITS / HOSTED_REQUEST_CREDITS).toBe(15)

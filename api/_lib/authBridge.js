@@ -218,7 +218,13 @@ function getPlanWindowEnd({
 function isAccountProExpired(account, now = Date.now()) {
   if (String(account?.plan_tier || '').toLowerCase() !== 'pro') return false
   const expiry = toIsoOrNull(account?.plan_expires_at)
-  if (!expiry) return false
+  // Legacy finite grants used the credit window as their only end date.
+  // Explicit manual grants may remain open-ended; provider access may not.
+  if (!expiry) {
+    if (!['bmac_webhook', 'paddle_webhook'].includes(String(account?.plan_source || '').toLowerCase())) return false
+    const legacyEnd = toIsoOrNull(account?.credit_period_ends_at)
+    return !legacyEnd || new Date(legacyEnd).getTime() <= now
+  }
   return new Date(expiry).getTime() <= now
 }
 
@@ -1081,7 +1087,7 @@ export async function ensureSecureAccountAccess({
   const [accountResponse, claimableGrantsResponse] = await Promise.all([
     supabase
       .from('accounts')
-      .select('email, plan_status, plan_source, plan_tier, plan_expires_at, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at')
+      .select('email, plan_status, plan_source, plan_tier, plan_expires_at, linked_at, legacy_code_hash, credit_balance, credit_period_started_at, credit_period_ends_at, created_at, deletion_requested_at')
       .eq('user_id', user.id)
       .maybeSingle(),
     userEmail
@@ -1100,6 +1106,9 @@ export async function ensureSecureAccountAccess({
   }
 
   let account = accountResponse.data || null
+  if (account?.deletion_requested_at) {
+    return { account: { ...account, plan_status: 'revoked' }, activeGrants: [], claimedGrantCount: 0, planExpiresAt: null }
+  }
   let claimableGrants = [...(claimableGrantsResponse.data || [])]
   let claimedGrantCount = 0
   let accountSynced = false
@@ -1188,6 +1197,14 @@ export async function ensureSecureAccountAccess({
   }
 
   const planExpired = isAccountProExpired(account, nowMs)
+  if (!planExpired && account?.plan_tier === 'pro' && !toIsoOrNull(account.plan_expires_at)
+      && ['bmac_webhook', 'paddle_webhook'].includes(String(account.plan_source || '').toLowerCase())) {
+    const inferredExpiry = toIsoOrNull(account.credit_period_ends_at)
+    if (inferredExpiry) {
+      account = await persistAccountState({ supabase, account, user, nowIso: now, nowMs,
+        overrides: { planExpiresAt: inferredExpiry, resetCredits: false } })
+    }
+  }
   if (planExpired) {
     account = await persistAccountState({
       supabase,
@@ -1411,12 +1428,18 @@ async function upsertPlanGrantFromPaymentProvider({
 
   const { data: existingGrant, error: existingGrantError } = await supabase
     .from('plan_grants')
-    .select('id, status')
+    .select('id, status, metadata')
     .eq('grant_type', grantType)
     .eq('external_ref', externalRef)
     .maybeSingle()
 
   if (existingGrantError) throw existingGrantError
+  if (existingGrant?.metadata?.retired) return {
+    grant: existingGrant, userId: null, created: false, statusChanged: false,
+  }
+  if (grantType === 'bmac_webhook' && existingGrant?.status === status) return {
+    grant: existingGrant, userId: existingAccount?.user_id || null, created: false, statusChanged: false,
+  }
 
   const nextGrantExpiry = status === 'active'
     ? (
@@ -1489,7 +1512,8 @@ async function upsertPlanGrantFromPaymentProvider({
           planTier,
           planSource: derivePlanSourceFromGrant(grant),
           planExpiresAt: getGrantExpiryIso(grant),
-          resetCredits: true,
+          resetCredits: currentAccount?.plan_tier !== planTier
+            || getGrantExpiryIso(existingGrant) !== getGrantExpiryIso(grant),
           anchor: planAnchor,
         },
       })
@@ -1558,8 +1582,16 @@ export async function upsertPaddlePlanGrant({
 }
 
 export async function logSecureAuditEvent({ userId, deviceId = null, action, metadata = {} }) {
-  void userId
-  void deviceId
-  void action
-  void metadata
+  // Avoid storing emails, provider payloads, tokens or resume content in the log.
+  const safeMetadata = Object.fromEntries(Object.entries(metadata).filter(([key, value]) =>
+    /^(count|grantCount|reason|route|provider|status|eventId)$/.test(key)
+    && ['string', 'number', 'boolean'].includes(typeof value)))
+  try {
+    const { error } = await createSupabaseAdminClient().from('secure_audit_events').insert({
+      user_id: userId || null, device_id: deviceId, action, metadata: safeMetadata,
+    })
+    if (error) console.error('Secure audit write failed:', error.code || 'unknown')
+  } catch {
+    console.error('Secure audit storage unavailable', { action, metadata: safeMetadata })
+  }
 }

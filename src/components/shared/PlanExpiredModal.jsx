@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { CreditCard, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
@@ -20,7 +20,8 @@ function formatNoticeDate(value) {
 }
 
 export default function PlanExpiredModal() {
-  const { planExpiredNotice, dismissPlanExpiredNotice, secureUser } = useAuth()
+  const { planExpiredNotice, dismissPlanExpiredNotice, secureUser, secureSession } = useAuth()
+  const [checkoutError, setCheckoutError] = useState('')
   const { t } = useLanguage()
   const { setActiveSection } = useApp()
 
@@ -57,9 +58,12 @@ export default function PlanExpiredModal() {
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={() => {
+              setCheckoutError('')
               openProCheckout({
                 email: secureUser?.email || planExpiredNotice?.email || '',
-              }).catch(() => {})
+                userId: secureUser?.id,
+                accessToken: secureSession?.access_token,
+              }).catch(error => setCheckoutError(error.message || 'Unable to open checkout.'))
             }}
             className="btn-primary flex-1 justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0"
           >
@@ -76,6 +80,7 @@ export default function PlanExpiredModal() {
             {t('planExpiredModal.stayFree')}
           </button>
         </div>
+        {checkoutError && <p role="alert" className="text-red-400 text-sm mt-3">{checkoutError}</p>}
       </div>
     </div>
   )

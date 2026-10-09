@@ -18,7 +18,8 @@ function toAccountSummary(account, deviceAccess, accessSync = {}) {
     planTier: account.plan_tier,
     linkedAt: account.linked_at,
     linked: Boolean(account.linked_at),
-    planActive: ACTIVE_PLAN_STATUSES.has(account.plan_status),
+    planActive: ACTIVE_PLAN_STATUSES.has(account.plan_status) && !account.deletion_requested_at,
+    deletionPending: Boolean(account.deletion_requested_at),
     planExpiresAt: account.plan_expires_at || accessSync.planExpiresAt || null,
     creditBalance: Number.isFinite(Number(account.credit_balance)) ? Math.max(0, Number(account.credit_balance)) : null,
     creditsRemaining: Number.isFinite(Number(account.credit_balance)) ? Math.max(0, Number(account.credit_balance)) : null,
@@ -59,7 +60,7 @@ export default async function handler(req, res) {
 
     const { data: account, error: accountError } = await supabase
       .from('accounts')
-      .select('email, plan_status, plan_source, plan_tier, plan_expires_at, linked_at, credit_balance, credit_period_started_at, credit_period_ends_at')
+      .select('email, plan_status, plan_source, plan_tier, plan_expires_at, linked_at, credit_balance, credit_period_started_at, credit_period_ends_at, deletion_requested_at')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -72,7 +73,7 @@ export default async function handler(req, res) {
       supabase,
       user,
       ...deviceContext,
-      autoApprove: ACTIVE_PLAN_STATUSES.has(account?.plan_status),
+      autoApprove: ACTIVE_PLAN_STATUSES.has(account?.plan_status) && !account?.deletion_requested_at,
     })
 
     return res.status(200).json({

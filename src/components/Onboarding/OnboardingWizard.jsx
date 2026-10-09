@@ -21,7 +21,7 @@ function buildInitialProfile(profile = {}, resume = '') {
 export default function OnboardingWizard() {
   const { saveProfile, profile, onboardingMode, closeOnboarding, skipOnboarding } = useApp()
   const { unlockAccess } = useAI()
-  const { secureUser, secureAccount, secureAccountsEnabled } = useAuth()
+  const { secureUser, secureAccount, secureAccountsEnabled, secureSession, signInWithGoogle } = useAuth()
   const { getProjectData, updateProjectData } = useProject()
   const { language, setLanguage, languages, t } = useLanguage()
 
@@ -96,6 +96,7 @@ export default function OnboardingWizard() {
       await openProCheckout({
         email: accessInput.trim(),
         userId: secureUser?.id || '',
+        accessToken: secureSession?.access_token || '',
       })
     } catch (error) {
       setAccessError(error.message || 'Unable to open Paddle checkout right now.')
@@ -214,6 +215,10 @@ export default function OnboardingWizard() {
           </div>
 
           <div className="rounded-3xl border border-navy-600 bg-navy-950/70 p-5">
+            {!secureUser && secureAccountsEnabled && <button className="btn-secondary w-full justify-center mb-3" onClick={async () => {
+              try { await signInWithGoogle() } catch (error) { setAccessError(error.message) }
+            }}><Languages size={14} /> {t('settings.googleSignIn')}</button>}
+            <p className="text-slate-400 text-sm leading-relaxed mb-3">{t('welcome.localPrivacy')}</p>
             <label className="text-sm text-slate-400 mb-1.5 block">{t('onboarding.emailLabel')}</label>
             <input
               className="input-field text-sm"
