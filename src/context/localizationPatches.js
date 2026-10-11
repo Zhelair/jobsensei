@@ -11342,7 +11342,7 @@ const paddleUxPatches = {
     'onboarding.freePlan': 'Free',
     'onboarding.proPlan': 'Pro',
     'onboarding.freePrice': 'EUR 0',
-    'onboarding.proPrice': 'EUR 5',
+    'onboarding.proPrice': 'EUR 8',
     'onboarding.perMonth': 'per month',
     'onboarding.freeCopy': 'Light hosted usage, up to 2 approved devices, and BYOK still available later in Settings.',
     'onboarding.proCopy': 'Built for heavier prep with 25,110 hosted credits every 31 days and billing managed through Buy Me a Coffee.',
