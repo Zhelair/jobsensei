@@ -8,6 +8,18 @@ import {
   setDefaultCorsHeaders,
 } from './_lib/authBridge.js'
 
+function respondToAccountError(res, error) {
+  // These codes identify an absent relation/column, including PostgREST's schema cache.
+  // Never bypass account/device enforcement or invent access when the schema is missing.
+  if (['42703', '42P01', 'PGRST204', 'PGRST205'].includes(error?.code)) {
+    return res.status(503).json({
+      code: 'ACCOUNT_SCHEMA_UPDATE_REQUIRED',
+      error: 'Account access is temporarily unavailable because the server database needs an update. Your sign-in succeeded. Please contact JobSensei support.',
+    })
+  }
+  return res.status(500).json({ error: 'Unable to load secure account status right now.' })
+}
+
 function toAccountSummary(account, deviceAccess, accessSync = {}) {
   if (!account) return null
 
@@ -66,7 +78,7 @@ export default async function handler(req, res) {
 
     if (accountError) {
       console.error('account-status query failed:', accountError)
-      return res.status(500).json({ error: 'Unable to load secure account status right now.' })
+      return respondToAccountError(res, accountError)
     }
 
     const deviceAccess = await ensureSecureDeviceAccess({
@@ -86,6 +98,6 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     console.error('account-status failed:', err)
-    return res.status(500).json({ error: 'Unable to load secure account status right now.' })
+    return respondToAccountError(res, err)
   }
 }
