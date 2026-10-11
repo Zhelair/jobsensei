@@ -42,7 +42,7 @@ Lemon Squeezy also acts as merchant of record, offers API/webhooks/test mode and
 
 Stripe provides hosted Checkout, subscriptions, a hosted billing portal, sandbox cards, CLI webhook forwarding and test clocks. Ordinary Stripe processing does not itself make Stripe the reseller of JobSensei. Confirm Bulgarian individual account eligibility and the founder's local status before committing. Do not assume Stripe requires a limited company everywhere, or that a merchant of record removes personal tax or registration duties.
 
-For a EUR 5 monthly plan, compare net proceeds after fixed transaction fee, percentage fees, applicable extras, tax treatment, payout/FX fees, refunds and AI/search costs. Paddle advertises 5% + 50 cents and offers contact for products below USD 10; Lemon Squeezy advertises the same base fee with possible additional fees. Do not convert the fixed fee to euros without checking settlement terms. Recheck the economics before committing to EUR 5 or annual discounts. A Bulgarian accountant can resolve the individual's registration/income obligations based on the actual arrangement; this plan does not establish a legal exemption.
+For a EUR 8 monthly plan, compare net proceeds after fixed transaction fee, percentage fees, applicable extras, tax treatment, payout/FX fees, refunds and AI/search costs. Recheck the economics and settlement terms before launch. A Bulgarian accountant can resolve the individual's registration/income obligations based on the actual arrangement; this plan does not establish a legal exemption.
 
 ### Standard implementation pattern
 
@@ -143,7 +143,7 @@ Use a benchmark of 20–30 dated/source-labeled reference listings with several 
 | 5 | Discover retrieval and evidence improvements | Benchmark, truthful dates/availability and useful empty/error states |
 | 6 | Full launch acceptance | Payment lifecycle, deletion retries, ownership and expiry validated before live mode |
 
-Confirmed: Paddle; Google as an additional sign-in method; local-only workspaces; existing two-device and other access restrictions; existing app UI/context repetition. Remaining choices: EUR 5 economics, monthly versus annual at launch, exact no-rollover/legacy-credit policy, deletion/refund wording and optional clearing of this browser, Discover fair-use policy. Recommendations are for discussion, not approval to deploy.
+Confirmed: Paddle; Google as an additional sign-in method; local-only workspaces; existing two-device and other access restrictions; existing app UI/context repetition. Remaining choices: EUR 8 economics, monthly versus annual at launch, exact no-rollover/legacy-credit policy, deletion/refund wording and optional clearing of this browser, Discover fair-use policy. Recommendations are for discussion, not approval to deploy.
 
 ## Follow-up: 31-day Pro/credit diagnosis
 
