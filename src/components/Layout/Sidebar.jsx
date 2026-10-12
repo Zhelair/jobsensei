@@ -3,12 +3,13 @@ import { useApp, SECTIONS } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
 import {
   LayoutDashboard, BookOpen,
-  Briefcase, Shield, Settings, ChevronLeft, ChevronRight
+  Briefcase, Shield, Settings, ChevronLeft, ChevronRight, Home
 } from 'lucide-react'
 import ProjectSwitcher from '../Projects/ProjectSwitcher'
 import BrandMark from '../shared/BrandMark'
 
 const NAV_ITEMS = [
+  { id: SECTIONS.HOME, icon: Home, labelKey: 'nav.home' },
   { id: SECTIONS.TODAY, icon: LayoutDashboard, labelKey: 'nav.today' },
   { id: SECTIONS.APPLICATIONS, icon: Briefcase, labelKey: 'nav.applications' },
   { id: SECTIONS.LEARNING, icon: BookOpen, labelKey: 'nav.learning' },
@@ -36,7 +37,7 @@ export default function Sidebar() {
   return (
     <aside className={`hidden md:flex flex-col bg-navy-900 border-r border-navy-700 transition-all duration-300 ${sidebarOpen ? 'w-56' : 'w-16'} flex-shrink-0`}>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-navy-700">
+      <button onClick={() => setActiveSection(SECTIONS.HOME)} aria-label="JobSensei Home" className="flex items-center gap-3 px-4 py-5 border-b border-navy-700 text-left">
         <BrandMark className="w-9 h-9" />
         {sidebarOpen && (
           <div className="flex flex-col gap-0.5">
@@ -44,7 +45,7 @@ export default function Sidebar() {
             <span className="logo-mantra text-xs leading-tight">{t('brand.tagline')}</span>
           </div>
         )}
-      </div>
+      </button>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">

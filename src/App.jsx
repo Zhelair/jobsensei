@@ -86,13 +86,15 @@ function PrepToolsSection() {
 }
 
 function AppContent() {
-  const { activeSection, showOnboarding, onboardingMode, navKey } = useApp()
+  const { activeSection, showOnboarding, onboardingMode, navKey, chatFocus } = useApp()
+  const mainRef = useRef(null)
   const { getProjectData } = useProject()
   const applications = getProjectData('applications') || []
   const previousTrackedSectionRef = useRef('')
   const showingWelcome = showOnboarding && onboardingMode !== 'profile'
 
   const sections = {
+    [SECTIONS.HOME]: WelcomePage,
     [SECTIONS.TODAY]: TodayPage,
     [SECTIONS.APPLICATIONS]: JobTracker,
     [SECTIONS.DASHBOARD]: Dashboard,
@@ -111,6 +113,8 @@ function AppContent() {
   const fullHeightSections = [SECTIONS.INTERVIEW]
   const isFullHeight = fullHeightSections.includes(activeSection)
 
+  useEffect(() => { mainRef.current?.scrollTo({ top: 0 }) }, [activeSection])
+
   useEffect(() => {
     const trackedSection = showingWelcome ? 'welcome' : activeSection
     if (previousTrackedSectionRef.current === trackedSection) return
@@ -124,13 +128,13 @@ function AppContent() {
   }, [activeSection, applications.length, showingWelcome])
 
   return (
-    <div className="flex h-screen overflow-hidden bg-mesh">
+    <div className={`app-shell flex h-screen overflow-hidden bg-mesh ${chatFocus ? 'chat-focused' : ''}`}>
       {showOnboarding && onboardingMode === 'profile' && <OnboardingWizard />}
       <ExtensionCaptureBridge />
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0">
         <TopBar />
-        <main className={`flex-1 ${isFullHeight ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'} pb-16 md:pb-0`}>
+        <main ref={mainRef} className={`app-main flex-1 min-h-0 ${isFullHeight || chatFocus ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'} pb-16 md:pb-0`}>
           {showingWelcome ? (
             <ActiveSection key="welcome" />
           ) : requiresApplication ? (

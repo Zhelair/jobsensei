@@ -5,6 +5,9 @@ import { useProject } from '../../context/ProjectContext'
 import { prompts } from '../../utils/prompts'
 import { generateId } from '../../utils/helpers'
 import ChatWindow from '../shared/ChatWindow'
+import SessionHeader from '../shared/SessionHeader'
+import useChatFocus from '../../hooks/useChatFocus'
+import MarkdownContent from '../shared/MarkdownContent'
 import VoiceChatBar from '../shared/VoiceChatBar'
 import { X, History, Play, ArrowLeft } from 'lucide-react'
 import { useVisuals } from '../../context/VisualsContext'
@@ -34,6 +37,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
   const persistedMode = getProjectData('interviewMode')
 
   const [view, setView] = useState('setup')
+  useChatFocus(view === 'chat')
   const [mode, setMode] = useState(persistedMode || 'hr')
   const [jd, setJd] = useState(activeContextJD || '')
   const [background, setBackground] = useState('')
@@ -314,8 +318,13 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
   }
 
   return (
-    <div className="flex flex-col h-full animate-in">
-      <div className="px-4 py-3 border-b border-navy-700 flex items-center justify-between bg-navy-900">
+    <div className="chat-session flex flex-col h-full min-h-0 animate-in">
+      <SessionHeader title={t('interview.title')} context={`${currentMode?.label} · ${questionsAsked}/${questionCount} · ${drillMode ? t('topbar.drill') : t('topbar.sensei')}`} onBack={handleBack}>
+        {activeApplication && <p className="text-sm text-slate-400">{activeApplication.company} — {activeApplication.role}</p>}
+        <button className="btn-secondary" disabled={isLoading} onClick={() => sendMessage('DEBRIEF - Please give me the full session debrief now.')}>{t('interview.debrief')}</button>
+        <button className="btn-secondary" onClick={handleBack}>{t('interview.end')}</button>
+      </SessionHeader>
+      <div className="desktop-session-header px-4 py-3 border-b border-navy-700 flex items-center justify-between bg-navy-900">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-indigo-500 flex items-center justify-center text-sm">{t('interview.interviewerAvatar')}</div>
           <div>
@@ -345,7 +354,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
 
       <ChatWindow messages={messages} isLoading={isLoading} />
 
-      <div className="p-4 border-t border-navy-700 bg-navy-900">
+      <div className="chat-composer p-4 border-t border-navy-700 bg-navy-900">
         <VoiceChatBar
           onSend={sendMessage}
           isLoading={isLoading}

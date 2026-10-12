@@ -82,7 +82,7 @@ export default function BottomNav() {
   }
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-navy-900 border-t border-navy-700 z-40">
+    <nav className="app-bottom-nav md:hidden fixed bottom-0 left-0 right-0 bg-navy-900 border-t border-navy-700 z-40">
       {/* Projects panel */}
       {showProjects && (
         <div className="absolute bottom-full left-0 right-0 bg-navy-800 border-t border-navy-700 shadow-2xl">

@@ -79,7 +79,7 @@ export default function VoiceChatBar({
   function resizeInput() {
     const el = textareaRef.current
     if (!el) return
-    const maxHeight = 160
+    const maxHeight = window.matchMedia('(max-width: 767px)').matches ? 104 : 160
     el.style.height = 'auto'
     const nextHeight = Math.min(el.scrollHeight, maxHeight)
     el.style.height = `${Math.max(nextHeight, 40)}px`
@@ -113,7 +113,7 @@ export default function VoiceChatBar({
         : t('voice.micPress')
 
   return (
-    <div className="relative">
+    <div className="voice-composer relative">
       {(isListening || isPaused) && (
         <div className={`absolute bottom-full left-0 right-0 mb-2 bg-navy-800 rounded-2xl p-4 shadow-2xl z-20 animate-in border ${isPaused ? 'border-amber-500/40' : 'border-teal-500/40'}`}>
           <div className="flex items-center justify-between mb-3">
@@ -221,7 +221,7 @@ export default function VoiceChatBar({
 
         <button
           onClick={handleTts}
-          className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all relative overflow-hidden ${
+          className={`voice-playback flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all relative overflow-hidden ${
             isSpeaking
               ? 'bg-teal-500/25 text-teal-400 border border-teal-500/40 shadow-lg shadow-teal-500/20'
               : ttsEnabled
@@ -270,6 +270,7 @@ export default function VoiceChatBar({
         </button>
       </div>
 
+      <details className="mobile-audio"><summary>{t('chat.audio')}</summary><button onClick={handleTts} className="btn-ghost" title={isSpeaking ? t('voice.ttsStop') : t('voice.ttsReplay')}>{isSpeaking ? t('voice.ttsStop') : ttsEnabled ? t('voice.ttsAutoplay') : t('voice.ttsReplay')}</button></details>
       {isSpeaking && (
         <div className="flex items-center justify-center gap-2 mt-1.5">
           <span className="relative flex h-2 w-2">

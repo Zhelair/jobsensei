@@ -135,6 +135,7 @@ export default function JobTracker() {
   const [pendingResearch, setPendingResearch] = useState(null)
   const [researchLoading, setResearchLoading] = useState(false)
   const [selectedAppId, setSelectedAppId] = useState(historyApp?.id || null)
+  const [mobileBoard, setMobileBoard] = useState(false)
   const [selectedWorkspaceTab, setSelectedWorkspaceTab] = useState(historyApp ? historyState.workspaceTab || 'overview' : 'overview')
   const [editingApp, setEditingApp] = useState(null)
   const [importMsg, setImportMsg] = useState('')
@@ -622,12 +623,13 @@ export default function JobTracker() {
       )}
 
       {TABS[tab] === 'Kanban' && (
-        <div className="overflow-x-auto -mx-4 px-4">
-          <div className="flex gap-3 min-w-max pb-4">
+        <div className={mobileBoard ? 'kanban-board overflow-x-auto -mx-4 px-4' : 'kanban-list overflow-x-auto -mx-4 px-4'}>
+          <div className="md:hidden flex gap-2 mb-3"><button className="btn-secondary" aria-pressed={!mobileBoard} onClick={() => setMobileBoard(false)}>{t('applications.list')}</button><button className="btn-secondary" aria-pressed={mobileBoard} onClick={() => setMobileBoard(true)}>{t('applications.tabs.kanban')}</button></div>
+          <div className="kanban-columns flex gap-3 min-w-max pb-4">
             {STAGES.map(stage => {
               const stageApps = applications.filter(a => a.stage === stage)
               return (
-                <div key={stage} className="w-52 flex-shrink-0">
+                <div key={stage} className={`kanban-stage w-52 flex-shrink-0 ${stageApps.length === 0 ? 'kanban-empty' : ''}`}>
                   <div className={`flex items-center gap-2 px-3 py-2 rounded-xl mb-2 border text-xs font-display font-semibold ${STAGE_COLORS[stage]}`}>
                     {stageLabel(stage)} <span className="ml-auto opacity-60">{stageApps.length}</span>
                   </div>
@@ -1461,7 +1463,8 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
 
     return (
       <div className="space-y-4">
-        <div className="card border-teal-500/20 bg-teal-500/5">
+        <details className="workspace-context card border-teal-500/20 bg-teal-500/5">
+          <summary className="flex justify-between gap-3 min-h-[44px] items-center cursor-pointer"><span className="text-white font-display font-semibold">{t('applications.workspace.overview.title')}</span><span className="text-slate-400 text-xs">{t('applications.workspace.overview.stepsComplete', { count: completedSteps, total: stepCards.length })}</span></summary>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0 max-w-3xl">
               <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">{t('applications.workspace.overview.title')}</div>
@@ -1542,29 +1545,19 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
               </div>
             </div>
           </div>
-        </div>
+        </details>
 
-        <div className="grid lg:grid-cols-2 gap-4">
+        <div className="grid lg:grid-cols-2 gap-4 items-start">
           {stepCards.map(card => {
             const status = statusInfo(card.state)
 
             return (
-              <div key={card.id} className={`card ${status.card}`}>
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="min-w-0">
-                    <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-2">
-                      {t('applications.workspace.overview.stepLabel', { step: card.step })}
-                    </div>
-                    <h4 className="text-white text-base font-display font-semibold mb-1">{card.title}</h4>
-                    <p className="text-slate-400 text-sm leading-relaxed">{card.desc}</p>
-                    <p className="text-slate-500 text-sm leading-relaxed mt-2">{card.summary}</p>
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-full text-[11px] border whitespace-nowrap ${status.badge}`}>
-                    {status.label}
-                  </span>
-                </div>
+              <details key={card.id} className={`workspace-step card ${status.card}`} open={card.id === nextStep?.id ? true : undefined}>
+                <summary><span className="workspace-step-number">{card.step}</span><h4 className="text-white font-display font-semibold">{card.title}</h4><span className="text-xs text-slate-400">{status.label}</span></summary>
+                <p className="text-slate-400 text-sm leading-relaxed mb-2">{card.desc}</p>
+                <p className="text-slate-500 text-sm leading-relaxed mb-4">{card.summary}</p>
                 <div className="flex flex-wrap gap-2">
-                  {card.actions.map(action => {
+                  {card.actions.filter((action, index, all) => all.findIndex(item => item.label === action.label) === index).map(action => {
                     const buttonClass = action.variant === 'primary'
                       ? 'btn-primary text-xs'
                       : action.variant === 'secondary'
@@ -1597,7 +1590,7 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
                     )
                   })}
                 </div>
-              </div>
+              </details>
             )
           })}
         </div>
@@ -1857,11 +1850,13 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
 
       {renderCurrentTab()}
 
+      {workspaceTab !== 'overview' && (
       <div className="flex items-center justify-end gap-2 mt-5 mb-6">
         <button onClick={() => saveWorkspace(true)} className={`btn-primary ${saved ? 'bg-green-500 hover:bg-green-400' : ''}`}>
           {saved ? <><Check size={16} /> {t('applications.workspace.saved')}</> : <>{t('applications.workspace.save')}</>}
         </button>
       </div>
+      )}
     </div>
   )
 }
