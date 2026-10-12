@@ -246,7 +246,7 @@ export default function GapAnalysis({ onBack, backLabel = 'Back' }) {
   )
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto animate-in">
+    <div className="gap-page p-4 md:p-6 animate-in">
       {onBack && (
         <button onClick={onBack} className="btn-ghost mb-4"><ArrowLeft size={16} /> {backLabel}</button>
       )}

@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { jobIdentity, shortlist, discoveryDraft, discoveryQuery, discoveryDate, matchesDiscovery, discoverySignature, withinDiscoveryRecency } from './jobDiscovery'
+import { jobIdentity, shortlist, discoveryDraft, discoveryQuery, discoveryDate, matchesDiscovery, discoverySignature, withinDiscoveryRecency, discoveryQueries, linkedinSearchUrl } from './jobDiscovery'
 
 it('matches investigation and AML title variants without borrowing role fit from snippets', () => {
   expect(matchesDiscovery({ title: 'German Speaking Fraud Investigator' }, 'Investigations')).toBe(true)
@@ -58,4 +58,22 @@ it('hides saved/applied and dismissed roles and ranks remaining excerpts by keyw
   const applications = [{ stage: 'Applied', jdUrl: 'https://linkedin.com/jobs/view/1' }]
   expect(shortlist(jobs, applications, { 'linkedin:3': { dismissed: 'date' } }, 'Risk SQL').map(job => job.id)).toEqual(['linkedin:2', 'linkedin:4'])
   expect(shortlist(jobs, applications, { 'linkedin:2': { viewed: 'date' } }, 'Risk', true).some(job => job.id === 'linkedin:2')).toBe(false)
+})
+
+it('searches local and remote alternatives separately within a fixed provider budget', () => {
+  const queries = discoveryQueries('Compliance', 'Sofia, Bulgaria or remote', 'linkedin')
+  expect(queries).toHaveLength(2)
+  expect(queries[0]).toContain('Sofia, Bulgaria')
+  expect(queries[0]).not.toContain('or remote')
+  expect(queries[1]).toContain('remote Europe')
+  expect(discoveryQueries('AML, Fraud, Compliance, Risk, KYC, Audit', 'Sofia or remote', 'all').length).toBeLessThanOrEqual(3)
+})
+it('keeps more than ten relevant matches for client pagination and safely encodes the native search', () => {
+  const jobs = Array.from({length:25},(_,i)=>({id:`linkedin:${i}`,title:'Compliance analyst',snippet:'Sofia'}))
+  expect(shortlist(jobs,[],{},'Compliance').length).toBe(25)
+  const link = new URL(linkedinSearchUrl({keywords:'Compliance & AML',location:'Sofia, Bulgaria or remote',recency:'week'}))
+  expect(link.hostname).toBe('www.linkedin.com')
+  expect(link.searchParams.get('keywords')).toBe('Compliance & AML')
+  expect(link.searchParams.get('location')).toBe('Sofia, Bulgaria')
+  expect(link.searchParams.get('f_TPR')).toBe('r604800')
 })

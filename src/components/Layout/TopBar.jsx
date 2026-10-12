@@ -40,6 +40,7 @@ const SECTION_TITLES = {
 }
 
 const SECTION_HELP = {
+  home: { titleKey: 'nav.home', descKey: 'home.demoCopy', tipKeys: ['welcome.localPrivacy', 'home.taxNote'] },
   today: {
     titleKey: 'guide.today.title',
     descKey: 'guide.today.desc',

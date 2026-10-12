@@ -4,8 +4,6 @@ import { useApp } from '../../context/AppContext'
 import { useAuth } from '../../context/AuthContext'
 import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
-import { useTheme, THEMES } from '../../context/ThemeContext'
-import { useVisuals } from '../../context/VisualsContext'
 import {
   Zap, Check, Trash2, Eye, EyeOff, FileText, Upload, Download, X,
   Coffee, CreditCard, ChevronDown, ChevronUp, LogOut, ExternalLink, Puzzle, FolderArchive,
@@ -41,8 +39,6 @@ export default function Settings({ mode = 'settings' }) {
   const [testResult, setTestResult] = useState(null)
   const [saved, setSaved] = useState(false)
   const [showOwnKey, setShowOwnKey] = useState(false)
-  const { theme, setTheme } = useTheme()
-  const { enabled: visualsEnabled, setEnabled: setVisualsEnabled, triggerConfetti } = useVisuals()
   const isAccountMode = mode === 'account'
 
   const [bmacInput, setBmacInput] = useState('')
@@ -626,14 +622,12 @@ export default function Settings({ mode = 'settings' }) {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl md:max-w-5xl xl:max-w-[72rem] mx-auto animate-in space-y-4">
-      <h2 className="section-title mb-1">{pageTitle}</h2>
-      <p className="section-sub">{pageSubtitle}</p>
-      {!isAccountMode && <section className="card mt-5"><h3 className="font-display font-semibold text-white mb-3">{t('settings.appearance')}</h3><div className="flex flex-wrap gap-2">{Object.values(THEMES).map(value => <button key={value} className="btn-secondary min-h-[44px]" aria-pressed={theme === value} onClick={() => setTheme(value)}>{t(`topbar.theme.${value === THEMES.MYSPACE ? 'neon' : value}`)}</button>)}<button className={`btn-secondary min-h-[44px] ${visualsEnabled ? 'visuals-active' : ''}`} onClick={() => { setVisualsEnabled(!visualsEnabled); if (!visualsEnabled) triggerConfetti(70) }}>{t('topbar.visualsMenu')}: {visualsEnabled ? t('common.on') : t('common.off')}</button></div></section>}
+    <div className={`settings-shell ${isAccountMode ? 'account-settings' : 'preferences-settings'} p-4 md:p-6 animate-in`}>
+      {!isAccountMode && <><h2 className="section-title mb-1">{pageTitle}</h2><p className="section-sub">{pageSubtitle}</p></>}
 
 
       {!isAccountMode && (
-      <div className="card border-indigo-500/20 bg-indigo-500/5">
+      <div id="settings-language" className="card border-indigo-500/20 bg-indigo-500/5">
         <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
           <div className="min-w-0 max-w-3xl">
             <h3 className="font-display font-semibold text-white text-lg mb-1 flex items-center gap-2">
@@ -742,7 +736,7 @@ export default function Settings({ mode = 'settings' }) {
             </span>
           </div>
 
-          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2">
+          <div className={`grid sm:grid-cols-2 xl:grid-cols-4 gap-2 ${creditSnapshot.mode === 'locked' ? 'hidden' : ''}`}>
             <div className="credits-metric rounded-xl border border-white/5 bg-navy-950/60 px-3 py-3">
               <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricAllowance')}</div>
               <div className="text-white text-sm font-display font-semibold">
@@ -798,30 +792,7 @@ export default function Settings({ mode = 'settings' }) {
                 </span>
               </div>
 
-              <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2">
-                <div className="rounded-xl border border-white/5 bg-navy-950/50 px-3 py-3">
-                  <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricAllowance')}</div>
-                  <div className="text-slate-300 text-sm font-display font-semibold">{formatCreditNumber(proPlanPreview.monthlyCredits)}</div>
-                </div>
-                <div className="rounded-xl border border-white/5 bg-navy-950/50 px-3 py-3">
-                  <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricCost')}</div>
-                  <div className="text-slate-300 text-sm font-display font-semibold">
-                    {t('settings.creditsRequestValue', { credits: formatCreditNumber(proPlanPreview.requestCost) })}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-white/5 bg-navy-950/50 px-3 py-3">
-                  <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricLeft')}</div>
-                  <div className="text-slate-400 text-sm font-display font-semibold">
-                    {proPreviewCreditsValue}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-white/5 bg-navy-950/50 px-3 py-3">
-                  <div className="text-[11px] text-slate-500 mb-1">{t('settings.creditsMetricReset')}</div>
-                  <div className="text-slate-400 text-sm font-display font-semibold">
-                    {proPreviewResetValue}
-                  </div>
-                </div>
-              </div>
+              <div className="pro-upgrade-summary"><strong>€8<span>{t('onboarding.perMonth')}</span></strong><p>{t('home.credits',{count:formatCreditNumber(proPlanPreview.monthlyCredits)})}</p><p>{t('home.requests',{count:'810'})}</p><small>{t('home.taxNote')}</small></div>
 
               <button
                 onClick={() => handleProCheckout()}
@@ -836,7 +807,7 @@ export default function Settings({ mode = 'settings' }) {
         )}
 
         <div className="grid xl:grid-cols-2 gap-4 mt-4 items-stretch">
-          <div id="account-resume" className={`${compactAccountCardClass} h-full min-w-0`}>
+          <div id="account-access" className={`${compactAccountCardClass} h-full min-w-0`}>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0">
                   <h4 className="font-display font-semibold text-white flex items-center gap-2">
@@ -965,7 +936,7 @@ export default function Settings({ mode = 'settings' }) {
               </div>}
             </div>
 
-          <div className={`${compactAccountCardClass} h-full min-w-0`}>
+          <div id="account-resume" className={`${compactAccountCardClass} h-full min-w-0`}>
               <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
                 <FileText size={16} className="text-teal-400" /> {t('settings.resumeTitle')}
               </h3>
@@ -1127,7 +1098,7 @@ export default function Settings({ mode = 'settings' }) {
 
       {!isAccountMode && (
       <div className="grid xl:grid-cols-2 gap-4 items-stretch">
-        <div className={`${pairedCardClass} border-red-500/20`}>
+        <div id="settings-data" className={`${pairedCardClass} border-red-500/20`}>
           <h3 className="font-display font-semibold text-white mb-1">{t('settings.dataManagementTitle')}</h3>
           <p className="text-slate-300 text-sm mb-3">Workspace data stays in this browser. Clearing browser storage can remove it permanently. Export a backup before clearing local data; signing in elsewhere does not sync your workspace.</p>
           <div className="rounded-xl border border-navy-600 bg-navy-950/60 p-3 mb-3 space-y-3">
@@ -1198,7 +1169,7 @@ export default function Settings({ mode = 'settings' }) {
           </button>
         </div>
 
-        <div className={`${pairedCardClass} border-teal-500/20`}>
+        <div id="settings-extension" className={`${pairedCardClass} border-teal-500/20`}>
           <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
             <Puzzle size={16} className="text-teal-400" /> {t('settings.chromeExtensionTitle')}
           </h3>
@@ -1232,7 +1203,7 @@ export default function Settings({ mode = 'settings' }) {
           </div>
         </div>
 
-        <div ref={byokCardRef} className={pairedCardClass}>
+        <div id="settings-provider" ref={byokCardRef} className={pairedCardClass}>
           <button
             onClick={() => setShowOwnKey(o => !o)}
             className="w-full flex items-center justify-between gap-3"

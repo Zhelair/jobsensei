@@ -39,7 +39,7 @@ function getSectionFromLocation() {
     return SECTIONS.SETTINGS
   }
 
-  return SECTIONS.TODAY
+  return localStorage.getItem('js_onboarding_done') ? SECTIONS.TODAY : SECTIONS.HOME
 }
 
 export function AppProvider({ children }) {
@@ -78,7 +78,6 @@ export function AppProvider({ children }) {
     if (parsedStats) setStats(parsedStats)
     if (!onboardingDone) {
       setOnboardingMode('access')
-      setShowOnboarding(true)
     }
 
     // Update streak
@@ -142,6 +141,7 @@ export function AppProvider({ children }) {
   }, [replaceAppHistory])
 
   const setActiveSection = useCallback((nextSectionOrUpdater, detail = {}) => {
+    setShowOnboarding(false)
     setActiveSectionState(prev => {
       const nextSection = typeof nextSectionOrUpdater === 'function'
         ? nextSectionOrUpdater(prev)

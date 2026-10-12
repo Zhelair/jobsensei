@@ -19,7 +19,7 @@ export function shortlist(results, applications, activity, keywords, hideViewed 
     if (!job.id || !matchesDiscovery(job, keywords, location) || seen.has(job.id) || saved.has(job.id) || activity[job.id]?.dismissed || (hideViewed && activity[job.id]?.viewed)) return false
     seen.add(job.id); return true
   }).map(job => ({ ...job, matched: [...new Set(terms.filter(term => `${job.title} ${job.snippet}`.toLocaleLowerCase().includes(term)))] }))
-    .sort((a, b) => b.matched.length - a.matched.length).slice(0, 10)
+    .sort((a, b) => b.matched.length - a.matched.length).slice(0, 60)
 }
 
 const words = text => String(text || '').toLowerCase().match(/[\p{L}\p{N}]+/gu) || []
@@ -84,4 +84,24 @@ export function discoveryDate(job) {
   if (job.postedAt && Number.isFinite(Date.parse(job.postedAt))) return `Posted ${new Date(job.postedAt).toLocaleDateString()}`
   if (job.sourceDate && Number.isFinite(Date.parse(job.sourceDate))) return `Source page dated ${new Date(job.sourceDate).toLocaleDateString()} · ${job.id?.startsWith('linkedin:') || !job.id ? 'LinkedIn posting date unconfirmed' : 'Posting date unconfirmed'}`
   return 'Posting date unavailable'
+}
+
+// Separate alternatives instead of asking the index to satisfy "Sofia or remote".
+// Every user search stays bounded to three basic provider requests.
+export function discoveryQueries(keywords, location, source) {
+  const roles = keywords.split(',').map(s => s.trim()).filter(Boolean).slice(0, 8)
+  const groups = roles.length > 3 ? [roles.slice(0, 3).join(', '), roles.slice(3).join(', ')] : [keywords]
+  const local = location.replace(/\bor\s+remote\b.*$/i, '').trim().replace(/[,\s]+$/, '')
+  const locations = /\bremote\b/i.test(location) && local && !/^remote\b/i.test(local) ? [local, 'remote Europe'] : [location]
+  return [...new Set(groups.flatMap(group => locations.map(place => discoveryQuery(group, place, source))))].slice(0, 3)
+}
+
+export function linkedinSearchUrl(preferences) {
+  const url = new URL('https://www.linkedin.com/jobs/search/')
+  url.searchParams.set('keywords', preferences.keywords.trim())
+  const location = preferences.location.replace(/\bor\s+remote\b.*$/i, '').trim().replace(/[,\s]+$/, '')
+  if (location) url.searchParams.set('location', location)
+  const seconds = { day: '86400', week: '604800', month: '2592000' }[preferences.recency]
+  if (seconds) url.searchParams.set('f_TPR', `r${seconds}`)
+  return url.toString()
 }
