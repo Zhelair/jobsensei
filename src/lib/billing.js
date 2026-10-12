@@ -28,7 +28,7 @@ function loadPaddleScript() {
     const existing = document.querySelector(`script[src="${PADDLE_SCRIPT_SRC}"]`)
     if (existing) {
       existing.addEventListener('load', () => resolve(window.Paddle), { once: true })
-      existing.addEventListener('error', () => reject(new Error('Unable to load Paddle.js.')), { once: true })
+      existing.addEventListener('error', () => { existing.remove(); paddleLoadPromise = null; reject(new Error('Unable to load Paddle.js. Please try again.')) }, { once: true })
       return
     }
 
@@ -36,7 +36,7 @@ function loadPaddleScript() {
     script.src = PADDLE_SCRIPT_SRC
     script.async = true
     script.onload = () => resolve(window.Paddle)
-    script.onerror = () => reject(new Error('Unable to load Paddle.js.'))
+    script.onerror = () => { script.remove(); paddleLoadPromise = null; reject(new Error('Unable to load Paddle.js. Please try again.')) }
     document.head.appendChild(script)
   })
 
@@ -90,15 +90,15 @@ export async function openProCheckout({
   const normalizedUserId = String(userId || '').trim()
 
   if (!PADDLE_ENABLED) {
-    openPricingPage()
-    return { mode: 'pricing_fallback' }
+    throw new Error('Pro checkout is unavailable on this deployment. Please try again later or contact support.')
   }
 
-  const Paddle = await ensurePaddle()
   if (!accessToken || !normalizedUserId) throw new Error('Sign in first to attach Pro to your JobSensei account.')
+  const Paddle = await ensurePaddle()
   const response = await fetch('/api/billing', {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ action: 'checkout' }),
+    signal: AbortSignal.timeout(30000),
   })
   const payload = await response.json().catch(() => ({}))
   if (!response.ok || !payload.transactionId) throw new Error(payload.error || 'Unable to start checkout.')

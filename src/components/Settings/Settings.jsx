@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import DeepSeekGuide from './DeepSeekGuide'
 import { getCreditSnapshot, HOSTED_REQUEST_CREDITS, PRO_MONTHLY_CREDITS } from '../../lib/credits'
-import { BMAC_ENABLED, openBmacCheckout, openProCheckout } from '../../lib/billing'
+import { openProCheckout } from '../../lib/billing'
 
 export default function Settings({ mode = 'settings' }) {
   const {
@@ -45,6 +45,8 @@ export default function Settings({ mode = 'settings' }) {
   const [bmacLoading, setBmacLoading] = useState(false)
   const [bmacError, setBmacError] = useState('')
   const [bmacNotice, setBmacNotice] = useState('')
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const checkoutBusy = useRef(false)
   const [magicLinkCooldownUntil, setMagicLinkCooldownUntil] = useState(0)
   const [secureError, setSecureError] = useState('')
   const [billingPortalLoading, setBillingPortalLoading] = useState(false)
@@ -278,6 +280,9 @@ export default function Settings({ mode = 'settings' }) {
   }
 
   async function handleProCheckout(prefillEmail = '') {
+    if (checkoutBusy.current) return
+    checkoutBusy.current = true
+    setCheckoutLoading(true)
     setBmacError('')
     setBmacNotice('')
 
@@ -289,19 +294,12 @@ export default function Settings({ mode = 'settings' }) {
       })
     } catch (error) {
       setBmacError(error.message || 'Unable to open Paddle checkout right now.')
+    } finally {
+      checkoutBusy.current = false
+      setCheckoutLoading(false)
     }
   }
 
-  function handleBmacCheckout() {
-    setBmacError('')
-    setBmacNotice('')
-
-    try {
-      openBmacCheckout()
-    } catch (error) {
-      setBmacError(error.message || 'Unable to open Buy Me a Coffee right now.')
-    }
-  }
 
   async function handleManageBilling() {
     if (!secureSession?.access_token) {
@@ -823,9 +821,11 @@ export default function Settings({ mode = 'settings' }) {
 
               <button
                 onClick={() => handleProCheckout()}
+                disabled={checkoutLoading}
+                aria-busy={checkoutLoading}
                 className="btn-secondary w-full justify-center mt-3 text-slate-200 border-slate-600/80 bg-slate-700/40 hover:bg-slate-700/60"
               >
-                <CreditCard size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
+                <CreditCard size={14} /> {checkoutLoading ? 'Opening checkout…' : t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
               </button>
             </div>
           </div>
@@ -902,18 +902,12 @@ export default function Settings({ mode = 'settings' }) {
                 <div className="space-y-3">
                   <button
                     onClick={() => handleProCheckout()}
+                disabled={checkoutLoading}
+                aria-busy={checkoutLoading}
                     className="btn-primary w-full justify-center bg-yellow-500 hover:bg-yellow-400 text-black border-0 text-sm"
                   >
-                    <CreditCard size={14} /> {t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
+                    <CreditCard size={14} /> {checkoutLoading ? 'Opening checkout…' : t('settings.upgradeViaBmac')} <ExternalLink size={12} className="opacity-60" />
                   </button>
-                  {BMAC_ENABLED && (
-                    <button
-                      onClick={handleBmacCheckout}
-                      className="btn-secondary w-full justify-center text-sm border-indigo-500/25 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20"
-                    >
-                      <Coffee size={14} /> {t('welcome.ctaBmac')}
-                    </button>
-                  )}
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-px bg-white/10" />
                     <span className="text-slate-600 text-xs">{t('settings.alreadyHaveAccess')}</span>
@@ -952,6 +946,8 @@ export default function Settings({ mode = 'settings' }) {
                   {bmacError && <p className="text-red-400 text-sm leading-relaxed">{bmacError}</p>}
                 </div>
               )}
+
+              {hasPlanAccess && bmacError && <p role="alert" className="mt-3 text-red-400 text-sm leading-relaxed">{bmacError}</p>}
 
               {(secureError || statusError || accountError) && (
                 <div className="mt-3 pt-3 border-t border-navy-700/80">
