@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 import { useVisuals } from '../../context/VisualsContext'
 import { useLanguage } from '../../context/LanguageContext'
-import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal, Languages, ChevronDown, Check, Coins } from 'lucide-react'
+import { Settings, Zap, Shield, Brain, HelpCircle, X, Volume2, VolumeX, Moon, Sun, Sparkles, Wand2, MoreHorizontal, Home, Languages, ChevronDown, Check, Coins } from 'lucide-react'
 import BrandMark from '../shared/BrandMark'
 import { getCreditSnapshot } from '../../lib/credits'
 
@@ -24,6 +24,7 @@ const THEME_LABELS = {
 const SAVE_LAST_RESPONSE_KEY = 'guide.learning.saveLastResponseLabel'
 
 const SECTION_TITLES = {
+  home: 'nav.home',
   today: 'nav.today',
   applications: 'nav.applications',
   dashboard: 'guide.dashboard.title',
@@ -362,7 +363,7 @@ function CreditStatusPanel({ t, snapshot, tone, onPrimaryAction, onSecondaryActi
             <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mt-1">{summary}</p>
           )}
         </div>
-        <button onClick={onClose} className="text-slate-500 hover:text-slate-300 flex-shrink-0">
+        <button aria-label={t('common.close')} onClick={onClose} className="text-slate-500 hover:text-slate-300 flex-shrink-0">
           <X size={14} />
         </button>
       </div>
@@ -490,7 +491,7 @@ function GuidedTour({ onClose }) {
               </div>
               <h3 className="font-display font-semibold text-white text-base">{t(step.titleKey)}</h3>
             </div>
-            <button onClick={onClose} className="text-slate-500 hover:text-slate-300">
+            <button aria-label={t('common.close')} onClick={onClose} className="text-slate-500 hover:text-slate-300">
               <X size={16} />
             </button>
           </div>
@@ -588,10 +589,9 @@ export default function TopBar() {
             : t(SECTION_TITLES[activeSection] || '') || ''
 
   useEffect(() => {
-    if (showOnboarding || guideSeen || !help) return
-    const id = setTimeout(() => setShowHelp(true), 700)
-    return () => clearTimeout(id)
-  }, [guideSeen, help, showOnboarding])
+    setShowHelp(false)
+    setShowMore(false)
+  }, [activeSection])
 
   useEffect(() => {
     if (!showOnboarding) return
@@ -653,22 +653,22 @@ export default function TopBar() {
     <header className="bg-navy-900 border-b border-navy-700 px-4 md:px-6 py-3 flex items-center justify-between flex-shrink-0 relative">
       {showTour && <GuidedTour onClose={closeGuidedTour} />}
       {/* Mobile logo */}
-      <div className="flex items-center gap-2 md:hidden">
+      <button onClick={() => setActiveSection(SECTIONS.HOME)} aria-label="JobSensei Home" className="flex items-center gap-2 xl:hidden text-left">
         <BrandMark className="w-8 h-8" />
         <div className="flex flex-col gap-0.5">
           <span className="font-display font-bold text-white text-base leading-tight tracking-tight">JobSensei</span>
           <span className="logo-mantra text-xs leading-tight">{t('brand.tagline')}</span>
         </div>
-      </div>
+      </button>
 
       {/* Desktop title */}
-      <h1 className="hidden md:block font-display font-semibold text-white text-lg">
+      <h1 className="hidden xl:block font-display font-semibold text-white text-lg">
         {translatedSectionTitle}
       </h1>
 
       {/* Right side */}
-      <div className="flex items-center gap-1 sm:gap-2">
-        <div className="hidden sm:block">
+      <div className="flex items-center gap-1 xl:gap-2">
+        <div className="hidden xl:block">
           <TopBarLanguageSelect />
         </div>
 
@@ -678,14 +678,14 @@ export default function TopBar() {
             setShowCredits(prev => !prev)
             setShowMore(false)
           }}
-          className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border transition-colors ${creditTone.button}`}
+          className={`flex items-center gap-1.5 xl:gap-2 px-2.5 xl:px-3 py-1.5 rounded-xl border transition-colors ${creditTone.button}`}
           title={t('topbar.creditsTitle')}
         >
           <Coins size={14} className={isThinking ? 'animate-pulse' : ''} />
-          <span className="sm:hidden text-xs font-display font-semibold">
+          <span className="xl:hidden text-xs font-display font-semibold">
             {creditButtonCopy.compact}
           </span>
-          <span className="hidden sm:inline text-xs font-display font-semibold whitespace-nowrap">
+          <span className="hidden xl:inline text-xs font-display font-semibold whitespace-nowrap">
             {creditButtonCopy.full}
           </span>
         </button>
@@ -697,7 +697,7 @@ export default function TopBar() {
             setVisualsEnabled(next)
             if (next) triggerConfetti(70)
           }}
-          className={`hidden sm:flex btn-ghost ${visualsEnabled ? 'visuals-active ring-1 ring-current' : 'text-slate-400'}`}
+          className={`hidden xl:flex btn-ghost ${visualsEnabled ? 'visuals-active ring-1 ring-current' : 'text-slate-400'}`}
           title={visualsEnabled ? t('topbar.visualsOnTitle') : t('topbar.visualsOffTitle')}
         >
           <Wand2 size={16} />
@@ -706,7 +706,7 @@ export default function TopBar() {
         {/* Theme cycle button - desktop only */}
         <button
           onClick={cycleTheme}
-          className="hidden sm:flex btn-ghost"
+          className="hidden xl:flex btn-ghost"
           title={t('topbar.themeCycleTitle', { current: currentThemeLabel })}
         >
           <ThemeIcon size={16} />
@@ -742,7 +742,7 @@ export default function TopBar() {
             setDrillMode(next)
             showFeedback(next ? t('topbar.modeDrillFeedback') : t('topbar.modeSenseiFeedback'))
           }}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-display font-semibold transition-all duration-200 ${
+          className={`flex items-center gap-1 xl:gap-1.5 px-2 xl:px-3 py-1 xl:py-1.5 rounded-xl text-xs font-display font-semibold transition-all duration-200 ${
             drillMode
               ? 'bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25'
               : 'bg-teal-500/10 text-teal-400 border border-teal-500/20 hover:bg-teal-500/20'
@@ -750,7 +750,7 @@ export default function TopBar() {
           title={drillMode ? t('topbar.modeDrillTitle') : t('topbar.modeSenseiTitle')}
         >
           {drillMode ? <Zap size={12} /> : <Shield size={12} />}
-          <span className="hidden sm:inline">{drillMode ? t('topbar.drill') : t('topbar.sensei')}</span>
+          <span className="hidden xl:inline">{drillMode ? t('topbar.drill') : t('topbar.sensei')}</span>
         </button>
 
         {/* Help button - desktop only (mobile users access via ⋯ menu) */}
@@ -758,7 +758,7 @@ export default function TopBar() {
           <button
             data-guide="guide-button"
             onClick={openGuide}
-            className={`hidden sm:flex btn-ghost relative ${!guideSeen ? 'ring-1 ring-teal-500/40 text-teal-300' : ''}`}
+            className={`hidden xl:flex btn-ghost relative ${!guideSeen ? 'ring-1 ring-teal-500/40 text-teal-300' : ''}`}
             title={t('guide.helpTitle', { section: helpTitle || SECTION_TITLES[activeSection] || '' })}
           >
             <HelpCircle size={16} className={showHelp ? 'text-teal-400' : ''} />
@@ -772,10 +772,11 @@ export default function TopBar() {
         )}
 
         {/* Mobile ⋯ overflow menu - Theme, Visuals, Help */}
-        <div className="relative sm:hidden">
+        <div className="relative xl:hidden">
           <button
             onClick={() => setShowMore(v => !v)}
             className={`btn-ghost relative text-base leading-none ${!guideSeen && help ? 'ring-1 ring-teal-500/40 text-teal-300 opacity-100' : showMore ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+            aria-label={t('topbar.moreOptions')}
             title={t('topbar.moreOptions')}
           >
             <MoreHorizontal size={18} />
@@ -791,6 +792,7 @@ export default function TopBar() {
               <div className="fixed inset-0 z-40" onClick={() => setShowMore(false)} />
               <div className="absolute right-0 top-full mt-1.5 bg-navy-800 border border-navy-700 rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-0.5 min-w-[190px]">
                 <TopBarLanguageSelect compact onChangeComplete={() => setShowMore(false)} />
+                <button className="btn-ghost min-h-[44px]" onClick={() => { setActiveSection(SECTIONS.HOME); setShowMore(false) }}><Home size={14} /> {t('nav.home')}</button>
                 <button
                   onClick={() => {
                     setActiveSection(SECTIONS.SETTINGS)
@@ -859,7 +861,7 @@ export default function TopBar() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowCredits(false)} />
 
-          <div className="hidden sm:block absolute right-4 top-full mt-2 z-50 w-[360px]">
+          <div className="hidden xl:block absolute right-4 top-full mt-2 z-50 w-[360px]">
             <CreditStatusPanel
               t={t}
               snapshot={creditSnapshot}
@@ -870,7 +872,7 @@ export default function TopBar() {
             />
           </div>
 
-          <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 px-3 pb-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}>
+          <div className="xl:hidden fixed inset-x-0 bottom-0 z-50 px-3 pb-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}>
             <CreditStatusPanel
               t={t}
               snapshot={creditSnapshot}
@@ -888,7 +890,7 @@ export default function TopBar() {
         <div className="guide-popover absolute right-4 top-full mt-2 z-50 w-80 bg-navy-800 border border-navy-600 rounded-2xl shadow-xl p-4 animate-in flex flex-col">
           <div className="flex items-start justify-between mb-2">
             <h3 className="font-display font-semibold text-white text-sm">{helpTitle}</h3>
-            <button onClick={() => setShowHelp(false)} className="text-slate-500 hover:text-slate-300 -mt-0.5">
+            <button aria-label={t('common.close')} onClick={() => setShowHelp(false)} className="text-slate-500 hover:text-slate-300 -mt-0.5">
               <X size={14} />
             </button>
           </div>

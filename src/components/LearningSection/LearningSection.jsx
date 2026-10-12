@@ -8,6 +8,9 @@ import { tryParseJSON, generateId } from '../../utils/helpers'
 import { createLearningTopic, getLearningTopicPreview, getLearningTopicSubject, getLearningTopicTitle } from '../../utils/learningTopics'
 import { sm2, getNextReviewDate, isDueToday } from '../../utils/spacedRepetition'
 import ChatWindow from '../shared/ChatWindow'
+import MarkdownContent from '../shared/MarkdownContent'
+import SessionHeader from '../shared/SessionHeader'
+import useChatFocus from '../../hooks/useChatFocus'
 import { BookOpen, Plus, Brain, Check, ArrowLeft, Edit3, Trash2, X, ChevronRight, History, FileText, Copy, Download, Printer, Save, StickyNote, Sparkles, Image } from 'lucide-react'
 import VoiceChatBar from '../shared/VoiceChatBar'
 
@@ -352,7 +355,7 @@ export default function LearningSection() {
           <div className="bg-navy-800 border border-navy-600 rounded-2xl p-5 w-full max-w-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display font-semibold text-white">{t('learning.editTopic')}</h3>
-              <button onClick={() => setEditingTopic(null)}><X size={16} className="text-slate-400" /></button>
+              <button aria-label={t('common.close')} onClick={() => setEditingTopic(null)}><X size={16} className="text-slate-400" /></button>
             </div>
             <div className="space-y-3 mb-4">
               <input
@@ -500,8 +503,8 @@ export default function LearningSection() {
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                   {due && <span className="badge-yellow">{t('learning.due')}</span>}
-                  <button onClick={() => setEditingTopic({ ...topic })} className="text-slate-500 hover:text-teal-400 p-0.5"><Edit3 size={13} /></button>
-                  <button onClick={() => deleteTopic(topic.id)} className="text-slate-500 hover:text-red-400 p-0.5"><Trash2 size={13} /></button>
+                  <button aria-label={t('common.edit')} onClick={() => setEditingTopic({ ...topic })} className="text-slate-500 hover:text-teal-400 p-0.5"><Edit3 size={13} /></button>
+                  <button aria-label={t('common.delete')} onClick={() => deleteTopic(topic.id)} className="text-slate-500 hover:text-red-400 p-0.5"><Trash2 size={13} /></button>
                 </div>
                 {!due && (
                   <div className="opacity-100 group-hover:opacity-0 transition-opacity flex-shrink-0">
@@ -537,6 +540,7 @@ export default function LearningSection() {
 
 function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isConnected, onSaveNote, language }) {
   const { t } = useLanguage()
+  useChatFocus()
   const [messages, setMessages] = useState(topic.messages || [])
   const [loading, setLoading] = useState(false)
   const [depth, setDepth] = useState('basics')
@@ -580,10 +584,16 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
   }
 
   return (
-    <div className="flex flex-col h-full animate-in">
-      <div className="px-4 py-3 border-b border-navy-700 bg-navy-900 flex items-center justify-between">
+    <div className="chat-session flex flex-col h-full min-h-0 animate-in">
+      <SessionHeader title={topicTitle} context={t(`learning.tutor.depth.${depth}`)} onBack={onBack}>
+        <p className="text-sm text-slate-400">{topicPreview}</p>
+        <div className="flex flex-wrap gap-2">{DEPTH_VALUES.map(value => <button key={value} className="btn-secondary" aria-pressed={depth === value} onClick={() => setDepth(value)}>{t(`learning.tutor.depth.${value}`)}</button>)}</div>
+        <button className="btn-secondary" onClick={() => onUpdate(topic.id, { status: 'Completed' })}>{topic.status === 'Completed' ? t('learning.status.completed') : t('chat.markComplete')}</button>
+        {lastAiMsg && <button className="btn-secondary" onClick={handleSaveNote}>{noteSaved ? t('learning.tutor.savedToNotes') : t('guide.learning.saveLastResponseLabel')}</button>}
+      </SessionHeader>
+      <div className="desktop-session-header px-4 py-3 border-b border-navy-700 bg-navy-900 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /></button>
+          <button onClick={onBack} aria-label={t('chat.back')} className="btn-ghost"><ArrowLeft size={16} /></button>
           <div>
             <div className="text-white text-sm font-body font-medium">{topicTitle}</div>
             {topicPreview && <div className="text-slate-500 text-xs mt-0.5 max-w-xl line-clamp-2">{topicPreview}</div>}
@@ -601,12 +611,12 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
           </div>
         </div>
         <button onClick={() => onUpdate(topic.id, { status: 'Completed' })} className="btn-ghost text-xs">
-          <Check size={14} /> {t('learning.tutor.done')}
+          <Check size={14} /> {topic.status === 'Completed' ? t('learning.status.completed') : t('chat.markComplete')}
         </button>
       </div>
       <ChatWindow messages={messages} isLoading={loading} emptyText={t('learning.tutor.emptyText')} />
-      <div className="p-4 border-t border-navy-700 bg-navy-900 space-y-2">
-        <p className="text-slate-500 text-sm leading-relaxed">
+      <div className="chat-composer p-4 border-t border-navy-700 bg-navy-900 space-y-2">
+        <p className="chat-start-hint text-slate-500 text-sm leading-relaxed">
           {t('learning.tutor.startHint')}
         </p>
         <VoiceChatBar
@@ -616,7 +626,7 @@ function TopicTutor({ topic, onBack, onUpdate, drillMode, profile, callAI, isCon
           placeholder={t('learning.typeYourAnswer')}
         />
         {lastAiMsg && (
-          <button onClick={handleSaveNote} className={`save-note-cta ${noteSaved ? 'is-saved' : ''}`}>
+          <button onClick={handleSaveNote} className={`desktop-save-note save-note-cta ${noteSaved ? 'is-saved' : ''}`}>
             {noteSaved ? <><Check size={12} /> {t('learning.tutor.savedToNotes')}</> : <><Save size={12} /> {t('guide.learning.saveLastResponseLabel')}</>}
           </button>
         )}
@@ -750,7 +760,7 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
   return (
     <div className="p-4 md:p-6 max-w-xl mx-auto animate-in">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /></button>
+        <button aria-label={t('chat.back')} onClick={onBack} className="btn-ghost"><ArrowLeft size={16} /></button>
         <div className="flex-1">
           <div className="flex justify-between text-xs text-slate-400 mb-1">
             <span>{t('learning.questionCounter', { current: current + 1, total: questions.length })}</span>
@@ -1012,11 +1022,11 @@ function NotesView({ topics, topicNotes, onBack, onSaveNote, onDeleteNote, callA
                     <span className="text-slate-500 text-xs ml-2">{new Date(note.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => navigator.clipboard?.writeText(note.content)} className="text-slate-500 hover:text-teal-400 p-0.5"><Copy size={13} /></button>
-                    <button onClick={() => onDeleteNote(note.id)} className="text-slate-500 hover:text-red-400 p-0.5"><Trash2 size={13} /></button>
+                    <button aria-label={t('tools.shared.copy')} onClick={() => navigator.clipboard?.writeText(note.content)} className="text-slate-500 hover:text-teal-400 p-0.5"><Copy size={13} /></button>
+                    <button aria-label={t('common.delete')} onClick={() => onDeleteNote(note.id)} className="text-slate-500 hover:text-red-400 p-0.5"><Trash2 size={13} /></button>
                   </div>
                 </div>
-                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{note.content}</p>
+                <MarkdownContent>{note.content}</MarkdownContent>
               </div>
             ))}
           </div>

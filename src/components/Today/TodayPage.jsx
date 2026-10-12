@@ -307,8 +307,8 @@ export default function TodayPage() {
           ? nextFocusStep.id === 'tailor' && focusTailorNeedsFollowOn
             ? t('tools.toolLabels.resumechecker')
             : t('today.continueStep', { title: nextFocusStep.title })
-          : t('today.openWorkspace'),
-        onClick: nextFocusStep ? nextFocusStep.onClick : () => openTrackerApplication(focusApplication.id, 'overview'),
+          : t('today.steps.mock.start'),
+        onClick: nextFocusStep ? nextFocusStep.onClick : () => launchTool(SECTIONS.INTERVIEW, 'interview'),
       }
     : null
 
@@ -360,7 +360,7 @@ export default function TodayPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-5 animate-in">
+    <div className="today-page p-4 md:p-6 space-y-5 animate-in">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className={`section-title dashboard-greeting ${drillMode ? 'drill' : 'sensei'}`}>
@@ -393,7 +393,7 @@ export default function TodayPage() {
               </div>
             )}
             {focusApplication && (
-              <p className="text-slate-500 text-sm mt-3 leading-relaxed">
+              <p className="text-slate-500 text-xs mt-3 leading-relaxed">
                 {t('today.prepHubsNote')}
               </p>
             )}
@@ -443,13 +443,14 @@ export default function TodayPage() {
               </select>
             )}
             {focusApplication ? (
-              <button onClick={() => openTrackerApplication(focusApplication.id, 'overview')} className="btn-primary text-sm">
+              <button onClick={() => openTrackerApplication(focusApplication.id, 'overview')} className="btn-secondary text-sm">
                 {t('today.workspace')}
               </button>
             ) : null}
           </div>
         </div>
 
+        {focusApplication && <div className="today-progress" role="progressbar" aria-label={t('today.workspaceProgress')} aria-valuenow={completedFocusSteps} aria-valuemin={0} aria-valuemax={6}><span style={{ width: `${completedFocusSteps / 6 * 100}%` }} /></div>}
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-4">
           <MetricCard
             label={t('today.workspaceProgress')}
@@ -522,7 +523,7 @@ export default function TodayPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="text-white text-sm font-display font-semibold">
-                          {entry.toolLabel || t(`tools.toolLabels.${entry.tool}`)}
+                          {entry.toolLabel || t(`tools.toolLabels.${entry.tool}`)}{entry.mode ? ` · ${entry.mode}` : ''}
                         </div>
                         {!showingFocusedRecentPrep && entry.applicationLabel && (
                           <div className="text-teal-300 text-xs mt-1">{entry.applicationLabel}</div>

@@ -4,6 +4,7 @@ import { hasAuthCallbackParams } from '../lib/authFlow'
 const AppContext = createContext(null)
 
 export const SECTIONS = {
+  HOME: 'home',
   TODAY: 'today',
   APPLICATIONS: 'applications',
   DASHBOARD: 'dashboard',
@@ -53,6 +54,7 @@ export function AppProvider({ children }) {
   const [pendingToolRequest, setPendingToolRequest] = useState(null)
   const [pendingLearningRequest, setPendingLearningRequest] = useState(null)
   const [pendingTrackerRequest, setPendingTrackerRequest] = useState(null)
+  const [chatFocus, setChatFocus] = useState(false)
   const activeSectionRef = useRef(activeSection)
 
   // Stats tracking
@@ -232,6 +234,7 @@ export function AppProvider({ children }) {
       pendingToolRequest, launchTool, clearPendingToolRequest,
       pendingLearningRequest, openLearningTopic, clearPendingLearningRequest,
       pendingTrackerRequest, openTrackerApplication, clearPendingTrackerRequest,
+      chatFocus, setChatFocus,
     }}>
       {children}
     </AppContext.Provider>

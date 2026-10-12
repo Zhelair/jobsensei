@@ -4,6 +4,8 @@ import { useApp } from '../../context/AppContext'
 import { useAuth } from '../../context/AuthContext'
 import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
+import { useTheme, THEMES } from '../../context/ThemeContext'
+import { useVisuals } from '../../context/VisualsContext'
 import {
   Zap, Check, Trash2, Eye, EyeOff, FileText, Upload, Download, X,
   Coffee, CreditCard, ChevronDown, ChevronUp, LogOut, ExternalLink, Puzzle, FolderArchive,
@@ -39,6 +41,8 @@ export default function Settings({ mode = 'settings' }) {
   const [testResult, setTestResult] = useState(null)
   const [saved, setSaved] = useState(false)
   const [showOwnKey, setShowOwnKey] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const { enabled: visualsEnabled, setEnabled: setVisualsEnabled, triggerConfetti } = useVisuals()
   const isAccountMode = mode === 'account'
 
   const [bmacInput, setBmacInput] = useState('')
@@ -495,7 +499,7 @@ export default function Settings({ mode = 'settings' }) {
       : t('settings.planCopyNone')
   const profileActionLabel = profile ? t('settings.editProfile') : t('settings.setupProfile')
   const pageTitle = isAccountMode ? t('account.title') : t('settings.title')
-  const pageSubtitle = isAccountMode ? t('account.subtitle') : t('settings.subtitle')
+  const pageSubtitle = isAccountMode ? t('account.subtitle') : t('settings.refinedSubtitle')
 
   const pairedCardClass = 'card flex flex-col'
   const compactAccountCardClass = 'rounded-2xl border border-navy-600 bg-navy-950/70 px-4 py-4'
@@ -625,6 +629,8 @@ export default function Settings({ mode = 'settings' }) {
     <div className="p-4 md:p-6 max-w-4xl md:max-w-5xl xl:max-w-[72rem] mx-auto animate-in space-y-4">
       <h2 className="section-title mb-1">{pageTitle}</h2>
       <p className="section-sub">{pageSubtitle}</p>
+      {!isAccountMode && <section className="card mt-5"><h3 className="font-display font-semibold text-white mb-3">{t('settings.appearance')}</h3><div className="flex flex-wrap gap-2">{Object.values(THEMES).map(value => <button key={value} className="btn-secondary min-h-[44px]" aria-pressed={theme === value} onClick={() => setTheme(value)}>{t(`topbar.theme.${value === THEMES.MYSPACE ? 'neon' : value}`)}</button>)}<button className={`btn-secondary min-h-[44px] ${visualsEnabled ? 'visuals-active' : ''}`} onClick={() => { setVisualsEnabled(!visualsEnabled); if (!visualsEnabled) triggerConfetti(70) }}>{t('topbar.visualsMenu')}: {visualsEnabled ? t('common.on') : t('common.off')}</button></div></section>}
+
 
       {!isAccountMode && (
       <div className="card border-indigo-500/20 bg-indigo-500/5">
@@ -671,7 +677,7 @@ export default function Settings({ mode = 'settings' }) {
       )}
 
       {isAccountMode && (
-      <div ref={planAccessRef} className="card border-teal-500/20 bg-teal-500/5">
+      <div id="account-plan" ref={planAccessRef} className="card border-teal-500/20 bg-teal-500/5">
         <p className="text-slate-300 text-sm mb-4">Your workspace is saved in this browser. Signing in on another device restores account access and credits, but does not transfer resumes, applications, stories or notes. Use Export and Import in Settings to move a backup.</p>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0 max-w-3xl">
@@ -830,7 +836,7 @@ export default function Settings({ mode = 'settings' }) {
         )}
 
         <div className="grid xl:grid-cols-2 gap-4 mt-4 items-stretch">
-          <div className={`${compactAccountCardClass} h-full min-w-0`}>
+          <div id="account-resume" className={`${compactAccountCardClass} h-full min-w-0`}>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0">
                   <h4 className="font-display font-semibold text-white flex items-center gap-2">
@@ -1019,7 +1025,7 @@ export default function Settings({ mode = 'settings' }) {
               )}
             </div>
 
-          <div className={`${compactAccountCardClass} h-full min-w-0`}>
+          <div id="account-devices" className={`${compactAccountCardClass} h-full min-w-0`}>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0">
                   <h3 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
@@ -1129,20 +1135,20 @@ export default function Settings({ mode = 'settings' }) {
               <div className="text-white text-sm font-display font-semibold">{t('settings.privacyTermsTitle')}</div>
               <p className="text-slate-400 text-sm leading-relaxed mt-1">{t('settings.privacyTermsSummary')}</p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+            <div className="legal-links">
+              <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="legal-link">
                 <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
               </a>
-              <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+              <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="legal-link">
                 <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
               </a>
-              <a href={`/cookie-storage-notice.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+              <a href={`/cookie-storage-notice.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="legal-link">
                 <ExternalLink size={13} /> {t('settings.cookieNoticeLink')}
               </a>
-              <a href={`/pricing.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+              <a href={`/pricing.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="legal-link">
                 <ExternalLink size={13} /> {t('settings.pricingLink')}
               </a>
-              <a href={`/refund-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+              <a href={`/refund-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="legal-link">
                 <ExternalLink size={13} /> {t('settings.refundPolicyLink')}
               </a>
             </div>

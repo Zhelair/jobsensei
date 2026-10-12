@@ -280,7 +280,7 @@ export default function Tools({ mode = 'prep-tools' }) {
   if (activeTool === 'transferable') return renderHubScreen(<TransferableSkillsTool onBack={() => setActiveTool(null)} hubLabel={hubTitle} resume={resume} saveHistory={(i, r) => saveHistory('transferable', getToolLabel(t, 'transferable'), i, r)} history={historyFor('transferable')} onDelete={deleteHistory} />)
   if (activeTool === 'tone') return renderHubScreen(<ToneAnalyzer onBack={() => setActiveTool(null)} hubLabel={hubTitle} saveHistory={(i, r) => saveHistory('tone', getToolLabel(t, 'tone'), i, r)} history={historyFor('tone')} onDelete={deleteHistory} />)
   if (activeTool === 'followup') return renderHubScreen(<FollowUpEmail onBack={() => setActiveTool(null)} hubLabel={hubTitle} activeContext={activeContext} saveHistory={(i, r) => saveHistory('followup', getToolLabel(t, 'followup'), i, r)} history={historyFor('followup')} onDelete={deleteHistory} />)
-  if (activeTool === 'pitch') return renderHubScreen(<ElevatorPitch onBack={() => setActiveTool(null)} hubLabel={hubTitle} resume={resume} saveHistory={(i, r) => saveHistory('pitch', getToolLabel(t, 'pitch'), i, r)} history={historyFor('pitch')} onDelete={deleteHistory} />)
+  if (activeTool === 'pitch') return renderHubScreen(<ElevatorPitch onBack={() => setActiveTool(null)} hubLabel={hubTitle} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('pitch', getToolLabel(t, 'pitch'), i, r)} history={historyFor('pitch')} onDelete={deleteHistory} />)
   if (activeTool === 'coverletter') return renderHubScreen(<CoverLetterOptimizer onBack={() => setActiveTool(null)} hubLabel={hubTitle} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('coverletter', getToolLabel(t, 'coverletter'), i, r)} history={historyFor('coverletter')} onDelete={deleteHistory} />)
   if (activeTool === 'resumechecker') return renderHubScreen(<ResumeChecker onBack={() => setActiveTool(null)} hubLabel={hubTitle} resume={resume} activeContext={activeContext} saveHistory={(i, r) => saveHistory('resumechecker', getToolLabel(t, 'resumechecker'), i, r)} history={historyFor('resumechecker')} onDelete={deleteHistory} />)
   if (activeTool === 'linkedin') return renderHubScreen(<LinkedInAuditor onBack={() => setActiveTool(null)} hubLabel={hubTitle} saveHistory={(i, r) => saveHistory('linkedin', getToolLabel(t, 'linkedin'), i, r)} history={historyFor('linkedin')} onDelete={deleteHistory} />)
@@ -1182,12 +1182,12 @@ function FollowUpEmail({ onBack, hubLabel = 'Back', activeContext, saveHistory, 
 
 // ─── Elevator Pitch ────────────────────────────────────────────────────────────
 
-function ElevatorPitch({ onBack, hubLabel = 'Back', resume, saveHistory, history, onDelete }) {
+function ElevatorPitch({ onBack, hubLabel = 'Back', resume, activeContext, saveHistory, history, onDelete }) {
   const { drillMode, profile } = useApp()
   const { callAI, isConnected } = useAI()
   const { language, t } = useLanguage()
   const toolLabel = getToolLabel(t, 'pitch')
-  const [role, setRole] = useState(profile?.targetRole || '')
+  const [role, setRole] = useState(activeContext?.application?.role || profile?.targetRole || '')
   const [strengths, setStrengths] = useState(resume ? resume.slice(0, 300) : '')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
@@ -1450,6 +1450,7 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
 // ─── Visual Design Review ──────────────────────────────────────────────────────
 
 function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, onDelete }) {
+  const { setActiveSection } = useApp()
   const { callAI, isConnected, provider, PROVIDERS, apiKey } = useAI()
   const { secureAccount } = useAuth()
   const { t } = useLanguage()
@@ -1508,14 +1509,14 @@ function VisualResumeReview({ onBack, hubLabel = 'Back', saveHistory, history, o
       {isDeepSeekActive ? (
         <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 mb-5 text-amber-300 text-sm">
           <span className="mt-0.5">⚠️</span>
-          <span>{t('tools.visualreview.visionWarning')}</span>
+          <div><p>{t('tools.visualreview.visionWarning')}</p><button className="btn-secondary mt-3" onClick={() => { setActiveSection(SECTIONS.SETTINGS); window.setTimeout(() => window.dispatchEvent(new CustomEvent('jobsensei:open-byok-settings')), 80) }}>{t('welcome.ctaByok')}</button></div>
         </div>
       ) : (
         <p className="text-xs text-slate-500 mb-5">{t('tools.visualreview.requiresVision')}</p>
       )}
       <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
       {!imagePreview ? (
-        <button onClick={() => imageInputRef.current?.click()} className="w-full border-2 border-dashed border-navy-600 hover:border-teal-500/50 rounded-2xl p-12 flex flex-col items-center gap-3 text-slate-500 hover:text-slate-400 transition-all mb-4">
+        <button disabled={Boolean(isDeepSeekActive)} onClick={() => imageInputRef.current?.click()} className="w-full border-2 border-dashed border-navy-600 hover:border-teal-500/50 rounded-2xl p-12 flex flex-col items-center gap-3 text-slate-500 hover:text-slate-400 transition-all mb-4">
           <Camera size={32} />
           <span className="text-sm font-body">{t('tools.visualreview.uploadCta')}</span>
           <span className="text-xs">{t('tools.visualreview.uploadFormats')}</span>
