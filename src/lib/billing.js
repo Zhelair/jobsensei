@@ -113,3 +113,12 @@ export async function openProCheckout({
 
   return { mode: 'checkout_opened' }
 }
+
+// Paddle.js opens an existing transaction from _ptxn during initialization.
+// This never creates a transaction or grants account access.
+export async function initializePaddlePaymentLink(search = window.location.search) {
+  const transactionId = new URLSearchParams(search).get('_ptxn')
+  if (!transactionId || !/^txn_[a-z0-9]+$/.test(transactionId)) return false
+  await ensurePaddle()
+  return true
+}

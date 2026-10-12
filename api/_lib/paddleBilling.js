@@ -18,7 +18,9 @@ export async function paddleRequest(path, { method = 'GET', body } = {}) {
     const error = new Error(`Paddle request failed: HTTP ${response.status}${code ? ` (${code})` : ''}`)
     error.code = code
     error.checkoutRejected = response.status >= 400 && response.status < 500
-    error.publicMessage = response.status === 401 || response.status === 403
+    error.publicMessage = code === 'transaction_default_checkout_url_not_set'
+      ? 'Paddle default payment link is missing. Set it in Paddle > Checkout > Checkout configuration.'
+      : response.status === 401 || response.status === 403
       ? 'Paddle rejected the server credentials or permissions. Check the API key and sandbox/live environment.'
       : `Paddle could not create or update billing (HTTP ${response.status}${code ? `, ${code}` : ''}). Contact support.`
     throw error

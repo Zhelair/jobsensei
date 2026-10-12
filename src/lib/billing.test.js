@@ -39,3 +39,20 @@ it('opens the server-selected sandbox transaction for the signed-in account', as
   expect(fetch.mock.calls[0][1].headers.Authorization).toBe('Bearer test_access')
   expect(Paddle.Checkout.open).toHaveBeenCalledWith(expect.objectContaining({ transactionId: 'txn_test' }))
 })
+
+it('initializes Paddle for a payment link without creating a transaction', async () => {
+  const { initializePaddlePaymentLink } = await configuredBilling()
+  const Paddle = { Environment: { set: vi.fn() }, Initialize: vi.fn() }
+  vi.stubGlobal('window', { Paddle })
+  const fetch = vi.fn()
+  vi.stubGlobal('fetch', fetch)
+  expect(await initializePaddlePaymentLink('?_ptxn=txn_test123')).toBe(true)
+  expect(Paddle.Initialize).toHaveBeenCalledTimes(1)
+  expect(fetch).not.toHaveBeenCalled()
+})
+
+it('does not load Paddle on normal navigation or malformed payment links', async () => {
+  const { initializePaddlePaymentLink } = await configuredBilling()
+  expect(await initializePaddlePaymentLink('')).toBe(false)
+  expect(await initializePaddlePaymentLink('?_ptxn=invalid')).toBe(false)
+})
