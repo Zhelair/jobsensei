@@ -31,11 +31,25 @@ export default async function handler(req, res) {
       })
       if (reserveError) throw reserveError
       if (reservation.status === 'reused') return res.status(200).json({ transactionId: reservation.transactionId })
-      if (reservation.status !== 'reserved') return res.status(409).json({ error: 'A checkout or subscription is already in progress. Please wait, or use Manage billing.' })
-      const transaction = await paddleRequest('/transactions', { method: 'POST', body: {
+      if (reservation.status === 'busy') return res.status(409).json({ error: 'A checkout request is still finishing. Wait 30 seconds, then try again.', code: 'checkout_busy' })
+      if (reservation.status === 'existing_subscription') return res.status(409).json({ error: 'Your account already has a subscription. Refresh account status and use Manage billing.', code: 'existing_subscription' })
+      if (reservation.status !== 'reserved') return res.status(409).json({ error: 'Checkout is unavailable for this account. Refresh account status.', code: 'checkout_unavailable' })
+      let transaction
+      try {
+        transaction = await paddleRequest('/transactions', { method: 'POST', body: {
         items: [{ price_id: priceId, quantity: 1 }], collection_mode: 'automatic',
         custom_data: { jobsensei_checkout_id: checkoutId },
-      } })
+        } })
+      } catch (providerError) {
+        // Keep the binding for a late provider webhook, but let a failed request be retried.
+        if (providerError.checkoutRejected) {
+        const { error: releaseError } = await supabase.from('billing_checkouts')
+          .update({ created_at: new Date(Date.now() - 31 * 60 * 1000).toISOString() })
+          .eq('id', checkoutId).eq('user_id', user.id).is('transaction_id', null)
+        if (releaseError) console.error('Checkout reservation recovery failed:', releaseError.code)
+        }
+        throw providerError
+      }
       const { error: saveError } = await supabase.from('billing_checkouts')
         .update({ transaction_id: transaction.id }).eq('id', checkoutId)
       if (saveError) throw saveError
@@ -61,6 +75,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Unknown billing action.' })
   } catch (error) {
     console.error('Billing action failed:', error.code || error.message)
-    return res.status(503).json({ error: 'Billing is temporarily unavailable. Please try again.' })
+    return res.status(503).json({ error: error.publicMessage || 'Billing is temporarily unavailable. Please try again.' })
   }
 }

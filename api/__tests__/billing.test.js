@@ -14,7 +14,7 @@ beforeEach(() => {
     writes.push({ table: 'billing_checkouts', payload: { id: args.p_checkout_id, user_id: args.p_user_id } })
     return { data: { status: 'reserved' }, error: null }
   }), from(table) {
-    const query = { select: () => query, eq: () => query,
+    const query = { select: () => query, eq: () => query, is: () => query,
       single: async () => ({ data: { deletion_requested_at: null }, error: null }),
       insert(payload) { writes.push({ table, payload }); return Promise.resolve({ error: null }) },
       update(payload) { writes.push({ table, payload }); return query },
@@ -57,4 +57,27 @@ it('schedules cancellation without removing access or changing credits', async (
   expect((await run({ action: 'cancel', subscriptionId: 'sub_owned' })).code).toBe(200)
   expect(mocks.paddle.mock.calls[1][1].body.effective_from).toBe('next_billing_period')
   expect(writes.every(write => write.table !== 'accounts')).toBe(true)
+})
+
+it('releases a failed reservation while retaining its webhook binding', async () => {
+  mocks.paddle.mockRejectedValueOnce(Object.assign(new Error('Provider failure'), { checkoutRejected: true }))
+  expect((await run({ action: 'checkout' })).code).toBe(503)
+  const recovery = writes.find(write => write.payload.created_at)
+  expect(recovery.table).toBe('billing_checkouts')
+  expect(Date.parse(recovery.payload.created_at)).toBeLessThan(Date.now() - 30 * 60 * 1000)
+  expect(writes.every(write => write.table !== 'accounts')).toBe(true)
+})
+
+it('explains a busy reservation without suggesting nonexistent billing controls', async () => {
+  mocks.client().rpc.mockResolvedValueOnce({ data: { status: 'busy' }, error: null })
+  const result = await run({ action: 'checkout' })
+  expect(result.value.code).toBe('checkout_busy')
+  expect(result.value.error).toContain('30 seconds')
+  expect(mocks.paddle).not.toHaveBeenCalled()
+})
+
+it('retains the reservation when a timeout leaves provider creation uncertain', async () => {
+  mocks.paddle.mockRejectedValueOnce(new Error('Request timed out'))
+  expect((await run({ action: 'checkout' })).code).toBe(503)
+  expect(writes.some(write => write.payload.created_at)).toBe(false)
 })
