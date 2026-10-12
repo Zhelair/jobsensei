@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useAI } from '../../context/AIContext'
 import { SECTIONS, useApp } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
@@ -16,6 +16,8 @@ export default function PaywallModal() {
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
   const [notice, setNotice] = useState('')
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const checkoutBusy = useRef(false)
 
   if (!showPaywall) return null
 
@@ -45,6 +47,10 @@ export default function PaywallModal() {
   }
 
   async function handleCheckout() {
+    if (checkoutBusy.current) return
+    checkoutBusy.current = true
+    setCheckoutLoading(true)
+    setError('')
     try {
       await openProCheckout({
         email: email.trim(),
@@ -53,6 +59,9 @@ export default function PaywallModal() {
       })
     } catch (e) {
       setError(e.message || 'Unable to open Paddle checkout right now.')
+    } finally {
+      checkoutBusy.current = false
+      setCheckoutLoading(false)
     }
   }
 
@@ -76,10 +85,12 @@ export default function PaywallModal() {
 
         <button
           onClick={handleCheckout}
+          disabled={checkoutLoading}
+          aria-busy={checkoutLoading}
           className="btn-primary w-full justify-center mb-4 bg-yellow-500 hover:bg-yellow-400 text-black border-0"
         >
           <CreditCard size={16} />
-          {t('paywall.cta')}
+          {checkoutLoading ? 'Opening checkout…' : t('paywall.cta')}
           <ExternalLink size={13} className="opacity-60" />
         </button>
 

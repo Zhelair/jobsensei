@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { MessageSquare, Send, Copy } from 'lucide-react'
+import { MessageSquare, Send, Copy, Coffee } from 'lucide-react'
+import { BMAC_ENABLED, openBmacCheckout } from '../../lib/billing'
 import { useAuth } from '../../context/AuthContext'
 
 export default function Feedback() {
@@ -56,6 +57,10 @@ export default function Feedback() {
   return <section ref={card} tabIndex={-1} className="card mt-6" aria-labelledby="feedback-heading">
     <h2 id="feedback-heading" className="font-display font-bold text-white flex items-center gap-2"><MessageSquare size={18} className="text-teal-400" /> Feedback & support</h2>
     <p className="text-slate-300 text-sm mt-2 mb-2">Report a bug, suggest an improvement, or request a job source.</p>
+    {BMAC_ENABLED && <div className="my-4">
+      <button type="button" className="btn-secondary" onClick={() => { try { openBmacCheckout() } catch (error) { setNotice(error.message) } }}><Coffee size={15} />Support on Buy Me a Coffee</button>
+      <p className="text-slate-400 text-xs mt-2">Voluntary support. To subscribe to Pro, use Paddle in Account.</p>
+    </div>}
     {secureUser && <button type="button" className="btn-ghost text-xs mb-3" onClick={() => { setCategory('source'); setSent(false) }}>Missing your job board? Request a source.</button>}
     {!secureUser ? <p className="text-slate-300 text-sm">Sign in to your JobSensei account to send feedback.</p> : <form onSubmit={submit} className="space-y-4" onChange={() => setSent(false)}>
       <div className="grid sm:grid-cols-2 gap-4">
