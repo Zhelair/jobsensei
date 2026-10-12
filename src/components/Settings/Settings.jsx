@@ -51,6 +51,7 @@ export default function Settings({ mode = 'settings' }) {
   const [secureError, setSecureError] = useState('')
   const [billingPortalLoading, setBillingPortalLoading] = useState(false)
   const [billingPortalError, setBillingPortalError] = useState('')
+  const [billingPortalUrl, setBillingPortalUrl] = useState('')
   const [subscriptions, setSubscriptions] = useState([])
   const [accountAction, setAccountAction] = useState(null)
   const [confirmEmail, setConfirmEmail] = useState('')
@@ -307,9 +308,9 @@ export default function Settings({ mode = 'settings' }) {
       return
     }
 
-    const popup = window.open('', '_blank', 'noopener,noreferrer')
     setBillingPortalLoading(true)
     setBillingPortalError('')
+    setBillingPortalUrl('')
 
     try {
       const response = await fetch('/api/paddle-portal', {
@@ -327,15 +328,12 @@ export default function Settings({ mode = 'settings' }) {
         throw new Error(payload.error || 'Unable to open Paddle billing right now.')
       }
 
-      if (popup) {
-        popup.location.href = payload.url
-      } else {
-        window.open(payload.url, '_blank', 'noopener,noreferrer')
+      const portalUrl = new URL(payload.url)
+      if (portalUrl.protocol !== 'https:' || !['customer-portal.paddle.com', 'sandbox-customer-portal.paddle.com'].includes(portalUrl.hostname)) {
+        throw new Error('Paddle returned an unexpected billing portal address.')
       }
+      setBillingPortalUrl(portalUrl.href)
     } catch (error) {
-      if (popup) {
-        popup.close()
-      }
       setBillingPortalError(error.message || 'Unable to open Paddle billing right now.')
     } finally {
       setBillingPortalLoading(false)
@@ -896,6 +894,7 @@ export default function Settings({ mode = 'settings' }) {
                   {subscriptions.filter(s => s.scheduledChange?.action === 'cancel').map(s => (
                     <p key={s.id} className={settingsSupportCopyClass}>{t('settings.switchesFree', { date: formatCreditResetDate(s.scheduledChange.effective_at || s.paidUntil) })}</p>
                   ))}
+                  {billingPortalUrl && <a className="btn-secondary text-sm" href={billingPortalUrl} target="_blank" rel="noopener noreferrer">Open Paddle billing portal <ExternalLink size={13} /></a>}
                   {billingPortalError && <p className="text-red-400 text-sm leading-relaxed">{billingPortalError}</p>}
                 </div>
               ) : (
