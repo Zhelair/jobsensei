@@ -2,13 +2,27 @@ import { getPaddleWebhookConfig } from './authBridge.js'
 
 export async function paddleRequest(path, { method = 'GET', body } = {}) {
   const { apiKey, apiBaseUrl } = getPaddleWebhookConfig()
-  if (!apiKey) throw new Error('Paddle billing is not configured yet.')
+  if (!apiKey) {
+    const error = new Error('Paddle API key missing')
+    error.checkoutRejected = true
+    error.publicMessage = 'Paddle server configuration is incomplete. Contact support.'
+    throw error
+  }
   const response = await fetch(`${apiBaseUrl}${path}`, {
     method, headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(15000),
   })
   const payload = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error('Paddle could not complete this request. Please try again.')
+  if (!response.ok) {
+    const code = String(payload.error?.code || '').replace(/[^a-zA-Z0-9_]/g, '').slice(0, 80)
+    const error = new Error(`Paddle request failed: HTTP ${response.status}${code ? ` (${code})` : ''}`)
+    error.code = code
+    error.checkoutRejected = response.status >= 400 && response.status < 500
+    error.publicMessage = response.status === 401 || response.status === 403
+      ? 'Paddle rejected the server credentials or permissions. Check the API key and sandbox/live environment.'
+      : `Paddle could not create or update billing (HTTP ${response.status}${code ? `, ${code}` : ''}). Contact support.`
+    throw error
+  }
   return payload.data
 }
 
