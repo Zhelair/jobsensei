@@ -53,3 +53,17 @@ it('reports provider exhaustion without inventing fallback jobs', async () => {
   expect(res.value.error).toContain('Monthly job-search allowance exhausted')
   expect(res.value.results).toBeUndefined()
 })
+
+it('returns successful results when a remote alternative fails and reports partial coverage', async () => {
+  fetch.mockResolvedValueOnce({ok:true,json:async()=>({results:[{title:'Compliance Analyst',url:'https://linkedin.com/jobs/view/456',content:'Sofia Bulgaria'}]})}).mockRejectedValueOnce(new Error('timeout'))
+  const res = await run({keywords:'Compliance',location:'Sofia, Bulgaria or remote',source:'linkedin'})
+  expect(res.code).toBe(200)
+  expect(res.value.results.map(job=>job.id)).toEqual(['linkedin:456'])
+  expect(res.value.partial).toBe(true)
+  expect(fetch).toHaveBeenCalledTimes(2)
+})
+it('explains how many otherwise matching undated listings a recency filter excluded', async () => {
+  const res = await run({keywords:'Risk analyst',location:'Sofia',recency:'week'})
+  expect(res.value.results).toEqual([])
+  expect(res.value.undatedExcluded).toBe(1)
+})

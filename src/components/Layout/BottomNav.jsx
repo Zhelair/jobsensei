@@ -3,11 +3,12 @@ import { useApp, SECTIONS } from '../../context/AppContext'
 import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
 import {
-  LayoutDashboard, BookOpen, Briefcase,
+  Home, LayoutDashboard, BookOpen, Briefcase,
   Shield, FolderOpen, Plus, Check, X, Edit3, Download, Trash2, Upload, FolderArchive
 } from 'lucide-react'
 
 const MOBILE_NAV = [
+  { id: SECTIONS.HOME, icon: Home, labelKey: 'nav.home' },
   { id: SECTIONS.TODAY, icon: LayoutDashboard, labelKey: 'nav.today' },
   { id: SECTIONS.APPLICATIONS, icon: Briefcase, labelKey: 'nav.apps' },
   { id: SECTIONS.LEARNING, icon: BookOpen, labelKey: 'nav.learning' },

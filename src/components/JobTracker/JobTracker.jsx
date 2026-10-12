@@ -9,7 +9,7 @@ import { useApp, SECTIONS } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
 import { generateId, formatDate, timeAgo, tryParseJSON } from '../../utils/helpers'
-import { Plus, X, Download, Building2, ArrowLeft, Check, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale, Copy, Printer, Save, Sparkles, FileText, Mic, Target, Star, Gauge, Mail, Megaphone, ClipboardCheck, Globe, Camera, Zap } from 'lucide-react'
+import { Plus, X, Download, Building2, ArrowLeft, Check, ChevronDown, FileSpreadsheet, Upload, Edit3, Clock, Search, Scale, Copy, Printer, Save, Sparkles, FileText, Mic, Target, Star, Gauge, Mail, Megaphone, ClipboardCheck, Globe, Camera, Zap } from 'lucide-react'
 
 const STAGES = ['Researching', 'Applied', 'Screening', 'Interviewing', 'Awaiting', 'Offer', 'Rejected']
 const STAGE_LABEL_KEYS = {
@@ -852,6 +852,7 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
   const [workspaceSummary, setWorkspaceSummary] = useState('')
   const [workspaceSummaryLoading, setWorkspaceSummaryLoading] = useState(false)
   const [showAdvancedTools, setShowAdvancedTools] = useState(false)
+  const [selectedWorkflowStep, setSelectedWorkflowStep] = useState(null)
   const interviewSessions = getProjectData('interviewSessions') || []
   const toolsHistory = getProjectData('toolsHistory') || []
   const gapResults = getProjectData('gapResults') || []
@@ -861,6 +862,7 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
   useEffect(() => {
     setWorkspaceTab(initialTab === 'notes' ? 'research' : initialTab || 'overview')
     setShowAdvancedTools(false)
+    setSelectedWorkflowStep(null)
   }, [app.id, initialTab])
 
   useEffect(() => {
@@ -1452,6 +1454,7 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
 
     const completedSteps = stepCards.filter(card => card.state === 'complete').length
     const nextStep = stepCards.find(card => card.state !== 'complete') || null
+    const displayedStepId = stepCards.some(card => card.id === selectedWorkflowStep) ? selectedWorkflowStep : nextStep?.id || 'mock'
     const nextStepAction = nextStep?.actions?.find(action => !action.disabled && action.onClick) || nextStep?.actions?.[0] || null
     const advancedTools = [
       { label: t('tools.toolLabels.transferable'), section: SECTIONS.TOOLS, toolId: 'transferable', count: appTransferableRuns.length },
@@ -1462,9 +1465,10 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
     ]
 
     return (
-      <div className="space-y-4">
+      <div className="workflow-overview">
+        <div className="workspace-progress-row"><span>{t('today.progress.stepsComplete',{count:completedSteps,total:6})}</span><div role="progressbar" aria-label={t('today.workspaceProgress')} aria-valuenow={completedSteps} aria-valuemin={0} aria-valuemax={6}><span style={{width:`${completedSteps/6*100}%`}}/></div></div>
         <details className="workspace-context card border-teal-500/20 bg-teal-500/5">
-          <summary className="flex justify-between gap-3 min-h-[44px] items-center cursor-pointer"><span className="text-white font-display font-semibold">{t('applications.workspace.overview.title')}</span><span className="text-slate-400 text-xs">{t('applications.workspace.overview.stepsComplete', { count: completedSteps, total: stepCards.length })}</span></summary>
+          <summary className="flex justify-between gap-3 min-h-[44px] items-center cursor-pointer"><span className="text-white font-display font-semibold">{t('workspace.contextForRole')}</span><span className="text-slate-400 text-xs">{t('applications.workspace.overview.stepsComplete', { count: completedSteps, total: stepCards.length })}</span></summary>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0 max-w-3xl">
               <div className="text-slate-400 text-xs font-display font-semibold uppercase tracking-wide mb-2">{t('applications.workspace.overview.title')}</div>
@@ -1547,13 +1551,14 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
           </div>
         </details>
 
-        <div className="grid lg:grid-cols-2 gap-4 items-start">
-          {stepCards.map(card => {
+        <div className="workflow-layout">
+          <nav className="workflow-step-nav" aria-label={t('applications.workspace.overview.title')}>{stepCards.map(card => <button key={card.id} aria-current={card.id === displayedStepId ? 'step' : undefined} onClick={() => setSelectedWorkflowStep(card.id)}><span className={card.state === 'complete' ? 'complete' : ''}>{card.state === 'complete' ? <Check size={13}/> : card.step}</span><strong>{card.title}</strong><ChevronDown size={13}/></button>)}</nav>
+          <div className="workflow-content">{stepCards.filter(card => card.id === displayedStepId).map(card => {
             const status = statusInfo(card.state)
 
             return (
-              <details key={card.id} className={`workspace-step card ${status.card}`} open={card.id === nextStep?.id ? true : undefined}>
-                <summary><span className="workspace-step-number">{card.step}</span><h4 className="text-white font-display font-semibold">{card.title}</h4><span className="text-xs text-slate-400">{status.label}</span></summary>
+              <section key={card.id} className={`workspace-step card ${status.card}`}>
+                <div className="workspace-panel-title"><span className="workspace-step-number">{card.step}</span><h4 className="text-white font-display font-semibold">{card.title}</h4><span className="text-xs text-slate-400">{status.label}</span></div>
                 <p className="text-slate-400 text-sm leading-relaxed mb-2">{card.desc}</p>
                 <p className="text-slate-500 text-sm leading-relaxed mb-4">{card.summary}</p>
                 <div className="flex flex-wrap gap-2">
@@ -1590,9 +1595,9 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
                     )
                   })}
                 </div>
-              </details>
+              </section>
             )
-          })}
+          })}</div>
         </div>
 
         <div className="card">
@@ -1797,7 +1802,7 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto animate-in">
+    <div className="application-workspace p-4 md:p-6 animate-in">
       <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
         <div>
           <button onClick={onBack} className="btn-ghost mb-3"><ArrowLeft size={16} /> {t('applications.workspace.back')}</button>

@@ -3,17 +3,18 @@ import { Search, ExternalLink, Plus, X } from 'lucide-react'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAuth } from '../../context/AuthContext'
 import { useProject } from '../../context/ProjectContext'
-import { shortlist, discoveryDate, discoverySignature } from '../../lib/jobDiscovery'
+import { shortlist, discoveryDate, discoverySignature, linkedinSearchUrl } from '../../lib/jobDiscovery'
 
 export default function JobDiscovery({ applications, onSave }) {
   const { profile, setActiveSection } = useApp()
   const { secureSession } = useAuth()
   const { getProjectData, updateProjectData } = useProject()
   const stored = getProjectData('jobDiscovery') || {}
-  const [preferences, setPreferences] = useState(stored.preferences || { keywords: profile?.targetRole || profile?.currentRole || '', location: '', source: 'linkedin', recency: 'week' })
+  const [preferences, setPreferences] = useState(stored.preferences || { keywords: profile?.targetRole || profile?.currentRole || '', location: '', source: 'all', recency: '' })
   const [snapshot, setSnapshot] = useState(stored.snapshot || null)
   const [cache, setCache] = useState(stored.cache || {})
   const [activity, setActivity] = useState(stored.activity || {})
+  const [visibleCount, setVisibleCount] = useState(20)
   const [hideViewed, setHideViewed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
@@ -28,7 +29,8 @@ export default function JobDiscovery({ applications, onSave }) {
   async function search(event) {
     event.preventDefault()
     if (searching.current) return
-    const signature = discoverySignature({ ...preferences, version: 2 })
+    setVisibleCount(20)
+    const signature = discoverySignature({ ...preferences, version: 3 })
     const cached = cache[signature] || (snapshot?.signature === signature ? snapshot : null)
     if (cached && Date.now() - Date.parse(cached.checkedAt) < 15 * 60 * 1000) { setSnapshot(cached); setNotice('Showing this search’s cached results. Searches refresh after 15 minutes.'); return }
     if (!secureSession?.access_token) { setNotice('Sign in to find jobs.'); return }
@@ -48,30 +50,34 @@ export default function JobDiscovery({ applications, onSave }) {
     } catch (error) { setNotice(error.name === 'TimeoutError' ? 'Search timed out. Please try again later.' : error.message) }
     finally { searching.current = false; setBusy(false) }
   }
-  const visibleSignature = discoverySignature({ ...preferences, version: 2 })
+  const visibleSignature = discoverySignature({ ...preferences, version: 3 })
   const visibleSnapshot = snapshot?.signature === visibleSignature ? snapshot : cache[visibleSignature]
   const jobs = shortlist(visibleSnapshot?.results || [], applications, activity, visibleSnapshot?.keywords || preferences.keywords, hideViewed, visibleSnapshot?.location || preferences.location)
   return <div className="space-y-4">
     <section className="card">
       <h2 className="font-display font-bold text-white text-xl">Discover your next role</h2>
-      <p className="text-slate-300 text-sm mt-2">Find up to ten indexed job listings. Try your usual role, adjacent roles, or skills such as SQL and Power BI. Review the keywords before searching.</p>
+      <p className="text-slate-300 text-sm mt-2">Search public job listings across LinkedIn and employer boards. Search your usual title or several adjacent roles, separated by commas. Review the search before submitting.</p>
       <form onSubmit={search} className="space-y-3 mt-4">
         <div className="grid md:grid-cols-2 gap-3">
-          <label className="text-sm text-slate-300">Roles or keywords<input required maxLength={300} className="input-field w-full mt-1" value={preferences.keywords} onChange={e => setPreferences({ ...preferences, keywords: e.target.value })} placeholder="Fraud analyst, compliance, SQL" disabled={busy} /></label>
+          <label className="text-sm text-slate-300">Role titles or related roles<input required maxLength={300} className="input-field w-full mt-1" value={preferences.keywords} onChange={e => setPreferences({ ...preferences, keywords: e.target.value })} placeholder="Fraud analyst, compliance, SQL" disabled={busy} /></label>
           <label className="text-sm text-slate-300">Location or remote preference<input maxLength={100} className="input-field w-full mt-1" value={preferences.location} onChange={e => setPreferences({ ...preferences, location: e.target.value })} placeholder="Sofia, Bulgaria or remote Europe" disabled={busy} /></label>
-          <label className="text-sm text-slate-300">Source<select className="input-field w-full mt-1" value={preferences.source} onChange={e => setPreferences({ ...preferences, source: e.target.value })} disabled={busy}><option value="linkedin">LinkedIn public listings</option><option value="careers">Company boards: Greenhouse / Lever</option></select></label>
+          <label className="text-sm text-slate-300">Source<select className="input-field w-full mt-1" value={preferences.source} onChange={e => setPreferences({ ...preferences, source: e.target.value })} disabled={busy}><option value="all">All supported sources</option><option value="linkedin">LinkedIn public listings</option><option value="careers">Company boards: Greenhouse / Lever</option></select></label>
           <label className="text-sm text-slate-300">Search recency<select className="input-field w-full mt-1" value={preferences.recency} onChange={e => setPreferences({ ...preferences, recency: e.target.value })} disabled={busy}><option value="">Any time</option><option value="day">Last 24 hours</option><option value="week">Last week</option><option value="month">Last month</option></select></label>
         </div>
+        <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400">Try related titles:</span>{['Compliance, AML, KYC, Financial Crime','Fraud Analyst, Fraud Investigator, Risk Analyst','Data Analyst, Business Intelligence Analyst'].map(value => <button type="button" key={value} disabled={busy} className="btn-ghost text-xs" onClick={() => setPreferences({...preferences,keywords:value})}>{value}</button>)}</div>
         <p className="text-xs text-slate-300">Recency uses source-page dates, which may differ from vacancy posting dates. Undated results are excluded when a period is selected. Confirm availability and remote eligibility on the original website.</p>
         <button className="btn-primary" disabled={busy || !preferences.keywords.trim()}><Search size={16} />{busy ? 'Finding jobs…' : 'Find jobs'}</button>
       </form>
       <p className="text-xs text-slate-300 mt-3">Repeat searches reuse cached results for 15 minutes. Live searches have a safety limit of 20 per hour and 100 per day; provider allowance also applies, separately from AI credits. Only search preferences are sent; your resume is not uploaded.</p>
       <button type="button" className="btn-ghost text-xs mt-2" onClick={() => { sessionStorage.setItem('js_feedback_source', 'request'); setActiveSection(SECTIONS.ACCOUNT) }}>Missing your job board? Request a source.</button>
     </section>
+    <div className="flex flex-wrap gap-3 items-center"><a className="btn-secondary text-xs" href={linkedinSearchUrl(preferences)} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/>See more on LinkedIn</a><span className="text-xs text-slate-400">LinkedIn's own search can include listings that are not indexed on the public web.</span></div>
+    {visibleSnapshot?.undatedExcluded > 0 && <p className="card text-sm text-slate-300">{visibleSnapshot.undatedExcluded} matching listings had no confirmed date and were excluded. <button className="home-text-link" onClick={() => setPreferences({...preferences,recency:''})}>Choose Any time, then Find jobs</button></p>}
+    {visibleSnapshot?.partial && <p role="status" className="text-sm text-slate-300">One search could not finish. Showing the results from successful searches.</p>}
     {notice && <p role="status" className="card text-sm text-slate-300">{notice}</p>}
-    {visibleSnapshot && <div className="flex flex-wrap justify-between gap-3 text-sm text-slate-300"><span>Results for: {visibleSnapshot.keywords} · Checked {new Date(visibleSnapshot.checkedAt).toLocaleString()} · {jobs.length} shown</span><label><input type="checkbox" checked={hideViewed} onChange={e => setHideViewed(e.target.checked)} /> Hide viewed jobs</label></div>}
+    {visibleSnapshot && <div className="flex flex-wrap justify-between gap-3 text-sm text-slate-300"><span>Results for: {visibleSnapshot.keywords} · Checked {new Date(visibleSnapshot.checkedAt).toLocaleString()} · {Math.min(visibleCount,jobs.length)} of {jobs.length} matches</span><label><input type="checkbox" checked={hideViewed} onChange={e => setHideViewed(e.target.checked)} /> Hide viewed jobs</label></div>}
     {visibleSnapshot?.results?.length > 0 && !jobs.length && <p className="card text-sm text-slate-300">All results in this search are saved, dismissed, or hidden by your viewed-jobs filter.</p>}
-    <div className="grid lg:grid-cols-2 gap-4">{jobs.map(job => <article key={job.id} className="card flex flex-col">
+    <div className="grid lg:grid-cols-2 gap-4">{jobs.slice(0,visibleCount).map(job => <article key={job.id} className="card flex flex-col">
       {(!visibleSnapshot.previousCheck || Date.parse(activity[job.id]?.firstSeen) > Date.parse(visibleSnapshot.previousCheck)) && <span className="text-teal-400 text-xs mb-2">First found by JobSensei</span>}
       <h3 className="font-display font-bold text-white">{job.title}</h3>
       <p className="text-slate-300 text-xs mt-2">{new URL(job.url).hostname} · {discoveryDate(job)} · {job.availability === 'open' ? 'Available on employer board when checked' : 'Availability unconfirmed'}{activity[job.id]?.viewed ? ' · Viewed' : ''}</p>
@@ -79,5 +85,6 @@ export default function JobDiscovery({ applications, onSave }) {
       <p className="text-teal-400 text-xs mt-3">{job.matched.length ? `Keyword overlap: ${job.matched.join(', ')}` : 'Search result; no exact keyword overlap in the excerpt.'}</p>
       <div className="flex flex-wrap gap-2 mt-4"><a className="btn-secondary text-xs" href={job.url} target="_blank" rel="noopener noreferrer" onClick={() => mark(job.id, 'viewed')}><ExternalLink size={14} />Open listing</a><button className="btn-primary text-xs" onClick={() => onSave(job)}><Plus size={14} />Create workspace</button><button className="btn-ghost text-xs" onClick={() => mark(job.id, 'dismissed')}><X size={14} />Dismiss</button></div>
     </article>)}</div>
+    {jobs.length > visibleCount && <button className="btn-secondary" onClick={() => setVisibleCount(count=>count+20)}>Show more matches</button>}
   </div>
 }
