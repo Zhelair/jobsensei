@@ -11085,7 +11085,7 @@ const creditsUxPatches = {
 
 const accountFlowPatches = {
   en: {
-    'settings.jobsenseiAccessCopy': 'Register with your email to start on Free, or unlock Pro through Buy Me a Coffee. The same account tracks credits and approved devices.',
+    'settings.jobsenseiAccessCopy': 'Register with your email to start on Free, or subscribe to Pro through Paddle. The same account tracks credits and approved devices.',
     'settings.upgradeViaBmac': 'Renew / Unlock Pro',
     'settings.alreadyHaveAccess': 'Free or Pro?',
     'settings.accessCodePlaceholder': 'Enter your email address...',
@@ -11095,7 +11095,7 @@ const accountFlowPatches = {
     'settings.signOutConfirm': 'Sign out of this JobSensei account on this device?',
     'settings.secureAccountCopy': 'Sign in with your JobSensei email to see approved devices and manage your 2-device limit here.',
     'guide.settings.detail.byok': 'BYOK requires sign-in first so JobSensei can track your account and approved devices.',
-    'paywall.copy': 'Start on Free with your email, or unlock Pro through Buy Me a Coffee.',
+    'paywall.copy': 'Start on Free with your email, or subscribe to Pro through Paddle.',
     'paywall.alreadySupporter': 'Use your email',
     'paywall.codePlaceholder': 'Enter your email address...',
     'paywall.codeHint': 'JobSensei will send a magic link for Free, or connect your Pro access if this email already has it.',
@@ -11310,7 +11310,7 @@ const hostedPlanClarityPatches = {
     'topbar.creditsMetricActiveUntil': 'Active until',
     'settings.creditsMetricActiveUntil': 'Active until',
     'settings.planInactiveBadge': 'Inactive',
-    'settings.jobsenseiAccessCopy': 'Register with your email to start on Free, or unlock Pro through Buy Me a Coffee. Use the same purchase email so JobSensei can link Pro automatically.',
+    'settings.jobsenseiAccessCopy': 'Register with your email to start on Free, or subscribe to Pro through Paddle. Use the same email so JobSensei can link Pro automatically.',
     'settings.unlockInputHint': 'Enter your email to receive a magic link. Free starts on this email right away. If you bought Pro, use the same purchase email so JobSensei can connect it automatically.',
     'paywall.codeHint': 'Enter your email to receive a magic link. Free starts immediately, and Pro will connect automatically if this email already has an active purchase.',
     'planExpiredModal.title': 'Your Pro plan ended',
@@ -11324,7 +11324,7 @@ const hostedPlanClarityPatches = {
 
 const paddleUxPatches = {
   en: {
-    'settings.jobsenseiAccessCopy': 'Start on Free with your email, unlock Pro through Buy Me a Coffee, and keep using the same JobSensei account for credits and approved devices.',
+    'settings.jobsenseiAccessCopy': 'Start on Free with your email, subscribe to Pro through Paddle, and keep using the same JobSensei account for credits and approved devices.',
     'settings.upgradeViaBmac': 'Unlock Pro with Buy Me a Coffee',
     'settings.unlockInputHint': 'Enter your email to receive a magic link. Free starts on this email, and Pro links automatically when the same purchase email is used.',
     'settings.legacyBmacNotice': 'Legacy Buy Me a Coffee supporters can still sign in with the same email used for their original access.',
@@ -11333,24 +11333,24 @@ const paddleUxPatches = {
     'settings.pricingLink': 'Pricing',
     'settings.refundPolicyLink': 'Refund Policy',
     'settings.privacyTermsSummary': 'Quick links to pricing, refunds, and the main legal pages for JobSensei.',
-    'paywall.copy': 'Start on Free with your email, or unlock Pro through Buy Me a Coffee.',
+    'paywall.copy': 'Start on Free with your email, or subscribe to Pro through Paddle.',
     'onboarding.badge': 'JobSensei access',
     'onboarding.welcome': 'Welcome to JobSensei',
     'onboarding.tagline': 'AI-powered job-search prep with Free and Pro access.',
     'onboarding.accessTitle': 'Choose your access',
-    'onboarding.accessSubtitle': 'Start with Free by email, or open Pro through Buy Me a Coffee before setting up your workspace.',
+    'onboarding.accessSubtitle': 'Start with Free by email, or open Pro through Paddle before setting up your workspace.',
     'onboarding.freePlan': 'Free',
     'onboarding.proPlan': 'Pro',
     'onboarding.freePrice': 'EUR 0',
     'onboarding.proPrice': 'EUR 8',
     'onboarding.perMonth': 'per month',
     'onboarding.freeCopy': 'Light hosted usage, up to 2 approved devices, and BYOK still available later in Settings.',
-    'onboarding.proCopy': 'Built for heavier prep with 25,110 hosted credits every 31 days and billing managed through Buy Me a Coffee.',
+    'onboarding.proCopy': 'Built for heavier prep with 25,110 hosted credits every 31 days and billing managed through Paddle.',
     'onboarding.emailLabel': 'Email address',
     'onboarding.emailPlaceholder': 'you@example.com',
     'onboarding.freeCta': 'Start with Free',
     'onboarding.proCta': 'Open Pro checkout',
-    'onboarding.sameEmailHint': 'Use the same email for JobSensei sign-in and Buy Me a Coffee checkout so Pro can link automatically.',
+    'onboarding.sameEmailHint': 'Use the same email for JobSensei sign-in and Paddle checkout so Pro can link automatically.',
     'onboarding.legacySupportNote': 'Legacy Buy Me a Coffee access is still honored when you sign in with the same email.',
     'onboarding.accessReady': 'Access ready',
     'onboarding.accessReadyCopy': 'Your account is active. Continue to finish your profile and resume setup.',
@@ -11572,7 +11572,7 @@ const accountLifecycleCopy = {
 }
 Object.assign(localizationPatches.en, accountLifecycleCopy)
 Object.assign(localizationPatches.en, {
-  'settings.upgradeViaBmac': 'Upgrade to Pro',
+    'settings.upgradeViaBmac': 'Upgrade to Pro with Paddle',
   'settings.jobsenseiAccessCopy': 'Start on Free and keep one JobSensei account for Pro access, AI credits and approved devices.',
 })
 
