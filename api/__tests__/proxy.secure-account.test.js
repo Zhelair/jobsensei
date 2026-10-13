@@ -96,6 +96,19 @@ describe('proxy secure-account mode', () => {
       cost: 31,
     }))
     expect(refundHostedCreditsMock).not.toHaveBeenCalled()
+    const providerBody = JSON.parse(fetch.mock.calls[0][1].body)
+    expect(providerBody.max_tokens).toBe(4096)
+    expect(providerBody.thinking).toEqual({ type: 'disabled' })
+  })
+
+  it('rejects oversized context before charging credits or contacting AI', async () => {
+    mockAuthBridge()
+    const { default: handler } = await import('../proxy.js')
+    const { req, res } = makeReqRes({ messages: [{role:'user',content:'a'.repeat(120001)}] },{authorization:'Bearer jwt-token'})
+    await handler(req,res)
+    expect(res._status).toBe(413)
+    expect(consumeHostedCreditsMock).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('returns 402 before calling the provider when credits are exhausted', async () => {

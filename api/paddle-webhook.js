@@ -7,6 +7,8 @@ import { processPaddleEvent } from './_lib/paddleBilling.js'
 
 const SUBSCRIPTION_EVENTS = new Set([
   'transaction.completed',
+  'adjustment.created',
+  'adjustment.updated',
   'subscription.created',
   'subscription.activated',
   'subscription.trialing',

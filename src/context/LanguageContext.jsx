@@ -24,9 +24,9 @@ export const LANGUAGE_OPTIONS = [
     nativeLabel: 'Български',
     speechLang: 'bg-BG',
     recognitionLang: 'bg-BG',
-    voiceSearch: ['Bulgarian', 'bg-BG', 'Daria'],
-    fallbackVoiceLangs: ['mk-MK', 'sr-RS', 'hr-HR', 'bs-BA', 'ru-RU', 'uk-UA'],
-    voiceNote: 'Bulgarian browser voices са често липсващи. Ако браузърът няма BG voice, JobSensei ще използва fallback и може да звучи странно.',
+    voiceSearch: ['Borislav', 'Kalina', 'Bulgarian', 'bg-BG'],
+    requireMatchingVoice: true,
+    voiceNote: 'За български се използва само български глас. Ако браузърът не предоставя такъв, отговорите остават като текст. Наличните гласове зависят от браузъра и устройството; cloud гласовете не се добавят автоматично.',
   },
   {
     code: 'ru',
@@ -832,7 +832,7 @@ export function findVoiceForLanguage(option, voices, preferredVoiceName = '') {
   if (!Array.isArray(voices) || voices.length === 0) return null
   if (preferredVoiceName) {
     const selected = voices.find(voice => voice.name === preferredVoiceName)
-    if (selected) return selected
+    if (selected && (!option?.requireMatchingVoice || normalizeVoiceLang(selected.lang).split('-')[0] === normalizeVoiceLang(option.speechLang).split('-')[0])) return selected
   }
 
   const lang = option?.speechLang || 'en-US'
@@ -878,6 +878,8 @@ export function findVoiceForLanguage(option, voices, preferredVoiceName = '') {
     })
   })
   const englishFallback = voices.filter(voice => normalizeVoiceLang(voice.lang).startsWith('en'))
+
+  if (option?.requireMatchingVoice) return pickBest(exactLang) || pickBest(relatedLang)
 
   return pickBest(exactLang)
     || pickBest(relatedLang)

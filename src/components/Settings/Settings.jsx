@@ -416,7 +416,7 @@ export default function Settings({ mode = 'settings' }) {
     if (!window.speechSynthesis || !activeVoice) return
     window.speechSynthesis.cancel()
     const previewSamples = {
-      bg: 'Здравейте, аз съм JobSensei. Ако гласът звучи странно, браузърът няма добър български voice.',
+      bg: 'Здравейте! Аз съм JobSensei. Нека се подготвим уверено за следващото ви интервю.',
       ru: 'Здравствуйте, я JobSensei. Это выбранный голос браузера.',
       de: 'Guten Tag, ich bin JobSensei. Dies ist die ausgewählte Browser-Stimme.',
       'es-ES': 'Hola, soy JobSensei. Esta es la voz seleccionada del navegador.',
@@ -431,13 +431,15 @@ export default function Settings({ mode = 'settings' }) {
     window.speechSynthesis.speak(utterance)
   }
 
-  const voiceSupportCopy = voiceSupport === 'exact'
+  const voiceSupportCopy = language === 'bg' && !activeVoice
+    ? languageOption.voiceNote
+    : voiceSupport === 'exact'
     ? t('settings.voiceExact')
     : voiceSupport === 'related'
       ? t('settings.voiceRelated')
       : voiceSupport === 'fallback'
         ? language === 'bg'
-          ? 'На това устройство в момента не е открит подходящ български voice. JobSensei ще използва fallback и е възможно звученето да не е идеално.'
+          ? languageOption.voiceNote
           : t('settings.voiceFallback')
         : t('settings.voiceNone')
   const voiceBadgeLabel = activeVoice

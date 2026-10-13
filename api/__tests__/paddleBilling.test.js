@@ -9,6 +9,21 @@ beforeEach(() => {
   } }) }))
 })
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals() })
+it.each(['adjustment.created','adjustment.updated'])('handles an approved refund through %s using current provider records', async (eventType) => {
+  const adjustment = {id:'adj_example',status:'approved',action:'refund',type:'full',transaction_id:'txn_example',subscription_id:'sub_example',customer_id:'ctm_example'}
+  const transaction = {id:'txn_example',subscription_id:'sub_example',customer_id:'ctm_example',items:[{price:{id:'pri_pro'}}]}
+  const subscription = {id:'sub_example',customer_id:'ctm_example'}
+  fetch.mockImplementation(async url => ({ok:true,json:async()=>({data:url.includes('/adjustments/')?adjustment:url.includes('/transactions/')?transaction:subscription})}))
+  const rpc = vi.fn().mockResolvedValue({data:{ok:true},error:null})
+  await processPaddleEvent({rpc},{event_id:'evt_refund',occurred_at:'2026-10-13T12:00:00Z',event_type:eventType,data:{id:'adj_example'}})
+  expect(rpc).toHaveBeenCalledWith('apply_paddle_adjustment',expect.objectContaining({p_adjustment:adjustment,p_transaction:transaction}))
+})
+it.each(['pending_approval','rejected'])('does not revoke access for a %s refund', async status => {
+  fetch.mockResolvedValue({ok:true,json:async()=>({data:{id:'adj_example',status,action:'refund'}})})
+  const rpc=vi.fn()
+  expect(await processPaddleEvent({rpc},{event_id:'evt_refund',occurred_at:'2026-10-13T12:00:00Z',event_type:'adjustment.updated',data:{id:'adj_example'}})).toEqual({skipped:true})
+  expect(rpc).not.toHaveBeenCalled()
+})
 it('loads current subscription state and processes completed payments atomically', async () => {
   const rpc = vi.fn().mockResolvedValue({ data: { ok: true }, error: null })
   const transaction = { id: 'txn_example', subscription_id: 'sub_example' }

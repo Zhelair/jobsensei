@@ -81,13 +81,13 @@
         en: {
           pill: 'JobSensei',
           title: 'Terms and Conditions',
-          updated: 'Last updated: May 6, 2026',
+          updated: 'Last updated: October 13, 2026',
           intro: 'By using JobSensei, you agree to use the product responsibly. JobSensei is a preparation tool, not a guarantee of employment, legal advice, or regulated professional advice.',
           sections: [
             { title: 'Using the service', items: ['Use JobSensei for your own job-search preparation and approved testing.', 'Do not misuse the app to break the service, bypass access controls, or abuse third-party providers.'] },
             { title: 'Hosted AI and personal keys', items: ['Hosted AI access depends on an active plan or grant.', 'Bring-your-own-key mode remains your responsibility, including provider costs and provider rules.', 'AI output can be imperfect and should be reviewed by you before use.'] },
             { title: 'Accounts and device limits', items: ['Secure sign-in may be used to link access to a real email account.', 'Approved-device limits may apply to prevent account sharing.', 'Removing a device may start a cooldown before a replacement device can be approved.'] },
-            { title: 'Availability and liability', items: ['Features, providers, or pricing may change over time.', 'JobSensei is provided on a best-effort basis, and you remain responsible for your own decisions and final materials.'] },
+            { title: 'Availability and responsibility', items: ['AI output may be inaccurate; review it before using it in an application or interview. JobSensei does not guarantee employment.', 'Nothing in these terms excludes liability or remedies that cannot lawfully be excluded. Material changes to an existing paid subscription will be communicated before they apply; cancellation and mandatory consumer rights remain available.'] },
           ],
         },
         bg: {
@@ -199,6 +199,14 @@
       document.getElementById('intro').textContent = copy.intro;
 
       const sections = document.getElementById('sections');
+      // Operational billing disclosures remain visible in every locale until translated.
+      copy.sections.push({ title: 'Subscriptions, cancellation and refunds (English)', items: [
+        'New Pro subscriptions are sold by Paddle as merchant of record, under Paddle Buyer Terms and Refund Policy. The checkout shows your price, applicable tax, billing interval and recurring payment terms before purchase. Earlier Buy Me a Coffee purchases stay with that provider.',
+        'The current Pro allowance is 25,110 credits per paid allowance period: 810 hosted AI requests at 31 credits each. Each interview turn or separate AI action can use a request; this is not 810 complete interviews. Credits are not cash and unused allowances do not roll over. Your own provider key is billed separately by that provider.',
+        'Manage or cancel Paddle subscriptions from Account or your Paddle receipt/customer portal. Cancellation normally preserves access until the paid period ends. Refund requests and withdrawal are separate from cancellation; see the Refund Policy. A fully refunded period loses its corresponding paid entitlement; partial refunds are reviewed separately.',
+        'Do not share accounts, automate bulk hosted usage, bypass usage limits or repeatedly create accounts to obtain free allowances. Documented abuse may lead to proportionate access restrictions, without removing mandatory consumer rights.',
+        'For product support use Account → Feedback & support. Paddle buyer support is available at paddle.net for billing. Mandatory protections under the law applicable to you prevail over these terms.'
+      ] });
       copy.sections.push({"title": "Local workspace and backups", "items": ["Your workspace is saved in this browser. Signing in on another device restores account access and credits, but does not transfer resumes, applications, stories or notes. Use Export and Import in Settings to move a backup.", "Clearing browser storage can permanently remove local workspace data. Clearing local data does not delete your hosted account, replenish credits, or cancel paid access."]});
       copy.sections.forEach(section => {
         const wrap = document.createElement('section');

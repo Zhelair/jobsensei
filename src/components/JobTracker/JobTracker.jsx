@@ -247,30 +247,6 @@ export default function JobTracker() {
     updateProjectData('companyNotes', next)
   }
 
-  function addApplication() {
-    if (!newApp.company.trim()) return
-    const { _liveData, ...researchNotes } = pendingResearch || {}
-    const { notes: prepNote, ...appFields } = newApp
-    const app = { ...appFields, id: generateId(), date: new Date().toISOString(), stageUpdatedAt: new Date().toISOString() }
-    const mergedNotes = {
-      ...(prepNote.trim() ? { prepNotes: prepNote } : {}),
-      ...researchNotes,
-    }
-    const nextApplications = [...applications, app]
-
-    updateProjectDataMultiple({
-      applications: nextApplications,
-      companyNotes: Object.keys(mergedNotes).length > 0 ? { ...notes, [app.id]: mergedNotes } : notes,
-      ...(activeApplicationId
-        ? {}
-        : {
-            activeApplicationId: app.id,
-            currentJD: app.jdText || '',
-          }),
-    })
-    resetAddForm()
-  }
-
   function createAndOpenApplication() {
     if (!newApp.company.trim()) return
     const { _liveData, ...researchNotes } = pendingResearch || {}
@@ -567,9 +543,6 @@ export default function JobTracker() {
           <div className="flex gap-2 flex-wrap">
             <button onClick={createAndOpenApplication} disabled={!newApp.company.trim()} className="btn-primary">
               {addPrimaryLabel}
-            </button>
-            <button onClick={addApplication} disabled={!newApp.company.trim()} className="btn-secondary">
-              {t('applications.add.saveToBoardOnly')}
             </button>
             <button onClick={resetAddForm} className="btn-ghost">{t('common.cancel')}</button>
           </div>
