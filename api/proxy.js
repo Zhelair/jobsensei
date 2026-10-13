@@ -228,7 +228,7 @@ export default async function handler(req, res) {
     }
 
     res.setHeader('Content-Type', 'text/event-stream')
-    res.setHeader('Cache-Control', 'no-cache, no-transform')
+    res.setHeader('Cache-Control', 'no-store, no-transform')
     res.setHeader('X-Accel-Buffering', 'no')
     if (latestCreditBalance != null) {
       res.setHeader('X-JobSensei-Credit-Balance', String(latestCreditBalance))

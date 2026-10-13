@@ -1,5 +1,6 @@
 const en = {
   'access.passwordless': 'We’ll email you a secure sign-in link. No password needed.',
+  'access.googlePurpose': 'Google sign-in uses your email and basic profile to create or access your JobSensei account. We do not request access to Gmail, Drive or Calendar. Your workspace stays in this browser.',
   'access.byokTitle': 'Use your own AI key — Pro is optional',
   'access.byokCopy': 'Create a free JobSensei account, then connect OpenAI, DeepSeek, Anthropic or a compatible provider in Settings. Your provider bills you directly; BYOK does not use hosted credits.',
   'settings.byokCopy': 'Sign in to a free account, then connect your own AI provider. Pro is optional. Provider charges are separate and BYOK does not use JobSensei hosted credits.',
@@ -22,6 +23,7 @@ const en = {
 }
 const bg = {
   'access.passwordless': 'Ще ви изпратим защитен линк за вход по имейл. Не е нужна парола.',
+  'access.googlePurpose': 'Входът с Google използва имейла и основния ви профил за създаване или достъп до JobSensei акаунт. Не искаме достъп до Gmail, Drive или Calendar. Работното пространство остава в този браузър.',
   'access.byokTitle': 'Използвайте собствен AI ключ — Pro е по избор',
   'access.byokCopy': 'Създайте безплатен JobSensei акаунт, после свържете OpenAI, DeepSeek, Anthropic или съвместим доставчик в Настройки. Плащате директно на доставчика; BYOK не използва hosted кредити.',
   'settings.byokCopy': 'Влезте в безплатен акаунт и свържете своя AI доставчик. Pro е по избор. Разходите са към доставчика; BYOK не използва hosted кредити.',
@@ -45,6 +47,7 @@ const bg = {
 }
 const ru = {
   'access.passwordless': 'Мы отправим безопасную ссылку для входа на email. Пароль не нужен.',
+  'access.googlePurpose': 'Вход через Google использует email и основной профиль для создания или входа в аккаунт JobSensei. Доступ к Gmail, Drive или Calendar не запрашивается. Рабочее пространство остаётся в этом браузере.',
   'access.byokTitle': 'Свой AI-ключ — Pro необязателен',
   'access.byokCopy': 'Создайте бесплатный аккаунт JobSensei, затем подключите OpenAI, DeepSeek, Anthropic или совместимого провайдера в Настройках. Оплата идёт провайдеру; BYOK не расходует hosted-кредиты.',
   'settings.byokCopy': 'Войдите в бесплатный аккаунт и подключите своего AI-провайдера. Pro необязателен. Провайдер выставляет счета отдельно; hosted-кредиты не расходуются.',

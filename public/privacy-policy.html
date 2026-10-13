@@ -609,6 +609,20 @@
       document.getElementById('intro').insertAdjacentElement('afterend', limitedUse);
 
       const sections = document.getElementById('sections');
+      const privacyContact = document.createElement('p');
+      const privacyLink = document.createElement('a');
+      privacyLink.href = 'mailto:privacy@jobsensei.app';
+      privacyLink.textContent = 'privacy@jobsensei.app';
+      privacyContact.append('Privacy and deletion requests: ', privacyLink);
+      sections.appendChild(privacyContact);
+      copy.sections.unshift({ title: 'Controller identity (English)', items: [
+        'JobSensei is operated by Nikita Vassilenko, an individual based in Bulgaria. Nikita Vassilenko is the controller for personal data processed to operate JobSensei. JobSensei is the product name; it is not presented as a registered company.',
+        'For privacy or deletion requests, email privacy@jobsensei.app or use Account → Feedback & support. A legally appropriate public service address must be added before the live paid launch.'
+      ] });
+      copy.sections.push({ title: 'Google sign-in (English)', items: [
+        'Google sign-in requests only openid, email and profile scopes. Google provides your account identifier, email and basic profile information to Supabase Authentication so you can create or access your JobSensei account. We do not request access to Gmail messages, Google Drive files or Google Calendar.',
+        'Your account is used for authentication, AI access, credits, billing access and approved devices. Signing in with Google does not synchronize the local JobSensei workspace or upload your saved resume automatically.'
+      ] });
       copy.sections.push({ title: 'Billing, AI, voice and privacy rights (English)', items: [
         'Paddle processes checkout and payment details under its own privacy notice (paddle.com/legal/privacy). JobSensei stores billing customer/subscription identifiers, paid-period dates, transaction/checkout bindings and webhook records to manage access. JobSensei does not receive your full card details.',
         'Hosted AI sends the prompts and conversation context you submit, including selected resume or job information, through our server to DeepSeek. BYOK requests go to the chosen provider. Local storage does not mean information you submit to AI stays on this device. Avoid including unnecessary sensitive information.',
