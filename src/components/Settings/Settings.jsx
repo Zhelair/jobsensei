@@ -360,20 +360,8 @@ export default function Settings({ mode = 'settings' }) {
         const text = await file.text()
         setResumeText(text)
       } else if (file.name.endsWith('.pdf') || file.type === 'application/pdf') {
-        const pdfjsLib = await import('pdfjs-dist')
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-          `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
-        const arrayBuffer = await file.arrayBuffer()
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-        let fullText = ''
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i)
-          const content = await page.getTextContent()
-          const pageText = content.items.map(item => item.str).join(' ')
-          fullText += pageText + '\n'
-        }
-        const cleaned = fullText.trim().replace(/\s{3,}/g, '\n')
-        setResumeText(cleaned || t('settings.resumePdfFallback'))
+        const { extractResumePdf } = await import('../../lib/resumePdf.js')
+        setResumeText(await extractResumePdf(file) || t('settings.resumePdfFallback'))
       } else {
         const text = await file.text()
         setResumeText(text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s{3,}/g, '\n'))
@@ -912,6 +900,7 @@ export default function Settings({ mode = 'settings' }) {
                   </button>
                   <p className={settingsMutedCopyClass}>{t('access.passwordless')}</p>
                   {!secureSignedIn && secureAccountsEnabled && <button onClick={handleGoogleSignIn} className="btn-secondary w-full justify-center"><Globe size={14} /> {t('settings.googleSignIn')}</button>}
+                  {!secureSignedIn && secureAccountsEnabled && <p className={settingsMutedCopyClass}>{t('access.googlePurpose')}</p>}
                   <p className="text-slate-500 text-sm leading-relaxed">{t('settings.legacyBmacNotice')}</p>
                   {secureSignedIn && (
                     <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-3 py-2.5">

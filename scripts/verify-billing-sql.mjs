@@ -7,7 +7,7 @@ const db = new PGlite()
 await db.exec(`create role anon; create role authenticated; create role service_role;
   create schema auth; create table auth.users(id uuid primary key);
   create function auth.uid() returns uuid language sql as 'select null::uuid';`)
-for (const file of ['secure-auth-bridge.sql', 'secure-hosted-credits.sql', 'account-billing-hardening.sql', 'paddle-refund-hardening.sql', 'paddle-refund-hardening.sql']) {
+for (const file of ['secure-auth-bridge.sql', 'secure-hosted-credits.sql', 'account-billing-hardening.sql', 'paddle-refund-hardening.sql', 'paddle-refund-hardening.sql', 'security-advisor-hardening.sql']) {
   const sql = (await readFile(new URL(`../supabase/${file}`, import.meta.url), 'utf8'))
     .replaceAll('create extension if not exists pgcrypto;', '')
   await db.exec(sql)
@@ -94,5 +94,15 @@ for(let index=0;index<20;index++) {
   assert.equal(result.rows[0].result.status,'reserved')
 }
 assert.equal((await db.query('select reserve_discovery_search($1,$2,$3) as result',[user2,'blocked','77777777-7777-4777-8777-777777777777'])).rows[0].result.status,'limited')
+// Reproduce stale explicit grants left behind by an earlier installation.
+await db.exec(`grant execute on function public.consume_hosted_credits(uuid,text,text,text,text,integer) to anon,authenticated;
+grant execute on function public.refund_hosted_credits(uuid,text,text,text,text,integer,text) to anon,authenticated;`)
+await db.exec(await readFile(new URL('../supabase/credit-rpc-permissions.sql', import.meta.url), 'utf8'))
+for (const signature of ['consume_hosted_credits(uuid,text,text,text,text,integer)', 'refund_hosted_credits(uuid,text,text,text,text,integer,text)']) {
+  for (const role of ['anon','authenticated','service_role']) {
+    const result = await db.query('select has_function_privilege($1,$2,\'EXECUTE\') as allowed', [role,signature])
+    assert.equal(result.rows[0].allowed, role === 'service_role')
+  }
+}
+console.log('PASS: SQL migrations and rerun, paid grants, replay protection, partial/current/older refunds, refund before payment, renewal, cancellation, deletion and server-only credit permissions.')
 await db.close()
-console.log('PASS: SQL migrations and rerun, paid grants, replay protection, partial/current/older refunds, refund before payment, renewal, cancellation, deletion and permissions.')

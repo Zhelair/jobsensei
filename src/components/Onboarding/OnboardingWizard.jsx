@@ -130,20 +130,8 @@ export default function OnboardingWizard() {
       if (file.name.endsWith('.txt') || file.type === 'text/plain') {
         updateField('resume', await file.text())
       } else if (file.name.endsWith('.pdf') || file.type === 'application/pdf') {
-        const pdfjsLib = await import('pdfjs-dist')
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-          `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
-
-        const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise
-        let fullText = ''
-
-        for (let i = 1; i <= pdf.numPages; i += 1) {
-          const page = await pdf.getPage(i)
-          const content = await page.getTextContent()
-          fullText += `${content.items.map(item => item.str).join(' ')}\n`
-        }
-
-        updateField('resume', fullText.trim().replace(/\s{3,}/g, '\n') || t('settings.resumePdfFallback'))
+        const { extractResumePdf } = await import('../../lib/resumePdf.js')
+        updateField('resume', await extractResumePdf(file) || t('settings.resumePdfFallback'))
       } else {
         updateField(
           'resume',
@@ -236,6 +224,7 @@ export default function OnboardingWizard() {
             {!secureUser && secureAccountsEnabled && <button className="btn-secondary w-full justify-center mb-3" onClick={async () => {
               try { await signInWithGoogle() } catch (error) { setAccessError(error.message) }
             }}><Languages size={14} /> {t('settings.googleSignIn')}</button>}
+            {!secureUser && secureAccountsEnabled && <p className="text-slate-400 text-sm leading-relaxed mb-3">{t('access.googlePurpose')}</p>}
             <p className="text-slate-400 text-sm leading-relaxed mb-3">{t('welcome.localPrivacy')}</p>
             <p className="text-slate-400 text-sm leading-relaxed mb-3">{t('access.passwordless')}</p>
             <label className="text-sm text-slate-400 mb-1.5 block">{t('onboarding.emailLabel')}</label>

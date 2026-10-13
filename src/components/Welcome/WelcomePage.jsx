@@ -140,6 +140,7 @@ export default function WelcomePage() {
             {!secureUser && secureAccountsEnabled && <button className="btn-secondary w-full justify-center mt-2 home-google-signin" onClick={async () => {
               try { await signInWithGoogle() } catch (error) { setAccessError(error.message) }
             }}>{t('settings.googleSignIn')}</button>}
+            {!secureUser && secureAccountsEnabled && <p className="text-slate-400 text-sm mt-2">{t('access.googlePurpose')}</p>}
             <p className="text-slate-400 text-sm mt-3">{t('welcome.localPrivacy')}</p>
             {accessReady && (
               <div className="mt-4 rounded-2xl border border-green-500/20 bg-green-500/10 p-4">

@@ -199,6 +199,16 @@
       document.getElementById('intro').textContent = copy.intro;
 
       const sections = document.getElementById('sections');
+      const supportContact = document.createElement('p');
+      const supportLink = document.createElement('a');
+      supportLink.href = 'mailto:support@jobsensei.app';
+      supportLink.textContent = 'support@jobsensei.app';
+      supportContact.append('Product support: ', supportLink);
+      sections.appendChild(supportContact);
+      copy.sections.unshift({ title: 'Operator identity (English)', items: [
+        'JobSensei is operated by Nikita Vassilenko, an individual based in Bulgaria. JobSensei is the product name and is not presented as a registered company.',
+        'For product support, email support@jobsensei.app or use Account → Feedback & support. A legally appropriate public service address must be added before the live paid launch.'
+      ] });
       // Operational billing disclosures remain visible in every locale until translated.
       copy.sections.push({ title: 'Subscriptions, cancellation and refunds (English)', items: [
         'New Pro subscriptions are sold by Paddle as merchant of record, under Paddle Buyer Terms and Refund Policy. The checkout shows your price, applicable tax, billing interval and recurring payment terms before purchase. Earlier Buy Me a Coffee purchases stay with that provider.',

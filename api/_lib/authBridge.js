@@ -487,6 +487,8 @@ export function readSecureDeviceContext(req) {
 }
 
 export function setDefaultCorsHeaders(req, res) {
+  // Account, billing and AI responses must never be retained by shared caches.
+  res.setHeader('Cache-Control', 'no-store')
   const origin = req.headers.origin || req.headers.Origin || ''
   const allowedOrigins = getAllowedCorsOrigins()
   if (origin && allowedOrigins.has(origin)) {

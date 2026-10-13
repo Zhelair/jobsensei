@@ -2,6 +2,30 @@
 
 Status checked on 13 October 2026. App changes are local and have not been deployed. This is an operational checklist, not a statement that legal or production requirements are complete.
 
+## Follow-up: individual operator and free email
+
+The owner confirmed **Nikita Vassilenko**, residing in **Bulgaria**, with no registered business. Terms and Privacy now identify him as an individual operator/controller. A legally appropriate public service address is still needed; no address or registration number has been invented.
+
+Paddle's first step has been advanced using its single-owner route. The product description explicitly states that the operator is an individual without a registered company. The owner completed the AUP/private form steps. The latest website review status is Failed; Paddle says to check its support email for the reason. This is not seller approval or confirmation of local eligibility. DOB, identity documents, residential address and payout information should be entered by the owner directly in the secure Paddle form.
+
+ImprovMX domain and both explicit aliases are saved; the initial catch-all was changed to `support`. The free tier covers 1 domain, 25 aliases, 500 forwarded messages/day and 7-day forwarding logs. Paid outbound SMTP is excluded from the free plan; no paid plan was selected. Source: https://www.improvmx.com/pricing/
+
+Provider-confirmed DNS records applied and verified Active: apex MX priority 10 `mx1.improvmx.com.`, apex MX priority 20 `mx2.improvmx.com.`, and apex TXT `v=spf1 include:spf.improvmx.com ~all`. Existing subdomain sending and website records were preserved. The owner confirmed that both aliases receive external mail.
+
+Vercel and Supabase dashboard sign-ins are working. See launch-readiness-audit-2026-10-13.md for applied changes, evidence and blockers. `supabase/launch-readiness-readonly.sql` is prepared to inspect tables, RLS, server-only function privileges and scheduled-job extensions without reading customer content. Apply no migration until its prerequisites and the correct project are confirmed.
+
+To repair the connector, open Vercel's plugin settings and reconnect/add the Vercel account that owns JobSensei, authorizing the project's owning team (`team_d9kwl7gqzrSfKTNrf1NPlkIw`, previously reported scope `niksales737-6845s-projects`). Check project permissions in that team. Connecting a different Vercel account does not repair the original account's team access. Official OpenAI guidance supports account connections through plugin settings: https://developers.openai.com/plugins/build/auth#support-multiple-accounts
+
+Screenshot previews are now capped at 900 CSS pixels rather than enlarged to the full container width. Google sign-in explains identity/profile scopes beside the button; the actual OAuth request uses only `openid email profile`. Google Cloud's OAuth branding must use JobSensei's name, domain and policy links, separate from the in-app explanation.
+
+### Retention and transfers: evidence gathered, remaining decisions
+
+- The existing service-request SQL purges metadata older than 32 days on the next reservation; it does not guarantee deletion during inactivity. A daily cleanup job is needed if we want a strict maximum retention promise. No such promise has been published.
+- Vercel runtime-log retention depends on the plan (Hobby 1 hour, Pro 1 day, Observability Plus 30 days); the previous 30-day proposal must not be presented as the actual configured plan. Source: https://vercel.com/docs/logs/runtime#limits
+- ImprovMX free forwarding logs are kept 7 days. Mail delivered into Gmail remains there until the owner deletes it; those are different retention locations.
+- DeepSeek's February 2026 public privacy policy explicitly excludes downstream-app end-user processing from its scope. It does not establish API-specific zero retention, no training, a DPA or an EEA transfer mechanism for JobSensei. Obtain the API contract and safeguards before making those claims. Source: https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html?locale=en_US
+- Billing/refund replay records must not be deleted merely to meet an arbitrary retention target: their lifetime and minimized post-deletion form need a documented reconciliation/disputes/legal-retention decision. No accounting retention number has been invented.
+
 ## Paddle catalogue created in Live
 
 | Field | Saved value |
@@ -36,14 +60,14 @@ Paddle verification reference: https://www.paddle.com/help/start/account-verific
 
 ## Technical go-live sequence
 
-1. Confirm existing Supabase migrations and take a backup. Apply `supabase/paddle-refund-hardening.sql` after the prerequisite billing migrations; inspect live roles/RLS. The refund migration was tested locally in the earlier work but has not been applied remotely.
+1. Confirm existing Supabase migrations and take a backup. Apply `supabase/paddle-refund-hardening.sql` after the prerequisite billing migrations; inspect live roles/RLS. The refund migration was applied remotely in this follow-up; server-only permissions and RLS were verified. Backup/restore preparation remains open.
 2. Use a sandbox EUR 10 monthly price and test the actual flow: email/Google sign-in, checkout, completed payment, allowance grant, duplicate webhook, renewal, failed payment, scheduled cancellation, cancellation at period end, full approved refund, refund before payment delivery, replay after refund, and partial refund requiring review. Assert both the UI and database state. This session did not run an actual sandbox refund.
 3. Complete Paddle seller/domain approval and set the approved default checkout/payment-link URL.
 4. Set live **server** `PADDLE_ENV`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET_KEY`, `PADDLE_PRO_PRICE_ID` and live **client** `VITE_PADDLE_ENV`, `VITE_PADDLE_CLIENT_TOKEN`, `VITE_PADDLE_PRO_PRICE_ID`. Use the saved live price above for both live price variables. API and webhook secrets stay server-only.
 5. Configure the live webhook at `https://jobsensei.app/api/paddle-webhook` for `transaction.completed`, the supported subscription lifecycle events, and `adjustment.created`/`adjustment.updated`. Check signatures, deliveries and replay behavior. Review handler-supported event names before selecting them.
 6. Deploy frontend and API together, confirm the displayed EUR 10 and final tax total, then have the owner complete a real payment/refund smoke test. Verify customer portal cancellation and account deletion behavior. Monitor webhook failures after launch.
 
-The current Vercel connector rejected environment inspection for this account scope. No remote environment values, DNS, database or deployment were changed. Reconnect the Vercel integration to the project's owning scope, or use an authorized Vercel dashboard session to finish configuration.
+The current Vercel connector rejected environment inspection for this account scope. The browser dashboard was used to apply DNS/database security changes; no live payment environment switch or production deployment was made. Reconnect the Vercel integration to the project's owning scope, or use an authorized Vercel dashboard session to finish configuration.
 
 ## Paddle features to use deliberately
 
@@ -60,7 +84,7 @@ Feature references: https://developer.paddle.com/concepts/sell/customer-portal/ 
 
 Requested aliases: `support@jobsensei.app` and `privacy@jobsensei.app`, both forwarding to the owner's supplied Gmail inbox. The private inbox should not appear on public policy pages or in frontend source.
 
-The ImprovMX signup is open. The owner must choose a password and complete account creation/terms acceptance. Once signed in:
+The owner completed ImprovMX signup. The aliases, DNS and receiving tests are complete on Free; authenticated domain replies are still pending. Original setup sequence:
 
 1. Add `jobsensei.app` and both aliases, with the supplied Gmail inbox as destination. Avoid a catch-all initially to reduce spam.
 2. Add the exact MX/TXT records ImprovMX shows at the authoritative DNS provider. Preserve existing website and sending-provider records. Merge SPF mechanisms into one SPF record rather than adding a second SPF record.
@@ -109,7 +133,7 @@ Email access explains a secure sign-in link and no password. BYOK explicitly nee
 
 Confirm backup/export recovery (workspaces do not sync); test a third device and same-email Google/email identity; verify mobile layout and keyboard dialog navigation; measure token usage at p50/p95 and heavy-user limits; monitor error/refund rates; keep accessibility and reduced-motion settings usable. At EUR 10, assess margin from actual net Paddle payouts minus hosted tokens, infrastructure and support—not a lifetime personal DeepSeek bill.
 
-## Verification in this session
+## Earlier verification, before the latest follow-up
 
 - 119 tests passed; production build and `git diff --check` passed.
 - Desktop browser verified EUR 10, passwordless copy, screenshot loading, Profile & Resume layout, Escape close/focus restoration, and long URL wrapping (card content width equaled scroll width).

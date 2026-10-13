@@ -40,13 +40,13 @@ export default async function handler(req, res) {
     const payload = await response.json().catch(() => ({}))
 
     if (!response.ok) {
-      console.error('paddle-portal create failed:', payload)
+      console.error('paddle-portal create failed:', { status: response.status })
       return res.status(502).json({ error: 'Unable to open Paddle billing right now.' })
     }
 
     const url = payload?.data?.urls?.general?.overview || ''
     if (!url) {
-      console.error('paddle-portal missing overview url:', payload)
+      console.error('paddle-portal missing overview url')
       return res.status(502).json({ error: 'Paddle did not return a billing portal link.' })
     }
 

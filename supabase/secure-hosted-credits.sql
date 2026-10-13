@@ -22,6 +22,7 @@ alter table public.accounts
 create or replace function public.normalize_account_plan_state()
 returns trigger
 language plpgsql
+set search_path = public, pg_temp
 as $$
 declare
   v_now timestamptz := timezone('utc', now());
@@ -357,7 +358,7 @@ begin
 end;
 $$;
 
-revoke all on function public.consume_hosted_credits(uuid, text, text, text, text, integer) from public;
-revoke all on function public.refund_hosted_credits(uuid, text, text, text, text, integer, text) from public;
+revoke all on function public.consume_hosted_credits(uuid, text, text, text, text, integer) from public, anon, authenticated;
+revoke all on function public.refund_hosted_credits(uuid, text, text, text, text, integer, text) from public, anon, authenticated;
 grant execute on function public.consume_hosted_credits(uuid, text, text, text, text, integer) to service_role;
 grant execute on function public.refund_hosted_credits(uuid, text, text, text, text, integer, text) to service_role;
