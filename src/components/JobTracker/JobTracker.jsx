@@ -568,7 +568,7 @@ export default function JobTracker() {
           <div className="space-y-2">
             {overdueApps.map(app => (
               <div key={app.id} className="flex items-center gap-2 flex-wrap">
-                <button onClick={() => openApplication(app)} className="text-white text-xs hover:text-teal-400 text-left flex-1 min-w-0 truncate">
+                <button onClick={() => openApplication(app)} className="application-name text-white text-xs hover:text-teal-400 text-left flex-1 min-w-0">
                   {app.company}{app.role ? ` — ${app.role}` : ''}
                 </button>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -611,7 +611,7 @@ export default function JobTracker() {
                       <div key={app.id} className={`card p-3 ${activeApplicationId === app.id ? 'border border-teal-500/30 bg-teal-500/5' : ''}`}>
                         <div className="flex items-start justify-between gap-1 mb-1">
                           <button onClick={() => openApplication(app)}
-                            className="text-white text-xs font-body font-semibold hover:text-teal-400 text-left leading-snug flex-1">
+                            className="application-name text-white text-xs font-body font-semibold hover:text-teal-400 text-left leading-snug flex-1 min-w-0">
                             {app.company}
                           </button>
                           <div className="flex items-center gap-0.5 flex-shrink-0 ml-1">
@@ -1777,7 +1777,7 @@ export function ApplicationWorkspaceView({ app, initialTab = 'overview', notes, 
   return (
     <div className="application-workspace p-4 md:p-6 animate-in">
       <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
-        <div>
+        <div className="min-w-0 flex-1 basis-64">
           <button onClick={onBack} className="btn-ghost mb-3"><ArrowLeft size={16} /> {t('applications.workspace.back')}</button>
           <h2 className="section-title">{app.company}</h2>
           <p className="section-sub">{app.role || t('applications.workspace.defaultTitle')}</p>

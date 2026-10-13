@@ -794,7 +794,7 @@ export default function Settings({ mode = 'settings' }) {
                 </span>
               </div>
 
-              <div className="pro-upgrade-summary"><strong>€8<span>{t('onboarding.perMonth')}</span></strong><p>{t('home.credits',{count:formatCreditNumber(proPlanPreview.monthlyCredits)})}</p><p>{t('home.requests',{count:'810'})}</p><small>{t('home.taxNote')}</small></div>
+              <div className="pro-upgrade-summary"><strong>€10<span>{t('onboarding.perMonth')}</span></strong><p>{t('home.credits',{count:formatCreditNumber(proPlanPreview.monthlyCredits)})}</p><p>{t('home.requests',{count:'810'})}</p><small>{t('home.taxNote')}</small></div>
 
               <button
                 onClick={() => handleProCheckout()}
@@ -910,7 +910,7 @@ export default function Settings({ mode = 'settings' }) {
                   >
                     <Check size={14} /> {bmacLoading ? t('settings.activating') : t('settings.activateAccess')}
                   </button>
-                  <p className={settingsMutedCopyClass}>{t('settings.unlockInputHint')}</p>
+                  <p className={settingsMutedCopyClass}>{t('access.passwordless')}</p>
                   {!secureSignedIn && secureAccountsEnabled && <button onClick={handleGoogleSignIn} className="btn-secondary w-full justify-center"><Globe size={14} /> {t('settings.googleSignIn')}</button>}
                   <p className="text-slate-500 text-sm leading-relaxed">{t('settings.legacyBmacNotice')}</p>
                   {secureSignedIn && (

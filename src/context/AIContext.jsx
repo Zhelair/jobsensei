@@ -122,8 +122,8 @@ export function AIProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    setIsConnected(Boolean(apiKey || hasSecurePlanAccess))
-  }, [apiKey, hasSecurePlanAccess])
+    setIsConnected(Boolean((apiKey && secureSession?.access_token) || hasSecurePlanAccess))
+  }, [apiKey, hasSecurePlanAccess, secureSession?.access_token])
 
   useEffect(() => {
     if (!secureAccountsEnabled || !bmacToken) return
@@ -227,6 +227,10 @@ export function AIProvider({ children }) {
   }
 
   async function callAI({ systemPrompt, messages, temperature = 0.7, onChunk, signal }) {
+    if (apiKey && !secureSession?.access_token) {
+      setShowPaywall(true)
+      throw new Error('Sign in to a free JobSensei account to use your own AI key. Pro is optional.')
+    }
     const hasHostedAccess = Boolean(hasSecurePlanAccess)
 
     if (!apiKey && !hasHostedAccess) {
