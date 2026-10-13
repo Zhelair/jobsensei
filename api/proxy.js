@@ -137,6 +137,13 @@ export default async function handler(req, res) {
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Invalid request body' })
   }
+  if (messages.length > 100 || (systemPrompt != null && typeof systemPrompt !== 'string')
+    || messages.some(message => !message || !['user', 'assistant', 'system'].includes(message.role) || typeof message.content !== 'string')) {
+    return res.status(400).json({ error: 'Invalid conversation. Send text messages only, up to 100 messages.' })
+  }
+  const inputBytes = Buffer.byteLength(systemPrompt || '', 'utf8')
+    + messages.reduce((total, message) => total + Buffer.byteLength(message.content, 'utf8'), 0)
+  if (inputBytes > 120000) return res.status(413).json({ error: 'This conversation is too long. Start a new session or shorten the supplied context.' })
 
   let creditsReserved = false
   let latestCreditBalance = null
@@ -151,7 +158,7 @@ export default async function handler(req, res) {
         deviceId: auth.deviceId,
         route: 'proxy',
         provider: 'deepseek',
-        model: 'deepseek-v4-flash',
+        model: 'deepseek-flash',
         cost: HOSTED_REQUEST_CREDITS,
       })
 
@@ -178,8 +185,10 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'deepseek-v4-flash',
+        model: 'deepseek-flash',
         temperature,
+        max_tokens: 4096,
+        thinking: { type: 'disabled' },
         stream,
         messages: systemPrompt
           ? [{ role: 'system', content: systemPrompt }, ...messages]
@@ -195,7 +204,7 @@ export default async function handler(req, res) {
           deviceId: auth.deviceId,
           route: 'proxy',
           provider: 'deepseek',
-          model: 'deepseek-v4-flash',
+          model: 'deepseek-flash',
           amount: HOSTED_REQUEST_CREDITS,
           reason: 'provider_http_error',
         }).catch(refundError => console.error('credit refund failed after provider HTTP error:', refundError))
@@ -249,7 +258,7 @@ export default async function handler(req, res) {
         deviceId: auth.deviceId,
         route: 'proxy',
         provider: 'deepseek',
-        model: 'deepseek-v4-flash',
+        model: 'deepseek-flash',
         amount: HOSTED_REQUEST_CREDITS,
         reason: 'provider_exception',
       }).catch(refundError => console.error('credit refund failed after proxy exception:', refundError))

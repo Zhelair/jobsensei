@@ -18,7 +18,8 @@ const ThemeContext = createContext(null)
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('js_theme') || THEMES.DARK
+    const saved = localStorage.getItem('js_theme')
+    return THEME_ORDER.includes(saved) ? saved : THEMES.DAYLIGHT
   })
 
   useEffect(() => {

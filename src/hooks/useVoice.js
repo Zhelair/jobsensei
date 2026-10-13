@@ -36,6 +36,7 @@ function getBestVoice(preferredVoice, speechLang) {
 
   const relatedMatch = voices.find(voice => getVoiceSupportLevel(voice, speechLang) === 2)
   if (relatedMatch) return relatedMatch
+  if (normalizeVoiceLang(speechLang).split('-')[0] === 'bg') return null
 
   const preferred = [
     'Google UK English Female', 'Google US English',
@@ -67,6 +68,7 @@ export function useVoice() {
 
   const recognitionRef = useRef(null)
   const accumulatedRef = useRef('')
+  const interimRef = useRef('')
   const onResultCallbackRef = useRef(null)
   const lastTextRef = useRef('')
   // Tracks whether the user explicitly pressed Done/Discard (vs auto-stop on mobile)
@@ -135,6 +137,7 @@ export function useVoice() {
     if (!supported) return
     if (resetAccumulated) {
       accumulatedRef.current = ''
+      interimRef.current = ''
       lastAppendedRef.current = ''
     }
     userStoppedRef.current = false
@@ -155,6 +158,8 @@ export function useVoice() {
     let maxFinalizedIndex = -1
 
     recognition.onresult = (e) => {
+      if (recognitionRef.current !== recognition || userStoppedRef.current) return
+      let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal && i > maxFinalizedIndex) {
           maxFinalizedIndex = i
@@ -177,19 +182,24 @@ export function useVoice() {
             lastAppendedRef.current = newText // store full cumulative phrase for next comparison
             accumulatedRef.current += toAppend + ' '
           }
+        } else if (!e.results[i].isFinal) {
+          interim += e.results[i][0].transcript + ' '
         }
       }
-      setTranscript(accumulatedRef.current.trim())
+      interimRef.current = interim.trim()
+      setTranscript([accumulatedRef.current.trim(), interimRef.current].filter(Boolean).join(' '))
     }
 
     recognition.onend = () => {
+      if (recognitionRef.current !== recognition) return
+      interimRef.current = ''
       if (!userStoppedRef.current) {
         // Mobile browsers auto-stop continuous recognition after each utterance.
         // We restart with a new SR instance. The 300ms delay lets mobile Chrome
         // flush its audio buffer — without it, the last audio chunk leaks into
         // the new session and gets transcribed again (the "I think I think" bug).
         setTimeout(() => {
-          if (!userStoppedRef.current) beginRecognitionRef.current(false)
+          if (!userStoppedRef.current && recognitionRef.current === recognition) beginRecognitionRef.current(false)
         }, 300)
         return
       }
@@ -217,6 +227,9 @@ export function useVoice() {
         setIsPaused(false)
         setError('No microphone found. Please connect a microphone and try again.')
       } else if (e.error !== 'aborted') {
+        userStoppedRef.current = true
+        setIsListening(false)
+        setIsPaused(true)
         setError(`Voice error: ${e.error}. Try refreshing the page.`)
       }
     }
@@ -253,8 +266,9 @@ export function useVoice() {
   // Also calls recognition.stop() in case it's still running (desktop).
   const stopListening = useCallback(() => {
     userStoppedRef.current = true
-    const final = accumulatedRef.current.trim()
+    const final = [accumulatedRef.current.trim(), interimRef.current].filter(Boolean).join(' ')
     accumulatedRef.current = ''
+    interimRef.current = ''
     setIsListening(false)
     setIsPaused(false)
     setTranscript('')
@@ -266,6 +280,7 @@ export function useVoice() {
   const discardRecording = useCallback(() => {
     userStoppedRef.current = true
     accumulatedRef.current = ''
+    interimRef.current = ''
     setTranscript('')
     setIsListening(false)
     setIsPaused(false)
@@ -274,6 +289,14 @@ export function useVoice() {
 
   const speak = useCallback((text, onEnd) => {
     if (!window.speechSynthesis) return
+    if (speechLang === 'bg-BG' && !getBestVoice(activeVoice, speechLang)) {
+      speakGenRef.current++
+      window.speechSynthesis.cancel()
+      setError('No Bulgarian voice is available in this browser. Read the response or use a browser/device that provides a Bulgarian voice.')
+      setIsSpeaking(false)
+      onEnd?.()
+      return
+    }
 
     speakGenRef.current++
     const gen = speakGenRef.current
@@ -342,6 +365,13 @@ export function useVoice() {
   }, [speak])
 
   const clearError = useCallback(() => setError(null), [])
+
+  useEffect(() => () => {
+    userStoppedRef.current = true
+    try { recognitionRef.current?.abort() } catch {}
+    speakGenRef.current++
+    window.speechSynthesis?.cancel()
+  }, [])
 
   return {
     isListening, isPaused, transcript, isSpeaking, supported, error, isRequestingPermission,

@@ -128,7 +128,7 @@
         en: {
           pill: 'JobSensei',
           title: 'Privacy Policy',
-          updated: 'Last updated: May 13, 2026',
+          updated: 'Last updated: October 13, 2026',
           intro: 'JobSensei is designed to keep most workspace data local in your browser. This page explains what stays local, what may be stored server-side to run the product, and how analytics, storage, authentication, and approved-device checks are used.',
           sections: [
             {
@@ -151,7 +151,7 @@
               items: [
                 'Vercel for hosting, serverless functions, Web Analytics, and Speed Insights.',
                 'Supabase for authentication and approved-device / plan-access records.',
-                'Buy Me a Coffee for payment events and purchase confirmation.',
+                'Paddle as merchant of record for new subscriptions, payments, receipts, refunds and billing portal access. Buy Me a Coffee remains a provider for legacy purchases and voluntary support.',
                 'Resend for magic-link or sign-in email delivery when enabled.',
                 'The selected AI provider for prompts and responses you choose to send.'
               ]
@@ -201,7 +201,7 @@
               items: [
                 'Vercel за хостинг, serverless функции, Web Analytics и Speed Insights.',
                 'Supabase за authentication и записи за одобрени устройства / достъп до план.',
-                'Buy Me a Coffee за платежни събития и потвърждение на покупка.',
+                'Paddle за нови абонаменти, плащания и възстановявания; Buy Me a Coffee само за стари покупки и доброволна подкрепа.',
                 'Resend за magic link или sign-in имейли, когато е активиран.',
                 'Избраният AI доставчик за prompt заявки и отговорите, които решиш да изпратиш.'
               ]
@@ -251,7 +251,7 @@
               items: [
                 'Vercel для хостинга, serverless-функций, Web Analytics и Speed Insights.',
                 'Supabase для authentication и записей об одобренных устройствах / доступе к плану.',
-                'Buy Me a Coffee для платёжных событий и подтверждения покупки.',
+                'Paddle для новых подписок, платежей и возвратов; Buy Me a Coffee для прежних покупок и добровольной поддержки.',
                 'Resend для magic link или sign-in email, когда это включено.',
                 'Выбранный AI-провайдер для prompt-запросов и ответов, которые вы решите отправить.'
               ]
@@ -301,7 +301,7 @@
               items: [
                 'Vercel para hosting, funciones serverless, Web Analytics y Speed Insights.',
                 'Supabase para authentication y registros de dispositivos aprobados / acceso al plan.',
-                'Buy Me a Coffee para eventos de pago y confirmación de compra.',
+                'Paddle para nuevas suscripciones, pagos y reembolsos; Buy Me a Coffee para compras anteriores y apoyo voluntario.',
                 'Resend para el envío de magic link o emails de sign-in cuando está habilitado.',
                 'El proveedor de AI seleccionado para los prompts y respuestas que decidas enviar.'
               ]
@@ -351,7 +351,7 @@
               items: [
                 'Vercel pour l’hébergement, les fonctions serverless, Web Analytics et Speed Insights.',
                 'Supabase pour l’authentication et les enregistrements d’appareils approuvés / d’accès au plan.',
-                'Buy Me a Coffee pour les événements de paiement et la confirmation d’achat.',
+                'Paddle pour les nouveaux abonnements, paiements et remboursements ; Buy Me a Coffee pour les anciens achats et le soutien volontaire.',
                 'Resend pour l’envoi de magic link ou d’emails de sign-in lorsqu’il est activé.',
                 'Le fournisseur AI sélectionné pour les prompts et réponses que vous choisissez d’envoyer.'
               ]
@@ -401,7 +401,7 @@
               items: [
                 'Vercel per hosting, funzioni serverless, Web Analytics e Speed Insights.',
                 'Supabase per authentication e record di dispositivi approvati / accesso al piano.',
-                'Buy Me a Coffee per eventi di pagamento e conferma acquisto.',
+                'Paddle per nuovi abbonamenti, pagamenti e rimborsi; Buy Me a Coffee per acquisti precedenti e supporto volontario.',
                 'Resend per l’invio di magic link o email di sign-in quando abilitato.',
                 'Il provider AI selezionato per i prompt e le risposte che scegli di inviare.'
               ]
@@ -451,7 +451,7 @@
               items: [
                 'Vercel para alojamento, funções serverless, Web Analytics e Speed Insights.',
                 'Supabase para authentication e registos de dispositivos aprovados / acesso ao plano.',
-                'Buy Me a Coffee para eventos de pagamento e confirmação de compra.',
+                'Paddle para novas assinaturas, pagamentos e reembolsos; Buy Me a Coffee para compras anteriores e apoio voluntário.',
                 'Resend para envio de magic link ou emails de sign-in quando estiver ativado.',
                 'O fornecedor de AI selecionado para os prompts e respostas que decidires enviar.'
               ]
@@ -501,7 +501,7 @@
               items: [
                 'Vercel do hostingu, funkcji serverless, Web Analytics i Speed Insights.',
                 'Supabase do authentication oraz rekordów zatwierdzonych urządzeń / dostępu do planu.',
-                'Buy Me a Coffee do zdarzeń płatniczych i potwierdzeń zakupu.',
+                'Paddle dla nowych subskrypcji, płatności i zwrotów; Buy Me a Coffee dla wcześniejszych zakupów i dobrowolnego wsparcia.',
                 'Resend do wysyłki magic linków lub maili sign-in, gdy jest włączony.',
                 'Wybrany dostawca AI dla promptów i odpowiedzi, które zdecydujesz się wysłać.'
               ]
@@ -551,7 +551,7 @@
               items: [
                 'Vercel für Hosting, serverlose Funktionen, Web Analytics und Speed Insights.',
                 'Supabase für Authentication sowie Datensätze zu freigegebenen Geräten / Plan-Zugriff.',
-                'Buy Me a Coffee für Zahlungsereignisse und Kaufbestätigungen.',
+                'Paddle für neue Abonnements, Zahlungen und Erstattungen; Buy Me a Coffee für frühere Käufe und freiwillige Unterstützung.',
                 'Resend für den Versand von Magic Links oder Sign-in-E-Mails, wenn aktiviert.',
                 'Der ausgewählte AI-Anbieter für Prompts und Antworten, die du senden möchtest.'
               ]
@@ -609,6 +609,13 @@
       document.getElementById('intro').insertAdjacentElement('afterend', limitedUse);
 
       const sections = document.getElementById('sections');
+      copy.sections.push({ title: 'Billing, AI, voice and privacy rights (English)', items: [
+        'Paddle processes checkout and payment details under its own privacy notice (paddle.com/legal/privacy). JobSensei stores billing customer/subscription identifiers, paid-period dates, transaction/checkout bindings and webhook records to manage access. JobSensei does not receive your full card details.',
+        'Hosted AI sends the prompts and conversation context you submit, including selected resume or job information, through our server to DeepSeek. BYOK requests go to the chosen provider. Local storage does not mean information you submit to AI stays on this device. Avoid including unnecessary sensitive information.',
+        'Voice recognition and speech playback use browser/device speech services. Depending on the browser, audio may be processed remotely by its speech provider. JobSensei does not operate an audio-recording storage service. Recognised text that you submit becomes part of the conversation sent to AI.',
+        'Account and billing data support performance of the service contract. Security and abuse-prevention records support our legitimate interests in protecting the service. Applicable legal obligations may require retaining some billing records after account deletion. Providers may process data outside the EEA. Contact us through Account → Feedback & support for information about recipients, processing locations and applicable transfer safeguards.',
+        'Subject to applicable law, you can request access, correction, deletion, restriction, portability or object to processing through Account → Feedback & support. You may complain to your local data protection authority, including the Bulgarian Commission for Personal Data Protection. Deleting an account and clearing local workspace data are separate operations; export your workspace first.'
+      ] });
       copy.sections.push({"title": "Local workspace and backups", "items": ["Your workspace is saved in this browser. Signing in on another device restores account access and credits, but does not transfer resumes, applications, stories or notes. Use Export and Import in Settings to move a backup.", "Clearing browser storage can permanently remove local workspace data. Clearing local data does not delete your hosted account, replenish credits, or cancel paid access."]});
       copy.sections.push({"title": "Feedback and live company research", "items": ["When you submit feedback, your message, optional name and authenticated account email are sent through Resend to the developer. Requested job-source URLs and countries are included when supplied. No resume, transcript or diagnostic files are automatically attached.", "For live company research, the company and role you enter are sent to Tavily. If live search is unavailable, research may use AI background knowledge and is labelled accordingly.", "For abuse prevention, Supabase stores request IDs, request type, status, timestamps, account IDs and hashed IP/content metadata. The rate-limit store does not contain your message text or email. Account deletion removes the linked account ID from these records; remaining metadata is purged on the next service request after 32 days. Feedback emails remain in the developer’s inbox until resolved and removed; request deletion through Account feedback."]});
       copy.sections.forEach(section => {

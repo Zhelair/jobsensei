@@ -40,6 +40,29 @@ export async function processPaddleEvent(supabase, payload) {
   const eventAt = payload.occurred_at
   const type = payload.event_type
   if (!eventId || !Number.isFinite(Date.parse(eventAt))) throw new Error('Missing event identity or timestamp.')
+  if (type === 'adjustment.created' || type === 'adjustment.updated') {
+    const adjustmentId = payload.data?.id
+    if (!/^adj_[a-z\d]+$/.test(adjustmentId || '')) throw new Error('Invalid adjustment identity.')
+    const adjustment = await paddleRequest(`/adjustments/${adjustmentId}`)
+    if (adjustment.status !== 'approved' || !['refund', 'chargeback'].includes(adjustment.action)) return { skipped: true }
+    if (!['full', 'partial'].includes(adjustment.type)) throw new Error('Adjustment type missing.')
+    if (!/^txn_[a-z\d]+$/.test(adjustment.transaction_id || '')) throw new Error('Invalid adjustment transaction.')
+    const transaction = await paddleRequest(`/transactions/${adjustment.transaction_id}`)
+    const subscriptionId = transaction.subscription_id
+    if (!/^sub_[a-z\d]+$/.test(subscriptionId || '')) return { skipped: true }
+    if (adjustment.subscription_id && adjustment.subscription_id !== subscriptionId) throw new Error('Adjustment subscription mismatch.')
+    const subscription = await paddleRequest(`/subscriptions/${subscriptionId}`)
+    const priceId = process.env.PADDLE_PRO_PRICE_ID
+    if (!priceId) throw new Error('Server Pro price is not configured.')
+    if (!transaction.items?.some(item => item.price?.id === priceId)) return { skipped: true }
+    if (transaction.customer_id !== subscription.customer_id || adjustment.customer_id !== subscription.customer_id) throw new Error('Adjustment customer mismatch.')
+    const { data, error } = await supabase.rpc('apply_paddle_adjustment', {
+      p_event_id: eventId, p_occurred_at: eventAt,
+      p_subscription: subscription, p_transaction: transaction, p_adjustment: adjustment,
+    })
+    if (error) throw error
+    return data
+  }
   const transaction = type === 'transaction.completed' ? payload.data : null
   const subscriptionId = transaction?.subscription_id || payload.data?.id
   if (!/^sub_[a-z\d]+$/.test(subscriptionId || '')) return { skipped: true }
