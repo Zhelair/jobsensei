@@ -9,7 +9,6 @@ import {
   Coffee, CreditCard, ChevronDown, ChevronUp, LogOut, ExternalLink, Puzzle, FolderArchive,
   Globe, Volume2, Shield, MonitorSmartphone,
 } from 'lucide-react'
-import DeepSeekGuide from './DeepSeekGuide'
 import { getCreditSnapshot, HOSTED_REQUEST_CREDITS, PRO_MONTHLY_CREDITS } from '../../lib/credits'
 import { openProCheckout } from '../../lib/billing'
 
@@ -1218,7 +1217,6 @@ export default function Settings({ mode = 'settings' }) {
                 </div>
               ) : (
                 <>
-                  <DeepSeekGuide />
                   <div className="rounded-xl border border-navy-600 bg-navy-900/60 px-3 py-3">
                     <div className="text-slate-500 text-[11px] font-display font-semibold uppercase tracking-wide mb-1">{t('settings.byokStatus')}</div>
                     <div className="text-white text-sm">

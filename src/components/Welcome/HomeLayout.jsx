@@ -3,8 +3,8 @@ import { ArrowRight, Check, Mic, Search, Target } from 'lucide-react'
 import { useTheme, THEMES } from '../../context/ThemeContext'
 import { useLanguage } from '../../context/LanguageContext'
 
-const PREVIEWS = ['workspace', 'research', 'story', 'interview', 'resume', 'learning', 'offers']
-const PREVIEW_ASSETS = { workspace: 'applications', research: 'research', story: 'workspace', interview: 'interview', resume: 'prep-tools', learning: 'learning', offers: 'offers' }
+const PREVIEWS = ['workspace', 'research', 'story', 'interview', 'prepTools', 'interviewTools', 'learning']
+const PREVIEW_ASSETS = { workspace: 'applications', research: 'research', story: 'workspace', interview: 'interview', prepTools: 'prep-tools', interviewTools: 'interview-tools', learning: 'learning' }
 export default function HomeLayout({ onStart, onExplore, onPro, onByok, children, legalLinks }) {
   const { t } = useLanguage()
   const { theme } = useTheme()
@@ -40,6 +40,7 @@ export default function HomeLayout({ onStart, onExplore, onPro, onByok, children
     </section>
     <section id="product-demo" className="home-section">
       <p className="home-eyebrow">{t('home.oneWorkspace')}</p><h2>{t('home.demoTitle')}</h2><p>{t('home.demoCopy')}</p>
+      <details className="home-feature-overview"><summary>{t('home.featureOverview.title')}</summary><ul>{['search', 'interview', 'documents', 'learning'].map(key => <li key={key}>{t(`home.featureOverview.${key}`)}</li>)}</ul></details>
       <div className="home-demo-tabs" role="tablist" aria-label={t('welcome.screenTour')}>{PREVIEWS.map(key => <button key={key} role="tab" tabIndex={preview === key ? 0 : -1} onKeyDown={movePreview} aria-selected={preview === key} aria-controls="home-demo-panel" id={`home-tab-${key}`} onClick={() => setPreview(key)}>{t(`home.preview.${key}`)}</button>)}</div>
       <figure id="home-demo-panel" role="tabpanel" aria-labelledby={`home-tab-${preview}`} className="home-demo-frame home-real-preview">
         <p className="home-preview-caption">{t(`home.caption.${preview}`)}</p>
