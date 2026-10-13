@@ -131,12 +131,21 @@
 .home-byok { margin:18px 0 8px; padding:16px 18px; border:1px solid var(--ui-line); border-radius:10px; background:var(--ui-surface); }
 .home-byok strong { font-size:15px; }.home-byok p { max-width:850px; margin:6px 0; color:var(--ui-muted); font-size:13px; line-height:1.65; }
 .home-real-preview img { display:block; width:100%; height:auto; border-radius:7px; }.home-preview-caption { padding:8px 4px 14px; color:var(--ui-text)!important; font-size:15px; }.home-real-preview figcaption { padding:12px 4px 3px; }
-.home-real-preview>a { display:block; width:min(100%,900px); margin-inline:auto; }
-.home-real-preview { max-width:980px; }
-.home-real-preview img { max-width:1040px; }
+#product-demo { width:100%; max-width:1100px; }
+.home-real-preview>a { display:block; width:min(100%,1056px); margin-inline:auto; }
+.home-real-preview { width:100%; max-width:none; }
+.home-real-preview img { max-width:1056px; }
 .home-feature-overview { margin:16px 0; color:var(--ui-muted); font-size:14px; line-height:1.65; }
 .home-feature-overview summary { cursor:pointer; color:var(--ui-text); padding-block:8px; }
-.home-feature-overview ul { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); gap:12px 28px; margin:10px 0; padding-left:20px; list-style:disc; }
+.home-feature-overview ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 28px; margin:10px 0; padding-left:20px; list-style:disc; }
+.home-feature-overview li { min-width:0; overflow-wrap:anywhere; }
+@media (max-width:767px) {
+  #product-demo .home-demo-tabs { flex-wrap:wrap; overflow:visible; gap:8px; }
+  #product-demo .home-demo-tabs button { flex:1 0 auto; text-align:center; }
+  .home-feature-overview ul { grid-template-columns:1fr; gap:10px; }
+  .home-preview-caption { font-size:13px; line-height:1.6; }
+  .home-real-preview { padding:12px; }
+}
 .onboarding-panel { max-height:calc(100dvh - 32px); display:flex; flex-direction:column; }.onboarding-panel>div:nth-child(2) { min-height:0; flex:1; }.onboarding-panel>div:first-child,.onboarding-panel>div:last-child { flex-shrink:0; }
 [data-theme] .onboarding-panel { background:var(--ui-surface)!important; border-color:var(--ui-line)!important; color:var(--ui-text); }
 [data-theme] .onboarding-panel .text-white { color:var(--ui-text)!important; }[data-theme] .onboarding-panel :is(.text-slate-300,.text-slate-400,.text-slate-500,.text-slate-600) { color:var(--ui-muted)!important; }
