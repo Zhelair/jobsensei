@@ -1,4 +1,5 @@
 import launchTranslations from './launchTranslations.js'
+import productAccessCopy from './productAccessCopy.js'
 
 const localizationPatches = {
   en: {
@@ -43,7 +44,7 @@ const localizationPatches = {
     'home.pricingCopy': 'The same preparation workspace, with more hosted AI capacity on Pro.',
     'home.credits': '{count} credits per monthly allowance',
     'home.requests': '{count} hosted AI requests',
-    'home.taxNote': 'Pro is €8/month plus applicable tax. Each hosted request uses 31 credits. Your own API provider bills BYOK separately.',
+    'home.taxNote': 'Pro is €10/month plus applicable tax. Each hosted request uses 31 credits. Your own API provider bills BYOK separately.',
     'home.faqTitle': 'A few things to know',
     'home.faq.local.question': 'Does signing in sync my workspace?',
     'home.faq.local.answer': 'Your resume, applications, stories and notes stay in this browser. Your account restores plan access and credits. Use Export and Import in Settings to move your workspace.',
@@ -11405,7 +11406,7 @@ const paddleUxPatches = {
     'onboarding.freePlan': 'Free',
     'onboarding.proPlan': 'Pro',
     'onboarding.freePrice': 'EUR 0',
-    'onboarding.proPrice': 'EUR 8',
+    'onboarding.proPrice': 'EUR 10',
     'onboarding.perMonth': 'per month',
     'onboarding.freeCopy': 'Light hosted usage, up to 2 approved devices, and BYOK still available later in Settings.',
     'onboarding.proCopy': 'Built for heavier prep with 25,110 hosted credits every 31 days and billing managed through Paddle.',
@@ -11670,6 +11671,7 @@ Object.assign(localizationPatches.en, {
 })
 
 Object.entries(launchTranslations).forEach(([locale, patch]) => Object.assign(localizationPatches[locale], patch))
+Object.entries(productAccessCopy).forEach(([locale, patch]) => Object.assign(localizationPatches[locale], patch, { 'onboarding.proPrice': 'EUR 10' }))
 
 export default localizationPatches
 

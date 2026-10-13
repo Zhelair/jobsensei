@@ -26,6 +26,7 @@ export default function OnboardingWizard() {
   const { language, setLanguage, languages, t } = useLanguage()
 
   const resumeFileRef = useRef(null)
+  const dialogRef = useRef(null)
   const resumeFromProject = getProjectData('resume') || ''
   const accessFirstMode = onboardingMode !== 'profile'
   const stepKeys = useMemo(
@@ -36,6 +37,23 @@ export default function OnboardingWizard() {
   const [step, setStep] = useState(0)
   const [data, setData] = useState(() => buildInitialProfile(profile, resumeFromProject))
   const [extractingResume, setExtractingResume] = useState(false)
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement
+    const dialog = dialogRef.current
+    const focusable = () => [...dialog.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]')].filter(el => el.getClientRects().length)
+    focusable()[0]?.focus()
+    const onKeyDown = event => {
+      if (event.key === 'Escape' && !accessFirstMode) closeOnboarding()
+      if (event.key !== 'Tab') return
+      const elements = focusable()
+      const first = elements[0], last = elements[elements.length - 1]
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+    }
+    dialog.addEventListener('keydown', onKeyDown)
+    return () => { dialog.removeEventListener('keydown', onKeyDown); previouslyFocused?.focus() }
+  }, [accessFirstMode, closeOnboarding])
   const [accessInput, setAccessInput] = useState(String(secureUser?.email || secureAccount?.email || '').trim())
   const [accessLoading, setAccessLoading] = useState(false)
   const [accessError, setAccessError] = useState('')
@@ -219,6 +237,7 @@ export default function OnboardingWizard() {
               try { await signInWithGoogle() } catch (error) { setAccessError(error.message) }
             }}><Languages size={14} /> {t('settings.googleSignIn')}</button>}
             <p className="text-slate-400 text-sm leading-relaxed mb-3">{t('welcome.localPrivacy')}</p>
+            <p className="text-slate-400 text-sm leading-relaxed mb-3">{t('access.passwordless')}</p>
             <label className="text-sm text-slate-400 mb-1.5 block">{t('onboarding.emailLabel')}</label>
             <input
               className="input-field text-sm"
@@ -404,7 +423,7 @@ export default function OnboardingWizard() {
 
   return (
     <div className="fixed inset-0 bg-navy-950/92 backdrop-blur-sm z-50 flex items-center justify-center p-4 md:p-6">
-      <div className="bg-navy-800 border border-navy-700 rounded-[28px] w-full max-w-5xl shadow-2xl animate-in overflow-hidden">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="setup-title" className={`onboarding-panel bg-navy-800 border border-navy-700 rounded-[28px] w-full ${accessFirstMode ? 'max-w-5xl' : 'max-w-3xl'} shadow-2xl animate-in overflow-hidden`}>
         <div className="px-6 md:px-8 pt-6 md:pt-7 pb-5 border-b border-navy-700">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -412,7 +431,7 @@ export default function OnboardingWizard() {
                 <GraduationCap size={22} className="text-white" />
               </div>
               <div>
-                <h2 className="font-display font-bold text-white text-2xl">{stepMeta[currentStepKey].title}</h2>
+                <h2 id="setup-title" className="font-display font-bold text-white text-2xl">{stepMeta[currentStepKey].title}</h2>
                 <p className="text-slate-400 text-sm leading-relaxed mt-1">{stepMeta[currentStepKey].subtitle}</p>
               </div>
             </div>
@@ -424,7 +443,7 @@ export default function OnboardingWizard() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-5">
+          <div className={`grid gap-2 mt-5 ${stepKeys.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
             {stepKeys.map((key, index) => (
               <div key={key} className="space-y-2">
                 <div className={`h-1.5 rounded-full transition-colors ${index <= step ? 'bg-teal-500' : 'bg-navy-600'}`} />

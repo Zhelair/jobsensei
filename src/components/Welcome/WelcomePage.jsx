@@ -86,6 +86,11 @@ export default function WelcomePage() {
   }
 
   function handleByokOpen() {
+    if (!secureUser) {
+      setAccessNotice(t('access.byokCopy'))
+      focusAccess()
+      return
+    }
     skipOnboarding()
     window.setTimeout(() => {
       setActiveSection(SECTIONS.SETTINGS)
@@ -121,7 +126,8 @@ export default function WelcomePage() {
               }}
             />
 
-            <div className="grid gap-2 mt-3 md:grid-cols-2">
+            <p className="text-slate-400 text-sm mt-2">{t('access.passwordless')}</p>
+            <div className="home-signin-actions grid gap-2 mt-3">
               <button
                 onClick={handleAccessStart}
                 disabled={accessLoading}
@@ -131,7 +137,7 @@ export default function WelcomePage() {
               </button>
             </div>
 
-            {!secureUser && secureAccountsEnabled && <button className="btn-secondary w-full justify-center mt-3" onClick={async () => {
+            {!secureUser && secureAccountsEnabled && <button className="btn-secondary w-full justify-center mt-2 home-google-signin" onClick={async () => {
               try { await signInWithGoogle() } catch (error) { setAccessError(error.message) }
             }}>{t('settings.googleSignIn')}</button>}
             <p className="text-slate-400 text-sm mt-3">{t('welcome.localPrivacy')}</p>

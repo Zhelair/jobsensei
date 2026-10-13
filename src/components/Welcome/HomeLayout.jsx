@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { ArrowRight, Check, Mic, Search, Target } from 'lucide-react'
 import { useTheme, THEMES } from '../../context/ThemeContext'
-import ProductExample from './ProductExample'
 import { useLanguage } from '../../context/LanguageContext'
 
-const PREVIEWS = ['workspace', 'research', 'interview', 'resume', 'learning', 'offers']
+const PREVIEWS = ['workspace', 'research', 'story', 'interview', 'resume', 'learning', 'offers']
+const PREVIEW_ASSETS = { workspace: 'applications', research: 'research', story: 'workspace', interview: 'interview', resume: 'prep-tools', learning: 'learning', offers: 'offers' }
 export default function HomeLayout({ onStart, onExplore, onPro, onByok, children, legalLinks }) {
   const { t } = useLanguage()
   const { theme } = useTheme()
@@ -34,13 +34,18 @@ export default function HomeLayout({ onStart, onExplore, onPro, onByok, children
     </section>
     <section className="home-section home-pricing-section" aria-label={t('settings.pricingLink')}>
       <h2>{t('home.pricingTitle')}</h2><p>{t('home.pricingCopy')}</p>
-      <div className="home-pricing">{[{name:'Free',price:'€0',credits:'465',requests:'15',action:onStart,cta:t('onboarding.freeCta')},{name:'Pro',price:'€8',credits:'25,110',requests:'810',action:onPro,cta:t('onboarding.proCta')}].map(plan => <div key={plan.name} className={`home-plan ${plan.name === 'Pro' ? 'home-plan-pro' : ''}`}><h3>{plan.name}</h3><div className="home-price">{plan.price}<span>{t('onboarding.perMonth')}</span></div><ul><li><Check size={16} />{t('home.credits', { count: plan.credits })}</li><li><Check size={16} />{t('home.requests', { count: plan.requests })}</li></ul><button className={plan.name === 'Pro' ? 'btn-primary' : 'btn-secondary'} onClick={plan.action}>{plan.cta} <ArrowRight size={16} /></button></div>)}</div>
-      <p className="home-pricing-note">{t('home.taxNote')}</p><button className="home-text-link" onClick={onByok}>{t('welcome.ctaByok')} <ArrowRight size={14} /></button>
+      <div className="home-pricing">{[{name:'Free',price:'€0',credits:'465',requests:'15',action:onStart,cta:t('onboarding.freeCta')},{name:'Pro',price:'€10',credits:'25,110',requests:'810',action:onPro,cta:t('onboarding.proCta')}].map(plan => <div key={plan.name} className={`home-plan ${plan.name === 'Pro' ? 'home-plan-pro' : ''}`}><h3>{plan.name}</h3><div className="home-price">{plan.price}<span>{t('onboarding.perMonth')}</span></div><ul><li><Check size={16} />{t('home.credits', { count: plan.credits })}</li><li><Check size={16} />{t('home.requests', { count: plan.requests })}</li></ul><button className={plan.name === 'Pro' ? 'btn-primary' : 'btn-secondary'} onClick={plan.action}>{plan.cta} <ArrowRight size={16} /></button></div>)}</div>
+      <p className="home-pricing-note">{t('home.taxNote')}</p>
+      <div className="home-byok"><strong>{t('access.byokTitle')}</strong><p>{t('access.byokCopy')}</p><button className="home-text-link" onClick={onByok}>{t('welcome.ctaByok')} <ArrowRight size={14} /></button></div>
     </section>
     <section id="product-demo" className="home-section">
       <p className="home-eyebrow">{t('home.oneWorkspace')}</p><h2>{t('home.demoTitle')}</h2><p>{t('home.demoCopy')}</p>
       <div className="home-demo-tabs" role="tablist" aria-label={t('welcome.screenTour')}>{PREVIEWS.map(key => <button key={key} role="tab" tabIndex={preview === key ? 0 : -1} onKeyDown={movePreview} aria-selected={preview === key} aria-controls="home-demo-panel" id={`home-tab-${key}`} onClick={() => setPreview(key)}>{t(`home.preview.${key}`)}</button>)}</div>
-      <figure id="home-demo-panel" role="tabpanel" aria-labelledby={`home-tab-${preview}`} className="home-demo-frame"><ProductExample view={preview}/><figcaption>{t('home.sampleCaption')}</figcaption></figure>
+      <figure id="home-demo-panel" role="tabpanel" aria-labelledby={`home-tab-${preview}`} className="home-demo-frame home-real-preview">
+        <p className="home-preview-caption">{t(`home.caption.${preview}`)}</p>
+        <a href={`/product-previews/${PREVIEW_ASSETS[preview]}.png`} target="_blank" rel="noopener noreferrer" aria-label={t('home.openScreenshot')}><img src={`/product-previews/${PREVIEW_ASSETS[preview]}.png`} alt={t(`home.caption.${preview}`)} width="1040" height="620" loading="lazy" /></a>
+        <figcaption>{t('home.realScreenshot')}</figcaption>
+      </figure>
     </section>
     <section className="home-section home-access" id="home-access">{children}</section>
     <section className="home-section home-faq"><h2>{t('home.faqTitle')}</h2>{['local','ai','cancel'].map(key => <details key={key}><summary>{t(`home.faq.${key}.question`)}</summary><p>{t(`home.faq.${key}.answer`)}</p></details>)}</section>
