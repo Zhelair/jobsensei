@@ -134,6 +134,9 @@
 .home-real-preview>a { display:block; width:min(100%,900px); margin-inline:auto; }
 .home-real-preview { max-width:980px; }
 .home-real-preview img { max-width:1040px; }
+.home-feature-overview { margin:16px 0; color:var(--ui-muted); font-size:14px; line-height:1.65; }
+.home-feature-overview summary { cursor:pointer; color:var(--ui-text); padding-block:8px; }
+.home-feature-overview ul { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); gap:12px 28px; margin:10px 0; padding-left:20px; list-style:disc; }
 .onboarding-panel { max-height:calc(100dvh - 32px); display:flex; flex-direction:column; }.onboarding-panel>div:nth-child(2) { min-height:0; flex:1; }.onboarding-panel>div:first-child,.onboarding-panel>div:last-child { flex-shrink:0; }
 [data-theme] .onboarding-panel { background:var(--ui-surface)!important; border-color:var(--ui-line)!important; color:var(--ui-text); }
 [data-theme] .onboarding-panel .text-white { color:var(--ui-text)!important; }[data-theme] .onboarding-panel :is(.text-slate-300,.text-slate-400,.text-slate-500,.text-slate-600) { color:var(--ui-muted)!important; }
