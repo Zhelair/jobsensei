@@ -4,7 +4,7 @@ Status checked on 13 October 2026. App changes are local and have not been deplo
 
 ## Follow-up: individual operator and free email
 
-The owner confirmed **Nikita Vassilenko**, residing in **Bulgaria**, with no registered business. Terms and Privacy now identify him as an individual operator/controller. A legally appropriate public service address is still needed; no address or registration number has been invented.
+The owner confirmed that they reside in **Bulgaria**, with no registered business. Public Terms and Privacy use email contact details without the owner’s personal name. A legally appropriate public service address is still needed; no address or registration number has been invented.
 
 Paddle's first step has been advanced using its single-owner route. The product description explicitly states that the operator is an individual without a registered company. The owner completed the AUP/private form steps. The latest website review status is Failed; Paddle says to check its support email for the reason. This is not seller approval or confirmation of local eligibility. DOB, identity documents, residential address and payout information should be entered by the owner directly in the secure Paddle form.
 
