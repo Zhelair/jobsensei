@@ -35,10 +35,14 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
   const persistedJD = getProjectData('currentJD')
   const activeContextJD = activeApplication ? (activeApplication.jdText || '') : persistedJD
   const persistedMode = getProjectData('interviewMode')
+  const stories = getProjectData('starStories') || []
+  const [practiceStoryId, setPracticeStoryId] = useState(getProjectData('practiceStoryId') || '')
+  const practiceStory = stories.find(story => story.id === practiceStoryId)
+  const practiceContext = practiceStory ? `\nPRACTICE FOCUS: ${practiceStory.targetQuestions?.[0] || practiceStory.situation}\nSaved story (${practiceStory.factsConfirmed ? 'facts confirmed by user' : 'unconfirmed draft; ask for confirmation, not proof'}): ${practiceStory.fullAnswer}\nAsk the candidate to answer in their own words. Give feedback against this competency, preserving supplied facts. Do not recite the saved answer for them.` : ''
 
   const [view, setView] = useState('setup')
   useChatFocus(view === 'chat')
-  const [mode, setMode] = useState(persistedMode || 'hr')
+  const [mode, setMode] = useState(practiceStory ? 'competency' : persistedMode || 'hr')
   const [jd, setJd] = useState(activeContextJD || '')
   const [background, setBackground] = useState('')
   const [questionCount, setQuestionCount] = useState(5)
@@ -96,6 +100,8 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
       messages: msgs,
       jdSnippet: jdRef.current.slice(0, 100),
       questionCount: questionsAskedRef.current,
+      storyId: practiceStory?.id || null,
+      storyTitle: practiceStory?.situation || null,
       applicationId: activeApplication?.id || existing?.applicationId || null,
       applicationLabel: activeApplication
         ? `${activeApplication.company}${activeApplication.role ? ` - ${activeApplication.role}` : ''}`
@@ -105,7 +111,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
       ? currentSessions.map(session => (session.id === id ? sessionData : session))
       : [...currentSessions, sessionData]
     updateProjectData('interviewSessions', updated)
-  }, [activeApplication, modes, updateProjectData])
+  }, [activeApplication, modes, updateProjectData, practiceStory])
 
   function startSession() {
     sessionIdRef.current = generateId()
@@ -125,7 +131,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
       let full = ''
       setMessages([{ role: 'assistant', content: '' }])
       await callAI({
-        systemPrompt: prompts.interviewSimulator(jd, mode, drillMode, background, language),
+        systemPrompt: prompts.interviewSimulator(jd, mode, drillMode, background, language) + practiceContext,
         messages: [{ role: 'user', content: `Start the interview. Ask ${questionCount} questions total.` }],
         temperature: 0.8,
         onChunk: (_, acc) => {
@@ -157,7 +163,7 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
       setMessages([...nextMessages, { role: 'assistant', content: '' }])
       abortRef.current = new AbortController()
       await callAI({
-        systemPrompt: prompts.interviewSimulator(jdRef.current, modeRef.current, drillMode, background, language),
+        systemPrompt: prompts.interviewSimulator(jdRef.current, modeRef.current, drillMode, background, language) + practiceContext,
         messages: nextMessages,
         temperature: 0.8,
         onChunk: (_, acc) => {
@@ -226,6 +232,13 @@ export default function InterviewSimulator({ onExit = null, hubLabel = 'Intervie
             </button>
           </div>
 
+          {stories.length > 0 && <label className="block text-sm text-slate-400">
+            {t('starBuilder.practiceFocus')}
+            <select className="input-field w-full mt-2" value={practiceStoryId} onChange={event => setPracticeStoryId(event.target.value)}>
+              <option value="">{t('starBuilder.generalPractice')}</option>
+              {stories.map(story => <option key={story.id} value={story.id}>{story.situation}</option>)}
+            </select>
+          </label>}
           <div>
             <label className="text-sm text-slate-400 mb-2 block">{t('interview.modeLabel')}</label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

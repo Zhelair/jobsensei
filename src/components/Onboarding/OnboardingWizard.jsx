@@ -289,16 +289,16 @@ export default function OnboardingWizard() {
         <div className="rounded-2xl border border-navy-600 bg-navy-950/55 p-4">
           <div className="text-white text-sm font-display font-semibold mb-3">{t('onboarding.legalLinksTitle')}</div>
           <div className="flex flex-wrap gap-2">
-            <a href={`/pricing.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+            <a href={`/pricing.html`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
               <ExternalLink size={13} /> {t('settings.pricingLink')}
             </a>
-            <a href={`/refund-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+            <a href={`/refund-policy.html`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
               <ExternalLink size={13} /> {t('settings.refundPolicyLink')}
             </a>
-            <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+            <a href={`/terms-and-conditions.html`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
               <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
             </a>
-            <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
+            <a href={`/privacy-policy.html`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs">
               <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
             </a>
           </div>

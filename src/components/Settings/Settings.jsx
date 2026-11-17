@@ -1097,19 +1097,19 @@ export default function Settings({ mode = 'settings' }) {
               <p className="text-slate-400 text-sm leading-relaxed mt-1">{t('settings.privacyTermsSummary')}</p>
             </div>
             <div className="legal-links">
-              <a href={`/privacy-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="legal-link">
+              <a href={`/privacy-policy.html`} target="_blank" rel="noopener noreferrer" className="legal-link">
                 <ExternalLink size={13} /> {t('settings.privacyPolicyLink')}
               </a>
-              <a href={`/terms-and-conditions.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="legal-link">
+              <a href={`/terms-and-conditions.html`} target="_blank" rel="noopener noreferrer" className="legal-link">
                 <ExternalLink size={13} /> {t('settings.termsConditionsLink')}
               </a>
-              <a href={`/cookie-storage-notice.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="legal-link">
+              <a href={`/cookie-storage-notice.html`} target="_blank" rel="noopener noreferrer" className="legal-link">
                 <ExternalLink size={13} /> {t('settings.cookieNoticeLink')}
               </a>
-              <a href={`/pricing.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="legal-link">
+              <a href={`/pricing.html`} target="_blank" rel="noopener noreferrer" className="legal-link">
                 <ExternalLink size={13} /> {t('settings.pricingLink')}
               </a>
-              <a href={`/refund-policy.html?lang=${language}`} target="_blank" rel="noopener noreferrer" className="legal-link">
+              <a href={`/refund-policy.html`} target="_blank" rel="noopener noreferrer" className="legal-link">
                 <ExternalLink size={13} /> {t('settings.refundPolicyLink')}
               </a>
             </div>

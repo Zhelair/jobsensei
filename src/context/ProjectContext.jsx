@@ -193,6 +193,12 @@ export function ProjectProvider({ children }) {
     const starterTopics = [
       createLearningTopic({ id: generateId(), title: 'B2B vs B2C Fraud: Key Differences', category: 'FRAML', difficulty: 'Intermediate', status: 'Not Started', messages: [], quizScores: [], repetitions: 0, easeFactor: 2.5, interval: 0, nextReview: null }),
       createLearningTopic({ id: generateId(), title: 'Merchant Risk Assessment & Onboarding', category: 'FRAML', difficulty: 'Intermediate', status: 'Not Started', messages: [], quizScores: [], repetitions: 0, easeFactor: 2.5, interval: 0, nextReview: null }),
+      ...[
+        ['Card Scheme Dispute Flows (Visa & Mastercard)', 'Payments', 'Intermediate'],
+        ['Correspondent Banking & De-risking', 'AML', 'Advanced'],
+        ['Trade-Based Money Laundering (TBML)', 'AML', 'Advanced'],
+        ['AML in B2B Payments Context', 'AML', 'Intermediate'],
+      ].map(([title, category, difficulty]) => createLearningTopic({ id: generateId(), title, category, difficulty, status: 'Not Started', messages: [], quizScores: [], repetitions: 0, easeFactor: 2.5, interval: 0, nextReview: null })),
     ]
     p.data.topics = starterTopics
     const updated = [...projects, p]

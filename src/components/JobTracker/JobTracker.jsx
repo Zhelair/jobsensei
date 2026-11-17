@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useProject } from '../../context/ProjectContext'
 import { useAI } from '../../context/AIContext'
 import ResearchSources from '../shared/ResearchSources'
-import JobDiscovery from './JobDiscovery'
-import { discoveryDraft } from '../../lib/jobDiscovery'
+import { offerScore, offerAdviceInput, incompleteOffers } from '../../utils/offerAssessment'
 import { countCompanyNotes, normalizeCompanyNotes, noteText } from '../../lib/companyNotes'
 import { useApp, SECTIONS } from '../../context/AppContext'
 import { useLanguage } from '../../context/LanguageContext'
@@ -55,7 +54,7 @@ const STAGE_COLORS = {
   Offer: 'text-green-400 bg-green-400/10 border-green-400/20',
   Rejected: 'text-red-400 bg-red-400/10 border-red-400/20',
 }
-const TABS = ['Kanban', 'Discover', 'Workspace', 'Offers']
+const TABS = ['Kanban', 'Workspace', 'Offers']
 const TAB_LABEL_KEYS = {
   Kanban: 'applications.tabs.kanban',
   Workspace: 'applications.tabs.workspace',
@@ -111,7 +110,7 @@ function exportToJSON(applications, notes) {
 }
 
 export default function JobTracker() {
-  const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId, activeProjectId } = useProject()
+  const { getProjectData, updateProjectData, updateProjectDataMultiple, activeApplicationId } = useProject()
   const { pendingTrackerRequest, clearPendingTrackerRequest, pushAppHistory } = useApp()
   const { language, t } = useLanguage()
   const applications = getProjectData('applications') || []
@@ -143,7 +142,7 @@ export default function JobTracker() {
   const importRef = useRef(null)
   const selectedApp = selectedAppId ? applications.find(app => app.id === selectedAppId) || null : null
   const stageLabel = (stage) => t(STAGE_LABEL_KEYS[stage] || 'applications.stage.unknown', { stage })
-  const tabLabel = (tabName) => tabName === 'Discover' ? 'Discover' : t(TAB_LABEL_KEYS[tabName] || 'applications.tabs.unknown', { tab: tabName })
+  const tabLabel = (tabName) => t(TAB_LABEL_KEYS[tabName] || 'applications.tabs.unknown', { tab: tabName })
 
   useEffect(() => {
     if (!pendingTrackerRequest?.applicationId) return
@@ -730,12 +729,6 @@ export default function JobTracker() {
         />
       )}
 
-      {TABS[tab] === 'Discover' && <JobDiscovery key={activeProjectId} applications={applications} onSave={job => {
-        setNewApp({ ...EMPTY_APPLICATION, ...discoveryDraft(job) })
-        setPendingResearch(null)
-        setShowAdd(true)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }} />}
     </div>
   )
 }
@@ -1850,10 +1843,10 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
   const [showWeights, setShowWeights] = useState(false)
   const [advice, setAdvice] = useState('')
   const [loadingAdvice, setLoadingAdvice] = useState(false)
+  useEffect(() => { setAdvice('') }, [offerData, applications, weights])
 
   function getScore(appId) {
-    const d = offerData[appId] || {}
-    return Math.round(OFFER_FIELDS.reduce((sum, f) => sum + (d[f.key] || 3) * 20 * (weights[f.key] / 100), 0))
+    return offerScore(offerData[appId] || {}, OFFER_FIELDS, weights)
   }
 
   function updateField(appId, field, value) {
@@ -1861,17 +1854,19 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
   }
 
   async function getAdvice() {
+    const incomplete = incompleteOffers(offerApps, offerData, OFFER_FIELDS, weights)
+    if (incomplete.length) {
+      setAdvice(t('applications.offer.completeFirst', { companies: incomplete.map(app => app.company).join(', ') }))
+      return
+    }
     setLoadingAdvice(true); setAdvice('')
-    const offersText = offerApps.map(app => {
-      const d = offerData[app.id] || {}
-      return `${app.company} (${app.role || 'role n/a'}): Score ${getScore(app.id)}/100 | Salary: ${d.baseSalary || 'not listed'} | Bonus: ${d.bonus || 'n/a'} | ${OFFER_FIELDS.map(f => `${t(f.labelKey)}: ${d[f.key] || 3}/5`).join(', ')}`
-    }).join('\n')
+    const offersText = offerAdviceInput(offerApps, offerData, OFFER_FIELDS, weights)
     const profileSummary = `${profile?.currentRole || 'professional'}, targeting ${profile?.targetRole || 'new role'}`
     try {
       await callAI({
         systemPrompt: prompts.offerAdvisor(offersText, profileSummary, language),
         messages: [{ role: 'user', content: 'Which offer should I take?' }],
-        temperature: 0.6,
+        temperature: 0.3,
         onChunk: (_, acc) => setAdvice(acc),
       })
     } catch {}
@@ -1886,8 +1881,10 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
     </div>
   )
 
-  const sortedOffers = [...offerApps].sort((a, b) => getScore(b.id) - getScore(a.id))
+  const sortedOffers = [...offerApps].sort((a, b) => (getScore(b.id) ?? -1) - (getScore(a.id) ?? -1))
+  const canRank = sortedOffers.length > 1 && sortedOffers.every(app => getScore(app.id) !== null)
   const weightTotal = Object.values(weights).reduce((s, v) => s + v, 0)
+
 
   return (
     <div className="space-y-4 animate-in">
@@ -1917,7 +1914,7 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
       </div>
 
       {/* Winner badge */}
-      {sortedOffers.length > 1 && (
+      {canRank && (
         <div className="card border-green-500/20 bg-green-500/5 text-center py-3">
           <div className="text-green-400 text-xs font-display font-semibold mb-0.5">{t('applications.offer.currentLeader')}</div>
           <div className="text-white font-display font-bold text-lg">{sortedOffers[0].company}</div>
@@ -1930,7 +1927,7 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
         const d = offerData[app.id] || {}
         const score = getScore(app.id)
         return (
-          <div key={app.id} className={`card ${rank === 0 && sortedOffers.length > 1 ? 'border-green-500/30' : ''}`}>
+          <div key={app.id} className={`card ${rank === 0 && canRank ? 'border-green-500/30' : ''}`}>
             <div className="flex items-center justify-between mb-3">
               <div>
                 <button onClick={() => onSelectApp(app)} className="text-white font-display font-semibold hover:text-teal-400 text-left text-sm">
@@ -1939,7 +1936,7 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
                 <div className="text-slate-400 text-xs">{app.role}</div>
               </div>
               <div className={`text-2xl font-display font-bold ${score >= 70 ? 'text-green-400' : score >= 50 ? 'text-yellow-400' : 'text-slate-400'}`}>
-                {score}<span className="text-slate-500 text-xs font-normal">/100</span>
+                {score ?? '—'}<span className="text-slate-500 text-xs font-normal">/100</span>
               </div>
             </div>
 
@@ -1959,7 +1956,7 @@ function OfferComparison({ applications, offerData, onUpdateOfferData, onSelectA
                   <div className="flex gap-1">
                     {[1,2,3,4,5].map(v => (
                       <button key={v} onClick={() => updateField(app.id, f.key, v)}
-                        className={`w-7 h-7 rounded-lg text-xs font-display font-semibold transition-all ${(d[f.key] || 3) === v ? 'bg-teal-500 text-white' : 'bg-navy-700 text-slate-400 hover:bg-navy-600'}`}>
+                        className={`w-7 h-7 rounded-lg text-xs font-display font-semibold transition-all ${d[f.key] === v ? 'bg-teal-500 text-white' : 'bg-navy-700 text-slate-400 hover:bg-navy-600'}`}>
                         {v}
                       </button>
                     ))}

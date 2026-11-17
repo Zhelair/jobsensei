@@ -7,6 +7,7 @@ import { prompts } from '../../utils/prompts'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { createLearningTopic, getLearningTopicPreview, getLearningTopicSubject, getLearningTopicTitle } from '../../utils/learningTopics'
 import { sm2, getNextReviewDate, isDueToday } from '../../utils/spacedRepetition'
+import { quizAverage } from '../../utils/quizScoring'
 import ChatWindow from '../shared/ChatWindow'
 import MarkdownContent from '../shared/MarkdownContent'
 import SessionHeader from '../shared/SessionHeader'
@@ -21,9 +22,6 @@ const STARTER_TOPIC_BLUEPRINTS = [
   { key: 'correspondentBanking', category: 'AML', difficulty: 'Advanced' },
   { key: 'tbml', category: 'AML', difficulty: 'Advanced' },
   { key: 'amlB2bPayments', category: 'AML', difficulty: 'Intermediate' },
-  { key: 'fatfOverview', category: 'Regulatory', difficulty: 'Beginner' },
-  { key: 'amldPsdEssentials', category: 'Regulatory', difficulty: 'Intermediate' },
-  { key: 'positioningB2c', category: 'Career', difficulty: 'Beginner' },
 ]
 
 const DIFF_COLORS = { Beginner: 'badge-green', Intermediate: 'badge-yellow', Advanced: 'badge-red' }
@@ -686,11 +684,7 @@ function QuizMode({ topic, onBack, onUpdate, onQuizComplete, callAI, isConnected
   }
 
   function finishQuiz() {
-    const scores = Object.entries(feedback).map(([id, item]) => {
-      const question = questions.find(entry => String(entry.id) === String(id))
-      return question?.type === 'open_ended' ? (item.score || 5) : (item.correct ? 10 : 0)
-    })
-    const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 5
+    const avg = quizAverage(questions, feedback)
     const quality = avg >= 8 ? 5 : avg >= 6 ? 3 : 1
     const { repetitions, easeFactor, interval } = sm2(quality, topic.repetitions || 0, topic.easeFactor || 2.5, topic.interval || 0)
     onUpdate(topic.id, {

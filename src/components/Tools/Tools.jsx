@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthContext'
 import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
+import { reconcileKeywords, verifyRequirementCoverage, reconcileProfileKeywords, groundResumeRewrites } from '../../utils/evidence'
+import EvidenceReview from '../shared/EvidenceReview'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { Target, Gauge, Mail, Megaphone, ArrowLeft, Copy, ChevronRight, History, Clock, FileText, ClipboardCheck, Globe, Camera, X, Search, Star, Zap, Trash2, Mic } from 'lucide-react'
 import GapAnalysis from '../GapAnalysis/GapAnalysis'
@@ -1188,7 +1190,7 @@ function ElevatorPitch({ onBack, hubLabel = 'Back', resume, activeContext, saveH
   const { language, t } = useLanguage()
   const toolLabel = getToolLabel(t, 'pitch')
   const [role, setRole] = useState(activeContext?.application?.role || profile?.targetRole || '')
-  const [strengths, setStrengths] = useState(resume ? resume.slice(0, 300) : '')
+  const [strengths, setStrengths] = useState(resume || '')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
@@ -1268,9 +1270,12 @@ function CoverLetterOptimizer({ onBack, hubLabel = 'Back', resume, activeContext
   async function generate() {
     setLoading(true); setResult(null)
     try {
-      const raw = await callAI({ systemPrompt: prompts.coverLetterOptimizer(jd, resumeText, language), messages: [{ role: 'user', content: 'Generate cover letters.' }], temperature: 0.8 })
+      const raw = await callAI({ systemPrompt: prompts.coverLetterOptimizer(jd, resumeText, language), messages: [{ role: 'user', content: 'Generate cover letters using only my supplied facts.' }], temperature: 0.3 })
       const parsed = tryParseJSON(raw)
-      if (parsed) { setResult(parsed); saveHistory({ jd: jd.slice(0, 80) }, parsed) }
+      if (parsed) {
+        const checked = reconcileKeywords(parsed, resumeText, jd)
+        setResult(checked); saveHistory({ jd: jd.slice(0, 80) }, checked)
+      }
     } catch {}
     setLoading(false)
   }
@@ -1358,7 +1363,10 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
     try {
       const raw = await callAI({ systemPrompt: prompts.resumeChecker(resumeText, jd, language), messages: [{ role: 'user', content: 'Analyze my resume.' }], temperature: 0.4 })
       const parsed = tryParseJSON(raw)
-      if (parsed) { setResult(parsed); saveHistory({ resumeSlice: resumeText.slice(0, 80) }, parsed) }
+      if (parsed) {
+        const checked = { ...groundResumeRewrites(reconcileKeywords(parsed, resumeText, jd), resumeText), requirementCoverage: verifyRequirementCoverage(parsed.requirementCoverage, resumeText, jd) }
+        setResult(checked); saveHistory({ resumeSlice: resumeText.slice(0, 80) }, checked)
+      }
     } catch {}
     setLoading(false)
   }
@@ -1409,6 +1417,7 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
               {t('tools.resumechecker.jdContextNote')}
             </p>
           </div>
+          <EvidenceReview result={result} />
           {result.redFlags?.length > 0 && (
             <div className="card border-red-500/20">
               <h4 className="font-display font-semibold text-white text-sm mb-3">{t('tools.resumechecker.redFlags')}</h4>
@@ -1416,7 +1425,7 @@ function ResumeChecker({ onBack, hubLabel = 'Back', resume, activeContext, saveH
                 {result.redFlags.map((f, i) => (
                   <div key={i} className="bg-navy-900 rounded-xl p-3">
                     <p className="text-red-300 text-xs font-mono mb-1">"{f.original}"</p>
-                    <p className="text-green-300 text-xs font-mono mb-1">→ "{f.fix}"</p>
+                    <p className="text-green-300 text-xs font-mono mb-1">{f.requiresConfirmation ? t('evidence.rewriteConfirm') : `→ “${f.fix}”`}</p>
                     <p className="text-slate-500 text-xs">{f.why}</p>
                   </div>
                 ))}
@@ -1561,7 +1570,10 @@ function LinkedInAuditor({ onBack, hubLabel = 'Back', saveHistory, history, onDe
     try {
       const raw = await callAI({ systemPrompt: prompts.linkedInAuditor(profileText, language), messages: [{ role: 'user', content: 'Audit my LinkedIn profile.' }], temperature: 0.5 })
       const parsed = tryParseJSON(raw)
-      if (parsed) { setResult(parsed); saveHistory({ profileSlice: profileText.slice(0, 80) }, parsed) }
+      if (parsed) {
+        const checked = reconcileProfileKeywords(parsed, profileText)
+        setResult(checked); saveHistory({ profileSlice: profileText.slice(0, 80) }, checked)
+      }
     } catch {}
     setLoading(false)
   }

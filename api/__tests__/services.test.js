@@ -1,15 +1,14 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
-const handlers = vi.hoisted(() => ({ feedback: vi.fn(), research: vi.fn(), discovery: vi.fn() }))
+const handlers = vi.hoisted(() => ({ feedback: vi.fn(), billing: vi.fn() }))
 vi.mock('../_feedback.js', () => ({ default: handlers.feedback }))
-vi.mock('../_research.js', () => ({ default: handlers.research }))
-vi.mock('../_discover-jobs.js', () => ({ default: handlers.discovery }))
+vi.mock('../_billing.js', () => ({ default: handlers.billing }))
 import service from '../services.js'
 beforeEach(() => vi.clearAllMocks())
 
-it('preserves all three public routes and forwards the original request and response', async () => {
+it('preserves feedback and billing routes and forwards the original request and response', async () => {
   const config = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'))
-  for (const [name, target] of [['feedback', handlers.feedback], ['research', handlers.research], ['discover-jobs', handlers.discovery]]) {
+  for (const [name, target] of [['feedback', handlers.feedback], ['billing', handlers.billing]]) {
     expect(config.rewrites).toContainEqual({ source: `/api/${name}`, destination: `/api/services?service=${name}` })
     const req = { query: { service: name }, method: 'POST', headers: { authorization: 'Bearer fixture' }, body: { fixture: true } }
     const res = {}
@@ -18,7 +17,7 @@ it('preserves all three public routes and forwards the original request and resp
   }
 })
 it('rejects unknown or repeated selectors without invoking a handler', async () => {
-  for (const selector of ['__proto__', '../proxy', ['feedback', 'research'], undefined]) {
+  for (const selector of ['__proto__', '../proxy', 'research', 'discover-jobs', ['feedback', 'billing'], undefined]) {
     const res = { setHeader: vi.fn(), status: vi.fn().mockReturnThis(), json: vi.fn() }
     await service({ query: { service: selector } }, res)
     expect(res.status).toHaveBeenCalledWith(404)

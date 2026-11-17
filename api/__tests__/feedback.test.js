@@ -4,7 +4,7 @@ const limits = vi.hoisted(() => ({ reserveServiceRequest: vi.fn(), finishService
 vi.mock('../_lib/authBridge.js', () => auth)
 vi.mock('../_lib/serviceRequests.js', () => limits)
 import handler from '../_feedback'
-const body = { category: 'source', requestId: '12345678-1234-1234-1234-123456789012', name: '<script>', message: 'Please support this website.', sourceUrl: 'https://jobs.bg', country: 'Bulgaria', email: 'attacker@example.com', to: 'attacker@example.com' }
+const body = { category: 'idea', requestId: '12345678-1234-1234-1234-123456789012', name: '<script>', message: 'Please improve this workflow.', email: 'attacker@example.com', to: 'attacker@example.com' }
 function run(data = body) {
   const res = { setHeader: vi.fn(), status(code) { this.code = code; return this }, json(value) { this.value = value; return this } }
   return handler({ method:'POST', body: data, headers: {} },res).then(() => res)
@@ -25,7 +25,7 @@ it('uses the server recipient and authenticated email; safely escapes content', 
   expect(mail.to).toBe('private@example.com')
   expect(mail.replyTo).toBe('verified@example.com')
   expect(mail.html).not.toContain('<script>')
-  expect(mail.subject).toContain('Source request')
+  expect(mail.subject).toContain('Suggestion')
   expect(JSON.stringify(res.value)).not.toContain('private@example.com')
 })
 it('rejects signed-out requests without sending', async () => {
