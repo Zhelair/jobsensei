@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { authenticateSupabaseUser, createSupabaseAdminClient } from './_lib/authBridge.js'
 import { ownedSubscriptions, paddleRequest } from './_lib/paddleBilling.js'
+import { checkoutPolicy, matchesPublicPrice } from './_lib/checkoutPolicy.js'
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
@@ -20,11 +21,16 @@ export default async function handler(req, res) {
       scheduledChange: s.scheduled_change,
     })) })
     if (action === 'checkout') {
+      const policy = checkoutPolicy()
+      if (!policy.allowed) return res.status(503).json({ error: policy.reason, code: 'checkout_unavailable' })
+      if (req.body.environment !== policy.environment) return res.status(503).json({ error: 'Checkout environment mismatch. Contact support.', code: 'checkout_environment' })
       if (subscriptions.some(s => ['active', 'trialing', 'past_due', 'paused'].includes(s.status))) {
         return res.status(409).json({ error: 'Manage your existing subscription before starting another.' })
       }
       const priceId = process.env.PADDLE_PRO_PRICE_ID
       if (!priceId) return res.status(503).json({ error: 'Paddle checkout is not configured yet.' })
+      const price = await paddleRequest(`/prices/${priceId}`)
+      if (!matchesPublicPrice(price)) return res.status(503).json({ error: 'The checkout price does not match the published EUR 10 monthly plan. Contact support.', code: 'checkout_price' })
       const checkoutId = crypto.randomUUID()
       const { data: reservation, error: reserveError } = await supabase.rpc('reserve_billing_checkout', {
         p_user_id: user.id, p_checkout_id: checkoutId,

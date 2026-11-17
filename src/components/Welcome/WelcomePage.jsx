@@ -26,10 +26,10 @@ export default function WelcomePage() {
     ? Boolean(secureUser && secureAccount?.planActive)
     : legacyUnlocked
   const legalLinks = [
-    { href: `/pricing.html?lang=${language}`, label: t('settings.pricingLink') },
-    { href: `/refund-policy.html?lang=${language}`, label: t('settings.refundPolicyLink') },
-    { href: `/terms-and-conditions.html?lang=${language}`, label: t('settings.termsConditionsLink') },
-    { href: `/privacy-policy.html?lang=${language}`, label: t('settings.privacyPolicyLink') },
+    { href: `/pricing.html`, label: t('settings.pricingLink') },
+    { href: `/refund-policy.html`, label: t('settings.refundPolicyLink') },
+    { href: `/terms-and-conditions.html`, label: t('settings.termsConditionsLink') },
+    { href: `/privacy-policy.html`, label: t('settings.privacyPolicyLink') },
   ]
 
   useEffect(() => {

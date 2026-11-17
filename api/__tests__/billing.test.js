@@ -6,10 +6,17 @@ import handler from '../_billing.js'
 let writes
 beforeEach(() => {
   vi.stubEnv('PADDLE_PRO_PRICE_ID', 'pri_server')
+  vi.stubEnv('PADDLE_CHECKOUT_ENABLED', 'true')
+  vi.stubEnv('PADDLE_ENV', 'sandbox')
+  vi.stubEnv('VERCEL_ENV', 'preview')
   writes = []
   mocks.auth.mockResolvedValue({ user: { id: 'owner', email: 'owner@example.invalid' } })
   mocks.owned.mockResolvedValue([])
-  mocks.paddle.mockResolvedValue({ id: 'txn_server' })
+  mocks.paddle.mockImplementation(async path => path.startsWith('/prices/') ? {
+    status: 'active', unit_price: { amount: '1000', currency_code: 'EUR' },
+    billing_cycle: { interval: 'month', frequency: 1 }, tax_mode: 'external',
+    trial_period: null, unit_price_overrides: [],
+  } : { id: 'txn_server' })
   mocks.client.mockReturnValue({ rpc: vi.fn().mockImplementation(async (name, args) => {
     writes.push({ table: 'billing_checkouts', payload: { id: args.p_checkout_id, user_id: args.p_user_id } })
     return { data: { status: 'reserved' }, error: null }
@@ -26,15 +33,15 @@ beforeEach(() => {
 afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs() })
 async function run(body) {
   const res = { setHeader: vi.fn(), status(code) { this.code = code; return this }, json(value) { this.value = value; return this } }
-  await handler({ method: 'POST', body }, res)
+  await handler({ method: 'POST', body: { environment: 'sandbox', ...body } }, res)
   return res
 }
 it('binds checkout to the verified account and server price, ignoring submitted identity and price', async () => {
   const result = await run({ action: 'checkout', userId: 'victim', priceId: 'pri_cheaper', email: 'victim@example.invalid' })
   expect(result.code).toBe(200)
   expect(writes[0].payload.user_id).toBe('owner')
-  expect(mocks.paddle.mock.calls[0][1].body.items).toEqual([{ price_id: 'pri_server', quantity: 1 }])
-  expect(mocks.paddle.mock.calls[0][1].body.custom_data).toEqual({ jobsensei_checkout_id: writes[0].payload.id })
+  expect(mocks.paddle.mock.calls[1][1].body.items).toEqual([{ price_id: 'pri_server', quantity: 1 }])
+  expect(mocks.paddle.mock.calls[1][1].body.custom_data).toEqual({ jobsensei_checkout_id: writes[0].payload.id })
 })
 it('requires authentication before creating a provider transaction', async () => {
   mocks.auth.mockResolvedValue({ user: null })
@@ -60,7 +67,10 @@ it('schedules cancellation without removing access or changing credits', async (
 })
 
 it('releases a failed reservation while retaining its webhook binding', async () => {
-  mocks.paddle.mockRejectedValueOnce(Object.assign(new Error('Provider failure'), { checkoutRejected: true }))
+  mocks.paddle.mockImplementation(async path => {
+    if (path.startsWith('/prices/')) return { status: 'active', unit_price: { amount: '1000', currency_code: 'EUR' }, billing_cycle: { interval: 'month', frequency: 1 }, tax_mode: 'external' }
+    throw Object.assign(new Error('Provider failure'), { checkoutRejected: true })
+  })
   expect((await run({ action: 'checkout' })).code).toBe(503)
   const recovery = writes.find(write => write.payload.created_at)
   expect(recovery.table).toBe('billing_checkouts')
@@ -73,11 +83,29 @@ it('explains a busy reservation without suggesting nonexistent billing controls'
   const result = await run({ action: 'checkout' })
   expect(result.value.code).toBe('checkout_busy')
   expect(result.value.error).toContain('30 seconds')
-  expect(mocks.paddle).not.toHaveBeenCalled()
+  expect(mocks.paddle).not.toHaveBeenCalledWith('/transactions', expect.anything())
 })
 
 it('retains the reservation when a timeout leaves provider creation uncertain', async () => {
-  mocks.paddle.mockRejectedValueOnce(new Error('Request timed out'))
+  const priceRequest = mocks.paddle.getMockImplementation()
+  mocks.paddle.mockImplementation(async (path, options) => {
+    if (path === '/transactions') throw new Error('Request timed out')
+    return priceRequest(path, options)
+  })
   expect((await run({ action: 'checkout' })).code).toBe(503)
   expect(writes.some(write => write.payload.created_at)).toBe(false)
+  expect(writes.some(write => write.payload.user_id === 'owner')).toBe(true)
+})
+
+it('rejects a mismatched catalog before reserving or creating a checkout', async () => {
+  mocks.paddle.mockResolvedValueOnce({ status: 'active', unit_price: { amount: '800', currency_code: 'EUR' } })
+  expect((await run({ action: 'checkout' })).value.code).toBe('checkout_price')
+  expect(writes).toEqual([])
+})
+
+it('leaves existing subscription status available while checkout is disabled', async () => {
+  vi.stubEnv('PADDLE_CHECKOUT_ENABLED', 'false')
+  expect((await run({ action: 'checkout' })).code).toBe(503)
+  expect((await run({ action: 'status' })).code).toBe(200)
+  expect(mocks.paddle).not.toHaveBeenCalled()
 })

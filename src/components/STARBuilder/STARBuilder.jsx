@@ -1,19 +1,25 @@
 import React, { useState } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp, SECTIONS } from '../../context/AppContext'
 import { useAI } from '../../context/AIContext'
 import { useProject } from '../../context/ProjectContext'
 import { useLanguage } from '../../context/LanguageContext'
 import { prompts } from '../../utils/prompts'
+import { containsEvidence } from '../../utils/evidence'
 import { tryParseJSON, generateId } from '../../utils/helpers'
 import { Star, Plus, Wand2, Copy, Trash2, ArrowLeft, Tag, Edit3, Check, Eye } from 'lucide-react'
 
 export default function STARBuilder({ onBack, backLabel }) {
-  const { drillMode } = useApp()
+  const { drillMode, launchTool } = useApp()
   const { callAI, isConnected } = useAI()
   const { getProjectData, updateProjectData, activeApplication } = useProject()
   const { language, t } = useLanguage()
 
   const stories = getProjectData('starStories')
+  const resume = getProjectData('resume') || ''
+  const jd = activeApplication?.jdText || getProjectData('currentJD') || ''
+  const [suggestions, setSuggestions] = useState([])
+  const [suggesting, setSuggesting] = useState(false)
+  const [suggestionError, setSuggestionError] = useState('')
   function setStories(updater) {
     const next = typeof updater === 'function' ? updater(stories) : updater
     updateProjectData('starStories', next)
@@ -28,6 +34,25 @@ export default function STARBuilder({ onBack, backLabel }) {
   const [editContent, setEditContent] = useState('')
   const [viewingStory, setViewingStory] = useState(null)
   const [autoSavedStoryId, setAutoSavedStoryId] = useState(null)
+
+  async function suggestStories() {
+    setSuggesting(true); setSuggestionError(''); setSuggestions([])
+    try {
+      const raw = await callAI({ systemPrompt: prompts.storySuggestions(resume, jd, stories.map(story => story.situation).join('\n'), language), messages: [{ role: 'user', content: 'Suggest evidence-based story topics, not completed stories.' }], temperature: 0.3 })
+      const parsed = tryParseJSON(raw)
+      if (!Array.isArray(parsed?.suggestions)) throw new Error('Invalid suggestions')
+      const supported = parsed.suggestions.filter(item => item && typeof item.title === 'string' && typeof item.question === 'string' && typeof item.evidence === 'string' && containsEvidence(resume, item.evidence))
+        .slice(0, 4).map(item => ({ ...item, prompts: Array.isArray(item.prompts) ? item.prompts.filter(prompt => typeof prompt === 'string') : [] }))
+      setSuggestions(supported)
+      if (!supported.length) setSuggestionError(t('starBuilder.noEvidence'))
+    } catch { setSuggestionError(t('starBuilder.suggestionError')) }
+    finally { setSuggesting(false) }
+  }
+
+  function practise(story) {
+    updateProjectData('practiceStoryId', story.id)
+    launchTool(SECTIONS.INTERVIEW, 'interview')
+  }
 
   async function buildStar() {
     if (!situation.trim()) return
@@ -47,6 +72,7 @@ export default function STARBuilder({ onBack, backLabel }) {
   function saveStory(storyResult = result) {
     if (!storyResult) return null
     const story = {
+      ...storyResult,
       id: generateId(),
       date: new Date().toISOString(),
       situation: situation.slice(0, 100),
@@ -54,7 +80,9 @@ export default function STARBuilder({ onBack, backLabel }) {
       applicationLabel: activeApplication
         ? `${activeApplication.company}${activeApplication.role ? ` - ${activeApplication.role}` : ''}`
         : null,
-      ...storyResult,
+      originalNotes: situation,
+      draftAnswer: storyResult.fullAnswer,
+      factsConfirmed: false,
     }
     setStories(prev => [...prev, story])
     return story
@@ -68,7 +96,7 @@ export default function STARBuilder({ onBack, backLabel }) {
   }
 
   function saveEdit(id) {
-    setStories(prev => prev.map(s => s.id === id ? { ...s, fullAnswer: editContent } : s))
+    setStories(prev => prev.map(s => s.id === id ? { ...s, fullAnswer: editContent, factsConfirmed: false, editedAt: new Date().toISOString() } : s))
     setEditingId(null)
   }
 
@@ -98,6 +126,19 @@ export default function STARBuilder({ onBack, backLabel }) {
       </div>
 
       <div className="space-y-4">
+        <div className="card flex flex-wrap gap-3 items-center">
+          <p className="text-slate-400 text-sm flex-1">{t(viewingStory.factsConfirmed ? 'starBuilder.confirmed' : 'starBuilder.draftNotice')}</p>
+          {!viewingStory.factsConfirmed && <button className="btn-secondary text-xs" onClick={() => {
+            setStories(prev => prev.map(story => story.id === viewingStory.id ? { ...story, factsConfirmed: true } : story))
+            setViewingStory(story => ({ ...story, factsConfirmed: true }))
+          }}>{t('starBuilder.confirmFacts')}</button>}
+          <button className="btn-primary text-xs" onClick={() => practise(viewingStory)}>{t('starBuilder.practise')}</button>
+        </div>
+        {(viewingStory.originalNotes || viewingStory.draftAnswer) && <details className="card text-sm text-slate-400">
+          <summary>{t('starBuilder.sourceAndDraft')}</summary>
+          <p className="whitespace-pre-wrap mt-3">{viewingStory.originalNotes}</p>
+          {viewingStory.editedAt && <p className="whitespace-pre-wrap mt-3">{viewingStory.draftAnswer}</p>}
+        </details>}
         <div className="card border-teal-500/20">
           <h3 className="font-display font-semibold text-white text-sm mb-3">{t('starBuilder.interviewReadyAnswer')}</h3>
           <p className="text-slate-200 text-sm font-body leading-relaxed">{viewingStory.fullAnswer}</p>
@@ -142,6 +183,17 @@ export default function STARBuilder({ onBack, backLabel }) {
       <button onClick={() => setView('bank')} className="btn-ghost mb-4"><ArrowLeft size={16} /> {t('starBuilder.storyBank')}</button>
       <h2 className="section-title mb-1">{t('starBuilder.builderTitle')}</h2>
       <p className="section-sub mb-5">{t('starBuilder.builderSubtitle')}</p>
+      <div className="card mb-4 space-y-3">
+        <p className="text-slate-400 text-sm">{t('starBuilder.discoverCopy')}</p>
+        <button className="btn-secondary" onClick={suggestStories} disabled={suggesting || !resume.trim() || !isConnected}>{suggesting ? t('starBuilder.finding') : t('starBuilder.findStories')}</button>
+        {suggestionError && <p role="status" className="text-yellow-300 text-sm">{suggestionError}</p>}
+        {suggestions.map((item, index) => <div key={index} className="border-l-2 border-teal-500/30 pl-3 space-y-2">
+          <p className="text-white text-sm">{item.title}</p>
+          <p className="text-teal-300 text-xs">“{item.evidence}”</p>
+          <p className="text-slate-300 text-sm">{item.question}</p>
+          <button className="btn-ghost text-xs" onClick={() => setSituation(`${item.title}\n\n${item.evidence}\n\n${(Array.isArray(item.prompts) ? item.prompts : []).join('\n\n')}`)}>{t('starBuilder.useTopic')}</button>
+        </div>)}
+      </div>
 
       <div className="mb-4">
         <label className="text-sm text-slate-400 mb-1.5 block">{t('starBuilder.describeSituationLabel')}</label>

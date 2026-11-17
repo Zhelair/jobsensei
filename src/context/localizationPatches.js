@@ -11641,8 +11641,8 @@ Object.assign(localizationPatches.en, {
 })
 
 Object.assign(localizationPatches.en, {
-  'welcome.productTitle': 'Prepare for your next role—from finding a job to comparing offers.',
-  'welcome.productSubtitle': 'Bring your resume, find or capture roles, check your fit, study skill gaps and practise interviews by voice or text—all in your JobSensei workspace.',
+  'welcome.productTitle': 'Prepare for your next role—from your application to the interview.',
+  'welcome.productSubtitle': 'Bring your resume, capture roles, check your fit, study skill gaps and practise interviews by voice or text—all in your JobSensei workspace.',
   'welcome.exploreWorkspace': 'Explore the workspace',
   'welcome.storyTitle': 'Your experience. Your next role. A clearer path between them.',
   'welcome.storyIntro': 'Follow the workflow, or use the tools you need. Your preparation stays attached to each application.',
@@ -11657,7 +11657,7 @@ Object.assign(localizationPatches.en, {
   'welcome.chapter.experience.title': 'Start with your experience',
   'welcome.chapter.experience.copy': 'Upload your resume as TXT or PDF and keep your background in your project. Your saved resume helps the tools work with your experience and the role you are preparing for.',
   'welcome.chapter.roles.title': 'Find roles. Keep every application in view.',
-  'welcome.chapter.roles.copy': 'Discover indexed jobs online or capture a role you already found. Save the job description, follow application stages and keep progress in a dedicated workspace. Always confirm listing availability on the original site.',
+  'welcome.chapter.roles.copy': 'Capture a role you found. Save the job description, follow application stages and keep progress in a dedicated workspace.',
   'welcome.chapter.research.title': 'Go into the conversation prepared',
   'welcome.chapter.research.copy': 'Keep company notes, people you spoke to and questions to ask beside the job. AI can draft company research and summarise your notes; verify current company facts before relying on them.',
   'welcome.chapter.application.title': 'Understand your fit. Strengthen your application.',
@@ -11672,6 +11672,37 @@ Object.assign(localizationPatches.en, {
 
 Object.entries(launchTranslations).forEach(([locale, patch]) => Object.assign(localizationPatches[locale], patch))
 Object.entries(productAccessCopy).forEach(([locale, patch]) => Object.assign(localizationPatches[locale], patch, { 'onboarding.proPrice': 'EUR 10' }))
+
+Object.assign(localizationPatches.en, {
+  'evidence.readability': 'Text readability',
+  'evidence.coverage': 'Requirement coverage and CV evidence',
+  'evidence.confirm': 'Not verified from the supplied CV — confirm your experience.',
+  'evidence.wording': 'Truthful wording opportunities',
+  'evidence.gaps': 'Experience not demonstrated',
+  'evidence.rewriteConfirm': 'Add your actual result before rewriting this point. Unverified numerical claims were omitted.',
+  'applications.offer.completeFirst': 'Before comparing offers, add the base pay and explicitly rate each factor for: {companies}. Confirm pay, working arrangements and expectations with the employer. No acceptance recommendation can be made from missing details.',
+  'starBuilder.findStories': 'Find story topics from my CV',
+  'starBuilder.finding': 'Finding story topics…',
+  'starBuilder.discoverCopy': 'Use your saved CV and this job description to find real experiences worth developing. Suggestions are questions to explore, not finished stories.',
+  'starBuilder.noEvidence': 'No supported story topics found. Add more detail to your saved CV or write your own notes below.',
+  'starBuilder.suggestionError': 'Story suggestions could not be generated. Your notes are unchanged; try again.',
+  'starBuilder.useTopic': 'Use as rough notes',
+  'starBuilder.draftNotice': 'AI draft. Review the facts and your own contribution before using this answer.',
+  'starBuilder.confirmed': 'Facts confirmed by you.',
+  'starBuilder.sourceAndDraft': 'Original notes and AI draft',
+  'starBuilder.confirmFacts': 'I confirm these facts',
+  'starBuilder.practise': 'Practise this story',
+  'starBuilder.practiceFocus': 'Story to practise',
+  'starBuilder.generalPractice': 'General interview practice',
+  'welcome.chapter.roles.title': 'Keep every application in view',
+  'welcome.chapter.roles.copy': 'Capture a role you found, save its job description and follow application stages in a dedicated workspace.',
+  'tools.resumechecker.atsScore': 'Text readiness',
+  'tools.coverletter.missingKeywords': 'JD wording not found verbatim — verify relevance before adding',
+  'tools.resumechecker.keywordGaps': 'JD wording not found verbatim',
+  'tools.resumechecker.keywordMatching': 'JobSensei assessment',
+  'tools.resumechecker.atsScoreBreakdown': 'A coaching estimate from supplied text, not an employer ATS pass score or a check of the original file layout.',
+  'home.featureOverview.search': 'Track applications on a Kanban board, capture job descriptions and save company research, stories and notes.',
+})
 
 export default localizationPatches
 

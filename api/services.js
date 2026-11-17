@@ -1,13 +1,9 @@
 import feedback from './_feedback.js'
-import research from './_research.js'
-import discoverJobs from './_discover-jobs.js'
 import billing from './_billing.js'
 
 // These handlers are bundled into one function; public URLs are preserved by rewrites.
 const handlers = new Map([
   ['feedback', feedback],
-  ['research', research],
-  ['discover-jobs', discoverJobs],
   ['billing', billing],
 ])
 

@@ -44,6 +44,9 @@ function loadPaddleScript() {
 }
 
 async function ensurePaddle() {
+  if (PADDLE_ENV === 'sandbox' && ['jobsensei.app', 'www.jobsensei.app'].includes(window.location?.hostname)) {
+    throw new Error('New subscriptions are not available yet. Test checkout is disabled on the public site.')
+  }
   if (!PADDLE_ENABLED) {
     throw new Error('Paddle checkout is not configured on this deployment yet.')
   }
@@ -97,7 +100,7 @@ export async function openProCheckout({
   const Paddle = await ensurePaddle()
   const response = await fetch('/api/billing', {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ action: 'checkout' }),
+    body: JSON.stringify({ action: 'checkout', environment: PADDLE_ENV }),
     signal: AbortSignal.timeout(30000),
   })
   const payload = await response.json().catch(() => ({}))
